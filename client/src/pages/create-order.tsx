@@ -281,7 +281,25 @@ const CreateOrder: React.FC = () => {
       setSelectedCustomer(customer);
       // ดึงข้อมูลวิธีการจัดส่งเมื่อเลือกลูกค้า
       fetchShippingMethods(customer);
+      
+      // อัตโนมัติกรอกข้อมูลที่อยู่จัดส่ง
+      const addressTextarea = document.getElementById('shipping-address') as HTMLTextAreaElement;
+      if (addressTextarea) {
+        addressTextarea.value = `${customer.address}, ${customer.subdistrict}, ${customer.district}, ${customer.province}, ${customer.zipcode}`;
+      }
     }
+  };
+  
+  // ล้างข้อมูลที่อยู่
+  const clearAddress = () => {
+    const addressTextarea = document.getElementById('shipping-address') as HTMLTextAreaElement;
+    if (addressTextarea) {
+      addressTextarea.value = '';
+    }
+    toast({
+      title: 'ล้างข้อมูลเรียบร้อย',
+      variant: 'default',
+    });
   };
 
   // ดึงข้อมูลวิธีการจัดส่ง
@@ -1067,14 +1085,29 @@ const CreateOrder: React.FC = () => {
             </h2>
             
             <div className="mb-6">
-              <h3 className="text-sm font-medium mb-3">ที่อยู่จัดส่ง</h3>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm font-medium">ข้อมูลผู้รับ / ที่อยู่จัดส่ง</h3>
+                <button
+                  type="button"
+                  onClick={clearAddress}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center"
+                >
+                  <i className="fa-solid fa-eraser mr-1"></i>
+                  ล้างข้อมูล
+                </button>
+              </div>
               <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
                 <p className="font-medium mb-1">{selectedCustomer?.name}</p>
                 <p className="text-sm text-gray-700 mb-1">โทร: {selectedCustomer?.phone}</p>
-                <p className="text-sm text-gray-700">
-                  {selectedCustomer?.address}, {selectedCustomer?.subdistrict}, {selectedCustomer?.district}, {selectedCustomer?.province}, {selectedCustomer?.zipcode}
-                </p>
+                <textarea
+                  id="shipping-address"
+                  className="w-full px-3 py-2 mt-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  rows={3}
+                  defaultValue={`${selectedCustomer?.address}, ${selectedCustomer?.subdistrict}, ${selectedCustomer?.district}, ${selectedCustomer?.province}, ${selectedCustomer?.zipcode}`}
+                  placeholder="ที่อยู่ (บ้านเลขที่ เขต แขวง รหัสไปรษณีย์)"
+                ></textarea>
               </div>
+              <p className="text-xs text-gray-500 mt-1">คุณสามารถแก้ไขที่อยู่จัดส่งได้เพื่อเปลี่ยนแปลงรายละเอียด</p>
             </div>
             
             <div className="mb-4">
