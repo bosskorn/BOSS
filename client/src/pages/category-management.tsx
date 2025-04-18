@@ -46,30 +46,27 @@ const CategoryManagement: React.FC = () => {
       try {
         console.log('Fetching categories with credentials, user:', user?.id);
         
-        // ใช้ axios จาก services/api แทน
-        const res = await fetch('/api/categories', {
-          method: 'GET',
-          credentials: 'include',
+        // ใช้ axios แทน fetch เพื่อให้สอดคล้องกับการใช้งาน cookies
+        const axios = (await import('axios')).default;
+        
+        console.log('Debug - Checking user auth state before fetch:', !!user);
+        console.log('Debug - Current document.cookie:', document.cookie);
+        
+        const res = await axios.get('/api/categories', {
           headers: {
             'Accept': 'application/json',
             'Cache-Control': 'no-cache',
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          withCredentials: true // สำคัญมาก ต้องใช้ withCredentials แทน credentials: 'include'
         });
         
         // จะแสดง response status และ headers เพื่อการตรวจสอบ
-        console.log('Categories request headers:', {
-          credentials: 'include',
-          Accept: 'application/json',
-          'Cache-Control': 'no-cache'
-        });
         console.log('Categories response status:', res.status);
+        console.log('Categories response headers:', res.headers);
         
-        if (!res.ok) {
-          throw new Error(`Error ${res.status}: ${res.statusText}`);
-        }
-        
-        const result = await res.json();
+        const result = res.data;
         console.log('Categories API response:', result);
         
         // ตรวจสอบโครงสร้างข้อมูล
@@ -77,12 +74,35 @@ const CategoryManagement: React.FC = () => {
           return result.categories;
         } else if (Array.isArray(result)) {
           return result;
+        } else if (result.success === false && result.message) {
+          // ถ้าการยืนยันตัวตนล้มเหลว อาจจะต้องทำการล็อกอินใหม่
+          console.warn('Authentication issue:', result.message);
+          // ถ้าต้องการ redirect ไปหน้า login สามารถเพิ่มโค้ดตรงนี้
+          // window.location.href = '/auth';
+          return [];
         } else {
           console.error('Invalid data format from API:', result);
           return [];
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching categories:', error);
+        
+        // ตรวจสอบ error จาก axios เพื่อจัดการเรื่องการ authentication
+        if (error.response && error.response.status === 401) {
+          console.warn('Authentication required. Please login again.');
+          toast({
+            title: 'กรุณาเข้าสู่ระบบ',
+            description: 'เซสชั่นหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+            variant: 'destructive',
+          });
+          
+          // สามารถ redirect ไปหน้า login หรือแสดง toast แจ้งเตือนได้
+          // นำทางให้ไปที่หน้า auth เพื่อเข้าสู่ระบบใหม่
+          setTimeout(() => {
+            navigate('/auth');
+          }, 1500);
+        }
+        
         throw error;
       }
     },
@@ -93,26 +113,46 @@ const CategoryManagement: React.FC = () => {
   // Mutation สำหรับสร้างหมวดหมู่ใหม่
   const createCategory = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const res = await fetch('/api/categories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify(data),
-        credentials: 'include'
-      });
+      // ใช้ axios แทน fetch
+      const axios = (await import('axios')).default;
       
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || `Error ${res.status}: ${res.statusText}`);
+      console.log('Creating category with data:', data);
+      
+      try {
+        const res = await axios.post('/api/categories', data, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          withCredentials: true
+        });
+        
+        console.log('Create category response:', res.status, res.data);
+        return res.data;
+      } catch (error: any) {
+        console.error('Create category error:', error.response?.data || error.message);
+        
+        // ตรวจสอบกรณี authentication error
+        if (error.response && error.response.status === 401) {
+          toast({
+            title: 'กรุณาเข้าสู่ระบบ',
+            description: 'เซสชั่นหมดอายุ กรุณาเข้าสู่ระบบใหม่',
+            variant: 'destructive',
+          });
+          
+          // redirect to login page
+          setTimeout(() => {
+            navigate('/auth');
+          }, 1500);
+        }
+        
+        throw new Error(error.response?.data?.message || error.message || 'ไม่สามารถสร้างหมวดหมู่ได้');
       }
-      
-      const result = await res.json();
-      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Category created successfully:', data);
       toast({
         title: 'สร้างหมวดหมู่สำเร็จ',
         description: 'เพิ่มหมวดหมู่สินค้าใหม่เรียบร้อยแล้ว',
@@ -121,7 +161,8 @@ const CategoryManagement: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       resetForm();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error('Create category mutation error:', error);
       toast({
         title: 'เกิดข้อผิดพลาด',
         description: error.message || 'ไม่สามารถสร้างหมวดหมู่ได้',
@@ -133,26 +174,46 @@ const CategoryManagement: React.FC = () => {
   // Mutation สำหรับแก้ไขหมวดหมู่
   const updateCategory = useMutation({
     mutationFn: async ({ id, data }: { id: number, data: Partial<typeof formData> }) => {
-      const res = await fetch(`/api/categories/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify(data),
-        credentials: 'include'
-      });
+      // ใช้ axios แทน fetch
+      const axios = (await import('axios')).default;
       
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || `Error ${res.status}: ${res.statusText}`);
+      console.log('Updating category with id:', id, 'data:', data);
+      
+      try {
+        const res = await axios.put(`/api/categories/${id}`, data, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          withCredentials: true
+        });
+        
+        console.log('Update category response:', res.status, res.data);
+        return res.data;
+      } catch (error: any) {
+        console.error('Update category error:', error.response?.data || error.message);
+        
+        // ตรวจสอบกรณี authentication error
+        if (error.response && error.response.status === 401) {
+          toast({
+            title: 'กรุณาเข้าสู่ระบบ',
+            description: 'เซสชั่นหมดอายุ กรุณาเข้าสู่ระบบใหม่',
+            variant: 'destructive',
+          });
+          
+          // redirect to login page
+          setTimeout(() => {
+            navigate('/auth');
+          }, 1500);
+        }
+        
+        throw new Error(error.response?.data?.message || error.message || 'ไม่สามารถแก้ไขหมวดหมู่ได้');
       }
-      
-      const result = await res.json();
-      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Category updated successfully:', data);
       toast({
         title: 'แก้ไขหมวดหมู่สำเร็จ',
         description: 'อัปเดตข้อมูลหมวดหมู่สินค้าเรียบร้อยแล้ว',
@@ -161,7 +222,8 @@ const CategoryManagement: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       resetForm();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error('Update category mutation error:', error);
       toast({
         title: 'เกิดข้อผิดพลาด',
         description: error.message || 'ไม่สามารถแก้ไขหมวดหมู่ได้',
