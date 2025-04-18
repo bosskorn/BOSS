@@ -298,10 +298,12 @@ const ProductListPage: React.FC = () => {
                 <Eye className="mr-2 h-4 w-4 text-muted-foreground" />
                 <span>ดูรายละเอียด</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <Edit className="mr-2 h-4 w-4 text-blue-500" />
-                <span>แก้ไขสินค้า</span>
-              </DropdownMenuItem>
+              <Link href={`/product-create?id=${row.original.id}`}>
+                <DropdownMenuItem className="cursor-pointer">
+                  <Edit className="mr-2 h-4 w-4 text-blue-500" />
+                  <span>แก้ไขสินค้า</span>
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600"
                 onClick={() => {
@@ -355,7 +357,7 @@ const ProductListPage: React.FC = () => {
               <RefreshCw className="h-4 w-4 mr-2" />
               รีเฟรช
             </Button>
-            <Link href="/products/create">
+            <Link href="/product-create">
               <Button size="sm" className="bg-green-600 hover:bg-green-700">
                 <Plus className="h-4 w-4 mr-2" />
                 เพิ่มสินค้าใหม่
