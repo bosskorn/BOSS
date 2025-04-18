@@ -1,0 +1,89 @@
+/* Admin Navbar Styles */
+.admin-navbar {
+  background-color: #2c1a4d;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.admin-navbar .navbar-brand .logo-container {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.admin-navbar .logo-link {
+  color: white;
+}
+
+.admin-navbar .logo-main {
+  color: white;
+}
+
+.admin-navbar .logo-sub {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.admin-navbar .logo-icon {
+  background-color: #8a2be2;
+  color: white;
+}
+
+.admin-navbar .menu-link {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.admin-navbar .menu-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.admin-navbar .menu-link.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-weight: 500;
+}
+
+.admin-navbar .dropdown-menu {
+  background-color: #3c2864;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.admin-navbar .dropdown-menu a {
+  color: rgba(255, 255, 255, 0.85);
+  transition: all 0.2s ease;
+}
+
+.admin-navbar .dropdown-menu a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.admin-navbar .dropdown-arrow {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.admin-navbar .mobile-toggle {
+  color: white;
+}
+
+.admin-badge {
+  background-color: #8a2be2;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  text-transform: uppercase;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+@media (max-width: 767px) {
+  .admin-navbar .navbar-menu.show {
+    background-color: #2c1a4d;
+  }
+  
+  .admin-navbar .menu-item.account-item .menu-link {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}

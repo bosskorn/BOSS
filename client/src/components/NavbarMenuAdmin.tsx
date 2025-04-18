@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useRoute } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import '../styles/admin-navbar.css';
 
 interface NavbarMenuAdminProps {
   onToggleSidebar: () => void;
