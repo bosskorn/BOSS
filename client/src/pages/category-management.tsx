@@ -42,14 +42,62 @@ const CategoryManagement: React.FC = () => {
     refetch 
   } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
+    queryFn: async () => {
+      try {
+        const res = await fetch('/api/categories', {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Error ${res.status}: ${res.statusText}`);
+        }
+        
+        const result = await res.json();
+        console.log('Categories API response:', result);
+        
+        // ตรวจสอบโครงสร้างข้อมูล
+        if (result.success && Array.isArray(result.categories)) {
+          return result.categories;
+        } else if (Array.isArray(result)) {
+          return result;
+        } else {
+          console.error('Invalid data format from API:', result);
+          return [];
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+    },
     enabled: !!user,
+    retry: 1
   });
   
   // Mutation สำหรับสร้างหมวดหมู่ใหม่
   const createCategory = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const res = await apiRequest('POST', '/api/categories', data);
-      return await res.json();
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Error ${res.status}: ${res.statusText}`);
+      }
+      
+      const result = await res.json();
+      return result;
     },
     onSuccess: () => {
       toast({
@@ -72,8 +120,24 @@ const CategoryManagement: React.FC = () => {
   // Mutation สำหรับแก้ไขหมวดหมู่
   const updateCategory = useMutation({
     mutationFn: async ({ id, data }: { id: number, data: Partial<typeof formData> }) => {
-      const res = await apiRequest('PUT', `/api/categories/${id}`, data);
-      return await res.json();
+      const res = await fetch(`/api/categories/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Error ${res.status}: ${res.statusText}`);
+      }
+      
+      const result = await res.json();
+      return result;
     },
     onSuccess: () => {
       toast({
