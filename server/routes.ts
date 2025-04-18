@@ -12,12 +12,20 @@ import adminAuthRouter from "./routes/admin-auth";
 import reportsRouter from "./routes/reports";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // แสดงข้อมูลข้อมูลของทุกคำขอเพื่อแก้ไขปัญหา
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Session ID: ${req.sessionID || 'no session'}`);
+    if (req.user) {
+      console.log(`User authenticated: ${req.user.username} (${req.user.id})`);
+    }
+    next();
+  });
+
   // กำหนดค่า CORS สำหรับ API
   app.use((req, res, next) => {
-    // อนุญาต origin ตามเครื่องมือทดสอบ
-    const allowedOrigins = ['http://localhost:5000', 'http://localhost:3000', 'https://purpledash.replit.app'];
+    // อนุญาต origin ทั้งหมด (สำหรับการทดสอบ)
     const origin = req.headers.origin;
-    if (origin && allowedOrigins.includes(origin)) {
+    if (origin) {
       res.header('Access-Control-Allow-Origin', origin);
     }
     

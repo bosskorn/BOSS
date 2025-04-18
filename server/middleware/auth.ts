@@ -12,6 +12,8 @@ declare global {
 
 // Middleware สำหรับการตรวจสอบว่าผู้ใช้ได้เข้าสู่ระบบหรือไม่
 export const auth = (req: Request, res: Response, next: NextFunction) => {
+  console.log('Auth middleware:', req.isAuthenticated(), req.user?.id, req.sessionID);
+  
   if (!req.isAuthenticated()) {
     return res.status(401).json({
       success: false,
@@ -19,6 +21,7 @@ export const auth = (req: Request, res: Response, next: NextFunction) => {
     });
   }
   
+  console.log('User authenticated:', req.user?.username);
   next();
 };
 

@@ -25,9 +25,10 @@ router.get("/", auth, async (req, res) => {
       categories = await storage.getCategoriesByUserId(userId);
     }
     
+    // ปรับรูปแบบให้ตรงกับที่ client คาดหวัง
     res.json({
       success: true,
-      data: categories
+      categories: categories
     });
   } catch (error) {
     console.error("Error fetching categories:", error);

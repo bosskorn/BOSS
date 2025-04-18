@@ -36,18 +36,18 @@ export function setupAuth(app: Express) {
   const isProduction = process.env.NODE_ENV === "production";
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "purpledash-secret-key",
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // เปลี่ยนเป็น true เพื่อบันทึก session ทุกครั้ง
+    saveUninitialized: true, // เปลี่ยนเป็น true เพื่อบันทึก session แม้ยังไม่มีข้อมูล
     store: new PostgresSessionStore({ 
       pool,
       tableName: 'session', // ชื่อตารางที่จะใช้เก็บข้อมูล session
       createTableIfMissing: true 
     }),
     cookie: {
-      secure: isProduction, // ใช้ secure เฉพาะใน production
+      secure: false, // กำหนดเป็น false เพื่อให้ทำงานได้บน HTTP
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      sameSite: isProduction ? 'none' : 'lax', // 'none' เพื่อให้ทำงานกับ cross-site
+      sameSite: 'lax', // ใช้ lax เพื่อความเข้ากันได้กับ browsers ทั้งหมด
       path: '/'
     }
   };
