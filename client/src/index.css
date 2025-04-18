@@ -145,6 +145,16 @@
 /* เอฟเฟกต์ Glowing */
 .glow-purple {
   filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.8));
+  animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    filter: drop-shadow(0 0 5px rgba(138, 43, 226, 0.5));
+  }
+  to {
+    filter: drop-shadow(0 0 20px rgba(138, 43, 226, 0.8));
+  }
 }
 
 /* เอฟเฟกต์ 3D กล่องลอย */
