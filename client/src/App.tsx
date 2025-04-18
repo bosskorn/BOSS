@@ -45,7 +45,7 @@ function Router() {
       <Route path="/order-detail/:id" component={OrderDetail} />
       
       {/* พัสดุและการจัดส่ง */}
-      <Route path="/shipment-list" component={ShipmentList} />
+      <Route path="/parcel-list" component={ShipmentList} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
