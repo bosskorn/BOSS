@@ -116,23 +116,24 @@
     display: block;
   }
   
-  /* เพิ่มการแสดงกล่องบอกเมนูว่าเป็นระบบผู้ดูแล */
-  .admin-navbar .mobile-toggle {
+  /* ปรับปรุงการแสดงผลปุ่มเมนูมือถือ */
+  .admin-navbar .mobile-menu-container {
+    display: flex;
+    align-items: center;
     position: relative;
   }
   
-  .admin-navbar .mobile-toggle::after {
-    content: "เมนูผู้ดูแล";
-    position: absolute;
-    top: -25px;
-    right: 0;
+  .admin-navbar .mobile-menu-text {
+    display: inline-block;
     background-color: #8a2be2;
     color: white;
-    font-size: 10px;
-    padding: 3px 8px;
+    font-size: 12px;
+    padding: 5px 10px;
     border-radius: 4px;
+    margin-right: 8px;
     font-weight: 500;
     white-space: nowrap;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
   }
   
   /* แสดงไอคอนที่ชัดเจนขึ้นในเวอร์ชั่นมือถือ */
@@ -140,7 +141,17 @@
     color: #ffffff;
     font-size: 1.5rem;
     padding: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: #8a2be2;
     border-radius: 4px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    animation: pulse-glow 2s infinite;
+    position: relative;
+  }
+  
+  /* เพิ่ม animation กระพริบเพื่อให้เห็นชัดในเวอร์ชั่นมือถือ */
+  @keyframes pulse-glow {
+    0% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+    50% { box-shadow: 0 0 15px rgba(255, 255, 255, 0.8); }
+    100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
   }
 }

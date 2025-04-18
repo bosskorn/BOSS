@@ -377,10 +377,13 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
         </li>
       </ul>
       
-      {/* Mobile Toggle */}
-      <button className="mobile-toggle" onClick={toggleMobileMenu}>
-        <i className="fas fa-shield-alt"></i>
-      </button>
+      {/* Mobile Toggle with Text */}
+      <div className="mobile-menu-container">
+        <span className="mobile-menu-text">กดเพื่อเปิดเมนูผู้ดูแล</span>
+        <button className="mobile-toggle" onClick={toggleMobileMenu}>
+          <i className="fas fa-shield-alt"></i>
+        </button>
+      </div>
     </nav>
   );
 };
