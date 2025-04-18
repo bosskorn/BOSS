@@ -1308,6 +1308,18 @@ const CreateOrder: React.FC = () => {
                                 classifyAddress();
                               } else if (classifiedAddress) {
                                 try {
+                                  console.log('กำลังบันทึกข้อมูลลูกค้าใหม่...');
+                                  
+                                  // ตรวจสอบการล็อกอิน
+                                  const userResponse = await fetch('/api/user', {
+                                    method: 'GET',
+                                    credentials: 'include',
+                                  });
+                                  
+                                  if (!userResponse.ok) {
+                                    throw new Error('กรุณาเข้าสู่ระบบก่อนบันทึกข้อมูลลูกค้า');
+                                  }
+                                  
                                   // สร้างข้อมูลลูกค้าใหม่จากข้อมูลที่จำแนกแล้ว
                                   const customerData = {
                                     name: classifiedAddress.fullname,
@@ -1328,6 +1340,8 @@ const CreateOrder: React.FC = () => {
                                     road: classifiedAddress.road || null
                                   };
                                   
+                                  console.log('กำลังส่งข้อมูล:', customerData);
+                                  
                                   // บันทึกข้อมูลลูกค้าลงฐานข้อมูล
                                   const response = await fetch('/api/customers', {
                                     method: 'POST',
@@ -1338,13 +1352,20 @@ const CreateOrder: React.FC = () => {
                                     body: JSON.stringify(customerData),
                                   });
                                   
+                                  // แสดงข้อมูลการตอบกลับจาก API เพื่อดีบัก
+                                  const responseText = await response.text();
+                                  console.log('การตอบกลับจาก API:', response.status, responseText);
+                                  
                                   if (!response.ok) {
-                                    throw new Error('ไม่สามารถบันทึกข้อมูลลูกค้าได้');
+                                    throw new Error(`ไม่สามารถบันทึกข้อมูลลูกค้าได้ (รหัส: ${response.status})`);
                                   }
                                   
-                                  const result = await response.json();
+                                  // แปลงข้อความตอบกลับเป็น JSON
+                                  const result = JSON.parse(responseText);
                                   
                                   if (result.success && result.customer) {
+                                    console.log('บันทึกข้อมูลลูกค้าสำเร็จ:', result.customer);
+                                    
                                     // อัปเดตรายการลูกค้าและเลือกลูกค้าที่เพิ่งสร้าง
                                     setCustomers([...customers, result.customer]);
                                     setSelectedCustomer(result.customer);
@@ -1361,7 +1382,7 @@ const CreateOrder: React.FC = () => {
                                       variant: 'default',
                                     });
                                   } else {
-                                    throw new Error('ไม่สามารถบันทึกข้อมูลลูกค้าได้');
+                                    throw new Error(result.message || 'ไม่สามารถบันทึกข้อมูลลูกค้าได้');
                                   }
                                 } catch (error) {
                                   console.error('Error saving customer:', error);
