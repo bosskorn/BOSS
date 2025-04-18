@@ -235,6 +235,8 @@
     z-index: 100;
     opacity: 0;
     visibility: hidden;
+    padding-bottom: 80px; /* เพิ่มพื้นที่ด้านล่างเพื่อให้สามารถเลื่อนลงดูเมนูได้ครบ */
+    -webkit-overflow-scrolling: touch; /* เพื่อให้การเลื่อนบน iOS ทำงานได้ดี */
   }
   
   .navbar-menu.show {
@@ -285,7 +287,7 @@
   }
   
   .dropdown-menu.show {
-    max-height: 500px;
+    max-height: none; /* ไม่จำกัดความสูงของเมนูย่อย */
   }
   
   .dropdown-menu li {

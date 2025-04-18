@@ -42,6 +42,13 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
     if (menu) {
       menu.classList.toggle('show');
     }
+    
+    // เพิ่มคลาสให้กับ body เพื่อป้องกันการเลื่อนพื้นหลัง
+    if (!mobileMenuOpen) {
+      document.body.classList.add('menu-open');
+    } else {
+      document.body.classList.remove('menu-open');
+    }
   };
   
   // Close all dropdowns
@@ -62,6 +69,21 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
       document.removeEventListener('click', handleClickOutside);
     };
   }, []);
+  
+  // ปิดเมนูมือถือเมื่อออกจากคอมโพเนนต์
+  useEffect(() => {
+    return () => {
+      // คืนค่าสถานะเริ่มต้นเมื่อคอมโพเนนต์ถูกทำลาย
+      document.body.classList.remove('menu-open');
+    };
+  }, []);
+  
+  // ปิดเมนูมือถือเมื่อคลิกที่ลิงก์ในเมนู
+  const handleMenuLinkClick = () => {
+    if (mobileMenuOpen) {
+      toggleMobileMenu();
+    }
+  };
 
   return (
     <nav className="purpledash-navbar" ref={navbarRef}>
@@ -87,6 +109,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
           <Link 
             href="/dashboard" 
             className={`menu-link ${isDashboard ? 'active' : ''}`}
+            onClick={handleMenuLinkClick}
           >
             <i className="fas fa-tachometer-alt"></i>
             <span className="menu-text">Dashboard</span>
@@ -112,12 +135,20 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
           
           <ul className={`dropdown-menu ${activeDropdown === 'orders' ? 'show' : ''}`}>
             <li>
-              <Link href="/orders-all" className={isOrdersList ? 'active' : ''}>
+              <Link 
+                href="/orders-all" 
+                className={isOrdersList ? 'active' : ''}
+                onClick={handleMenuLinkClick}
+              >
                 <i className="fas fa-list-ul"></i> คำสั่งซื้อทั้งหมด
               </Link>
             </li>
             <li>
-              <Link href="/create-order" className={isCreateOrder ? 'active' : ''}>
+              <Link 
+                href="/create-order" 
+                className={isCreateOrder ? 'active' : ''}
+                onClick={handleMenuLinkClick}
+              >
                 <i className="fas fa-plus-circle"></i> สร้างออเดอร์
               </Link>
             </li>
