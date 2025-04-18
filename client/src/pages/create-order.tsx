@@ -316,6 +316,15 @@ const CreateOrder: React.FC = () => {
       setSelectedCustomer(customer);
       // ดึงข้อมูลวิธีการจัดส่งเมื่อเลือกลูกค้า
       fetchShippingMethods(customer);
+      
+      // เปลี่ยนไปขั้นตอนการเลือกสินค้าโดยอัตโนมัติ
+      setCurrentStep('items');
+      
+      toast({
+        title: 'เลือกลูกค้าเรียบร้อย',
+        description: 'กรุณาเลือกสินค้าในขั้นตอนถัดไป',
+        variant: 'default',
+      });
     }
   };
 
@@ -500,6 +509,8 @@ const CreateOrder: React.FC = () => {
         variant: 'destructive',
       });
       setIsLoadingShippingRates(false);
+    } finally {
+      setIsLoadingShippingRates(false);
     }
   };
 
@@ -612,6 +623,20 @@ const CreateOrder: React.FC = () => {
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+  
+  // ข้ามไปขั้นตอนการเลือกวิธีการจัดส่ง
+  const goToShippingStep = () => {
+    if (selectedCustomer) {
+      setCurrentStep('shipping');
+      fetchShippingMethods(selectedCustomer);
+    } else {
+      toast({
+        title: 'กรุณาเลือกลูกค้า',
+        description: 'ต้องเลือกลูกค้าก่อนไปหน้าเลือกวิธีการจัดส่ง',
+        variant: 'destructive',
+      });
+    }
   };
 
   // ไปยังขั้นตอนถัดไป
