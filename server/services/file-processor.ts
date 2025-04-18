@@ -1,146 +1,117 @@
-import fs from 'fs';
-import csv from 'csv-parser';
-import xlsx from 'xlsx';
-import path from 'path';
-import { storage } from '../storage';
+import * as xlsx from 'xlsx';
+import * as csv from 'csv-parser';
+import * as fs from 'fs';
 
-// Process uploaded files based on type
-export const processFile = async (filePath: string, fileExt: string): Promise<{ records: number, data: any[] }> => {
-  try {
-    let data: any[] = [];
-    
-    // Process based on file extension
-    switch (fileExt) {
-      case '.csv':
-        data = await processCSV(filePath);
-        break;
-      case '.xls':
-      case '.xlsx':
-        data = await processExcel(filePath);
-        break;
-      default:
-        throw new Error('ไม่รองรับประเภทไฟล์นี้');
+/**
+ * แปลง Excel แถวเป็นข้อมูล JavaScript Object
+ */
+function normalizeExcelRow(row: any) {
+  const normalized: Record<string, any> = {};
+  
+  // กรณีไม่มีข้อมูลหรือเป็น undefined
+  if (!row) return normalized;
+  
+  // วนลูปทุก key
+  Object.keys(row).forEach(key => {
+    // ข้ามฟิลด์ที่ไม่มีค่า
+    if (row[key] === undefined || row[key] === null || row[key] === '') {
+      return;
     }
-
-    // Determine data type and store in appropriate storage
-    if (data.length > 0) {
-      const sample = data[0];
-      
-      // Simple heuristic to guess data type
-      if ('customer' in sample && 'total' in sample) {
-        // Looks like order data
-        await storeOrdersData(data);
-      } else if ('name' in sample && 'price' in sample) {
-        // Looks like product data
-        await storeProductsData(data);
-      } else if ('name' in sample && 'address' in sample) {
-        // Looks like customer data
-        await storeCustomersData(data);
+    
+    // แปลงชื่อฟิลด์ให้เป็น camelCase
+    const normalizedKey = key.trim().toLowerCase()
+      .replace(/\s+(\w)/g, (_, c) => c.toUpperCase())
+      .replace(/[^a-zA-Z0-9]/g, '');
+    
+    // แปลงค่าให้เป็นรูปแบบที่เหมาะสม
+    let value = row[key];
+    
+    // แปลงวันที่
+    if (value instanceof Date) {
+      value = value.toISOString();
+    } 
+    // แปลงตัวเลข
+    else if (typeof value === 'string' && !isNaN(Number(value)) && value.trim() !== '') {
+      if (value.includes('.')) {
+        value = parseFloat(value);
+      } else {
+        value = parseInt(value);
       }
     }
     
-    // Clean up the file after processing
-    fs.unlinkSync(filePath);
-    
-    return {
-      records: data.length,
-      data: data.slice(0, 10) // Return only first 10 rows to avoid large response
-    };
-  } catch (error) {
-    // Clean up on error
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-    throw error;
-  }
-};
+    normalized[normalizedKey] = value;
+  });
+  
+  return normalized;
+}
 
-// Process CSV files
-const processCSV = (filePath: string): Promise<any[]> => {
+/**
+ * ประมวลผลไฟล์ Excel
+ */
+async function processExcelFile(filePath: string): Promise<{ records: number, data: any[] }> {
+  const workbook = xlsx.readFile(filePath);
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  
+  // แปลงข้อมูลเป็น JSON
+  const jsonData = xlsx.utils.sheet_to_json(worksheet, { defval: null, raw: false });
+  
+  // ทำความสะอาดข้อมูล
+  const normalizedData = jsonData
+    .map(row => normalizeExcelRow(row))
+    .filter(row => Object.keys(row).length > 0); // กรองแถวที่ไม่มีข้อมูลออก
+  
+  return {
+    records: normalizedData.length,
+    data: normalizedData
+  };
+}
+
+/**
+ * ประมวลผลไฟล์ CSV
+ */
+async function processCsvFile(filePath: string): Promise<{ records: number, data: any[] }> {
   return new Promise((resolve, reject) => {
     const results: any[] = [];
     
     fs.createReadStream(filePath)
       .pipe(csv())
-      .on('data', (data) => results.push(data))
-      .on('end', () => resolve(results))
-      .on('error', (error) => reject(error));
+      .on('data', (data) => results.push(normalizeExcelRow(data)))
+      .on('end', () => {
+        // กรองแถวที่ไม่มีข้อมูลออก
+        const filteredResults = results.filter(row => Object.keys(row).length > 0);
+        
+        resolve({
+          records: filteredResults.length,
+          data: filteredResults
+        });
+      })
+      .on('error', (error) => {
+        reject(error);
+      });
   });
-};
+}
 
-// Process Excel files
-const processExcel = (filePath: string): Promise<any[]> => {
-  return new Promise((resolve, reject) => {
-    try {
-      const workbook = xlsx.readFile(filePath);
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const data = xlsx.utils.sheet_to_json(worksheet);
-      resolve(data);
-    } catch (error) {
-      reject(error);
+/**
+ * ประมวลผลไฟล์ตามนามสกุล
+ */
+export const processFile = async (filePath: string, fileExt: string): Promise<{ records: number, data: any[] }> => {
+  try {
+    // ตรวจสอบว่าไฟล์มีอยู่จริง
+    if (!fs.existsSync(filePath)) {
+      throw new Error('ไฟล์ไม่พบ');
     }
-  });
-};
-
-// Store order data
-const storeOrdersData = async (data: any[]): Promise<void> => {
-  for (const item of data) {
-    try {
-      // Map CSV/Excel data to order structure
-      const orderData = {
-        customer: item.customer || 'Unknown',
-        total: parseFloat(item.total) || 0,
-        date: item.date || new Date().toISOString(),
-        status: item.status || 'pending',
-        items: item.items ? JSON.parse(item.items) : []
-      };
-      
-      await storage.createOrder(orderData);
-    } catch (error) {
-      console.error('Error storing order data:', error);
-      // Continue with next item rather than failing entire process
+    
+    // ประมวลผลตามนามสกุลไฟล์
+    if (fileExt === '.csv') {
+      return await processCsvFile(filePath);
+    } else if (fileExt === '.xlsx' || fileExt === '.xls') {
+      return await processExcelFile(filePath);
+    } else {
+      throw new Error('รูปแบบไฟล์ไม่รองรับ ต้องเป็น .csv, .xlsx หรือ .xls เท่านั้น');
     }
-  }
-};
-
-// Store product data
-const storeProductsData = async (data: any[]): Promise<void> => {
-  for (const item of data) {
-    try {
-      // Map CSV/Excel data to product structure
-      const productData = {
-        name: item.name || 'Unknown',
-        price: parseFloat(item.price) || 0,
-        description: item.description || '',
-        stock: parseInt(item.stock) || 0,
-        category: item.category || 'General'
-      };
-      
-      await storage.createProduct(productData);
-    } catch (error) {
-      console.error('Error storing product data:', error);
-    }
-  }
-};
-
-// Store customer data
-const storeCustomersData = async (data: any[]): Promise<void> => {
-  for (const item of data) {
-    try {
-      // Map CSV/Excel data to customer structure
-      const customerData = {
-        name: item.name || 'Unknown',
-        email: item.email || '',
-        phone: item.phone || '',
-        address: item.address || '',
-        city: item.city || '',
-        postalCode: item.postalCode || ''
-      };
-      
-      await storage.createCustomer(customerData);
-    } catch (error) {
-      console.error('Error storing customer data:', error);
-    }
+  } catch (error: any) {
+    console.error('Error processing file:', error);
+    throw new Error(`ไม่สามารถประมวลผลไฟล์ได้: ${error.message}`);
   }
 };

@@ -1,77 +1,180 @@
-import { Router } from 'express';
+import express, { Request, Response } from 'express';
 import multer from 'multer';
-import { auth } from '../middleware/auth';
-import { processFile } from '../services/file-processor';
 import path from 'path';
 import fs from 'fs';
+import { auth } from '../middleware/auth';
+import { processFile } from '../services/file-processor';
+import { storage } from '../storage';
+import { insertProductSchema, insertCustomerSchema, insertOrderSchema } from '@shared/schema';
 
-const router = Router();
+const router = express.Router();
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// ตั้งค่า multer สำหรับการอัปโหลดไฟล์
+const uploadDir = path.join(__dirname, '../../uploads');
+
+// สร้างโฟลเดอร์ถ้ายังไม่มี
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure multer for file upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    }
+  }),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
   },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const fileExt = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + fileExt);
+  fileFilter: function (req, file, cb) {
+    const filetypes = /xlsx|xls|csv/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+      return cb(null, true);
+    } else {
+      cb(new Error('รองรับเฉพาะไฟล์ Excel (.xlsx, .xls) และ CSV (.csv) เท่านั้น'));
+    }
   }
 });
 
-// File filter to only accept CSV, XLS, and XLSX files
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['.csv', '.xls', '.xlsx'];
-  const ext = path.extname(file.originalname).toLowerCase();
-  
-  if (allowedTypes.includes(ext)) {
-    cb(null, true);
-  } else {
-    cb(new Error('ไม่อนุญาตประเภทไฟล์นี้ รองรับเฉพาะไฟล์ CSV, XLS และ XLSX เท่านั้น'));
-  }
-};
-
-const upload = multer({ 
-  storage, 
-  fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
-});
-
-// Upload and process file
-router.post('/', auth, upload.single('file'), async (req, res) => {
+// API สำหรับอัปโหลดและประมวลผลข้อมูลตัวอย่าง
+router.post('/preview', auth, upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'ไม่พบไฟล์ที่อัพโหลด'
+        message: 'ไม่พบไฟล์ในคำขอ'
       });
     }
-    
-    const { filename, path: filePath, originalname, mimetype } = req.file;
-    
-    // Process file based on type
-    const result = await processFile(filePath, path.extname(originalname).toLowerCase());
-    
+
+    const fileType = req.body.type || 'unknown';
+    const filePath = req.file.path;
+    const fileExt = path.extname(req.file.originalname).toLowerCase();
+
+    // ประมวลผลไฟล์และดึงข้อมูลตัวอย่าง
+    const result = await processFile(filePath, fileExt);
+
+    // ส่งข้อมูลตัวอย่างกลับไป
     res.json({
       success: true,
-      message: 'อัพโหลดและประมวลผลไฟล์สำเร็จ',
-      filename,
-      originalname,
-      mimetype,
-      records: result.records,
-      data: result.data
+      message: `ดึงข้อมูลตัวอย่างสำเร็จ (${result.records} รายการ)`,
+      data: result.data,
+      type: fileType
     });
-  } catch (error) {
-    console.error('File upload error:', error);
+  } catch (error: any) {
+    console.error('Error preview file:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'เกิดข้อผิดพลาดในการอัพโหลดไฟล์'
+      message: `เกิดข้อผิดพลาดในการประมวลผลไฟล์: ${error.message}`
+    });
+  }
+});
+
+// API สำหรับนำเข้าข้อมูลจากไฟล์
+router.post('/import', auth, upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'ไม่พบไฟล์ในคำขอ'
+      });
+    }
+
+    const fileType = req.body.type || 'unknown';
+    const filePath = req.file.path;
+    const fileExt = path.extname(req.file.originalname).toLowerCase();
+    const userId = req.user!.id;
+
+    // ประมวลผลไฟล์และดึงข้อมูลทั้งหมด
+    const result = await processFile(filePath, fileExt);
+
+    // จัดการข้อมูลตามประเภท
+    let importedCount = 0;
+
+    switch (fileType) {
+      case 'products':
+        for (const item of result.data) {
+          try {
+            // เพิ่ม userId เข้าไปในข้อมูล
+            const productData = { ...item, userId };
+            
+            // ตรวจสอบความถูกต้องของข้อมูล
+            const validatedData = insertProductSchema.parse(productData);
+            
+            // บันทึกข้อมูล
+            await storage.createProduct(validatedData);
+            importedCount++;
+          } catch (error) {
+            console.error('Error importing product:', error);
+            // ทำต่อไปแม้จะมีข้อผิดพลาดในบางรายการ
+          }
+        }
+        break;
+
+      case 'customers':
+        for (const item of result.data) {
+          try {
+            // เพิ่ม userId เข้าไปในข้อมูล
+            const customerData = { ...item, userId };
+            
+            // ตรวจสอบความถูกต้องของข้อมูล
+            const validatedData = insertCustomerSchema.parse(customerData);
+            
+            // บันทึกข้อมูล
+            await storage.createCustomer(validatedData);
+            importedCount++;
+          } catch (error) {
+            console.error('Error importing customer:', error);
+          }
+        }
+        break;
+
+      case 'orders':
+        for (const item of result.data) {
+          try {
+            // เพิ่ม userId เข้าไปในข้อมูล
+            const orderData = { ...item, userId };
+            
+            // ตรวจสอบความถูกต้องของข้อมูล
+            const validatedData = insertOrderSchema.parse(orderData);
+            
+            // บันทึกข้อมูล
+            await storage.createOrder(validatedData);
+            importedCount++;
+          } catch (error) {
+            console.error('Error importing order:', error);
+          }
+        }
+        break;
+
+      default:
+        return res.status(400).json({
+          success: false,
+          message: 'ประเภทข้อมูลไม่ถูกต้อง'
+        });
+    }
+
+    // ลบไฟล์หลังจากประมวลผลเสร็จ
+    fs.unlinkSync(filePath);
+
+    res.json({
+      success: true,
+      message: `นำเข้าข้อมูลสำเร็จ ${importedCount} รายการ จาก ${result.records} รายการ`,
+      records: importedCount,
+      total: result.records
+    });
+  } catch (error: any) {
+    console.error('Error importing file:', error);
+    res.status(500).json({
+      success: false,
+      message: `เกิดข้อผิดพลาดในการนำเข้าข้อมูล: ${error.message}`
     });
   }
 });

@@ -40,8 +40,8 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "purpledash-secure-secret-key-2025",
     name: "purpledash.sid", // ตั้งชื่อ cookie ให้เป็นเอกลักษณ์
-    resave: true, // บันทึก session ทุกครั้งแม้ไม่มีการเปลี่ยนแปลง
-    saveUninitialized: true, // บันทึก session แม้ยังไม่มีข้อมูล
+    resave: false, // เปลี่ยนเป็น false เพื่อไม่บันทึก session โดยไม่จำเป็น
+    saveUninitialized: false, // เปลี่ยนเป็น false เพื่อไม่บันทึก session ที่ยังไม่ได้ใช้งาน
     store: new PostgresSessionStore({ 
       pool,
       tableName: 'session', // ชื่อตารางที่จะใช้เก็บข้อมูล session
@@ -51,7 +51,7 @@ export function setupAuth(app: Express) {
       secure: false, // จำเป็นต้องเป็น false สำหรับ HTTP ใน development
       httpOnly: true, // ป้องกันการเข้าถึง cookie ด้วย JavaScript
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'lax', // กลับไปใช้ lax เพื่อความเข้ากันได้ดีกว่า
+      sameSite: 'lax', 
       path: '/'
     }
   };
