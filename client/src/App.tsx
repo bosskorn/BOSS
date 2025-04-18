@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
+import AdminRegisterPage from "@/pages/admin-register";
 import Dashboard from "@/pages/dashboard-with-layout";
 import CategoryManage from "@/pages/category-manage-enhanced";
 import ProductCreate from "@/pages/product-create-enhanced";
@@ -22,6 +23,7 @@ function Router() {
       {/* Add pages below */}
       <Route path="/" component={Dashboard} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/admin-register" component={AdminRegisterPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/category-manage" component={CategoryManage} />
       <Route path="/category-management" component={CategoryManagement} />

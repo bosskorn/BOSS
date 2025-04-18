@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/hooks/use-toast';
-import purpleDashLogo from '../assets/purpledash-logo-clean.png';
+// โลโก้ถูกลบออกตามความต้องการ
 
 // สร้าง Schema สำหรับการตรวจสอบข้อมูลการสมัครสมาชิก
 const registerSchema = z.object({
@@ -185,16 +185,12 @@ const AuthPage: React.FC = () => {
       {/* คอนเทนเนอร์หลัก */}
       <div className="max-w-md w-full space-y-8 bg-white/90 p-8 rounded-lg shadow-xl backdrop-blur-xl relative z-10 float-box">
         <div className="text-center">
-          <div className="flex items-center justify-center mb-6">
-            <img 
-              src={purpleDashLogo} 
-              alt="PURPLEDASH Logo" 
-              className="h-14 glow-purple"
-            />
-          </div>
-          <h2 className="text-2xl font-extrabold text-gray-900 mt-3">
+          <h2 className="text-2xl font-extrabold text-gray-900">
             {isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
           </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            ระบบจัดการข้อมูลขนส่งอัจฉริยะ
+          </p>
         </div>
         
         {isLogin ? (
@@ -350,6 +346,15 @@ const AuthPage: React.FC = () => {
                 >
                   เข้าสู่ระบบที่นี่
                 </button>
+              </p>
+              <p className="text-sm text-gray-600 mt-2">
+                ต้องการสมัครเป็นผู้ดูแลระบบ?{' '}
+                <a 
+                  href="/admin-register"
+                  className="font-medium text-purple-600 hover:text-purple-500"
+                >
+                  สมัครที่นี่
+                </a>
               </p>
             </div>
           </form>
