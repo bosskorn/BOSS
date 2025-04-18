@@ -973,46 +973,247 @@ const CreateOrder: React.FC = () => {
         {/* ขั้นตอนที่ 2: ข้อมูลลูกค้า */}
         {currentStep === 'customer' && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-lg font-medium mb-4 flex items-center">
-              <i className="fa-solid fa-user text-indigo-600 mr-2"></i>
-              ข้อมูลลูกค้า
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* รายชื่อลูกค้า */}
-              <div className="col-span-1 md:col-span-1 border-r border-gray-200 pr-4">
+            <div className="flex flex-col space-y-4">
+              {/* Stepper */}
+              <div className="w-full bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-medium">✓</div>
+                    <span className="ml-2 text-sm font-medium">เลือกสินค้า</span>
+                    <div className="w-12 h-1 bg-gray-200 mx-2"></div>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium">2</div>
+                    <span className="ml-2 text-sm font-medium text-indigo-600">ข้อมูลลูกค้า</span>
+                    <div className="w-12 h-1 bg-gray-200 mx-2"></div>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-medium">3</div>
+                    <span className="ml-2 text-sm font-medium text-gray-500">การจัดส่ง</span>
+                    <div className="w-12 h-1 bg-gray-200 mx-2"></div>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-medium">4</div>
+                    <span className="ml-2 text-sm font-medium text-gray-500">การชำระเงิน</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center text-indigo-800 mb-2">
+                <i className="fa-solid fa-user mr-2"></i>
+                <h2 className="text-lg font-medium">ข้อมูลลูกค้า</h2>
+              </div>
+              
+              <div className="w-full">
                 <h3 className="text-sm font-medium mb-3">เลือกลูกค้า</h3>
-                <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {customers.map((customer) => (
                     <div
                       key={customer.id}
-                      className={`p-3 rounded-md cursor-pointer transition-colors ${
+                      className={`p-3 border rounded-md cursor-pointer transition-colors ${
                         selectedCustomer?.id === customer.id 
-                          ? 'bg-indigo-50 border border-indigo-200' 
-                          : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                          ? 'border-indigo-400 bg-indigo-50 shadow-sm' 
+                          : 'border-gray-200 hover:bg-gray-50'
                       }`}
                       onClick={() => handleSelectCustomer(customer.id)}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-2">
-                            <i className="fa-solid fa-user-circle"></i>
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">{customer.name}</p>
-                            <p className="text-xs text-gray-500">{customer.phone}</p>
-                          </div>
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
+                          <i className="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                          <p className="font-medium">{customer.name}</p>
+                          <p className="text-xs text-gray-500">{customer.phone}</p>
                         </div>
                         {selectedCustomer?.id === customer.id && (
-                          <div className="text-indigo-600">
+                          <div className="ml-auto text-green-600">
                             <i className="fa-solid fa-check-circle"></i>
                           </div>
                         )}
                       </div>
                     </div>
                   ))}
+                  
+                  <div className="p-5 border border-dashed border-indigo-300 rounded-md flex flex-col items-center justify-center text-center hover:bg-indigo-50 cursor-pointer">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mb-2">
+                      <i className="fa-solid fa-plus"></i>
+                    </div>
+                    <p className="font-medium text-indigo-600">เพิ่มลูกค้าใหม่</p>
+                  </div>
                 </div>
               </div>
+              
+              {selectedCustomer && (
+                <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-sm font-medium">ข้อมูลผู้รับ</h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // แสดงฟอร์มกรอกที่อยู่แบบละเอียด
+                        const customerAddressForm = document.getElementById('customer-address-form');
+                        if (customerAddressForm) {
+                          customerAddressForm.classList.toggle('hidden');
+                        }
+                      }}
+                      className="flex items-center text-indigo-600 hover:text-indigo-800 text-sm"
+                    >
+                      <i className="fa-solid fa-pen-to-square mr-1"></i>
+                      จำแนกที่อยู่
+                    </button>
+                  </div>
+                  
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    rows={2}
+                    defaultValue={`${selectedCustomer?.address}, ${selectedCustomer?.subdistrict}, ${selectedCustomer?.district}, ${selectedCustomer?.province}, ${selectedCustomer?.zipcode}`}
+                    placeholder="ที่อยู่ (บ้านเลขที่ เขต แขวง รหัสไปรษณีย์)"
+                  ></textarea>
+                  
+                  {/* ฟอร์มกรอกที่อยู่แบบละเอียด */}
+                  <div id="customer-address-form" className="hidden mt-3">
+                    <div className="p-3 bg-white border border-gray-200 rounded-md">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">บ้านเลขที่</label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            defaultValue={selectedCustomer?.addressNumber || ''}
+                            placeholder="บ้านเลขที่"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">หมู่</label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            defaultValue={selectedCustomer?.moo || ''}
+                            placeholder="หมู่"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">ซอย</label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            defaultValue={selectedCustomer?.soi || ''}
+                            placeholder="ซอย"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">ถนน</label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            defaultValue={selectedCustomer?.road || ''}
+                            placeholder="ถนน"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">แขวง/ตำบล</label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            defaultValue={selectedCustomer?.subdistrict || ''}
+                            placeholder="แขวง/ตำบล"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">เขต/อำเภอ</label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            defaultValue={selectedCustomer?.district || ''}
+                            placeholder="เขต/อำเภอ"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">จังหวัด</label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            defaultValue={selectedCustomer?.province || ''}
+                            placeholder="จังหวัด"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">รหัสไปรษณีย์</label>
+                          <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            defaultValue={selectedCustomer?.zipcode || ''}
+                            placeholder="รหัสไปรษณีย์"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 flex justify-end space-x-2">
+                        <button
+                          type="button"
+                          className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
+                          onClick={() => {
+                            // ซ่อนฟอร์ม
+                            const customerAddressForm = document.getElementById('customer-address-form');
+                            if (customerAddressForm) {
+                              customerAddressForm.classList.add('hidden');
+                            }
+                          }}
+                        >
+                          ยกเลิก
+                        </button>
+                        <button
+                          type="button"
+                          className="px-3 py-1 text-sm text-white bg-green-600 hover:bg-green-700 rounded"
+                          onClick={() => {
+                            toast({
+                              title: 'บันทึกที่อยู่เรียบร้อย',
+                              variant: 'default',
+                            });
+                            
+                            // ซ่อนฟอร์ม
+                            const customerAddressForm = document.getElementById('customer-address-form');
+                            if (customerAddressForm) {
+                              customerAddressForm.classList.add('hidden');
+                            }
+                          }}
+                        >
+                          ยืนยัน
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end mt-3">
+                    <button
+                      type="button"
+                      className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded mr-2"
+                    >
+                      ล้างข้อมูล
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 py-1 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded"
+                    >
+                      บันทึก
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {validationErrors.customer_id && (
+                <p className="mt-2 text-sm text-red-600">
+                  <i className="fa-solid fa-circle-exclamation mr-1"></i>
+                  {validationErrors.customer_id}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
               
               {/* ข้อมูลลูกค้าที่เลือก */}
               <div className="col-span-1 md:col-span-2">
