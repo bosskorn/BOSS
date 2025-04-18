@@ -45,7 +45,7 @@ interface Discount {
 }
 
 interface ShippingMethod {
-  id: string;
+  id: number;
   name: string;
   deliveryTime: string;
   price: number;
