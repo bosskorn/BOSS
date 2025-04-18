@@ -337,6 +337,18 @@
       color: #8A2BE2;
       margin-top: 2px;
     }
+    
+    /* ป้องกันการเลื่อนเมื่อเปิด sidebar */
+    body.sidebar-open {
+      overflow: hidden;
+    }
+    
+    /* ทำให้ sidebar เลื่อนได้เมื่อมีเนื้อหาเยอะ */
+    .fixed.right-0.h-full.w-64.bg-white.shadow-xl.z-50 {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 60px; /* ให้พื้นที่สำหรับส่วนล่าง */
+    }
   }
 }
 
