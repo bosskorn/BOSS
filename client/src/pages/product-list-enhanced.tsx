@@ -163,16 +163,38 @@ const ProductListPage: React.FC = () => {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      // จำลองการดึงข้อมูลจาก API
-      setTimeout(() => {
-        setProducts(mockProducts);
-        setIsLoading(false);
-      }, 500);
+      // ดึงข้อมูลจริงจาก API
+      const response = await fetch('/api/products');
+      const data = await response.json();
       
-      // ในการใช้งานจริงจะใช้ API เพื่อดึงข้อมูล
-      // const response = await fetch('/api/products');
-      // const data = await response.json();
-      // setProducts(data);
+      if (data && data.success && Array.isArray(data.data)) {
+        // แปลงข้อมูลจาก API ให้อยู่ในรูปแบบที่ใช้งานได้
+        const formattedProducts = data.data.map((item: any) => ({
+          id: item.id,
+          sku: item.sku || '-',
+          name: item.name || 'ไม่มีชื่อ',
+          price: typeof item.price === 'string' ? parseFloat(item.price) : 0,
+          cost: typeof item.cost === 'string' ? parseFloat(item.cost) : 0,
+          stock: item.stock || 0,
+          category: item.category?.name || 'ไม่มีหมวดหมู่',
+          categoryId: item.categoryId || item.category_id || 0,
+          status: item.status || 'active',
+          imageUrl: item.imageUrl || undefined,
+          createdAt: item.createdAt || new Date().toISOString()
+        }));
+        
+        setProducts(formattedProducts);
+        console.log('Loaded products:', formattedProducts);
+      } else {
+        console.error('Invalid data format from API:', data);
+        // เมื่อไม่พบข้อมูล ให้แสดงข้อมูลว่าง
+        setProducts([]);
+        toast({
+          title: 'ไม่พบข้อมูลสินค้า',
+          description: 'กรุณาเพิ่มสินค้าเพื่อแสดงในรายการ',
+          variant: 'default',
+        });
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
       toast({

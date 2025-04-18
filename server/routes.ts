@@ -1,12 +1,9 @@
-import { Express, Request, Response, NextFunction } from "express";
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import categoriesRouter from "./routes/categories";
 import productsRouter from "./routes/products";
-
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // กำหนดค่า CORS สำหรับ API
@@ -24,8 +21,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // ลงทะเบียน routes
-  app.use("/api/categories", categoriesRouter);
-  app.use("/api/products", productsRouter);
+  app.use("/api", categoriesRouter);
+  app.use("/api", productsRouter);
 
   // สร้าง API endpoint สำหรับดึงข้อมูล orders
   app.get("/api/orders", async (req, res) => {

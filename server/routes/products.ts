@@ -58,7 +58,7 @@ router.get('/products/:id', auth, async (req, res) => {
       const category = await storage.getCategory(product.categoryId);
       productWithCategory = {
         ...product,
-        category
+        categoryName
       };
     }
     
