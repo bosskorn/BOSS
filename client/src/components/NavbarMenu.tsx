@@ -60,6 +60,9 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
           <Link href="/" className="flex items-center text-xl font-semibold text-gray-800 hover:text-purple-600">
             <i className="fa-solid fa-truck-fast mr-2 text-purple-600"></i> <span className="text-purple-700">PURPLE</span><span className="text-purple-500">DASH</span>
           </Link>
+          <Link href="/logo" className="ml-6 text-sm text-purple-600 hover:text-purple-800 font-medium">
+            ดูโลโก้
+          </Link>
         </div>
         
         <ul className="flex flex-wrap justify-center md:justify-end space-x-1 md:space-x-4">

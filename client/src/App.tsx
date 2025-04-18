@@ -11,6 +11,7 @@ import ProductCreate from "@/pages/product-create-enhanced";
 import ProductList from "@/pages/product-list";
 import ProductListEnhanced from "@/pages/product-list-enhanced";
 import CreateOrder from "@/pages/create-order";
+import LogoDisplay from "@/pages/logo-display";
 
 function Router() {
   return (
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/product-list" component={ProductListEnhanced} />
       <Route path="/product-list-old" component={ProductList} />
       <Route path="/create-order" component={CreateOrder} />
+      <Route path="/logo" component={LogoDisplay} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

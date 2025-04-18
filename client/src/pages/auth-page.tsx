@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/hooks/use-toast';
+import LogoIcon from '@/components/LogoIcon';
+import Logo from '@/components/Logo';
 
 // สร้าง Schema สำหรับการตรวจสอบข้อมูลการสมัครสมาชิก
 const registerSchema = z.object({
