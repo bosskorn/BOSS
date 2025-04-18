@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'wouter';
+import React, { useEffect, useRef } from 'react';
+import { Link, useLocation } from 'wouter';
 
 interface SidebarMenuProps {
   isOpen: boolean;
@@ -11,88 +11,180 @@ interface SidebarMenuProps {
   };
 }
 
-const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData = { name: 'ผู้ใช้ทดสอบระบบ', role: 'ผู้ดูแลระบบ', balance: 0 } }) => {
-  // จำลองการออกจากระบบ
-  const handleLogout = () => {
-    console.log('Logging out...');
-    // นำทางไปยังหน้าล็อกอิน (ในการใช้งานจริงควรทำการ clear token)
-    window.location.href = '/auth';
-  };
+const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) => {
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const [location] = useLocation();
 
-  if (!isOpen) return null;
+  // ตรวจจับการคลิกภายนอก sidebar เพื่อปิด
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node) && isOpen) {
+        onClose();
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  // รายการเมนูทั้งหมด
+  const menuItems = [
+    { 
+      path: '/dashboard', 
+      icon: 'fa-chart-pie', 
+      label: 'แดชบอร์ด', 
+    },
+    { 
+      path: '/orders-all', 
+      icon: 'fa-clipboard-list', 
+      label: 'คำสั่งซื้อทั้งหมด', 
+    },
+    { 
+      path: '/create-order', 
+      icon: 'fa-plus-circle', 
+      label: 'สร้างออเดอร์' 
+    },
+    { 
+      path: '/parcel-list', 
+      icon: 'fa-box-open', 
+      label: 'รายการพัสดุ' 
+    },
+    { 
+      path: '/claims-list', 
+      icon: 'fa-shield-halved', 
+      label: 'รายการเคลม' 
+    },
+    { 
+      path: '/product-list', 
+      icon: 'fa-tags', 
+      label: 'สินค้าทั้งหมด' 
+    },
+    { 
+      path: '/product-create', 
+      icon: 'fa-plus-square', 
+      label: 'สร้างสินค้า' 
+    },
+    { 
+      path: '/category-manage', 
+      icon: 'fa-folder-plus', 
+      label: 'จัดการหมวดหมู่' 
+    },
+    { 
+      path: '/reports/overview', 
+      icon: 'fa-tachometer-alt', 
+      label: 'ภาพรวมรายงาน' 
+    },
+    { 
+      path: '/reports/by-courier', 
+      icon: 'fa-shipping-fast', 
+      label: 'รายงานตามขนส่ง' 
+    },
+    { 
+      path: '/reports/by-area', 
+      icon: 'fa-map-marked-alt', 
+      label: 'รายงานตามพื้นที่' 
+    },
+    { 
+      path: '/reports/cod', 
+      icon: 'fa-dollar-sign', 
+      label: 'รายงาน COD' 
+    },
+    { 
+      path: '/reports/returns', 
+      icon: 'fa-undo', 
+      label: 'รายงานพัสดุตีกลับ' 
+    },
+    { 
+      path: '/settings', 
+      icon: 'fa-cog', 
+      label: 'ตั้งค่า' 
+    },
+    { 
+      path: '/topup', 
+      icon: 'fa-plus-circle', 
+      label: 'เติมเครดิต' 
+    },
+    { 
+      path: '/auth', 
+      icon: 'fa-sign-out-alt', 
+      label: 'ออกจากระบบ' 
+    }
+  ];
 
   return (
-    <div className="fixed inset-0 z-50 flex">
-      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-      <div className="relative flex flex-col w-72 max-w-sm bg-white shadow-xl">
-        <div className="flex items-center justify-between p-5 border-b border-emerald-100 bg-emerald-50">
-          <h2 className="text-lg font-medium text-emerald-800">บัญชีผู้ใช้</h2>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-emerald-100 text-emerald-700">
-            <i className="fa-solid fa-times"></i>
-          </button>
-        </div>
-        <div className="flex flex-col p-5 border-b">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white">
-              <i className="fa-solid fa-user"></i>
+    <>
+      {/* Overlay เมื่อเปิด Sidebar (จะคลิกปิดได้) */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity" />
+      )}
+
+      {/* Sidebar เมนู */}
+      <div
+        ref={sidebarRef}
+        className={`fixed top-0 right-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* ส่วนหัวข้อมูลผู้ใช้ */}
+        <div className="bg-gradient-to-r from-purple-700 to-purple-500 text-white p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">บัญชีของฉัน</h3>
+            <button onClick={onClose} className="text-white hover:text-gray-200">
+              <i className="fa-solid fa-times"></i>
+            </button>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+              <i className="fa-solid fa-user text-2xl"></i>
             </div>
             <div>
-              <p className="font-medium">{userData.name}</p>
-              <p className="text-sm text-gray-500">{userData.role}</p>
+              <p className="font-medium">{userData?.name || 'ผู้ใช้'}</p>
+              <p className="text-sm opacity-80">{userData?.role || 'ผู้ดูแลระบบ'}</p>
             </div>
           </div>
-          <div className="flex flex-col bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-            <span className="text-sm text-gray-600 mb-1">
-              ยอดเงินคงเหลือ
-            </span>
-            <span className="text-xl font-semibold text-emerald-700 flex items-center">
-              <i className="fa-solid fa-wallet mr-2 text-emerald-500"></i>
-              {new Intl.NumberFormat('th-TH', {
-                style: 'currency',
-                currency: 'THB',
-                minimumFractionDigits: 2
-              }).format(userData.balance)}
-            </span>
+
+          <div className="mt-3 px-3 py-2 bg-white bg-opacity-10 rounded-md">
+            <div className="flex justify-between items-center">
+              <span className="text-sm">เครดิตคงเหลือ</span>
+              <span className="font-medium">{userData?.balance?.toLocaleString() || 0} บาท</span>
+            </div>
           </div>
         </div>
-        
-        <nav className="flex-1 p-4">
-          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3 px-3">เมนูหลัก</div>
+
+        {/* รายการเมนู */}
+        <div className="py-2">
           <ul className="space-y-1">
-            <li>
-              <Link href="/profile" className="flex items-center px-3 py-2 text-sm rounded-md hover:bg-emerald-50 text-gray-700 hover:text-emerald-700">
-                <i className="fa-solid fa-user-gear w-5 mr-2 text-emerald-500"></i> ข้อมูลผู้ใช้
-              </Link>
-            </li>
-            <li>
-              <Link href="/topup" className="flex items-center px-3 py-2 text-sm rounded-md hover:bg-emerald-50 text-gray-700 hover:text-emerald-700">
-                <i className="fa-solid fa-credit-card w-5 mr-2 text-emerald-500"></i> เติมเครดิต
-              </Link>
-            </li>
-            <li>
-              <Link href="/settings" className="flex items-center px-3 py-2 text-sm rounded-md hover:bg-emerald-50 text-gray-700 hover:text-emerald-700">
-                <i className="fa-solid fa-gear w-5 mr-2 text-emerald-500"></i> ตั้งค่าระบบ
-              </Link>
-            </li>
-            <li className="mt-6 pt-6 border-t border-gray-200">
-              <button 
-                onClick={handleLogout} 
-                className="flex items-center px-3 py-2 text-sm rounded-md text-left w-full hover:bg-red-50 text-gray-700 hover:text-red-700"
-              >
-                <i className="fa-solid fa-right-from-bracket w-5 mr-2 text-red-500"></i> ออกจากระบบ
-              </button>
-            </li>
+            {menuItems.map((item) => (
+              <li key={item.path}>
+                <Link 
+                  href={item.path}
+                  className={`flex items-center px-4 py-2 text-sm hover:bg-purple-50 ${
+                    location === item.path ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
+                  }`}
+                  onClick={onClose}
+                >
+                  <i className={`fa-solid ${item.icon} w-5 mr-3 ${location === item.path ? 'text-purple-600' : 'text-gray-500'}`}></i>
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            ))}
           </ul>
-        </nav>
-        
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <div className="text-xs text-gray-500 text-center">
-            <p>เวอร์ชัน 1.0.0</p>
-            <p className="mt-1">© 2025 ระบบจัดการข้อมูลขนส่ง</p>
+        </div>
+
+        {/* ส่วนล่าง */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-purple-700 font-semibold">PURPLE</span><span className="text-purple-500 font-semibold">DASH</span>
+            </div>
+            <span className="text-xs text-gray-500">v1.5.0</span>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
