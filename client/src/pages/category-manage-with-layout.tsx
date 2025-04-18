@@ -40,10 +40,6 @@ const CategoryManage: React.FC = () => {
     isActive: true
   });
 
-  // สำหรับเมนู dropdown
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   // โหลดข้อมูลหมวดหมู่เมื่อคอมโพเนนต์โหลด
   useEffect(() => {
     fetchCategories();
@@ -234,259 +230,151 @@ const CategoryManage: React.FC = () => {
     }
   };
 
-  // สลับการแสดงผล dropdown
-  const toggleDropdown = (dropdownName: string) => {
-    setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
-  };
-
-  // สลับการแสดงผล sidebar
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 font-kanit">
-      {/* ส่วนหัวและเมนู */}
-      <header className="bg-white shadow-md">
-        <div className="container px-4 py-3 mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <i className="fa-solid fa-truck-fast text-green-600 text-xl"></i>
-            <h1 className="text-xl font-semibold">ระบบจัดการขนส่ง</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => toggleDropdown('products')}
-              className="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-1"
-            >
-              <i className="fa-solid fa-boxes-stacked"></i>
-              <span>สินค้า</span>
-              <i className={`fa-solid fa-caret-down ml-1 transition-transform ${activeDropdown === 'products' ? 'rotate-180' : ''}`}></i>
-            </button>
-            <button 
-              onClick={toggleSidebar}
-              className="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center gap-1"
-            >
-              <i className="fa-solid fa-user"></i>
-              <span>บัญชี</span>
-            </button>
-          </div>
-        </div>
-        
-        {/* Dropdown เมนูสินค้า */}
-        {activeDropdown === 'products' && (
-          <div className="absolute z-10 mt-1 bg-white shadow-lg rounded-md border border-gray-200 right-10 w-48">
-            <div className="py-1">
-              <Link href="/product-list" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                <i className="fa-solid fa-tags mr-2"></i>สินค้าทั้งหมด
-              </Link>
-              <Link href="/product-create" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                <i className="fa-solid fa-plus-square mr-2"></i>สร้างสินค้า
-              </Link>
-              <Link href="/category-manage" className="block px-4 py-2 text-sm text-gray-700 bg-gray-100">
-                <i className="fa-solid fa-folder-plus mr-2"></i>เพิ่มหมวดหมู่สินค้า
-              </Link>
-            </div>
-          </div>
-        )}
-      </header>
+    <Layout>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
+          เพิ่ม/จัดการหมวดหมู่สินค้า
+        </h1>
+        <p className="mt-2 text-gray-600">
+          จัดการหมวดหมู่สินค้า เพื่อให้การค้นหาและจัดกลุ่มสินค้าในระบบมีประสิทธิภาพมากขึ้น
+        </p>
+      </div>
 
-      {/* Sidebar */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={toggleSidebar}></div>
-          <div className="relative flex flex-col w-72 max-w-sm bg-white shadow-xl">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-medium">บัญชีผู้ใช้</h2>
-              <button onClick={toggleSidebar} className="p-1 rounded-full hover:bg-gray-200">
-                <i className="fa-solid fa-times"></i>
-              </button>
-            </div>
-            <div className="flex flex-col p-4 border-b">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white">
-                  <i className="fa-solid fa-user"></i>
-                </div>
-                <div>
-                  <p className="font-medium">ผู้ใช้ทดสอบระบบ</p>
-                  <p className="text-sm text-gray-500">ผู้ดูแลระบบ</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between bg-gray-100 p-2 rounded">
-                <span className="text-sm flex items-center">
-                  <i className="fa-solid fa-wallet mr-2 text-green-600"></i> ยอดเงินคงเหลือ:
-                </span>
-                <span className="font-semibold">0.00 บาท</span>
-              </div>
-            </div>
-            <nav className="flex-1 p-4">
-              <ul className="space-y-1">
-                <li>
-                  <a href="/profile" className="flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100">
-                    <i className="fa-solid fa-user-gear w-5 mr-2"></i> ข้อมูลผู้ใช้
-                  </a>
-                </li>
-                <li>
-                  <a href="/topup" className="flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100">
-                    <i className="fa-solid fa-credit-card w-5 mr-2"></i> เติมเครดิต
-                  </a>
-                </li>
-                <li>
-                  <a href="/login" className="flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100">
-                    <i className="fa-solid fa-right-from-bracket w-5 mr-2"></i> ออกจากระบบ
-                  </a>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        </div>
-      )}
-
-      {/* เนื้อหาหลัก */}
-      <main className="container mx-auto p-4 md:p-6 lg:p-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
-            เพิ่ม/จัดการหมวดหมู่สินค้า
-          </h1>
-          <p className="mt-2 text-gray-600">
-            จัดการหมวดหมู่สินค้า เพื่อให้การค้นหาและจัดกลุ่มสินค้าในระบบมีประสิทธิภาพมากขึ้น
-          </p>
-        </div>
-
-        {/* ส่วนเพิ่มหมวดหมู่ใหม่ */}
-        <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
-          <h2 className="mb-4 text-xl font-semibold text-gray-700">เพิ่มหมวดหมู่ใหม่</h2>
-          <form onSubmit={(e) => { e.preventDefault(); addCategory(); }} className="space-y-4">
-            <div>
-              <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700">
-                ชื่อหมวดหมู่ <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="categoryName"
-                value={newCategory.name}
-                onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
-                required
-                className={`w-full px-3 py-2 mt-1 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${validationErrors.name ? 'border-red-500' : 'border-gray-300'}`}
-                placeholder="เช่น อุปกรณ์อิเล็กทรอนิกส์, อาหาร, แฟชั่น"
-              />
-              {validationErrors.name && (
-                <p className="mt-1 text-xs text-red-600">
-                  {validationErrors.name}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="categoryDescription" className="block text-sm font-medium text-gray-700">
-                รายละเอียดหมวดหมู่ (ไม่บังคับ)
-              </label>
-              <textarea
-                id="categoryDescription"
-                value={newCategory.description}
-                onChange={(e) => setNewCategory({...newCategory, description: e.target.value})}
-                rows={3}
-                className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="คำอธิบายเพิ่มเติมเกี่ยวกับหมวดหมู่นี้..."
-              ></textarea>
-            </div>
-
-            <div>
-              <label htmlFor="categoryStatus" className="block text-sm font-medium text-gray-700">
-                สถานะการใช้งาน
-              </label>
-              <select
-                id="categoryStatus"
-                value={newCategory.isActive.toString()}
-                onChange={(e) => setNewCategory({...newCategory, isActive: e.target.value === 'true'})}
-                className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="true">เปิดใช้งาน</option>
-                <option value="false">ปิดใช้งาน</option>
-              </select>
-            </div>
-
-            <div className="flex items-center justify-end pt-2">
-              {showSuccessMessage && (
-                <p className="mr-4 text-sm text-green-600">
-                  เพิ่มหมวดหมู่เรียบร้อยแล้ว!
-                </p>
-              )}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'กำลังเพิ่ม...' : 'เพิ่มหมวดหมู่'}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* ส่วนแสดงรายการหมวดหมู่ */}
-        <div className="p-6 bg-white rounded-lg shadow-md">
-          <h2 className="mb-4 text-xl font-semibold text-gray-700">รายการหมวดหมู่ทั้งหมด</h2>
-
-          <div className="mb-4">
+      {/* ส่วนเพิ่มหมวดหมู่ใหม่ */}
+      <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
+        <h2 className="mb-4 text-xl font-semibold text-gray-700">เพิ่มหมวดหมู่ใหม่</h2>
+        <form onSubmit={(e) => { e.preventDefault(); addCategory(); }} className="space-y-4">
+          <div>
+            <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700">
+              ชื่อหมวดหมู่ <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="ค้นหาตามชื่อหมวดหมู่..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 md:w-1/3"
+              id="categoryName"
+              value={newCategory.name}
+              onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
+              required
+              className={`w-full px-3 py-2 mt-1 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${validationErrors.name ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="เช่น อุปกรณ์อิเล็กทรอนิกส์, อาหาร, แฟชั่น"
             />
+            {validationErrors.name && (
+              <p className="mt-1 text-xs text-red-600">
+                {validationErrors.name}
+              </p>
+            )}
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div>
+            <label htmlFor="categoryDescription" className="block text-sm font-medium text-gray-700">
+              รายละเอียดหมวดหมู่ (ไม่บังคับ)
+            </label>
+            <textarea
+              id="categoryDescription"
+              value={newCategory.description}
+              onChange={(e) => setNewCategory({...newCategory, description: e.target.value})}
+              rows={3}
+              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="คำอธิบายเพิ่มเติมเกี่ยวกับหมวดหมู่นี้..."
+            ></textarea>
+          </div>
+
+          <div>
+            <label htmlFor="categoryStatus" className="block text-sm font-medium text-gray-700">
+              สถานะการใช้งาน
+            </label>
+            <select
+              id="categoryStatus"
+              value={newCategory.isActive.toString()}
+              onChange={(e) => setNewCategory({...newCategory, isActive: e.target.value === 'true'})}
+              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="true">เปิดใช้งาน</option>
+              <option value="false">ปิดใช้งาน</option>
+            </select>
+          </div>
+
+          <div className="flex items-center justify-end pt-2">
+            {showSuccessMessage && (
+              <p className="mr-4 text-sm text-green-600">
+                เพิ่มหมวดหมู่เรียบร้อยแล้ว!
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'กำลังเพิ่ม...' : 'เพิ่มหมวดหมู่'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* ส่วนแสดงรายการหมวดหมู่ */}
+      <div className="p-6 bg-white rounded-lg shadow-md">
+        <h2 className="mb-4 text-xl font-semibold text-gray-700">รายการหมวดหมู่ทั้งหมด</h2>
+
+        <div className="mb-4">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="ค้นหาตามชื่อหมวดหมู่..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 md:w-1/3"
+          />
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">ชื่อหมวดหมู่</th>
+                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">รายละเอียด</th>
+                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">สถานะ</th>
+                <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">การดำเนินการ</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredCategories.length === 0 ? (
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">ชื่อหมวดหมู่</th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">รายละเอียด</th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">สถานะ</th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">การดำเนินการ</th>
+                  <td colSpan={4} className="px-6 py-4 text-sm text-center text-gray-500 whitespace-nowrap">
+                    ไม่พบหมวดหมู่ที่ตรงกับการค้นหา
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCategories.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-4 text-sm text-center text-gray-500 whitespace-nowrap">
-                      ไม่พบหมวดหมู่ที่ตรงกับการค้นหา
+              ) : (
+                filteredCategories.map((category) => (
+                  <tr key={category.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">{category.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{category.description || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 text-xs font-semibold leading-5 rounded-full ${category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {category.isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                      <button 
+                        onClick={() => startEditCategory(category)} 
+                        className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-2"
+                      >
+                        <i className="fa-solid fa-pen-to-square mr-1"></i>
+                        แก้ไข
+                      </button>
+                      <button 
+                        onClick={() => confirmDeleteCategory(category.id)} 
+                        className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        <i className="fa-solid fa-trash-can mr-1"></i>
+                        ลบ
+                      </button>
                     </td>
                   </tr>
-                ) : (
-                  filteredCategories.map((category) => (
-                    <tr key={category.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">{category.name}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{category.description || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 text-xs font-semibold leading-5 rounded-full ${category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {category.isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                        <button 
-                          onClick={() => startEditCategory(category)} 
-                          className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-2"
-                        >
-                          <i className="fa-solid fa-pen-to-square mr-1"></i>
-                          แก้ไข
-                        </button>
-                        <button 
-                          onClick={() => confirmDeleteCategory(category.id)} 
-                          className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                        >
-                          <i className="fa-solid fa-trash-can mr-1"></i>
-                          ลบ
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </main>
+      </div>
 
       {/* Modal แก้ไขหมวดหมู่ */}
       {editingCategory && (
@@ -652,7 +540,7 @@ const CategoryManage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </Layout>
   );
 };
 

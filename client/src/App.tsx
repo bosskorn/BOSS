@@ -8,13 +8,13 @@ import AuthPage from "@/pages/auth-page";
 import CategoryManage from "@/pages/category-manage";
 import ProductCreate from "@/pages/product-create";
 import ProductList from "@/pages/product-list";
-import Dashboard from "@/pages/dashboard";
+import Dashboard from "@/pages/dashboard-with-layout";
 
 function Router() {
   return (
     <Switch>
       {/* Add pages below */}
-      <Route path="/" component={AuthPage} />
+      <Route path="/" component={Dashboard} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/category-manage" component={CategoryManage} />
