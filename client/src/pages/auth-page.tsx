@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/hooks/use-toast';
-import purpleDashLogo from '../assets/purpledash-logo.png';
+import purpleDashLogo from '../assets/purpledash-logo-clean.png';
 
 // สร้าง Schema สำหรับการตรวจสอบข้อมูลการสมัครสมาชิก
 const registerSchema = z.object({
