@@ -6,6 +6,7 @@ import categoriesRouter from "./routes/categories";
 import productsRouter from "./routes/products";
 import ordersRouter from "./routes/orders";
 import orderItemsRouter from "./routes/order-items";
+import customersRouter from "./routes/customers";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // กำหนดค่า CORS สำหรับ API
@@ -23,10 +24,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // ลงทะเบียน routes
-  app.use("/api", categoriesRouter);
-  app.use("/api", productsRouter);
-  app.use("/api", ordersRouter);
-  app.use("/api", orderItemsRouter);
+  app.use("/api/categories", categoriesRouter);
+  app.use("/api/products", productsRouter);
+  app.use("/api/orders", ordersRouter);
+  app.use("/api/order-items", orderItemsRouter);
+  app.use("/api/customers", customersRouter);
 
   const httpServer = createServer(app);
 
