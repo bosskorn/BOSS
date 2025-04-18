@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useRoute } from 'wouter';
-import SimpleDropdown from './SimpleDropdown';
 
 interface NavbarMenuProps {
   onToggleSidebar: () => void;
@@ -12,6 +11,44 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
   const [isProductCreate] = useRoute('/product-create');
   const [isCategoryManage] = useRoute('/category-manage');
   const [isDashboard] = useRoute('/dashboard');
+  
+  // เก็บสถานะว่าเมนูไหนกำลังแสดงอยู่
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  
+  // สร้าง ref เพื่อใช้ในการตรวจจับคลิกนอกเมนู
+  const ordersDropdownRef = useRef<HTMLDivElement>(null);
+  const productsDropdownRef = useRef<HTMLDivElement>(null);
+  const reportsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // ฟังก์ชันสำหรับเปิด/ปิดเมนู dropdown
+  const toggleDropdown = (dropdownId: string) => {
+    if (activeDropdown === dropdownId) {
+      setActiveDropdown(null);
+    } else {
+      setActiveDropdown(dropdownId);
+    }
+  };
+
+  // ปิดเมนู dropdown เมื่อคลิกนอกเมนู
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        ordersDropdownRef.current && 
+        !ordersDropdownRef.current.contains(event.target as Node) &&
+        productsDropdownRef.current && 
+        !productsDropdownRef.current.contains(event.target as Node) &&
+        reportsDropdownRef.current && 
+        !reportsDropdownRef.current.contains(event.target as Node)
+      ) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="bg-white shadow-md py-2 px-4 sticky top-0 z-30 border-b-2 border-purple-500 purple-dash-line">
@@ -37,12 +74,20 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             </Link>
           </li>
           
-          <li className="relative">
-            <SimpleDropdown
-              buttonText="คำสั่งซื้อ"
-              icon="fa-solid fa-clipboard-list"
-            >
-              <ul className="py-1">
+          <li className="relative dropdown">
+            <div ref={ordersDropdownRef}>
+              <button 
+                onClick={() => toggleDropdown('orders')}
+                className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-purple-50 dropdown-toggle"
+                aria-haspopup="true" 
+                aria-expanded={activeDropdown === 'orders'}
+              >
+                <i className="fa-solid fa-clipboard-list mr-2"></i>
+                <span>คำสั่งซื้อ</span>
+                <i className={`fa-solid fa-caret-down ml-1 text-xs transition-transform ${activeDropdown === 'orders' ? 'rotate-180' : ''}`}></i>
+              </button>
+              
+              <ul className={`dropdown-menu ${activeDropdown === 'orders' ? 'show' : ''}`}>
                 <li>
                   <Link href="/orders-all" className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50">
                     <i className="fa-solid fa-list-ul mr-2"></i>
@@ -68,16 +113,23 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
                   </Link>
                 </li>
               </ul>
-            </SimpleDropdown>
+            </div>
           </li>
           
-          <li className="relative">
-            <SimpleDropdown
-              buttonText="สินค้า"
-              icon="fa-solid fa-boxes-stacked"
-              buttonClassName={`flex items-center px-3 py-2 text-sm rounded-md ${isProductsList || isProductCreate || isCategoryManage ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-purple-50'}`}
-            >
-              <ul className="py-1">
+          <li className="relative dropdown">
+            <div ref={productsDropdownRef}>
+              <button 
+                onClick={() => toggleDropdown('products')}
+                className={`flex items-center px-3 py-2 text-sm rounded-md dropdown-toggle ${(activeDropdown === 'products' || isProductsList || isProductCreate || isCategoryManage) ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-purple-50'}`}
+                aria-haspopup="true" 
+                aria-expanded={activeDropdown === 'products'}
+              >
+                <i className="fa-solid fa-boxes-stacked mr-2"></i>
+                <span>สินค้า</span>
+                <i className={`fa-solid fa-caret-down ml-1 text-xs transition-transform ${activeDropdown === 'products' ? 'rotate-180' : ''}`}></i>
+              </button>
+              
+              <ul className={`dropdown-menu ${activeDropdown === 'products' ? 'show' : ''}`}>
                 <li>
                   <Link href="/product-list" className={`block px-4 py-2 text-sm ${isProductsList ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-purple-50'}`}>
                     <i className="fa-solid fa-tags mr-2"></i>
@@ -97,15 +149,23 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
                   </Link>
                 </li>
               </ul>
-            </SimpleDropdown>
+            </div>
           </li>
           
-          <li className="relative">
-            <SimpleDropdown
-              buttonText="รายงาน"
-              icon="fa-solid fa-file-alt"
-            >
-              <ul className="py-1">
+          <li className="relative dropdown">
+            <div ref={reportsDropdownRef}>
+              <button 
+                onClick={() => toggleDropdown('reports')}
+                className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-purple-50 dropdown-toggle"
+                aria-haspopup="true" 
+                aria-expanded={activeDropdown === 'reports'}
+              >
+                <i className="fa-solid fa-file-alt mr-2"></i>
+                <span>รายงาน</span>
+                <i className={`fa-solid fa-caret-down ml-1 text-xs transition-transform ${activeDropdown === 'reports' ? 'rotate-180' : ''}`}></i>
+              </button>
+              
+              <ul className={`dropdown-menu ${activeDropdown === 'reports' ? 'show' : ''}`}>
                 <li>
                   <Link href="/reports/overview" className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50">
                     <i className="fas fa-tachometer-alt mr-2"></i>
@@ -143,7 +203,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
                   </Link>
                 </li>
               </ul>
-            </SimpleDropdown>
+            </div>
           </li>
           
           <li className="relative">
