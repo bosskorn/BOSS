@@ -416,16 +416,16 @@ const ProductCreate: React.FC = () => {
       // เตรียมข้อมูลสำหรับส่ง API
       console.log('Preparing product data for submission');
 
-      // สร้างข้อมูลสำหรับส่ง API แบบ JSON
+      // สร้างข้อมูลสำหรับส่ง API แบบ JSON (ส่งเป็น string ทั้งหมดตามที่ API ต้องการ)
       const productData = {
         sku: product.sku,
         name: product.name,
-        categoryId: product.category_id ? Number(product.category_id) : undefined,
+        categoryId: product.category_id ? String(product.category_id) : undefined,
         description: product.description,
-        price: product.price ? Number(product.price) : undefined,
-        cost: product.cost ? Number(product.cost) : undefined,
-        stock: product.stock ? Number(product.stock) : undefined,
-        weight: product.weight ? Number(product.weight) : undefined,
+        price: product.price ? String(product.price) : undefined,
+        cost: product.cost ? String(product.cost) : undefined,
+        stock: product.stock ? String(product.stock) : undefined,
+        weight: product.weight ? String(product.weight) : undefined,
         status: product.status,
         tags: product.tags,
         dimensions: product.dimensions
