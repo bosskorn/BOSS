@@ -6,7 +6,7 @@ interface SidebarMenuAdminProps {
   onClose: () => void;
   userData?: {
     name: string;
-    role: string;
+    role?: string | null;
     balance: number;
   };
 }

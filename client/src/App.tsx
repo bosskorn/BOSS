@@ -15,6 +15,7 @@ import CreateOrder from "@/pages/create-order";
 import LogoDisplay from "@/pages/logo-display";
 import CategoryManagement from "@/pages/category-management";
 import ProductManagement from "@/pages/product-management";
+import AdminDashboard from "@/pages/admin-dashboard";
 import { AuthProvider } from "@/hooks/use-auth";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/admin-register" component={AdminRegisterPage} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route path="/category-manage" component={CategoryManage} />
       <Route path="/category-management" component={CategoryManagement} />
       <Route path="/product-create" component={ProductCreate} />

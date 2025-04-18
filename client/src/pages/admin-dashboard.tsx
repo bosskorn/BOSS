@@ -504,7 +504,7 @@ const AdminDashboard: React.FC = () => {
           </>
         )}
       </div>
-    </Layout>
+    </AdminLayout>
   );
 };
 

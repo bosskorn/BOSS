@@ -28,7 +28,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // ข้อมูลผู้ใช้สำหรับแสดงใน sidebar
   const userData = user ? {
     name: user.fullname || user.username,
-    role: user.role,
+    role: user.role || 'admin',
     balance: Number(user.balance) || 0
   } : undefined;
 
