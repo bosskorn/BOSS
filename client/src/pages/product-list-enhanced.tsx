@@ -73,88 +73,18 @@ interface Product {
   createdAt: string;
 }
 
-// ข้อมูลสินค้าตัวอย่างสำหรับการพัฒนา
-const mockProducts: Product[] = [
-  {
-    id: 1,
-    sku: 'PRD001',
-    name: 'เสื้อยืดคอกลม',
-    price: 299,
-    cost: 150,
-    stock: 100,
-    category: 'เสื้อผ้า',
-    categoryId: 1,
-    status: 'active',
-    imageUrl: 'https://example.com/tshirt.jpg',
-    createdAt: '2023-04-15T09:00:00'
-  },
-  {
-    id: 2,
-    sku: 'PRD002',
-    name: 'กางเกงยีนส์ขายาว',
-    price: 699,
-    cost: 350,
-    stock: 50,
-    category: 'เสื้อผ้า',
-    categoryId: 1,
-    status: 'active',
-    imageUrl: 'https://example.com/jeans.jpg',
-    createdAt: '2023-04-15T10:30:00'
-  },
-  {
-    id: 3,
-    sku: 'PRD003',
-    name: 'รองเท้าผ้าใบ',
-    price: 1290,
-    cost: 600,
-    stock: 30,
-    category: 'รองเท้า',
-    categoryId: 2,
-    status: 'active',
-    imageUrl: 'https://example.com/shoes.jpg',
-    createdAt: '2023-04-16T11:00:00'
-  },
-  {
-    id: 4,
-    sku: 'PRD004',
-    name: 'หมวกแก๊ป',
-    price: 250,
-    cost: 100,
-    stock: 0,
-    category: 'เครื่องประดับ',
-    categoryId: 3,
-    status: 'out_of_stock',
-    imageUrl: 'https://example.com/cap.jpg',
-    createdAt: '2023-04-17T13:15:00'
-  },
-  {
-    id: 5,
-    sku: 'PRD005',
-    name: 'นาฬิกาข้อมือ',
-    price: 990,
-    cost: 500,
-    stock: 15,
-    category: 'เครื่องประดับ',
-    categoryId: 3,
-    status: 'active',
-    imageUrl: 'https://example.com/watch.jpg',
-    createdAt: '2023-04-18T14:30:00'
-  }
-];
-
-// ข้อมูลสรุปสำหรับแดชบอร์ด
-const productSummary = {
-  totalProducts: 5,
-  activeProducts: 4,
-  outOfStockProducts: 1,
-  categories: 3,
-  totalValue: 179750, // มูลค่าสินค้าคงคลัง (ราคาทุน × จำนวน)
-  lastUpdated: new Date().toLocaleString('th-TH')
-};
+// สำหรับ 'blank state' เมื่อไม่มีข้อมูล
+const emptyProducts: Product[] = [];
 
 const ProductListPage: React.FC = () => {
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productSummary, setProductSummary] = useState({
+    totalProducts: 0,
+    activeProducts: 0,
+    outOfStockProducts: 0,
+    totalValue: 0
+  });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
@@ -177,18 +107,45 @@ const ProductListPage: React.FC = () => {
           cost: typeof item.cost === 'string' ? parseFloat(item.cost) : 0,
           stock: item.stock || 0,
           category: item.category?.name || 'ไม่มีหมวดหมู่',
-          categoryId: item.categoryId || item.category_id || 0,
+          categoryId: item.categoryId || 0,
           status: item.status || 'active',
           imageUrl: item.imageUrl || undefined,
           createdAt: item.createdAt || new Date().toISOString()
         }));
         
+        // คำนวณค่าสรุปข้อมูลสินค้า
+        const totalProducts = formattedProducts.length;
+        const activeProducts = formattedProducts.filter((p: Product) => p.status === 'active').length;
+        const outOfStockProducts = formattedProducts.filter((p: Product) => p.stock === 0 || p.status === 'out_of_stock').length;
+        
+        // คำนวณมูลค่าสินค้าคงคลังจากต้นทุนสินค้า (cost) คูณจำนวนสินค้าคงเหลือ (stock)
+        const totalValue = formattedProducts.reduce((sum: number, product: Product) => {
+          // ตรวจสอบว่า cost เป็นตัวเลขหรือไม่
+          const cost = typeof product.cost === 'number' ? product.cost : 0;
+          // ตรวจสอบว่า stock เป็นตัวเลขหรือไม่
+          const stock = typeof product.stock === 'number' ? product.stock : 0;
+          
+          return sum + (cost * stock);
+        }, 0);
+        
         setProducts(formattedProducts);
+        setProductSummary({
+          totalProducts,
+          activeProducts,
+          outOfStockProducts,
+          totalValue
+        });
         console.log('Loaded products:', formattedProducts);
       } else {
         console.error('Invalid data format from API:', data);
         // เมื่อไม่พบข้อมูล ให้แสดงข้อมูลว่าง
         setProducts([]);
+        setProductSummary({
+          totalProducts: 0,
+          activeProducts: 0,
+          outOfStockProducts: 0,
+          totalValue: 0
+        });
         toast({
           title: 'ไม่พบข้อมูลสินค้า',
           description: 'กรุณาเพิ่มสินค้าเพื่อแสดงในรายการ',
@@ -197,6 +154,13 @@ const ProductListPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      setProducts([]);
+      setProductSummary({
+        totalProducts: 0,
+        activeProducts: 0,
+        outOfStockProducts: 0,
+        totalValue: 0
+      });
       toast({
         title: 'เกิดข้อผิดพลาด',
         description: 'ไม่สามารถดึงข้อมูลสินค้าได้',
