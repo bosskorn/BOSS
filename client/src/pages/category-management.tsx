@@ -44,13 +44,26 @@ const CategoryManagement: React.FC = () => {
     queryKey: ['/api/categories'],
     queryFn: async () => {
       try {
+        console.log('Fetching categories with credentials, user:', user?.id);
+        
+        // ใช้ axios จาก services/api แทน
         const res = await fetch('/api/categories', {
+          method: 'GET',
           credentials: 'include',
           headers: {
             'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
+            'Cache-Control': 'no-cache',
+            'Content-Type': 'application/json'
           }
         });
+        
+        // จะแสดง response status และ headers เพื่อการตรวจสอบ
+        console.log('Categories request headers:', {
+          credentials: 'include',
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache'
+        });
+        console.log('Categories response status:', res.status);
         
         if (!res.ok) {
           throw new Error(`Error ${res.status}: ${res.statusText}`);

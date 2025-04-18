@@ -47,7 +47,7 @@ export function setupAuth(app: Express) {
       secure: false, // กำหนดเป็น false เพื่อให้ทำงานได้บน HTTP
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'lax', // ใช้ lax เพื่อความเข้ากันได้กับ browsers ทั้งหมด
+      sameSite: 'none', // ใช้ none เพื่อรองรับ cross-site requests
       path: '/'
     }
   };
@@ -132,10 +132,16 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
+    console.log('Login request received:', req.body.username);
+    
     passport.authenticate("local", (err: any, user: SelectUser | false, info: any) => {
-      if (err) return next(err);
+      if (err) {
+        console.error('Login error:', err);
+        return next(err);
+      }
       
       if (!user) {
+        console.error('Login failed: Invalid credentials');
         return res.status(401).json({ 
           success: false, 
           message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" 
@@ -143,7 +149,13 @@ export function setupAuth(app: Express) {
       }
       
       req.login(user, (loginErr: any) => {
-        if (loginErr) return next(loginErr);
+        if (loginErr) {
+          console.error('Login session creation error:', loginErr);
+          return next(loginErr);
+        }
+        
+        console.log('Login successful. Session ID:', req.sessionID);
+        console.log('User authenticated:', req.isAuthenticated());
         
         // ส่งข้อมูลผู้ใช้กลับไป (ยกเว้นรหัสผ่าน)
         const { password, ...userWithoutPassword } = user;
