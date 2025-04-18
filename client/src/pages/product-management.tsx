@@ -69,7 +69,39 @@ const ProductManagement: React.FC = () => {
     isLoading: isLoadingCategories
   } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
+    queryFn: async () => {
+      try {
+        const res = await fetch('/api/categories', {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Error ${res.status}: ${res.statusText}`);
+        }
+        
+        const result = await res.json();
+        console.log('Categories API response:', result);
+        
+        // ตรวจสอบโครงสร้างข้อมูลที่ได้รับ
+        if (result.success && Array.isArray(result.categories)) {
+          return result.categories;
+        } else if (Array.isArray(result)) {
+          return result;
+        } else {
+          console.error('Invalid data format from API:', result);
+          return [];
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+    },
     enabled: !!user,
+    retry: 1
   });
 
   // กรองสินค้าตามคำค้นหา

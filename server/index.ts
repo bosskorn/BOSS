@@ -10,7 +10,9 @@ app.use(express.urlencoded({ extended: false }));
 // ตั้งค่า CORS ให้อนุญาตทุก origin และส่ง credentials
 app.use(cors({
   origin: true,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
 }));
 
 app.use((req, res, next) => {

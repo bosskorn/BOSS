@@ -21,24 +21,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // กำหนดค่า CORS สำหรับ API
-  app.use((req, res, next) => {
-    // อนุญาต origin ทั้งหมด (สำหรับการทดสอบ)
-    const origin = req.headers.origin;
-    if (origin) {
-      res.header('Access-Control-Allow-Origin', origin);
-    }
-    
-    // อนุญาตให้ส่ง credentials
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-
-    if (req.method === 'OPTIONS') {
-      return res.status(200).json({});
-    }
-    next();
-  });
+  // กำหนดค่า CORS ได้ตั้งค่าไว้ใน index.ts แล้ว
 
   // ตั้งค่าระบบ Authentication
   setupAuth(app);
