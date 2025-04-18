@@ -9,6 +9,7 @@ import Dashboard from "@/pages/dashboard-with-layout";
 import CategoryManage from "@/pages/category-manage-enhanced";
 import ProductCreate from "@/pages/product-create-enhanced";
 import ProductList from "@/pages/product-list";
+import ProductListEnhanced from "@/pages/product-list-enhanced";
 import CreateOrder from "@/pages/create-order";
 
 function Router() {
@@ -20,7 +21,8 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/category-manage" component={CategoryManage} />
       <Route path="/product-create" component={ProductCreate} />
-      <Route path="/product-list" component={ProductList} />
+      <Route path="/product-list" component={ProductListEnhanced} />
+      <Route path="/product-list-old" component={ProductList} />
       <Route path="/create-order" component={CreateOrder} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
