@@ -50,7 +50,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       label: 'แดชบอร์ด', 
     },
     { 
-      path: '/orders-all', 
+      path: '/order-list', 
       icon: 'fa-clipboard-list', 
       label: 'คำสั่งซื้อทั้งหมด', 
     },
@@ -60,7 +60,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       label: 'สร้างออเดอร์' 
     },
     { 
-      path: '/parcel-list', 
+      path: '/shipment-list', 
       icon: 'fa-box-open', 
       label: 'รายการพัสดุ' 
     },
@@ -80,7 +80,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       label: 'สร้างสินค้า' 
     },
     { 
-      path: '/category-manage', 
+      path: '/category-management', 
       icon: 'fa-folder-plus', 
       label: 'จัดการหมวดหมู่' 
     },
