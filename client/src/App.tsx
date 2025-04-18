@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard-with-layout";
-import CategoryManage from "@/pages/category-manage-with-layout";
+import CategoryManage from "@/pages/category-manage-enhanced";
 import ProductCreate from "@/pages/product-create-enhanced";
 import ProductList from "@/pages/product-list";
 
