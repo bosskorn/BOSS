@@ -416,24 +416,27 @@ const ProductCreate: React.FC = () => {
       // เตรียมข้อมูลสำหรับส่ง API
       console.log('Preparing product data for submission');
 
-      // สร้าง FormData สำหรับส่งไฟล์
-      const formData = new FormData();
-      Object.entries(product).forEach(([key, value]) => {
-        if (key === 'image' && value) {
-          formData.append(key, value);
-        } else if (key === 'dimensions') {
-          formData.append(key, JSON.stringify(value));
-        } else if (key === 'tags') {
-          formData.append(key, JSON.stringify(value));
-        } else if (value !== '') {
-          formData.append(key, String(value));
-        }
-      });
+      // สร้างข้อมูลสำหรับส่ง API แบบ JSON
+      const productData = {
+        sku: product.sku,
+        name: product.name,
+        categoryId: product.category_id ? Number(product.category_id) : undefined,
+        description: product.description,
+        price: product.price ? Number(product.price) : undefined,
+        cost: product.cost ? Number(product.cost) : undefined,
+        stock: product.stock ? Number(product.stock) : undefined,
+        weight: product.weight ? Number(product.weight) : undefined,
+        status: product.status,
+        tags: product.tags,
+        dimensions: product.dimensions
+      };
+
+      console.log('Sending product data:', productData);
 
       // ส่งข้อมูลไปยัง API
-      const response = await axios.post('/api/products', formData, {
+      const response = await axios.post('/api/products', productData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'application/json'
         }
       });
 
