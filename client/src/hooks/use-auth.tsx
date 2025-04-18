@@ -66,6 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       try {
+        // เพิ่ม log เพื่อตรวจสอบข้อมูลที่ส่งไป
+        console.log('Sending login request with credentials:', {
+          username: credentials.username,
+          password: '******'
+        });
+        
         const res = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -75,9 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         const data = await res.json();
         
+        // เพิ่ม log เพื่อตรวจสอบการตอบกลับ
+        console.log('Login response status:', res.status, data);
+        
         if (!res.ok || !data.success) {
           throw new Error(data.message || "เข้าสู่ระบบล้มเหลว");
         }
+        
+        // สร้าง session ต่อทันที
+        await fetch('/api/user', { credentials: 'include' });
         
         return data.user;
       } catch (error) {
@@ -92,8 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: "ยินดีต้อนรับเข้าสู่ระบบจัดการขนส่ง",
       });
       
-      // ใช้งาน refetch หลังจากเข้าสู่ระบบสำเร็จ
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      // ล้าง cache และดึงข้อมูลใหม่ทั้งหมดเมื่อล็อกอินสำเร็จ
+      queryClient.invalidateQueries();
     },
     onError: (error: Error) => {
       toast({
