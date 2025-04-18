@@ -6,7 +6,7 @@ import { auth, checkOwnership } from "../middleware/auth";
 const router = Router();
 
 // ดึงรายการหมวดหมู่สินค้าทั้งหมดของผู้ใช้
-router.get("/categories", auth, async (req, res) => {
+router.get("/", auth, async (req, res) => {
   try {
     const userId = req.user!.id;
     const parentId = req.query.parentId;
@@ -39,7 +39,7 @@ router.get("/categories", auth, async (req, res) => {
 });
 
 // ดึงข้อมูลหมวดหมู่สินค้าตาม ID
-router.get("/categories/:id", auth, async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
     const categoryId = parseInt(req.params.id);
     if (isNaN(categoryId)) {
