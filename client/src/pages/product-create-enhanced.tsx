@@ -398,6 +398,11 @@ const ProductCreate: React.FC = () => {
     } else if (Number(product.price) <= 0) {
       errors.price = 'ราคาขายต้องมากกว่า 0';
     }
+    
+    // ตรวจสอบรูปภาพ (บังคับ)
+    if (!product.image) {
+      errors.image = 'กรุณาอัปโหลดรูปภาพสินค้า';
+    }
 
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
@@ -408,11 +413,8 @@ const ProductCreate: React.FC = () => {
     setValidationErrors({});
 
     try {
-      // จำลองการส่งข้อมูล
-      console.log('Submitting product data:', {
-        ...product,
-        image: product.image ? product.image.name : null,
-      });
+      // เตรียมข้อมูลสำหรับส่ง API
+      console.log('Preparing product data for submission');
 
       // สร้าง FormData สำหรับส่งไฟล์
       const formData = new FormData();
@@ -428,8 +430,14 @@ const ProductCreate: React.FC = () => {
         }
       });
 
-      // สำหรับการสาธิต (ในการใช้งานจริงควรใช้ axios.post)
-      setTimeout(() => {
+      // ส่งข้อมูลไปยัง API
+      const response = await axios.post('/api/products', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data && response.data.success) {
         // รีเซ็ตฟอร์ม
         setProduct({
           sku: '',
@@ -459,17 +467,19 @@ const ProductCreate: React.FC = () => {
           description: 'สินค้าถูกบันทึกเข้าระบบเรียบร้อยแล้ว',
           variant: 'default',
         });
-        
-        setIsSubmitting(false);
-      }, 1500);
+      } else {
+        throw new Error(response.data?.message || 'ไม่สามารถบันทึกข้อมูลสินค้าได้');
+      }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating product:', error);
       toast({
         title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถบันทึกข้อมูลสินค้าได้',
+        description: error.response?.data?.message || 'ไม่สามารถบันทึกข้อมูลสินค้าได้',
         variant: 'destructive',
       });
+      setIsSubmitting(false);
+    } finally {
       setIsSubmitting(false);
     }
   };
