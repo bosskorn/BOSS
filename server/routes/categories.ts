@@ -6,7 +6,7 @@ import { auth, checkOwnership } from "../middleware/auth";
 const router = Router();
 
 // ดึงรายการหมวดหมู่สินค้าทั้งหมดของผู้ใช้
-router.get("/", auth, async (req, res) => {
+router.get("/categories", auth, async (req, res) => {
   try {
     const userId = req.user!.id;
     const parentId = req.query.parentId;
@@ -39,7 +39,7 @@ router.get("/", auth, async (req, res) => {
 });
 
 // ดึงข้อมูลหมวดหมู่สินค้าตาม ID
-router.get("/:id", auth, async (req, res) => {
+router.get("/categories/:id", auth, async (req, res) => {
   try {
     const categoryId = parseInt(req.params.id);
     if (isNaN(categoryId)) {
@@ -80,7 +80,7 @@ router.get("/:id", auth, async (req, res) => {
 });
 
 // สร้างหมวดหมู่สินค้าใหม่
-router.post("/", auth, async (req, res) => {
+router.post("/categories", auth, async (req, res) => {
   try {
     // ตรวจสอบข้อมูลที่ส่งมา
     const categoryData = insertCategorySchema.parse({
@@ -107,7 +107,7 @@ router.post("/", auth, async (req, res) => {
 });
 
 // อัปเดตข้อมูลหมวดหมู่สินค้า
-router.put("/:id", auth, checkOwnership('id'), async (req, res) => {
+router.put("/categories/:id", auth, async (req, res) => {
   try {
     const categoryId = parseInt(req.params.id);
     const category = await storage.getCategory(categoryId);

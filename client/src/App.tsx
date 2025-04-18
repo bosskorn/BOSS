@@ -26,6 +26,7 @@ function Router() {
       <Route path="/category-manage" component={CategoryManage} />
       <Route path="/category-management" component={CategoryManagement} />
       <Route path="/product-create" component={ProductCreate} />
+      <Route path="/products/create" component={ProductCreate} />
       <Route path="/product-list" component={ProductListEnhanced} />
       <Route path="/product-list-old" component={ProductList} />
       <Route path="/product-management" component={ProductManagement} />
