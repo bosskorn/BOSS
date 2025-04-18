@@ -35,9 +35,9 @@ async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   const isProduction = process.env.NODE_ENV === "production";
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "purpledash-secret",
-    resave: true,
-    saveUninitialized: true,
+    secret: process.env.SESSION_SECRET || "purpledash-secret-key",
+    resave: false,
+    saveUninitialized: false,
     store: new PostgresSessionStore({ 
       pool,
       tableName: 'session', // ชื่อตารางที่จะใช้เก็บข้อมูล session
@@ -47,7 +47,8 @@ export function setupAuth(app: Express) {
       secure: false, // ปิดใช้งาน secure เพื่อให้ทำงานได้บน HTTP
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'lax'
+      sameSite: 'lax',
+      path: '/'
     }
   };
 
@@ -131,7 +132,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: any, user: SelectUser | false, info: any) => {
       if (err) return next(err);
       
       if (!user) {
@@ -141,11 +142,13 @@ export function setupAuth(app: Express) {
         });
       }
       
-      req.login(user, (err) => {
-        if (err) return next(err);
+      req.login(user, (loginErr: any) => {
+        if (loginErr) return next(loginErr);
         
         // ส่งข้อมูลผู้ใช้กลับไป (ยกเว้นรหัสผ่าน)
         const { password, ...userWithoutPassword } = user;
+        
+        // จัดรูปแบบข้อมูลให้ตรงกันทั้ง API
         res.json({
           success: true,
           message: "เข้าสู่ระบบสำเร็จ",

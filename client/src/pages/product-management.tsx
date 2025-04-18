@@ -19,20 +19,48 @@ const ProductManagement: React.FC = () => {
   // ดึงข้อมูลสินค้า
   const { 
     data: products, 
-    isLoading: isLoadingProducts 
+    isLoading: isLoadingProducts,
+    error: productsError
   } = useQuery<Product[]>({
     queryKey: ['/api/products', selectedCategory],
     queryFn: async () => {
-      const url = selectedCategory 
-        ? `/api/products?categoryId=${selectedCategory}` 
-        : '/api/products';
-      
-      const res = await apiRequest('GET', url);
-      const result = await res.json();
-      console.log('Products API response:', result);
-      return result.products || [];
+      try {
+        const url = selectedCategory 
+          ? `/api/products?categoryId=${selectedCategory}` 
+          : '/api/products';
+        
+        console.log('Fetching products with authenticated user:', user?.id);
+        
+        // ใช้ fetch โดยตรงพร้อมส่ง credentials
+        const res = await fetch(url, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Error ${res.status}: ${res.statusText}`);
+        }
+        
+        const result = await res.json();
+        console.log('Products API response:', result);
+        
+        // ตรวจสอบโครงสร้างข้อมูลที่ได้รับ
+        if (result.success && Array.isArray(result.products)) {
+          return result.products;
+        } else {
+          console.error('Invalid data format from API:', result);
+          return [];
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        throw error;
+      }
     },
     enabled: !!user,
+    retry: 1
   });
 
   // ดึงข้อมูลหมวดหมู่สินค้า
