@@ -51,75 +51,31 @@ const ProductList: React.FC = () => {
     setError(null);
 
     try {
-      // สำหรับการสาธิต ใช้ข้อมูลจำลอง
-      // ในการใช้งานจริงควรใช้ axios.get('/api/products')
+      // ดึงข้อมูลจริงจากฐานข้อมูล
+      const response = await axios.get('/api/products');
       
-      // ข้อมูลจำลองสำหรับรายการสินค้า
-      const mockProducts: Product[] = [
-        {
-          id: 1,
-          sku: 'ELEC-001',
-          name: 'โทรศัพท์มือถือ รุ่น X-Pro',
-          category: 'อุปกรณ์อิเล็กทรอนิกส์',
-          category_id: 1,
-          price: 15990,
-          stock: 25,
-          status: 'active',
-          imageUrl: 'https://via.placeholder.com/100',
-          description: 'สมาร์ทโฟนรุ่นใหม่ล่าสุด หน้าจอ AMOLED 6.5 นิ้ว แรม 8GB รอม 256GB'
-        },
-        {
-          id: 2,
-          sku: 'CLOTH-001',
-          name: 'เสื้อยืดคอกลม',
-          category: 'เสื้อผ้าแฟชั่น',
-          category_id: 2,
-          price: 290,
-          stock: 100,
-          status: 'active',
-          imageUrl: 'https://via.placeholder.com/100',
-          description: 'เสื้อยืดคอกลมสไตล์มินิมอล ผลิตจากผ้าคอตตอน 100% นุ่มสบาย ระบายอากาศดี'
-        },
-        {
-          id: 3,
-          sku: 'FOOD-001',
-          name: 'ชาเขียวมัทฉะ',
-          category: 'อาหารและเครื่องดื่ม',
-          category_id: 3,
-          price: 150,
-          stock: 50,
-          status: 'active',
-          imageUrl: 'https://via.placeholder.com/100',
-          description: 'ชาเขียวมัทฉะคุณภาพสูงนำเข้าจากญี่ปุ่น รสชาติเข้มข้น'
-        },
-        {
-          id: 4,
-          sku: 'ELEC-002',
-          name: 'หูฟังไร้สาย Bluetooth 5.0',
-          category: 'อุปกรณ์อิเล็กทรอนิกส์',
-          category_id: 1,
-          price: 1290,
-          stock: 30,
-          status: 'active',
-          imageUrl: 'https://via.placeholder.com/100',
-          description: 'หูฟังไร้สายระบบ Bluetooth 5.0 ต่อได้ไกลถึง 10 เมตร ใช้งานได้ต่อเนื่อง 8 ชั่วโมง'
-        },
-        {
-          id: 5,
-          sku: 'BEAUTY-001',
-          name: 'ครีมบำรุงผิวหน้า',
-          category: 'ความงามและสุขภาพ',
-          category_id: 4,
-          price: 890,
-          stock: 15,
-          status: 'inactive',
-          imageUrl: 'https://via.placeholder.com/100',
-          description: 'ครีมบำรุงผิวหน้าสูตรเข้มข้น ลดริ้วรอย เพิ่มความชุ่มชื้น ผิวกระจ่างใสเปล่งประกาย'
-        }
-      ];
+      if (!response.data || !response.data.success) {
+        throw new Error(response.data?.message || 'ไม่สามารถโหลดข้อมูลสินค้าได้');
+      }
+      
+      // แปลงข้อมูลที่ได้จาก API ให้อยู่ในรูปแบบที่ต้องการแสดงผล
+      const products = response.data.data.map((product: any) => {
+        return {
+          id: product.id,
+          sku: product.sku,
+          name: product.name,
+          category: product.category?.name || 'ไม่มีหมวดหมู่',
+          category_id: product.categoryId,
+          price: parseFloat(product.price || 0),
+          stock: product.stock || 0,
+          status: product.status || 'active',
+          imageUrl: product.imageUrl,
+          description: product.description || ''
+        };
+      });
       
       // กรองข้อมูลตามเงื่อนไขการค้นหา
-      let filteredProducts = [...mockProducts];
+      let filteredProducts = [...products];
       
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
