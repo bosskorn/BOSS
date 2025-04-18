@@ -113,7 +113,7 @@ const CreateOrder: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState('bank-transfer');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const [currentStep, setCurrentStep] = useState<'items' | 'customer' | 'shipping' | 'payment'>('items');
+  const [currentStep, setCurrentStep] = useState<'customer' | 'items' | 'shipping' | 'payment'>('customer');
   
   // รูปภาพโลโก้ผู้ให้บริการจัดส่ง
   const shippingLogos = {
@@ -818,7 +818,7 @@ const CreateOrder: React.FC = () => {
                               key={product.id}
                               className={`p-3 rounded-md cursor-pointer transition-colors ${
                                 currentItem.product_id === product.id 
-                                  ? 'bg-indigo-50 border border-indigo-200' 
+                                  ? 'bg-green-50 border border-green-200' 
                                   : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
                               }`}
                               onClick={() => selectProduct(product)}
@@ -831,7 +831,7 @@ const CreateOrder: React.FC = () => {
                                   <p className="font-medium">{product.name}</p>
                                   <div className="flex justify-between mt-1">
                                     <span className="text-sm text-gray-500">SKU: {product.sku}</span>
-                                    <span className="text-sm font-medium text-indigo-600">{product.price.toLocaleString()} บาท</span>
+                                    <span className="text-sm font-medium text-green-600">{product.price.toLocaleString()} บาท</span>
                                   </div>
                                   <div className="mt-1 text-xs text-gray-500">
                                     สต็อค: {product.stock} ชิ้น
@@ -868,7 +868,7 @@ const CreateOrder: React.FC = () => {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="font-medium text-indigo-600">{currentItem.price.toLocaleString()} บาท / ชิ้น</p>
+                              <p className="font-medium text-green-600">{currentItem.price.toLocaleString()} บาท / ชิ้น</p>
                               <p className="text-sm text-gray-500">คงเหลือ: {currentItem.product?.stock} ชิ้น</p>
                             </div>
                           </div>
@@ -902,7 +902,7 @@ const CreateOrder: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={addItemToOrder}
-                                className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+                                className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
                               >
                                 <i className="fa-solid fa-plus mr-1"></i>
                                 เพิ่มสินค้า
