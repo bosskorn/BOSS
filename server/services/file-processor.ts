@@ -1,6 +1,7 @@
 import * as xlsx from 'xlsx';
-import * as csv from 'csv-parser';
 import * as fs from 'fs';
+import { createReadStream } from 'fs';
+import csvParser from 'csv-parser';
 
 /**
  * แปลง Excel แถวเป็นข้อมูล JavaScript Object
@@ -74,9 +75,9 @@ async function processCsvFile(filePath: string): Promise<{ records: number, data
   return new Promise((resolve, reject) => {
     const results: any[] = [];
     
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on('data', (data) => results.push(normalizeExcelRow(data)))
+    createReadStream(filePath)
+      .pipe(csvParser())
+      .on('data', (data: any) => results.push(normalizeExcelRow(data)))
       .on('end', () => {
         // กรองแถวที่ไม่มีข้อมูลออก
         const filteredResults = results.filter(row => Object.keys(row).length > 0);
@@ -86,7 +87,7 @@ async function processCsvFile(filePath: string): Promise<{ records: number, data
           data: filteredResults
         });
       })
-      .on('error', (error) => {
+      .on('error', (error: Error) => {
         reject(error);
       });
   });

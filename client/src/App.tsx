@@ -20,6 +20,7 @@ import OrderList from "@/pages/order-list";
 import OrderDetail from "@/pages/order-detail";
 import ShipmentList from "@/pages/shipment-list";
 import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "./lib/protected-route";
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -31,35 +32,37 @@ import ReportsReturns from "@/pages/reports/returns";
 function Router() {
   return (
     <Switch>
-      {/* Add pages below */}
-      <Route path="/" component={Dashboard} />
+      {/* Public routes */}
       <Route path="/auth" component={AuthPage} />
-      <Route path="/admin-register" component={AdminRegisterPage} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/admin-dashboard" component={AdminDashboard} />
-      <Route path="/category-manage" component={CategoryManage} />
-      <Route path="/category-management" component={CategoryManagement} />
-      <Route path="/product-create" component={ProductCreate} />
-      <Route path="/products/create" component={ProductCreate} />
-      <Route path="/product-list" component={ProductListEnhanced} />
-      <Route path="/product-list-old" component={ProductList} />
-      <Route path="/product-management" component={ProductManagement} />
-      <Route path="/create-order" component={CreateOrder} />
       <Route path="/logo" component={LogoDisplay} />
       
-      {/* คำสั่งซื้อ */}
-      <Route path="/orders-all" component={OrderList} />
-      <Route path="/order-detail/:id" component={OrderDetail} />
+      {/* Protected routes - require authentication */}
+      <ProtectedRoute path="/" component={Dashboard} />
+      <ProtectedRoute path="/admin-register" component={AdminRegisterPage} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/admin-dashboard" component={AdminDashboard} />
+      <ProtectedRoute path="/category-manage" component={CategoryManage} />
+      <ProtectedRoute path="/category-management" component={CategoryManagement} />
+      <ProtectedRoute path="/product-create" component={ProductCreate} />
+      <ProtectedRoute path="/products/create" component={ProductCreate} />
+      <ProtectedRoute path="/product-list" component={ProductListEnhanced} />
+      <ProtectedRoute path="/product-list-old" component={ProductList} />
+      <ProtectedRoute path="/product-management" component={ProductManagement} />
+      <ProtectedRoute path="/create-order" component={CreateOrder} />
       
-      {/* พัสดุและการจัดส่ง */}
-      <Route path="/parcel-list" component={ShipmentList} />
+      {/* คำสั่งซื้อ - protected */}
+      <ProtectedRoute path="/orders-all" component={OrderList} />
+      <ProtectedRoute path="/order-detail/:id" component={OrderDetail} />
       
-      {/* รายงาน */}
-      <Route path="/reports/overview" component={ReportsOverview} />
-      <Route path="/reports/by-courier" component={ReportsByCourier} />
-      <Route path="/reports/by-area" component={ReportsByArea} />
-      <Route path="/reports/cod" component={ReportsCOD} />
-      <Route path="/reports/returns" component={ReportsReturns} />
+      {/* พัสดุและการจัดส่ง - protected */}
+      <ProtectedRoute path="/parcel-list" component={ShipmentList} />
+      
+      {/* รายงาน - protected */}
+      <ProtectedRoute path="/reports/overview" component={ReportsOverview} />
+      <ProtectedRoute path="/reports/by-courier" component={ReportsByCourier} />
+      <ProtectedRoute path="/reports/by-area" component={ReportsByArea} />
+      <ProtectedRoute path="/reports/cod" component={ReportsCOD} />
+      <ProtectedRoute path="/reports/returns" component={ReportsReturns} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

@@ -10,6 +10,8 @@ import customersRouter from "./routes/customers";
 import shippingMethodsRouter from "./routes/shipping-methods";
 import adminAuthRouter from "./routes/admin-auth";
 import reportsRouter from "./routes/reports";
+import shippingRouter from "./routes/shipping";
+import uploadRouter from "./routes/upload";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // แสดงข้อมูลข้อมูลของทุกคำขอเพื่อแก้ไขปัญหา
@@ -35,6 +37,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/customers", customersRouter);
   app.use("/api/shipping-methods", shippingMethodsRouter);
   app.use("/api/reports", reportsRouter);
+  app.use("/api/shipping", shippingRouter);
+  app.use("/api/upload", uploadRouter);
+
+  // ตรวจสอบสถานะ Flash Express API
+  app.get("/api/flash-express/status", (req, res) => {
+    const hasCredentials = process.env.FLASH_EXPRESS_MERCHANT_ID && process.env.FLASH_EXPRESS_API_KEY;
+    res.json({
+      enabled: !!hasCredentials,
+      merchantId: hasCredentials ? "configured" : "missing",
+      apiKey: hasCredentials ? "configured" : "missing",
+    });
+  });
 
   const httpServer = createServer(app);
 

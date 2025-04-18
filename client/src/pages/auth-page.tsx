@@ -1,428 +1,435 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import axios from 'axios';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from '@/hooks/use-toast';
-// โลโก้ถูกลบออกตามความต้องการ
+import { useAuth } from '@/hooks/use-auth';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { 
+  LogIn, 
+  UserPlus, 
+  User, 
+  Key, 
+  AtSign, 
+  Phone 
+} from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
-// สร้าง Schema สำหรับการตรวจสอบข้อมูลการสมัครสมาชิก
+// สคีมาสำหรับการเข้าสู่ระบบ
+const loginSchema = z.object({
+  username: z.string().min(3, { message: 'ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร' }),
+  password: z.string().min(6, { message: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' }),
+});
+
+// สคีมาสำหรับการลงทะเบียน
 const registerSchema = z.object({
   username: z.string().min(3, { message: 'ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร' }),
-  password: z.string().min(6, { message: 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร' }),
-  confirmPassword: z.string(),
-  fullname: z.string().min(3, { message: 'ชื่อ-นามสกุลต้องมีอย่างน้อย 3 ตัวอักษร' })
-}).refine(data => data.password === data.confirmPassword, {
-  message: 'รหัสผ่านไม่ตรงกัน',
-  path: ['confirmPassword']
+  password: z.string().min(6, { message: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' }),
+  fullname: z.string().min(3, { message: 'ชื่อ-นามสกุลต้องมีอย่างน้อย 3 ตัวอักษร' }),
+  email: z.string().email({ message: 'รูปแบบอีเมลไม่ถูกต้อง' }),
+  phone: z.string().min(9, { message: 'เบอร์โทรศัพท์ไม่ถูกต้อง' }).max(10, { message: 'เบอร์โทรศัพท์ไม่ถูกต้อง' }),
 });
 
-// สร้าง Schema สำหรับการตรวจสอบข้อมูลการเข้าสู่ระบบ
-const loginSchema = z.object({
-  username: z.string().min(1, { message: 'กรุณากรอกชื่อผู้ใช้' }),
-  password: z.string().min(1, { message: 'กรุณากรอกรหัสผ่าน' })
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
 type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const AuthPage: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('login');
+  const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
-
-  // สร้าง form สำหรับการเข้าสู่ระบบ
+  
+  // ถ้ายืนยันตัวตนแล้ว ให้ redirect ไปหน้าหลัก
+  useEffect(() => {
+    if (user) {
+      setLocation('/');
+    }
+  }, [user, setLocation]);
+  
+  // สร้างฟอร์มสำหรับการเข้าสู่ระบบ
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       username: '',
-      password: ''
-    }
+      password: '',
+    },
   });
-
-  // สร้าง form สำหรับการสมัครสมาชิก
+  
+  // สร้างฟอร์มสำหรับการลงทะเบียน
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       username: '',
       password: '',
-      confirmPassword: '',
-      fullname: ''
-    }
+      fullname: '',
+      email: '',
+      phone: '',
+    },
   });
-
-  // ฟังก์ชันสำหรับการเข้าสู่ระบบ
-  const handleLogin = async (data: LoginFormValues) => {
-    setIsLoading(true);
-    
-    try {
-      console.log('Sending login request with credentials:', { username: data.username, password: '******' });
-      
-      // ใช้ axios เพื่อให้การจัดการ session และ cookies มีความสอดคล้องกัน
-      const credentials = {
-        username: data.username,
-        password: data.password
-      };
-      
-      // ข้อมูลสำหรับการทดสอบ session และ cookies
-      console.log('Debug - Using axios with withCredentials:', true);
-      console.log('Debug - Current document.cookie:', document.cookie);
-      
-      // ใช้ axios และตรวจสอบการตอบกลับอย่างละเอียด
-      import('axios').then(async ({ default: axios }) => {
-        try {
-          const res = await axios.post('/api/login', credentials, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-            withCredentials: true // สำคัญมาก เพื่อให้มีการส่ง cookies
-          });
-          
-          console.log('Login response:', res.status, res.data);
-          console.log('Response headers:', res.headers);
-          console.log('Cookies after login:', document.cookie);
-          
-          // ถ้าล็อกอินสำเร็จ
-          if (res.data.success) {
-            toast({
-              title: 'เข้าสู่ระบบสำเร็จ',
-              description: res.data.message || 'ยินดีต้อนรับเข้าสู่ระบบ',
-              variant: 'default',
-            });
-            
-            // ตรวจสอบว่าได้รับ session cookie หรือไม่
-            if (document.cookie.includes('purpledash.sid')) {
-              console.log('Session cookie found!');
-            } else {
-              console.warn('No session cookie found after login');
-            }
-            
-            // ทดสอบเรียกข้อมูลผู้ใช้ทันทีหลังจากล็อกอิน
-            try {
-              const userCheck = await axios.get('/api/user', { withCredentials: true });
-              console.log('User session check success:', userCheck.data);
-            } catch (err) {
-              console.error('User session check failed:', err);
-            }
-            
-            // นำทางไปยังหน้าแดชบอร์ด
-            setTimeout(() => {
-              window.location.href = '/dashboard'; // ใช้ window.location เพื่อให้มั่นใจว่ามีการโหลดหน้าใหม่
-            }, 1500); // รอ 1.5 วินาทีเพื่อให้ cookie ได้บันทึกเรียบร้อย
-          } else {
-            toast({
-              title: 'เข้าสู่ระบบไม่สำเร็จ',
-              description: res.data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
-              variant: 'destructive',
-            });
-            
-            loginForm.reset({ username: data.username, password: '' });
-          }
-        } catch (error: any) {
-          console.error('Login axios error:', error.response?.data || error.message);
-          
-          toast({
-            title: 'เข้าสู่ระบบไม่สำเร็จ',
-            description: error.response?.data?.message || error.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
-            variant: 'destructive',
-          });
-          
-          loginForm.reset({ username: data.username, password: '' });
-        } finally {
-          setIsLoading(false);
-        }
-      });
-    } catch (error: any) {
-      console.error('Login error:', error);
-      
-      toast({
-        title: 'เข้าสู่ระบบไม่สำเร็จ',
-        description: error.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
-        variant: 'destructive',
-      });
-      
-      loginForm.reset({ username: data.username, password: '' });
-      setIsLoading(false);
-    }
+  
+  // ส่งข้อมูลฟอร์มเข้าสู่ระบบ
+  const onLoginSubmit = (data: LoginFormValues) => {
+    console.log('Login form submitted:', data);
+    loginMutation.mutate(data);
   };
-
-  // ฟังก์ชันสำหรับการสมัครสมาชิก
-  const handleRegister = async (data: RegisterFormValues) => {
-    setIsLoading(true);
-    
-    try {
-      const { confirmPassword, ...userData } = data;
-      
-      console.log('Sending register request with data:', { 
-        username: userData.username,
-        password: '******',
-        fullname: userData.fullname
-      });
-      
-      // ใช้ fetch แทน axios เพื่อให้สอดคล้องกับส่วนอื่นของแอปพลิเคชัน
-      const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify(userData),
-        credentials: 'include' // สำคัญมาก ต้องส่ง cookies ไปและรับกลับมาด้วย
-      });
-      
-      // อ่านข้อมูลการตอบกลับ
-      const responseData = await res.json();
-      console.log('Register response status:', res.status, responseData);
-      
-      if (res.ok && responseData.success) {
-        toast({
-          title: 'สมัครสมาชิกสำเร็จ',
-          description: responseData.message || 'บัญชีของคุณถูกสร้างแล้ว กำลังเข้าสู่ระบบ...',
-          variant: 'default',
-        });
-        
-        // เข้าสู่ระบบโดยอัตโนมัติและนำทางไปยังหน้าแดชบอร์ด
-        setTimeout(() => {
-          window.location.href = '/dashboard'; // ใช้ window.location เพื่อให้มั่นใจว่ามีการโหลดหน้าใหม่
-        }, 1000); // รอ 1 วินาทีเพื่อให้ cookie ได้บันทึกเรียบร้อย
-      } else {
-        toast({
-          title: 'สมัครสมาชิกไม่สำเร็จ',
-          description: responseData.message || 'เกิดข้อผิดพลาดไม่สามารถสมัครสมาชิกได้',
-          variant: 'destructive',
-        });
-      }
-    } catch (error: any) {
-      console.error('Register error:', error);
-      
-      toast({
-        title: 'สมัครสมาชิกไม่สำเร็จ',
-        description: error.message || 'เกิดข้อผิดพลาดในการสมัครสมาชิก',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  
+  // ส่งข้อมูลฟอร์มลงทะเบียน
+  const onRegisterSubmit = (data: RegisterFormValues) => {
+    console.log('Register form submitted:', data);
+    registerMutation.mutate(data);
   };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center font-kanit relative overflow-hidden">
-      {/* พื้นหลังแบบเคลื่อนไหว 3D */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 z-0">
-        <div className="absolute inset-0 opacity-20">
-          {/* รูปแบบกราฟิกเส้นทางขนส่ง */}
-          <div className="absolute h-[150px] w-[150px] -top-10 left-20 bg-purple-400 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute h-[250px] w-[250px] top-40 -right-20 bg-purple-500 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
-          <div className="absolute h-[200px] w-[200px] bottom-20 left-40 bg-purple-600 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
-          
-          {/* เส้นทางจำลอง */}
-          <div className="absolute top-1/4 left-0 right-0 h-1 bg-white opacity-10 purple-dash-line"></div>
-          <div className="absolute top-2/3 left-0 right-0 h-1 bg-white opacity-10 purple-dash-line" style={{animationDelay: '1s'}}></div>
-          <div className="absolute bottom-1/4 left-0 right-0 h-1 bg-white opacity-10 purple-dash-line" style={{animationDelay: '2s'}}></div>
-          
-          {/* วงกลมจุดเริ่มต้นและปลายทาง */}
-          <div className="absolute top-1/4 left-10 h-4 w-4 bg-white rounded-full opacity-40"></div>
-          <div className="absolute top-1/4 right-10 h-4 w-4 bg-white rounded-full opacity-60"></div>
-          <div className="absolute top-2/3 left-20 h-4 w-4 bg-white rounded-full opacity-50"></div>
-          <div className="absolute top-2/3 right-20 h-4 w-4 bg-white rounded-full opacity-30"></div>
-          <div className="absolute bottom-1/4 left-40 h-4 w-4 bg-white rounded-full opacity-60"></div>
-          <div className="absolute bottom-1/4 right-40 h-4 w-4 bg-white rounded-full opacity-40"></div>
-          
-          {/* รถขนส่งเคลื่อนที่ */}
-          <div className="absolute top-1/4 left-0 animate-truck">
-            <div className="h-6 w-6 bg-white rounded-full flex items-center justify-center">
-              <i className="fa-solid fa-truck-fast text-purple-700 text-xs"></i>
-            </div>
+  
+  // สำหรับแสดง 3D model หรือข้อความต้อนรับในฝั่งขวา
+  const renderWelcomeSection = () => {
+    return (
+      <div className="h-full flex flex-col justify-center items-center text-center px-6 bg-gradient-to-br from-purple-50 to-white">
+        <div className="mb-6">
+          <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <span className="text-white text-5xl font-bold">PD</span>
           </div>
-          <div className="absolute top-2/3 right-0 animate-truck-reverse">
-            <div className="h-6 w-6 bg-white rounded-full flex items-center justify-center">
-              <i className="fa-solid fa-truck-fast text-purple-700 text-xs"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* คอนเทนเนอร์หลัก */}
-      <div className="max-w-md w-full space-y-8 bg-white/90 p-8 rounded-lg shadow-xl backdrop-blur-xl relative z-10 float-box">
-        <div className="text-center">
-          <h2 className="text-2xl font-extrabold text-gray-900">
-            {isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            ระบบจัดการข้อมูลขนส่งอัจฉริยะ
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+            PURPLEDASH
+          </h1>
+          <p className="text-xl italic text-purple-600 font-medium mt-1">
+            ส่งด่วน ม่วงสะดุด!
           </p>
         </div>
         
-        {isLogin ? (
-          <form className="mt-8 space-y-6" onSubmit={loginForm.handleSubmit(handleLogin)}>
-            <div className="rounded-md -space-y-px">
-              <div className="mb-4">
-                <label htmlFor="login-username" className="block text-sm font-medium text-gray-700 mb-1">
-                  ชื่อผู้ใช้งาน
-                </label>
-                <input
-                  id="login-username"
-                  type="text"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="กรอกชื่อผู้ใช้งาน"
-                  {...loginForm.register('username')}
-                />
-                {loginForm.formState.errors.username && (
-                  <p className="mt-1 text-sm text-red-600">{loginForm.formState.errors.username.message}</p>
-                )}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">
+            {activeTab === 'login' ? 'ยินดีต้อนรับกลับ!' : 'เริ่มต้นใช้งานเลย!'}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {activeTab === 'login'
+              ? 'เข้าสู่ระบบเพื่อจัดการการขนส่งของคุณอย่างมีประสิทธิภาพ'
+              : 'ลงทะเบียนเพื่อใช้งานระบบจัดการการขนส่งอัจฉริยะ'}
+          </p>
+          
+          <div className="space-y-4 text-left">
+            <div className="flex items-start">
+              <div className="bg-purple-100 p-2 rounded-full mr-3">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
-              
-              <div className="mb-2">
-                <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">
-                  รหัสผ่าน
-                </label>
-                <input
-                  id="login-password"
-                  type="password"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="กรอกรหัสผ่าน"
-                  {...loginForm.register('password')}
-                />
-                {loginForm.formState.errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{loginForm.formState.errors.password.message}</p>
-                )}
+              <div>
+                <h3 className="font-medium text-gray-800">ติดตามพัสดุ</h3>
+                <p className="text-sm text-gray-600">ติดตามสถานะการจัดส่งแบบเรียลไทม์</p>
               </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-purple-300 disabled:cursor-not-allowed"
-              >
-                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                  <i className="fa-solid fa-right-to-bracket"></i>
-                </span>
-                {isLoading ? 'กำลังดำเนินการ...' : 'เข้าสู่ระบบ'}
-              </button>
             </div>
             
-            <div className="text-center">
-              <p className="text-sm text-gray-600">
-                ยังไม่มีบัญชี?{' '}
-                <button 
-                  type="button" 
-                  onClick={() => setIsLogin(false)} 
-                  className="font-medium text-purple-600 hover:text-purple-500"
-                >
-                  สมัครสมาชิกที่นี่
-                </button>
-              </p>
-            </div>
-          </form>
-        ) : (
-          <form className="mt-8 space-y-6" onSubmit={registerForm.handleSubmit(handleRegister)}>
-            <div className="rounded-md -space-y-px">
-              <div className="mb-4">
-                <label htmlFor="register-fullname" className="block text-sm font-medium text-gray-700 mb-1">
-                  ชื่อ-นามสกุล
-                </label>
-                <input
-                  id="register-fullname"
-                  type="text"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="กรอกชื่อ-นามสกุล"
-                  {...registerForm.register('fullname')}
-                />
-                {registerForm.formState.errors.fullname && (
-                  <p className="mt-1 text-sm text-red-600">{registerForm.formState.errors.fullname.message}</p>
-                )}
+            <div className="flex items-start">
+              <div className="bg-purple-100 p-2 rounded-full mr-3">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
-              
-              <div className="mb-4">
-                <label htmlFor="register-username" className="block text-sm font-medium text-gray-700 mb-1">
-                  ชื่อผู้ใช้งาน
-                </label>
-                <input
-                  id="register-username"
-                  type="text"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="กรอกชื่อผู้ใช้งาน"
-                  {...registerForm.register('username')}
-                />
-                {registerForm.formState.errors.username && (
-                  <p className="mt-1 text-sm text-red-600">{registerForm.formState.errors.username.message}</p>
-                )}
+              <div>
+                <h3 className="font-medium text-gray-800">นำเข้าข้อมูล</h3>
+                <p className="text-sm text-gray-600">นำเข้าข้อมูลจาก Excel และ CSV ได้อย่างง่ายดาย</p>
               </div>
-              
-              <div className="mb-4">
-                <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1">
-                  รหัสผ่าน
-                </label>
-                <input
-                  id="register-password"
-                  type="password"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="กรอกรหัสผ่าน (อย่างน้อย 6 ตัว)"
-                  {...registerForm.register('password')}
-                />
-                {registerForm.formState.errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{registerForm.formState.errors.password.message}</p>
-                )}
-              </div>
-              
-              <div className="mb-2">
-                <label htmlFor="register-confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
-                  ยืนยันรหัสผ่าน
-                </label>
-                <input
-                  id="register-confirm-password"
-                  type="password"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="กรอกรหัสผ่านอีกครั้ง"
-                  {...registerForm.register('confirmPassword')}
-                />
-                {registerForm.formState.errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">{registerForm.formState.errors.confirmPassword.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-purple-300 disabled:cursor-not-allowed"
-              >
-                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                  <i className="fa-solid fa-user-plus"></i>
-                </span>
-                {isLoading ? 'กำลังดำเนินการ...' : 'สมัครสมาชิก'}
-              </button>
             </div>
             
-            <div className="text-center">
-              <p className="text-sm text-gray-600">
-                มีบัญชีอยู่แล้ว?{' '}
-                <button 
-                  type="button" 
-                  onClick={() => setIsLogin(true)} 
-                  className="font-medium text-purple-600 hover:text-purple-500"
-                >
-                  เข้าสู่ระบบที่นี่
-                </button>
-              </p>
-              <p className="text-sm text-gray-600 mt-2">
-                ต้องการสมัครเป็นผู้ดูแลระบบ?{' '}
-                <a 
-                  href="/admin-register"
-                  className="font-medium text-purple-600 hover:text-purple-500"
-                >
-                  สมัครที่นี่
-                </a>
-              </p>
+            <div className="flex items-start">
+              <div className="bg-purple-100 p-2 rounded-full mr-3">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-800">การจัดส่งแบบ COD</h3>
+                <p className="text-sm text-gray-600">รองรับการเก็บเงินปลายทางกับ Flash Express</p>
+              </div>
             </div>
-          </form>
-        )}
+            
+            <div className="flex items-start">
+              <div className="bg-purple-100 p-2 rounded-full mr-3">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-800">รายงานและการวิเคราะห์</h3>
+                <p className="text-sm text-gray-600">ดูรายงานและวิเคราะห์ข้อมูลการขนส่งเพื่อเพิ่มประสิทธิภาพ</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="w-full max-w-sm">
+          <Card className="bg-purple-50 border-purple-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-purple-700 text-xl flex items-center">
+                <Key className="w-5 h-5 mr-2" />
+                Flash Express API
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-purple-900 text-sm">
+                ระบบเชื่อมต่อกับ Flash Express API ช่วยให้คุณสามารถจัดการการขนส่งได้อย่างมีประสิทธิภาพ
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white">
+      <div className="flex flex-col md:flex-row min-h-screen font-kanit">
+        <div className="md:w-1/2 lg:w-5/12 p-4 md:p-8 flex items-center justify-center">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold text-gray-900">PURPLEDASH</h1>
+              <p className="text-gray-600">ระบบจัดการขนส่งอัจฉริยะ</p>
+            </div>
+            
+            <Tabs
+              defaultValue="login"
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="login" className="flex items-center">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  เข้าสู่ระบบ
+                </TabsTrigger>
+                <TabsTrigger value="register" className="flex items-center">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  ลงทะเบียน
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="login">
+                <Card>
+                  <CardHeader className="space-y-1 pb-2">
+                    <CardTitle className="text-2xl">เข้าสู่ระบบ</CardTitle>
+                    <CardDescription>
+                      กรอกชื่อผู้ใช้และรหัสผ่านเพื่อเข้าสู่ระบบ
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="py-4">
+                    <Form {...loginForm}>
+                      <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                        <FormField
+                          control={loginForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                <User className="w-4 h-4 mr-2 text-gray-500" />
+                                ชื่อผู้ใช้
+                              </FormLabel>
+                              <FormControl>
+                                <Input placeholder="กรอกชื่อผู้ใช้" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={loginForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                <Key className="w-4 h-4 mr-2 text-gray-500" />
+                                รหัสผ่าน
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="password"
+                                  placeholder="กรอกรหัสผ่าน"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="submit"
+                          className="w-full bg-purple-600 hover:bg-purple-700"
+                          disabled={loginMutation.isPending}
+                        >
+                          {loginMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              กำลังเข้าสู่ระบบ...
+                            </>
+                          ) : (
+                            <>
+                              <LogIn className="mr-2 h-4 w-4" />
+                              เข้าสู่ระบบ
+                            </>
+                          )}
+                        </Button>
+                      </form>
+                    </Form>
+                  </CardContent>
+                  <CardFooter className="bg-gray-50 border-t rounded-b-lg flex justify-between">
+                    <div className="text-xs text-gray-500">
+                      หากลืมรหัสผ่าน กรุณาติดต่อผู้ดูแลระบบ
+                    </div>
+                  </CardFooter>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="register">
+                <Card>
+                  <CardHeader className="space-y-1 pb-2">
+                    <CardTitle className="text-2xl">ลงทะเบียน</CardTitle>
+                    <CardDescription>
+                      สร้างบัญชีใหม่เพื่อเริ่มใช้งานระบบ
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="py-4">
+                    <Form {...registerForm}>
+                      <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                        <FormField
+                          control={registerForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                <User className="w-4 h-4 mr-2 text-gray-500" />
+                                ชื่อผู้ใช้
+                              </FormLabel>
+                              <FormControl>
+                                <Input placeholder="กรอกชื่อผู้ใช้" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={registerForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                <Key className="w-4 h-4 mr-2 text-gray-500" />
+                                รหัสผ่าน
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="password"
+                                  placeholder="กรอกรหัสผ่าน"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <Separator className="my-4" />
+                        
+                        <FormField
+                          control={registerForm.control}
+                          name="fullname"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>ชื่อ-นามสกุล</FormLabel>
+                              <FormControl>
+                                <Input placeholder="กรอกชื่อ-นามสกุล" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={registerForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="flex items-center">
+                                  <AtSign className="w-4 h-4 mr-2 text-gray-500" />
+                                  อีเมล
+                                </FormLabel>
+                                <FormControl>
+                                  <Input placeholder="example@email.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={registerForm.control}
+                            name="phone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="flex items-center">
+                                  <Phone className="w-4 h-4 mr-2 text-gray-500" />
+                                  เบอร์โทรศัพท์
+                                </FormLabel>
+                                <FormControl>
+                                  <Input placeholder="0812345678" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        <Button
+                          type="submit"
+                          className="w-full bg-purple-600 hover:bg-purple-700"
+                          disabled={registerMutation.isPending}
+                        >
+                          {registerMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              กำลังลงทะเบียน...
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="mr-2 h-4 w-4" />
+                              ลงทะเบียน
+                            </>
+                          )}
+                        </Button>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+        
+        <div className="hidden md:block md:w-1/2 lg:w-7/12">
+          {renderWelcomeSection()}
+        </div>
       </div>
     </div>
   );

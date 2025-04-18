@@ -7,17 +7,14 @@ import { processFile } from '../services/file-processor';
 import { storage } from '../storage';
 import { insertProductSchema, insertCustomerSchema, insertOrderSchema } from '@shared/schema';
 
-// Type declaration for multer
-declare module 'express-serve-static-core' {
-  interface Request {
-    file?: Express.Multer.File;
-  }
-}
+// Type declaration is already provided by @types/multer
 
 const router = express.Router();
 
 // ตั้งค่า multer สำหรับการอัปโหลดไฟล์
-const uploadDir = path.join(__dirname, '../../uploads');
+// ใช้เส้นทางสัมพัทธ์แทนเส้นทางสัมบูรณ์
+
+const uploadDir = path.resolve(process.cwd(), 'uploads');
 
 // สร้างโฟลเดอร์ถ้ายังไม่มี
 if (!fs.existsSync(uploadDir)) {
