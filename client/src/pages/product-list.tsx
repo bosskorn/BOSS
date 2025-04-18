@@ -103,7 +103,7 @@ const ProductListPage: React.FC = () => {
 
   // หมวดหมู่ทั้งหมดของสินค้า
   const allCategories = SAMPLE_PRODUCTS.map(p => p.category);
-  const uniqueCategories = [...new Set(allCategories)];
+  const uniqueCategories = Array.from(new Set(allCategories));
   const categories = ['ทั้งหมด', ...uniqueCategories];
 
   // กรองและเรียงลำดับสินค้า
