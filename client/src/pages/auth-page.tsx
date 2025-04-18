@@ -134,17 +134,58 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-kanit">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-        <div className="text-center">
-          <div className="flex justify-center text-green-500 text-5xl mb-2">
-            <i className="fa-solid fa-truck-fast"></i>
+    <div className="min-h-screen flex items-center justify-center font-kanit relative overflow-hidden">
+      {/* พื้นหลังแบบเคลื่อนไหว 3D */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 z-0">
+        <div className="absolute inset-0 opacity-20">
+          {/* รูปแบบกราฟิกเส้นทางขนส่ง */}
+          <div className="absolute h-[150px] w-[150px] -top-10 left-20 bg-purple-400 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute h-[250px] w-[250px] top-40 -right-20 bg-purple-500 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute h-[200px] w-[200px] bottom-20 left-40 bg-purple-600 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+          
+          {/* เส้นทางจำลอง */}
+          <div className="absolute top-1/4 left-0 right-0 h-1 bg-white opacity-10 purple-dash-line"></div>
+          <div className="absolute top-2/3 left-0 right-0 h-1 bg-white opacity-10 purple-dash-line" style={{animationDelay: '1s'}}></div>
+          <div className="absolute bottom-1/4 left-0 right-0 h-1 bg-white opacity-10 purple-dash-line" style={{animationDelay: '2s'}}></div>
+          
+          {/* วงกลมจุดเริ่มต้นและปลายทาง */}
+          <div className="absolute top-1/4 left-10 h-4 w-4 bg-white rounded-full opacity-40"></div>
+          <div className="absolute top-1/4 right-10 h-4 w-4 bg-white rounded-full opacity-60"></div>
+          <div className="absolute top-2/3 left-20 h-4 w-4 bg-white rounded-full opacity-50"></div>
+          <div className="absolute top-2/3 right-20 h-4 w-4 bg-white rounded-full opacity-30"></div>
+          <div className="absolute bottom-1/4 left-40 h-4 w-4 bg-white rounded-full opacity-60"></div>
+          <div className="absolute bottom-1/4 right-40 h-4 w-4 bg-white rounded-full opacity-40"></div>
+          
+          {/* รถขนส่งเคลื่อนที่ */}
+          <div className="absolute top-1/4 left-0 animate-truck">
+            <div className="h-6 w-6 bg-white rounded-full flex items-center justify-center">
+              <i className="fa-solid fa-truck-fast text-purple-700 text-xs"></i>
+            </div>
           </div>
-          <h2 className="text-3xl font-extrabold text-gray-900">
+          <div className="absolute top-2/3 right-0 animate-truck-reverse">
+            <div className="h-6 w-6 bg-white rounded-full flex items-center justify-center">
+              <i className="fa-solid fa-truck-fast text-purple-700 text-xs"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* คอนเทนเนอร์หลัก */}
+      <div className="max-w-md w-full space-y-8 bg-white/90 p-8 rounded-lg shadow-xl backdrop-blur-xl relative z-10 float-box">
+        <div className="text-center">
+          <div className="flex flex-col items-center mb-4">
+            <LogoIcon size={60} />
+            <div className="mt-3 flex items-center justify-center">
+              <span className="text-2xl font-bold text-purple-700">PURPLE</span>
+              <span className="text-2xl font-bold text-purple-500">DASH</span>
+            </div>
+            <div className="mt-1 text-sm text-purple-600 font-medium">ส่งด่วน ม่วงสะดุด!</div>
+          </div>
+          <h2 className="text-2xl font-extrabold text-gray-900">
             {isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            ระบบจัดการขนส่งสินค้า
+            กรุณากรอกข้อมูลเพื่อใช้งานระบบ
           </p>
         </div>
         
@@ -188,7 +229,7 @@ const AuthPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-green-300 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-purple-300 disabled:cursor-not-allowed"
               >
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                   <i className="fa-solid fa-right-to-bracket"></i>
@@ -203,7 +244,7 @@ const AuthPage: React.FC = () => {
                 <button 
                   type="button" 
                   onClick={() => setIsLogin(false)} 
-                  className="font-medium text-green-600 hover:text-green-500"
+                  className="font-medium text-purple-600 hover:text-purple-500"
                 >
                   สมัครสมาชิกที่นี่
                 </button>
@@ -282,7 +323,7 @@ const AuthPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-green-300 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-purple-300 disabled:cursor-not-allowed"
               >
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                   <i className="fa-solid fa-user-plus"></i>

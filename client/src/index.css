@@ -112,6 +112,53 @@
   @apply animate-pulse bg-purple-100;
 }
 
+/* อนิเมชันรถขนส่ง */
+@keyframes truckMove {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(100vw); }
+}
+
+@keyframes truckMoveReverse {
+  0% { transform: translateX(0) scaleX(-1); }
+  100% { transform: translateX(-100vw) scaleX(-1); }
+}
+
+.animate-truck {
+  animation: truckMove 15s linear infinite;
+}
+
+.animate-truck-reverse {
+  animation: truckMoveReverse 12s linear infinite;
+  transform: scaleX(-1);
+}
+
+/* อนิเมชัน 3D หมุน */
+@keyframes rotate3D {
+  0% { transform: perspective(1000px) rotateY(0deg); }
+  100% { transform: perspective(1000px) rotateY(360deg); }
+}
+
+.rotate-3d {
+  animation: rotate3D 15s linear infinite;
+}
+
+/* เอฟเฟกต์ Glowing */
+.glow-purple {
+  filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.8));
+}
+
+/* เอฟเฟกต์ 3D กล่องลอย */
+.float-box {
+  transform-style: preserve-3d;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.float-box:hover {
+  transform: translateY(-10px) rotateX(5deg) rotateY(5deg);
+  box-shadow: 0 20px 30px rgba(0, 0, 0, 0.3);
+}
+
 /* สไตล์สำหรับส่วนกราฟิกการจัดส่ง */
 .delivery-dash {
   @apply relative py-1 px-3 font-bold;
