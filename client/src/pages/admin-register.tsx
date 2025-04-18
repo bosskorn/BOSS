@@ -14,7 +14,6 @@ const adminRegisterSchema = z.object({
   fullname: z.string().min(3, { message: 'ชื่อ-นามสกุลต้องมีอย่างน้อย 3 ตัวอักษร' }),
   email: z.string().email({ message: 'รูปแบบอีเมลไม่ถูกต้อง' }),
   phone: z.string().min(9, { message: 'เบอร์โทรศัพท์ต้องมีอย่างน้อย 9 ตัว' }),
-  companyName: z.string().min(2, { message: 'ชื่อบริษัทต้องมีอย่างน้อย 2 ตัวอักษร' }),
   adminKey: z.string().min(6, { message: 'รหัสสำหรับผู้ดูแลระบบไม่ถูกต้อง' })
 }).refine(data => data.password === data.confirmPassword, {
   message: 'รหัสผ่านไม่ตรงกัน',
@@ -37,7 +36,6 @@ const AdminRegisterPage: React.FC = () => {
       fullname: '',
       email: '',
       phone: '',
-      companyName: '',
       adminKey: ''
     }
   });
@@ -54,7 +52,6 @@ const AdminRegisterPage: React.FC = () => {
         fullname: adminData.fullname,
         email: adminData.email,
         phone: adminData.phone,
-        companyName: adminData.companyName,
         adminKey: '******',
         password: '******'
       });
