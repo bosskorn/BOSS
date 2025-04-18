@@ -41,7 +41,7 @@ function Router() {
       <Route path="/logo" component={LogoDisplay} />
       
       {/* คำสั่งซื้อ */}
-      <Route path="/order-list" component={OrderList} />
+      <Route path="/orders-all" component={OrderList} />
       <Route path="/order-detail/:id" component={OrderDetail} />
       
       {/* พัสดุและการจัดส่ง */}

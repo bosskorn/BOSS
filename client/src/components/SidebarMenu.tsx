@@ -50,7 +50,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       label: 'แดชบอร์ด', 
     },
     { 
-      path: '/order-list', 
+      path: '/orders-all', 
       icon: 'fa-clipboard-list', 
       label: 'คำสั่งซื้อทั้งหมด', 
     },
