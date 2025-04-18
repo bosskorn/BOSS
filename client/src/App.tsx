@@ -21,6 +21,13 @@ import OrderDetail from "@/pages/order-detail";
 import ShipmentList from "@/pages/shipment-list";
 import { AuthProvider } from "@/hooks/use-auth";
 
+// รายงาน
+import ReportsOverview from "@/pages/reports/overview";
+import ReportsByCourier from "@/pages/reports/by-courier";
+import ReportsByArea from "@/pages/reports/by-area";
+import ReportsCOD from "@/pages/reports/cod";
+import ReportsReturns from "@/pages/reports/returns";
+
 function Router() {
   return (
     <Switch>
@@ -46,6 +53,13 @@ function Router() {
       
       {/* พัสดุและการจัดส่ง */}
       <Route path="/parcel-list" component={ShipmentList} />
+      
+      {/* รายงาน */}
+      <Route path="/reports/overview" component={ReportsOverview} />
+      <Route path="/reports/by-courier" component={ReportsByCourier} />
+      <Route path="/reports/by-area" component={ReportsByArea} />
+      <Route path="/reports/cod" component={ReportsCOD} />
+      <Route path="/reports/returns" component={ReportsReturns} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
