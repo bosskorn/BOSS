@@ -995,153 +995,170 @@ const CreateOrder: React.FC = () => {
                 </div>
                 
                 {selectedCustomer && (
-                  <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-sm font-medium">ข้อมูลผู้รับ</h3>
-                      <button
-                        type="button"
-                        onClick={() => autoClassifyAddress(selectedCustomer.address)}
-                        className="flex items-center text-indigo-600 hover:text-indigo-800 text-sm"
-                      >
-                        <i className="fa-solid fa-pen-to-square mr-1"></i>
-                        จำแนกที่อยู่
-                      </button>
-                    </div>
-                    
-                    <textarea
-                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                      rows={2}
-                      defaultValue={`${selectedCustomer?.address}, ${selectedCustomer?.subdistrict}, ${selectedCustomer?.district}, ${selectedCustomer?.province}, ${selectedCustomer?.zipcode}`}
-                      placeholder="ที่อยู่ (บ้านเลขที่ เขต แขวง รหัสไปรษณีย์)"
-                    ></textarea>
-                    
-                    {/* ฟอร์มกรอกที่อยู่แบบละเอียด */}
-                    <div id="customer-address-form" className="hidden mt-3">
-                      <div className="p-3 bg-white border border-gray-200 rounded-md">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">บ้านเลขที่</label>
-                            <input
-                              type="text"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              defaultValue={selectedCustomer?.addressNumber || ''}
-                              placeholder="บ้านเลขที่"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">หมู่</label>
-                            <input
-                              type="text"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              defaultValue={selectedCustomer?.moo || ''}
-                              placeholder="หมู่"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">ซอย</label>
-                            <input
-                              type="text"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              defaultValue={selectedCustomer?.soi || ''}
-                              placeholder="ซอย"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">ถนน</label>
-                            <input
-                              type="text"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              defaultValue={selectedCustomer?.road || ''}
-                              placeholder="ถนน"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">แขวง/ตำบล</label>
-                            <input
-                              type="text"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              defaultValue={selectedCustomer?.subdistrict || ''}
-                              placeholder="แขวง/ตำบล"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">เขต/อำเภอ</label>
-                            <input
-                              type="text"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              defaultValue={selectedCustomer?.district || ''}
-                              placeholder="เขต/อำเภอ"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">จังหวัด</label>
-                            <input
-                              type="text"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              defaultValue={selectedCustomer?.province || ''}
-                              placeholder="จังหวัด"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">รหัสไปรษณีย์</label>
-                            <input
-                              type="text"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              defaultValue={selectedCustomer?.zipcode || ''}
-                              placeholder="รหัสไปรษณีย์"
-                            />
-                          </div>
+                  <div className="mt-6">
+                    <div className="inner-forms-box p-5 rounded-md border border-gray-200 bg-white">
+                      <div className="order-information mb-4">
+                        <div className="mb-3">
+                          <span className="title-txt text-sm font-medium">ข้อมูลผู้รับ</span>
                         </div>
                         
-                        <div className="mt-3 flex justify-end space-x-2">
-                          <button
-                            type="button"
-                            className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
-                            onClick={() => {
-                              // ซ่อนฟอร์ม
-                              const customerAddressForm = document.getElementById('customer-address-form');
-                              if (customerAddressForm) {
-                                customerAddressForm.classList.add('hidden');
-                              }
-                            }}
-                          >
-                            ยกเลิก
-                          </button>
-                          <button
-                            type="button"
-                            className="px-3 py-1 text-sm text-white bg-green-600 hover:bg-green-700 rounded"
-                            onClick={() => {
-                              toast({
-                                title: 'บันทึกที่อยู่เรียบร้อย',
-                                variant: 'default',
-                              });
+                        <div className="form-box-platform">
+                          {/* ข้อมูลผู้รับ */}
+                          <div className="mb-4">
+                            <div className="flex justify-between items-center mb-2">
+                              <label className="block text-xs text-gray-500">ที่อยู่ผู้รับ</label>
+                              <button
+                                type="button"
+                                onClick={() => autoClassifyAddress(selectedCustomer.address)}
+                                className="flex items-center text-indigo-600 hover:text-indigo-800 text-xs px-2 py-1 border border-indigo-300 rounded-md bg-indigo-50"
+                              >
+                                <i className="fa-solid fa-wand-magic-sparkles mr-1"></i>
+                                จำแนกที่อยู่
+                              </button>
+                            </div>
+                            
+                            <textarea
+                              className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                              rows={3}
+                              style={{ minHeight: '115px' }}
+                              defaultValue={`${selectedCustomer?.address}, ${selectedCustomer?.subdistrict}, ${selectedCustomer?.district}, ${selectedCustomer?.province}, ${selectedCustomer?.zipcode}`}
+                              placeholder="ที่อยู่ (บ้านเลขที่ เขต แขวง รหัสไปรษณีย์)"
+                            ></textarea>
+                          </div>
+                          
+                          {/* ฟอร์มกรอกที่อยู่แบบละเอียด */}
+                          <div id="customer-address-form" className="hidden mb-4">
+                            <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                              <h4 className="text-sm font-medium mb-3">ข้อมูลที่อยู่แบบละเอียด</h4>
                               
-                              // ซ่อนฟอร์ม
-                              const customerAddressForm = document.getElementById('customer-address-form');
-                              if (customerAddressForm) {
-                                customerAddressForm.classList.add('hidden');
-                              }
-                            }}
-                          >
-                            ยืนยัน
-                          </button>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">บ้านเลขที่</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    defaultValue={selectedCustomer?.addressNumber || ''}
+                                    placeholder="บ้านเลขที่"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">หมู่</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    defaultValue={selectedCustomer?.moo || ''}
+                                    placeholder="หมู่"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4 mt-3">
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">ซอย</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    defaultValue={selectedCustomer?.soi || ''}
+                                    placeholder="ซอย"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">ถนน</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    defaultValue={selectedCustomer?.road || ''}
+                                    placeholder="ถนน"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4 mt-3">
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">แขวง/ตำบล</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    defaultValue={selectedCustomer?.subdistrict || ''}
+                                    placeholder="แขวง/ตำบล"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">เขต/อำเภอ</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    defaultValue={selectedCustomer?.district || ''}
+                                    placeholder="เขต/อำเภอ"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4 mt-3">
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">จังหวัด</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    defaultValue={selectedCustomer?.province || ''}
+                                    placeholder="จังหวัด"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">รหัสไปรษณีย์</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    defaultValue={selectedCustomer?.zipcode || ''}
+                                    placeholder="รหัสไปรษณีย์"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-end mt-3 pt-3 border-t border-gray-200">
+                            <button
+                              type="button"
+                              className="px-4 py-2 mr-2 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded"
+                              onClick={() => {
+                                // ล้างข้อมูล
+                                const textarea = document.querySelector('textarea');
+                                if (textarea) {
+                                  textarea.value = '';
+                                }
+                                
+                                toast({
+                                  title: 'ล้างข้อมูลเรียบร้อย',
+                                  variant: 'default',
+                                });
+                              }}
+                            >
+                              <i className="fa-solid fa-eraser mr-1"></i>
+                              ล้างข้อมูล
+                            </button>
+                            <button
+                              type="button"
+                              className="px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded"
+                              onClick={() => {
+                                // ซ่อนฟอร์ม
+                                const customerAddressForm = document.getElementById('customer-address-form');
+                                if (customerAddressForm) {
+                                  customerAddressForm.classList.add('hidden');
+                                }
+                                
+                                toast({
+                                  title: 'บันทึกข้อมูลเรียบร้อย',
+                                  variant: 'default',
+                                });
+                              }}
+                            >
+                              <i className="fa-solid fa-check mr-1"></i>
+                              บันทึก
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex justify-end mt-3">
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded mr-2"
-                      >
-                        ล้างข้อมูล
-                      </button>
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded"
-                      >
-                        บันทึก
-                      </button>
                     </div>
                   </div>
                 )}
