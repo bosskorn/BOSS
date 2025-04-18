@@ -617,12 +617,13 @@ const CreateOrder: React.FC = () => {
             <p className="text-gray-600">กรอกข้อมูลเพื่อสร้างออเดอร์สำหรับลูกค้า</p>
           </div>
           <div>
-            <Link href="/orders">
-              <a className="px-4 py-2 bg-gray-200 rounded-md text-gray-700 hover:bg-gray-300 mr-2">
-                <i className="fa-solid fa-arrow-left mr-2"></i>
-                กลับไปรายการออเดอร์
-              </a>
-            </Link>
+            <button 
+              onClick={() => window.location.href = '/orders'} 
+              className="px-4 py-2 bg-gray-200 rounded-md text-gray-700 hover:bg-gray-300 mr-2"
+            >
+              <i className="fa-solid fa-arrow-left mr-2"></i>
+              กลับไปรายการออเดอร์
+            </button>
           </div>
         </div>
         
