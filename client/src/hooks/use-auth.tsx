@@ -43,15 +43,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // ตรวจสอบว่าการเข้าสู่ระบบสำเร็จหรือไม่
         if (response.data.success && response.data.user) {
+          console.log('User found in session:', response.data.user.username);
           return response.data.user;
+        } else {
+          console.log('No user in session or invalid response format');
+          console.log('API response data:', response.data);
+          return null;
         }
-        
-        return null;
       } catch (error: any) {
         console.error('Error checking auth:', error.response?.status, error.message);
         
         // ถ้าเป็น 401 แสดงว่ายังไม่ได้เข้าสู่ระบบ ให้ return null
         if (error.response?.status === 401) {
+          console.log('Not logged in (401)');
           return null;
         }
         

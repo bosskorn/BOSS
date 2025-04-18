@@ -4,6 +4,8 @@ import axios from 'axios'
 // ไม่ต้องมี /api เพราะพาทของ API เริ่มต้นด้วย /api อยู่แล้ว
 const API_URL = ''
 
+console.log('Initializing axios with withCredentials: true');
+
 // Set up axios with default config
 const api = axios.create({
   baseURL: API_URL,
@@ -11,11 +13,10 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Cache-Control': 'no-cache',
     'Pragma': 'no-cache',
-    'Accept': 'application/json'
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
   },
-  withCredentials: true, // ส่ง cookies และ credentials ไปด้วยทุกครั้ง
-  xsrfCookieName: 'XSRF-TOKEN',
-  xsrfHeaderName: 'X-XSRF-TOKEN'
+  withCredentials: true // ส่ง cookies และ credentials ไปด้วยทุกครั้ง
 })
 
 // Interceptor to add auth token to requests

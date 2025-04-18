@@ -59,45 +59,82 @@ const AuthPage: React.FC = () => {
     try {
       console.log('Sending login request with credentials:', { username: data.username, password: '******' });
       
-      // ใช้ fetch แทน axios เพื่อให้สอดคล้องกับส่วนอื่นของแอปพลิเคชัน
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify({
-          username: data.username,
-          password: data.password
-        }),
-        credentials: 'include' // สำคัญมาก ต้องส่ง cookies ไปและรับกลับมาด้วย
+      // ใช้ axios เพื่อให้การจัดการ session และ cookies มีความสอดคล้องกัน
+      const credentials = {
+        username: data.username,
+        password: data.password
+      };
+      
+      // ข้อมูลสำหรับการทดสอบ session และ cookies
+      console.log('Debug - Using axios with withCredentials:', true);
+      console.log('Debug - Current document.cookie:', document.cookie);
+      
+      // ใช้ axios และตรวจสอบการตอบกลับอย่างละเอียด
+      import('axios').then(async ({ default: axios }) => {
+        try {
+          const res = await axios.post('/api/login', credentials, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            withCredentials: true // สำคัญมาก เพื่อให้มีการส่ง cookies
+          });
+          
+          console.log('Login response:', res.status, res.data);
+          console.log('Response headers:', res.headers);
+          console.log('Cookies after login:', document.cookie);
+          
+          // ถ้าล็อกอินสำเร็จ
+          if (res.data.success) {
+            toast({
+              title: 'เข้าสู่ระบบสำเร็จ',
+              description: res.data.message || 'ยินดีต้อนรับเข้าสู่ระบบ',
+              variant: 'default',
+            });
+            
+            // ตรวจสอบว่าได้รับ session cookie หรือไม่
+            if (document.cookie.includes('purpledash.sid')) {
+              console.log('Session cookie found!');
+            } else {
+              console.warn('No session cookie found after login');
+            }
+            
+            // ทดสอบเรียกข้อมูลผู้ใช้ทันทีหลังจากล็อกอิน
+            try {
+              const userCheck = await axios.get('/api/user', { withCredentials: true });
+              console.log('User session check success:', userCheck.data);
+            } catch (err) {
+              console.error('User session check failed:', err);
+            }
+            
+            // นำทางไปยังหน้าแดชบอร์ด
+            setTimeout(() => {
+              window.location.href = '/dashboard'; // ใช้ window.location เพื่อให้มั่นใจว่ามีการโหลดหน้าใหม่
+            }, 1500); // รอ 1.5 วินาทีเพื่อให้ cookie ได้บันทึกเรียบร้อย
+          } else {
+            toast({
+              title: 'เข้าสู่ระบบไม่สำเร็จ',
+              description: res.data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+              variant: 'destructive',
+            });
+            
+            loginForm.reset({ username: data.username, password: '' });
+          }
+        } catch (error: any) {
+          console.error('Login axios error:', error.response?.data || error.message);
+          
+          toast({
+            title: 'เข้าสู่ระบบไม่สำเร็จ',
+            description: error.response?.data?.message || error.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+            variant: 'destructive',
+          });
+          
+          loginForm.reset({ username: data.username, password: '' });
+        } finally {
+          setIsLoading(false);
+        }
       });
-      
-      // อ่านข้อมูลการตอบกลับ
-      const responseData = await res.json();
-      console.log('Login response status:', res.status, responseData);
-      
-      if (res.ok && responseData.success) {
-        toast({
-          title: 'เข้าสู่ระบบสำเร็จ',
-          description: responseData.message || 'ยินดีต้อนรับเข้าสู่ระบบ',
-          variant: 'default',
-        });
-        
-        // นำทางไปยังหน้าแดชบอร์ด
-        setTimeout(() => {
-          window.location.href = '/dashboard'; // ใช้ window.location เพื่อให้มั่นใจว่ามีการโหลดหน้าใหม่
-        }, 1000); // รอ 1 วินาทีเพื่อให้ cookie ได้บันทึกเรียบร้อย
-      } else {
-        toast({
-          title: 'เข้าสู่ระบบไม่สำเร็จ',
-          description: responseData.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
-          variant: 'destructive',
-        });
-        
-        loginForm.reset({ username: data.username, password: '' });
-      }
     } catch (error: any) {
       console.error('Login error:', error);
       
@@ -108,7 +145,6 @@ const AuthPage: React.FC = () => {
       });
       
       loginForm.reset({ username: data.username, password: '' });
-    } finally {
       setIsLoading(false);
     }
   };
