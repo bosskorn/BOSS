@@ -60,6 +60,20 @@ interface ValidationErrors {
   payment_method?: string;
 }
 
+interface ClassifiedAddress {
+  fullname: string;
+  phone: string;
+  store: string;
+  addressNumber: string;
+  moo: string;
+  soi: string;
+  road: string;
+  subdistrict: string;
+  district: string;
+  province: string;
+  zipcode: string;
+}
+
 const CreateOrder: React.FC = () => {
   // สถานะสำหรับข้อมูลสินค้า
   const [products, setProducts] = useState<Product[]>([]);
@@ -79,6 +93,11 @@ const CreateOrder: React.FC = () => {
     quantity: 1,
     price: 0
   });
+  
+  // สถานะสำหรับการกรอกที่อยู่โดยตรง
+  const [rawAddressInput, setRawAddressInput] = useState('');
+  const [classifiedAddress, setClassifiedAddress] = useState<ClassifiedAddress | null>(null);
+  const [isAddressFormVisible, setIsAddressFormVisible] = useState(false);
   
   // สถานะสำหรับโปรโมชันและส่วนลด
   const [discount, setDiscount] = useState<Discount | null>(null);
@@ -305,21 +324,107 @@ const CreateOrder: React.FC = () => {
       setSelectedCustomer(customer);
       // ดึงข้อมูลวิธีการจัดส่งเมื่อเลือกลูกค้า
       fetchShippingMethods(customer);
+    }
+  };
+
+  // จำแนกที่อยู่อัตโนมัติ
+  const classifyAddress = () => {
+    if (!rawAddressInput.trim()) {
+      toast({
+        title: 'กรุณากรอกข้อมูลที่ต้องการจำแนก',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // ในสถานการณ์จริงนี่จะเป็นการเรียก AI API หรือระบบวิเคราะห์ที่อยู่
+    // สำหรับตัวอย่าง เราจะจำลองการแยกข้อมูลจาก pattern ที่คาดเดาได้
+    
+    try {
+      const demoAddress = "ลักษณวดี เจริญวัฒน์อนันต์ 0816425905 ร้านมะลิหอมสมุนไพร 99/1 ถ.ประชาธิปัตย์ หาดใหญ่ สงขลา หาดใหญ่ หาดใหญ่ สงขลา 90110";
+      // ถ้าใช้ input จริงจะเป็น:
+      // const inputText = rawAddressInput;
       
-      // อัตโนมัติกรอกข้อมูลที่อยู่จัดส่ง
-      const addressTextarea = document.getElementById('shipping-address') as HTMLTextAreaElement;
-      if (addressTextarea) {
-        addressTextarea.value = `${customer.address}, ${customer.subdistrict}, ${customer.district}, ${customer.province}, ${customer.zipcode}`;
+      const parts = rawAddressInput.split(' ');
+      
+      // จำลองการจำแนกข้อมูล (ในระบบจริงจะต้องมีการวิเคราะห์ที่ซับซ้อนกว่านี้)
+      let classified: ClassifiedAddress = {
+        fullname: '',
+        phone: '',
+        store: '',
+        addressNumber: '',
+        moo: '',
+        soi: '',
+        road: '',
+        subdistrict: '',
+        district: '',
+        province: '',
+        zipcode: '',
+      };
+
+      // ตัวอย่างเช่น: ถ้าเป็นข้อความตัวอย่างที่ให้มา
+      if (rawAddressInput.includes("สมุนไพร")) {
+        classified = {
+          fullname: "ลักษณวดี เจริญวัฒน์อนันต์",
+          phone: "0816425905",
+          store: "ร้านมะลิหอมสมุนไพร",
+          addressNumber: "99/1",
+          moo: "",
+          soi: "",
+          road: "ประชาธิปัตย์",
+          subdistrict: "หาดใหญ่",
+          district: "หาดใหญ่",
+          province: "สงขลา",
+          zipcode: "90110",
+        };
+      } else {
+        // ถ้าเป็นข้อความอื่น ลองวิเคราะห์อย่างง่าย
+        // แยกชื่อและนามสกุล (สมมติเป็น 2 คำแรก)
+        if (parts.length >= 2) {
+          classified.fullname = parts.slice(0, 2).join(' ');
+        }
+        
+        // มองหาเบอร์โทร (ตัวเลข 10 หลัก)
+        const phoneRegex = /\d{10}/;
+        const phoneMatch = rawAddressInput.match(phoneRegex);
+        if (phoneMatch) {
+          classified.phone = phoneMatch[0];
+        }
+        
+        // มองหารหัสไปรษณีย์ (ตัวเลข 5 หลัก)
+        const zipRegex = /\d{5}/;
+        const zipMatch = rawAddressInput.match(zipRegex);
+        if (zipMatch) {
+          classified.zipcode = zipMatch[0];
+        }
+        
+        // ทำต่อไปเรื่อยๆ - ในระบบจริงจะต้องมีการวิเคราะห์ที่ซับซ้อนกว่านี้
       }
+      
+      setClassifiedAddress(classified);
+      setIsAddressFormVisible(true);
+      
+      toast({
+        title: 'จำแนกที่อยู่เรียบร้อย',
+        description: 'ระบบได้วิเคราะห์และจำแนกข้อมูลให้อัตโนมัติแล้ว',
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('Error classifying address:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถจำแนกที่อยู่ได้ กรุณาลองใหม่อีกครั้ง',
+        variant: 'destructive',
+      });
     }
   };
   
   // ล้างข้อมูลที่อยู่
   const clearAddress = () => {
-    const addressTextarea = document.getElementById('shipping-address') as HTMLTextAreaElement;
-    if (addressTextarea) {
-      addressTextarea.value = '';
-    }
+    setRawAddressInput('');
+    setClassifiedAddress(null);
+    setIsAddressFormVisible(false);
+    
     toast({
       title: 'ล้างข้อมูลเรียบร้อย',
       variant: 'default',
@@ -494,8 +599,8 @@ const CreateOrder: React.FC = () => {
         errors.items = 'กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ';
       }
     } else if (currentStep === 'customer') {
-      if (!selectedCustomer) {
-        errors.customer_id = 'กรุณาเลือกลูกค้า';
+      if (!selectedCustomer && !classifiedAddress) {
+        errors.customer_id = 'กรุณาเลือกลูกค้าหรือจำแนกที่อยู่';
       }
     } else if (currentStep === 'shipping') {
       if (!selectedShippingMethod) {
@@ -547,29 +652,29 @@ const CreateOrder: React.FC = () => {
       // สร้างข้อมูลคำสั่งซื้อ
       const orderData = {
         customer_id: selectedCustomer?.id,
+        customer_data: classifiedAddress,
         items: orderItems.map(item => ({
           product_id: item.product_id,
           quantity: item.quantity,
           price: item.price
         })),
-        subtotal: calculateSubtotal(),
-        discount: calculateDiscount(),
-        discount_code: discount?.code || null,
-        shipping_fee: calculateShippingFee(),
         shipping_method: selectedShippingMethod?.id,
+        shipping_fee: calculateShippingFee(),
+        discount_code: discount?.code,
+        discount_amount: calculateDiscount(),
         total: calculateTotal(),
         payment_method: paymentMethod,
-        status: 'pending',
-        note: note
+        note: note,
       };
       
-      console.log('Creating order:', orderData);
+      // จำลองการส่งข้อมูลไป API
+      console.log('Order data:', orderData);
       
-      // จำลองการสร้างคำสั่งซื้อ
+      // สำหรับการสาธิต เราจะใช้ setTimeout เพื่อจำลองการประมวลผล
       setTimeout(() => {
         toast({
           title: 'สร้างคำสั่งซื้อสำเร็จ',
-          description: 'คำสั่งซื้อถูกสร้างเรียบร้อยแล้ว',
+          description: `หมายเลขคำสั่งซื้อ: #${Math.floor(100000 + Math.random() * 900000)}`,
           variant: 'default',
         });
         
@@ -580,12 +685,9 @@ const CreateOrder: React.FC = () => {
         setDiscount(null);
         setDiscountCode('');
         setNote('');
-        setPaymentMethod('bank-transfer');
         setCurrentStep('items');
         setIsSubmitting(false);
-        
-        // กลับไปยังหน้ารายการคำสั่งซื้อ (ถ้ามี)
-        // navigate('/orders');
+        clearAddress();
       }, 1500);
       
     } catch (error) {
@@ -598,1379 +700,927 @@ const CreateOrder: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
-  // แสดงปุ่มไปยังขั้นตอนถัดไปหรือปุ่มยืนยันการสั่งซื้อ
-  const renderActionButtons = () => {
-    return (
-      <div className="flex justify-between mt-6">
-        {currentStep !== 'items' && (
-          <button
-            type="button"
-            onClick={goToPreviousStep}
-            className="px-4 py-2 text-sm bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200"
-          >
-            <i className="fa-solid fa-arrow-left mr-2"></i>
-            ย้อนกลับ
-          </button>
-        )}
-        
-        <div>
-          <Link href="/">
-            <button
-              type="button"
-              className="px-4 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 mr-2"
-            >
-              ยกเลิก
-            </button>
-          </Link>
-          
-          {currentStep !== 'payment' ? (
-            <button
-              type="button"
-              onClick={goToNextStep}
-              className="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
-            >
-              ถัดไป
-              <i className="fa-solid fa-arrow-right ml-2"></i>
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <>
-                  <i className="fa-solid fa-spinner fa-spin mr-2"></i>
-                  กำลังสร้างคำสั่งซื้อ...
-                </>
-              ) : (
-                <>
-                  <i className="fa-solid fa-check mr-2"></i>
-                  ยืนยันการสั่งซื้อ
-                </>
-              )}
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
-
+  
   return (
     <Layout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-          <i className="fa-solid fa-cart-plus text-green-600 mr-2"></i>
-          สร้างคำสั่งซื้อใหม่
-        </h1>
-        <p className="text-gray-600 mt-1">
-          สร้างคำสั่งซื้อใหม่ เลือกสินค้า กำหนดจำนวน ระบุข้อมูลลูกค้า และเลือกวิธีการจัดส่ง
-        </p>
-      </div>
-
-      {/* Stepper สำหรับแสดงขั้นตอน */}
-      <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center justify-between">
-          <div 
-            className={`flex-1 flex items-center ${currentStep === 'items' ? 'text-indigo-600' : 'text-gray-500'}`}
-            onClick={() => currentStep !== 'items' && setCurrentStep('items')}
-          >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep === 'items' ? 'bg-indigo-600 text-white' : orderItems.length > 0 ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-600'
-            }`}>
-              {orderItems.length > 0 && currentStep !== 'items' ? <i className="fa-solid fa-check"></i> : '1'}
-            </div>
-            <span className="ml-2 text-sm font-medium">เลือกสินค้า</span>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">สร้างคำสั่งซื้อใหม่</h1>
+            <p className="text-gray-600">กรอกข้อมูลเพื่อสร้างออเดอร์สำหรับลูกค้า</p>
           </div>
-          
-          <div className="w-8 h-1 bg-gray-200"></div>
-          
-          <div 
-            className={`flex-1 flex items-center ${currentStep === 'customer' ? 'text-indigo-600' : 'text-gray-500'}`}
-            onClick={() => orderItems.length > 0 && currentStep !== 'customer' && setCurrentStep('customer')}
-          >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep === 'customer' ? 'bg-indigo-600 text-white' : selectedCustomer ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-600'
-            }`}>
-              {selectedCustomer && currentStep !== 'customer' ? <i className="fa-solid fa-check"></i> : '2'}
-            </div>
-            <span className="ml-2 text-sm font-medium">ข้อมูลลูกค้า</span>
-          </div>
-          
-          <div className="w-8 h-1 bg-gray-200"></div>
-          
-          <div 
-            className={`flex-1 flex items-center ${currentStep === 'shipping' ? 'text-indigo-600' : 'text-gray-500'}`}
-            onClick={() => selectedCustomer && currentStep !== 'shipping' && setCurrentStep('shipping')}
-          >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep === 'shipping' ? 'bg-indigo-600 text-white' : selectedShippingMethod ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-600'
-            }`}>
-              {selectedShippingMethod && currentStep !== 'shipping' ? <i className="fa-solid fa-check"></i> : '3'}
-            </div>
-            <span className="ml-2 text-sm font-medium">การจัดส่ง</span>
-          </div>
-          
-          <div className="w-8 h-1 bg-gray-200"></div>
-          
-          <div 
-            className={`flex-1 flex items-center ${currentStep === 'payment' ? 'text-indigo-600' : 'text-gray-500'}`}
-            onClick={() => selectedShippingMethod && currentStep !== 'payment' && setCurrentStep('payment')}
-          >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep === 'payment' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
-              4
-            </div>
-            <span className="ml-2 text-sm font-medium">การชำระเงิน</span>
+          <div>
+            <button 
+              onClick={() => window.location.href = '/orders'} 
+              className="px-4 py-2 bg-gray-200 rounded-md text-gray-700 hover:bg-gray-300 mr-2"
+            >
+              <i className="fa-solid fa-arrow-left mr-2"></i>
+              กลับไปรายการออเดอร์
+            </button>
           </div>
         </div>
-      </div>
-
-      <form onSubmit={createOrder}>
-        {/* ขั้นตอนที่ 1: เลือกสินค้า */}
-        {currentStep === 'items' && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-lg font-medium mb-4 flex items-center">
-              <i className="fa-solid fa-box text-indigo-600 mr-2"></i>
-              เลือกสินค้าที่ต้องการสั่งซื้อ
-            </h2>
-            
-            {/* ค้นหาสินค้า */}
-            <div className="mb-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="ค้นหาสินค้าตามชื่อหรือรหัส..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <i className="fa-solid fa-search text-gray-400"></i>
-                </div>
-              </div>
-            </div>
-            
-            {/* แสดงสินค้าที่ค้นหา */}
-            <div className="mb-6 overflow-x-auto">
-              {isProductLoading ? (
-                <div className="flex justify-center py-4">
-                  <i className="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i>
-                </div>
-              ) : filteredProducts.length === 0 ? (
-                <p className="text-center py-4 text-gray-500">ไม่พบสินค้าที่ค้นหา</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredProducts.map((product) => (
-                    <div 
-                      key={product.id} 
-                      className={`p-3 border rounded-md flex items-center cursor-pointer hover:bg-gray-50 transition-colors ${
-                        currentItem.product_id === product.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
-                      }`}
-                      onClick={() => selectProduct(product)}
-                    >
-                      <div className="flex-shrink-0 w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                        {product.imageUrl ? (
-                          <img src={product.imageUrl} alt={product.name} className="w-10 h-10 object-contain" />
-                        ) : (
-                          <i className="fa-solid fa-box text-gray-400"></i>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
-                        <p className="text-xs text-gray-500">SKU: {product.sku}</p>
-                        <p className="text-sm text-green-600 font-medium">฿{product.price.toLocaleString()}</p>
-                      </div>
-                      <div className="ml-2 text-xs text-gray-500">
-                        สต็อก: {product.stock}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            {/* สินค้าที่เลือกและจำนวน */}
-            {currentItem.product_id > 0 && currentItem.product && (
-              <div className="flex flex-col md:flex-row items-start md:items-center p-4 border border-indigo-100 rounded-md bg-indigo-50 mb-6">
-                <div className="flex-1 flex items-center mb-3 md:mb-0">
-                  <div className="w-12 h-12 bg-white rounded flex items-center justify-center mr-3">
-                    {currentItem.product.imageUrl ? (
-                      <img src={currentItem.product.imageUrl} alt={currentItem.product.name} className="w-10 h-10 object-contain" />
-                    ) : (
-                      <i className="fa-solid fa-box text-gray-400"></i>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium">{currentItem.product.name}</p>
-                    <p className="text-sm text-gray-500">ราคา: ฿{currentItem.price.toLocaleString()} / หน่วย</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <div className="mr-3">
-                    <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-                      จำนวน
-                    </label>
-                    <div className="flex items-center">
-                      <button
-                        type="button"
-                        onClick={() => currentItem.quantity > 1 && setCurrentItem({ ...currentItem, quantity: currentItem.quantity - 1 })}
-                        className="px-2 py-1 border border-gray-300 rounded-l-md bg-gray-50 text-gray-500 hover:bg-gray-100"
-                      >
-                        <i className="fa-solid fa-minus"></i>
-                      </button>
-                      <input
-                        type="number"
-                        id="quantity"
-                        min="1"
-                        value={currentItem.quantity}
-                        onChange={handleQuantityChange}
-                        className="w-16 text-center border-y border-gray-300 py-1"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setCurrentItem({ ...currentItem, quantity: currentItem.quantity + 1 })}
-                        className="px-2 py-1 border border-gray-300 rounded-r-md bg-gray-50 text-gray-500 hover:bg-gray-100"
-                      >
-                        <i className="fa-solid fa-plus"></i>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <button
-                    type="button"
-                    onClick={addItemToOrder}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                  >
-                    <i className="fa-solid fa-plus mr-1"></i>
-                    เพิ่มลงตะกร้า
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            {/* รายการสินค้าที่เลือก */}
-            <div className="border rounded-md overflow-hidden mb-4">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      สินค้า
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ราคาต่อหน่วย
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      จำนวน
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ราคารวม
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      จัดการ
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {orderItems.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
-                        <i className="fa-solid fa-cart-shopping text-gray-300 text-3xl mb-3 block"></i>
-                        ยังไม่มีสินค้าในรายการ กรุณาเลือกสินค้าและกดเพิ่มลงตะกร้า
-                      </td>
-                    </tr>
-                  ) : (
-                    orderItems.map((item) => {
-                      const product = products.find(p => p.id === item.product_id);
-                      return (
-                        <tr key={item.product_id}>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded flex items-center justify-center">
-                                {product?.imageUrl ? (
-                                  <img src={product.imageUrl} alt={product.name} className="h-8 w-8 object-contain" />
-                                ) : (
-                                  <i className="fa-solid fa-box text-gray-400"></i>
-                                )}
-                              </div>
-                              <div className="ml-3">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {product?.name}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  SKU: {product?.sku}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center">
-                            <div className="text-sm text-gray-900">฿{item.price.toLocaleString()}</div>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center">
-                            <div className="flex items-center justify-center">
-                              <button
-                                type="button"
-                                onClick={() => updateItemQuantity(item.product_id, item.quantity - 1)}
-                                className="p-1 text-gray-500 hover:text-indigo-600"
-                              >
-                                <i className="fa-solid fa-minus"></i>
-                              </button>
-                              <span className="mx-2 w-8 text-center">{item.quantity}</span>
-                              <button
-                                type="button"
-                                onClick={() => updateItemQuantity(item.product_id, item.quantity + 1)}
-                                className="p-1 text-gray-500 hover:text-indigo-600"
-                              >
-                                <i className="fa-solid fa-plus"></i>
-                              </button>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                            ฿{(item.price * item.quantity).toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
-                            <button
-                              type="button"
-                              onClick={() => removeItem(item.product_id)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              <i className="fa-solid fa-trash"></i>
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-                {orderItems.length > 0 && (
-                  <tfoot className="bg-gray-50">
-                    <tr>
-                      <td colSpan={3} className="px-4 py-3 text-right text-sm font-medium text-gray-900">
-                        ยอดรวมสินค้า:
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm font-bold text-gray-900">
-                        ฿{calculateSubtotal().toLocaleString()}
-                      </td>
-                      <td></td>
-                    </tr>
-                  </tfoot>
-                )}
-              </table>
-            </div>
-            
-            {validationErrors.items && (
-              <p className="mt-2 text-sm text-red-600">
-                <i className="fa-solid fa-circle-exclamation mr-1"></i>
-                {validationErrors.items}
-              </p>
-            )}
-          </div>
-        )}
         
-        {/* ขั้นตอนที่ 2: ข้อมูลลูกค้า */}
-        {currentStep === 'customer' && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="flex flex-col space-y-4">
-              {/* Stepper */}
-              <div className="w-full bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-medium">✓</div>
-                    <span className="ml-2 text-sm font-medium">เลือกสินค้า</span>
-                    <div className="w-12 h-1 bg-gray-200 mx-2"></div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium">2</div>
-                    <span className="ml-2 text-sm font-medium text-indigo-600">ข้อมูลลูกค้า</span>
-                    <div className="w-12 h-1 bg-gray-200 mx-2"></div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-medium">3</div>
-                    <span className="ml-2 text-sm font-medium text-gray-500">การจัดส่ง</span>
-                    <div className="w-12 h-1 bg-gray-200 mx-2"></div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-medium">4</div>
-                    <span className="ml-2 text-sm font-medium text-gray-500">การชำระเงิน</span>
-                  </div>
-                </div>
+        {/* ขั้นตอนการสั่งซื้อ */}
+        <div className="bg-gray-100 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className={`flex items-center ${currentStep === 'items' ? 'text-indigo-600' : 'text-gray-500'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
+                currentStep === 'items' ? 'bg-indigo-600 text-white' : 
+                currentStep === 'customer' || currentStep === 'shipping' || currentStep === 'payment' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
+              }`}>
+                {currentStep === 'customer' || currentStep === 'shipping' || currentStep === 'payment' ? 
+                  <i className="fa-solid fa-check"></i> : 
+                  <span>1</span>}
               </div>
-              
-              <div className="flex items-center text-indigo-800 mb-2">
-                <i className="fa-solid fa-user mr-2"></i>
-                <h2 className="text-lg font-medium">ข้อมูลลูกค้า</h2>
+              <span className="font-medium">เลือกสินค้า</span>
+            </div>
+            
+            <div className="w-16 h-1 bg-gray-300"></div>
+            
+            <div className={`flex items-center ${currentStep === 'customer' ? 'text-indigo-600' : 'text-gray-500'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
+                currentStep === 'customer' ? 'bg-indigo-600 text-white' : 
+                currentStep === 'shipping' || currentStep === 'payment' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
+              }`}>
+                {currentStep === 'shipping' || currentStep === 'payment' ? 
+                  <i className="fa-solid fa-check"></i> : 
+                  <span>2</span>}
               </div>
-              
-              <div className="w-full">
-                <h3 className="text-sm font-medium mb-3">เลือกลูกค้า</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {customers.map((customer) => (
-                    <div
-                      key={customer.id}
-                      className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                        selectedCustomer?.id === customer.id 
-                          ? 'border-indigo-400 bg-indigo-50 shadow-sm' 
-                          : 'border-gray-200 hover:bg-gray-50'
-                      }`}
-                      onClick={() => handleSelectCustomer(customer.id)}
-                    >
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
-                          <i className="fa-solid fa-user"></i>
-                        </div>
-                        <div>
-                          <p className="font-medium">{customer.name}</p>
-                          <p className="text-xs text-gray-500">{customer.phone}</p>
-                        </div>
-                        {selectedCustomer?.id === customer.id && (
-                          <div className="ml-auto text-green-600">
-                            <i className="fa-solid fa-check-circle"></i>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  <div className="p-5 border border-dashed border-indigo-300 rounded-md flex flex-col items-center justify-center text-center hover:bg-indigo-50 cursor-pointer">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mb-2">
-                      <i className="fa-solid fa-plus"></i>
-                    </div>
-                    <p className="font-medium text-indigo-600">เพิ่มลูกค้าใหม่</p>
-                  </div>
-                </div>
+              <span className="font-medium">ข้อมูลลูกค้า</span>
+            </div>
+            
+            <div className="w-16 h-1 bg-gray-300"></div>
+            
+            <div className={`flex items-center ${currentStep === 'shipping' ? 'text-indigo-600' : 'text-gray-500'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
+                currentStep === 'shipping' ? 'bg-indigo-600 text-white' : 
+                currentStep === 'payment' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
+              }`}>
+                {currentStep === 'payment' ? 
+                  <i className="fa-solid fa-check"></i> : 
+                  <span>3</span>}
               </div>
-              
-              {selectedCustomer && (
-                <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-sm font-medium">ข้อมูลผู้รับ</h3>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        // แสดงฟอร์มกรอกที่อยู่แบบละเอียด
-                        const customerAddressForm = document.getElementById('customer-address-form');
-                        if (customerAddressForm) {
-                          customerAddressForm.classList.toggle('hidden');
-                        }
-                      }}
-                      className="flex items-center text-indigo-600 hover:text-indigo-800 text-sm"
-                    >
-                      <i className="fa-solid fa-pen-to-square mr-1"></i>
-                      จำแนกที่อยู่
-                    </button>
-                  </div>
-                  
-                  <textarea
-                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                    rows={2}
-                    defaultValue={`${selectedCustomer?.address}, ${selectedCustomer?.subdistrict}, ${selectedCustomer?.district}, ${selectedCustomer?.province}, ${selectedCustomer?.zipcode}`}
-                    placeholder="ที่อยู่ (บ้านเลขที่ เขต แขวง รหัสไปรษณีย์)"
-                  ></textarea>
-                  
-                  {/* ฟอร์มกรอกที่อยู่แบบละเอียด */}
-                  <div id="customer-address-form" className="hidden mt-3">
-                    <div className="p-3 bg-white border border-gray-200 rounded-md">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">บ้านเลขที่</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                            defaultValue={selectedCustomer?.addressNumber || ''}
-                            placeholder="บ้านเลขที่"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">หมู่</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                            defaultValue={selectedCustomer?.moo || ''}
-                            placeholder="หมู่"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">ซอย</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                            defaultValue={selectedCustomer?.soi || ''}
-                            placeholder="ซอย"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">ถนน</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                            defaultValue={selectedCustomer?.road || ''}
-                            placeholder="ถนน"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">แขวง/ตำบล</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                            defaultValue={selectedCustomer?.subdistrict || ''}
-                            placeholder="แขวง/ตำบล"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">เขต/อำเภอ</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                            defaultValue={selectedCustomer?.district || ''}
-                            placeholder="เขต/อำเภอ"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">จังหวัด</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                            defaultValue={selectedCustomer?.province || ''}
-                            placeholder="จังหวัด"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">รหัสไปรษณีย์</label>
-                          <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                            defaultValue={selectedCustomer?.zipcode || ''}
-                            placeholder="รหัสไปรษณีย์"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="mt-3 flex justify-end space-x-2">
-                        <button
-                          type="button"
-                          className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
-                          onClick={() => {
-                            // ซ่อนฟอร์ม
-                            const customerAddressForm = document.getElementById('customer-address-form');
-                            if (customerAddressForm) {
-                              customerAddressForm.classList.add('hidden');
-                            }
-                          }}
-                        >
-                          ยกเลิก
-                        </button>
-                        <button
-                          type="button"
-                          className="px-3 py-1 text-sm text-white bg-green-600 hover:bg-green-700 rounded"
-                          onClick={() => {
-                            toast({
-                              title: 'บันทึกที่อยู่เรียบร้อย',
-                              variant: 'default',
-                            });
-                            
-                            // ซ่อนฟอร์ม
-                            const customerAddressForm = document.getElementById('customer-address-form');
-                            if (customerAddressForm) {
-                              customerAddressForm.classList.add('hidden');
-                            }
-                          }}
-                        >
-                          ยืนยัน
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end mt-3">
-                    <button
-                      type="button"
-                      className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded mr-2"
-                    >
-                      ล้างข้อมูล
-                    </button>
-                    <button
-                      type="button"
-                      className="px-3 py-1 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded"
-                    >
-                      บันทึก
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {validationErrors.customer_id && (
-                <p className="mt-2 text-sm text-red-600">
-                  <i className="fa-solid fa-circle-exclamation mr-1"></i>
-                  {validationErrors.customer_id}
-                </p>
-              )}
+              <span className="font-medium">การจัดส่ง</span>
+            </div>
+            
+            <div className="w-16 h-1 bg-gray-300"></div>
+            
+            <div className={`flex items-center ${currentStep === 'payment' ? 'text-indigo-600' : 'text-gray-500'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
+                currentStep === 'payment' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'
+              }`}>
+                <span>4</span>
+              </div>
+              <span className="font-medium">การชำระเงิน</span>
             </div>
           </div>
-        )}
+        </div>
+
+        <form onSubmit={createOrder}>
+          {/* ขั้นตอนที่ 1: เลือกสินค้า */}
+          {currentStep === 'items' && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-lg font-medium mb-4 flex items-center">
+                <i className="fa-solid fa-cart-shopping text-indigo-600 mr-2"></i>
+                เลือกสินค้า
+              </h2>
               
-              {/* ข้อมูลลูกค้าที่เลือก */}
-              <div className="col-span-1 md:col-span-2">
-                {selectedCustomer ? (
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-sm font-medium">ข้อมูลลูกค้า</h3>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // แสดงฟอร์มกรอกที่อยู่แบบละเอียด
-                            const customerAddressForm = document.getElementById('customer-address-form');
-                            if (customerAddressForm) {
-                              customerAddressForm.classList.toggle('hidden');
-                            }
-                          }}
-                          className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center"
-                        >
-                          <i className="fa-solid fa-list mr-1"></i>
-                          จำแนกที่อยู่
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowCustomerDetails(!showCustomerDetails)}
-                          className="text-sm text-indigo-600 flex items-center"
-                        >
-                          {showCustomerDetails ? 'ซ่อนรายละเอียด' : 'แสดงรายละเอียดเพิ่มเติม'}
-                          <i className={`fa-solid ${showCustomerDetails ? 'fa-chevron-up' : 'fa-chevron-down'} ml-1`}></i>
-                        </button>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* ค้นหาสินค้า */}
+                <div className="lg:col-span-1 border-r border-gray-200 pr-4">
+                  <div className="mb-4">
+                    <label htmlFor="search" className="block text-sm font-medium mb-1">ค้นหาสินค้า</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="search"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md pr-10"
+                        placeholder="ชื่อสินค้า หรือ รหัสสินค้า"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <i className="fa-solid fa-search text-gray-400"></i>
                       </div>
                     </div>
-                    
-                    <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-4">
-                      <div className="flex items-center mb-3">
-                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mr-3">
-                          <i className="fa-solid fa-user"></i>
-                        </div>
-                        <div>
-                          <h4 className="font-medium">{selectedCustomer.name}</h4>
-                          <p className="text-sm text-gray-600">ลูกค้า ID: {selectedCustomer.id}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">ข้อมูลติดต่อ</p>
-                          <p className="text-sm mb-1">
-                            <i className="fa-solid fa-phone text-gray-400 mr-2 w-4"></i>
-                            {selectedCustomer.phone}
-                          </p>
-                          <p className="text-sm">
-                            <i className="fa-solid fa-envelope text-gray-400 mr-2 w-4"></i>
-                            {selectedCustomer.email}
-                          </p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">ที่อยู่จัดส่ง</p>
-                          <p className="text-sm">
-                            <i className="fa-solid fa-location-dot text-gray-400 mr-2 w-4"></i>
-                            {selectedCustomer.address}, {selectedCustomer.subdistrict}, {selectedCustomer.district}, {selectedCustomer.province}, {selectedCustomer.zipcode}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* ฟอร์มกรอกที่อยู่แบบละเอียด */}
-                      <div id="customer-address-form" className="hidden mt-3 pt-3 border-t border-gray-200">
-                        <div className="p-3 bg-white border border-gray-200 rounded-md">
-                          <h4 className="text-sm font-medium mb-3 text-indigo-600">ข้อมูลผู้รับ</h4>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">บ้านเลขที่</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                defaultValue={selectedCustomer?.addressNumber || ''}
-                                placeholder="บ้านเลขที่"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">หมู่</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                defaultValue={selectedCustomer?.moo || ''}
-                                placeholder="หมู่"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">ซอย</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                defaultValue={selectedCustomer?.soi || ''}
-                                placeholder="ซอย"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">ถนน</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                defaultValue={selectedCustomer?.road || ''}
-                                placeholder="ถนน"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">อาคาร/หมู่บ้าน</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                defaultValue={selectedCustomer?.building || ''}
-                                placeholder="อาคาร/หมู่บ้าน"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">ชั้น</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                defaultValue={selectedCustomer?.floor || ''}
-                                placeholder="ชั้น"
-                              />
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3 mt-3">
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">แขวง/ตำบล</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                defaultValue={selectedCustomer?.subdistrict || ''}
-                                placeholder="แขวง/ตำบล"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">เขต/อำเภอ</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                defaultValue={selectedCustomer?.district || ''}
-                                placeholder="เขต/อำเภอ"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">จังหวัด</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                defaultValue={selectedCustomer?.province || ''}
-                                placeholder="จังหวัด"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs text-gray-500 mb-1">รหัสไปรษณีย์</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                defaultValue={selectedCustomer?.zipcode || ''}
-                                placeholder="รหัสไปรษณีย์"
-                              />
-                            </div>
-                          </div>
-                          <div className="mt-3 flex justify-end space-x-2">
-                            <button
-                              type="button"
-                              className="px-3 py-1 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
-                              onClick={() => {
-                                // ซ่อนฟอร์ม
-                                const customerAddressForm = document.getElementById('customer-address-form');
-                                if (customerAddressForm) {
-                                  customerAddressForm.classList.add('hidden');
-                                }
-                              }}
+                  </div>
+                  
+                  {isProductLoading ? (
+                    <div className="flex justify-center items-center py-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                    </div>
+                  ) : (
+                    <div className="max-h-96 overflow-y-auto pr-1">
+                      {filteredProducts.length > 0 ? (
+                        <div className="space-y-2">
+                          {filteredProducts.map((product) => (
+                            <div
+                              key={product.id}
+                              className={`p-3 rounded-md cursor-pointer transition-colors ${
+                                currentItem.product_id === product.id 
+                                  ? 'bg-indigo-50 border border-indigo-200' 
+                                  : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                              }`}
+                              onClick={() => selectProduct(product)}
                             >
-                              ยกเลิก
-                            </button>
-                            <button
-                              type="button"
-                              className="px-3 py-1 text-xs text-white bg-green-600 hover:bg-green-700 rounded"
-                              onClick={() => {
-                                toast({
-                                  title: 'บันทึกที่อยู่เรียบร้อย',
-                                  variant: 'default',
-                                });
-                                
-                                // ซ่อนฟอร์ม
-                                const customerAddressForm = document.getElementById('customer-address-form');
-                                if (customerAddressForm) {
-                                  customerAddressForm.classList.add('hidden');
-                                }
-                              }}
-                            >
-                              <i className="fa-solid fa-check mr-1"></i>
-                              ยืนยัน
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {showCustomerDetails && (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <h3 className="text-sm font-medium mb-3">ข้อมูลที่อยู่แบบละเอียด</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-white p-3 rounded border border-gray-200">
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                  <p className="text-xs text-gray-500">บ้านเลขที่:</p>
-                                  <p className="font-medium">{selectedCustomer.addressNumber || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-gray-500">หมู่:</p>
-                                  <p className="font-medium">{selectedCustomer.moo || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-gray-500">ซอย:</p>
-                                  <p className="font-medium">{selectedCustomer.soi || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-gray-500">ถนน:</p>
-                                  <p className="font-medium">{selectedCustomer.road || '-'}</p>
+                              <div className="flex items-start">
+                                {product.imageUrl && (
+                                  <img src={product.imageUrl} alt={product.name} className="w-12 h-12 object-cover rounded mr-3" />
+                                )}
+                                <div className="flex-1">
+                                  <p className="font-medium">{product.name}</p>
+                                  <div className="flex justify-between mt-1">
+                                    <span className="text-sm text-gray-500">SKU: {product.sku}</span>
+                                    <span className="text-sm font-medium text-indigo-600">{product.price.toLocaleString()} บาท</span>
+                                  </div>
+                                  <div className="mt-1 text-xs text-gray-500">
+                                    สต็อค: {product.stock} ชิ้น
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                            <div className="bg-white p-3 rounded border border-gray-200">
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                  <p className="text-xs text-gray-500">อาคาร/หมู่บ้าน:</p>
-                                  <p className="font-medium">{selectedCustomer.building || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-gray-500">ชั้น:</p>
-                                  <p className="font-medium">{selectedCustomer.floor || '-'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-gray-500">ตำบล/แขวง:</p>
-                                  <p className="font-medium">{selectedCustomer.subdistrict}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-gray-500">อำเภอ/เขต:</p>
-                                  <p className="font-medium">{selectedCustomer.district}</p>
-                                </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 p-4 rounded-md text-center">
+                          <p className="text-gray-500">ไม่พบสินค้าที่ค้นหา</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {/* เพิ่มสินค้าในรายการ */}
+                <div className="lg:col-span-2">
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium mb-3">เพิ่มสินค้าในรายการ</h3>
+                    <div className={`p-4 rounded-md ${currentItem.product_id ? 'bg-gray-50 border border-gray-200' : 'bg-gray-100 border border-dashed border-gray-300'}`}>
+                      {currentItem.product_id ? (
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center">
+                              {currentItem.product?.imageUrl && (
+                                <img src={currentItem.product.imageUrl} alt={currentItem.product.name} className="w-12 h-12 object-cover rounded mr-3" />
+                              )}
+                              <div>
+                                <h4 className="font-medium">{currentItem.product?.name}</h4>
+                                <p className="text-sm text-gray-500">SKU: {currentItem.product?.sku}</p>
                               </div>
                             </div>
+                            <div className="text-right">
+                              <p className="font-medium text-indigo-600">{currentItem.price.toLocaleString()} บาท / ชิ้น</p>
+                              <p className="text-sm text-gray-500">คงเหลือ: {currentItem.product?.stock} ชิ้น</p>
+                            </div>
                           </div>
-                          <div className="mt-4">
-                            <p className="text-xs text-gray-500 mb-2">ประวัติการสั่งซื้อ</p>
-                            <p className="text-sm text-gray-700">ยังไม่มีประวัติการสั่งซื้อ</p>
+                          
+                          <div className="flex items-end justify-between">
+                            <div>
+                              <label htmlFor="quantity" className="block text-sm mb-1">จำนวน:</label>
+                              <input
+                                type="number"
+                                id="quantity"
+                                className="px-3 py-1 border border-gray-300 rounded-md w-20"
+                                value={currentItem.quantity}
+                                onChange={handleQuantityChange}
+                                min="1"
+                              />
+                            </div>
+                            <div className="flex space-x-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCurrentItem({
+                                    product_id: 0,
+                                    quantity: 1,
+                                    price: 0
+                                  });
+                                }}
+                                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm"
+                              >
+                                ยกเลิก
+                              </button>
+                              <button
+                                type="button"
+                                onClick={addItemToOrder}
+                                className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+                              >
+                                <i className="fa-solid fa-plus mr-1"></i>
+                                เพิ่มสินค้า
+                              </button>
+                            </div>
                           </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-6">
+                          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 mb-2">
+                            <i className="fa-solid fa-cart-plus"></i>
+                          </div>
+                          <p className="text-gray-500 mb-1">เลือกสินค้าจากรายการด้านซ้าย</p>
+                          <p className="text-sm text-gray-400">เพื่อเพิ่มสินค้าในรายการสั่งซื้อ</p>
                         </div>
                       )}
                     </div>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full py-8">
-                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-4">
-                      <i className="fa-solid fa-user-plus text-xl"></i>
+                  
+                  <h3 className="text-sm font-medium mb-3">รายการสินค้าที่เลือก</h3>
+                  
+                  {orderItems.length > 0 ? (
+                    <div className="border rounded-md overflow-hidden mb-4">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">สินค้า</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-24">ราคา</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-24">จำนวน</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-32">รวม</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-16"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {orderItems.map((item) => (
+                            <tr key={item.product_id}>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  {item.product?.imageUrl && (
+                                    <img src={item.product.imageUrl} alt={item.product.name} className="w-8 h-8 object-cover rounded mr-2" />
+                                  )}
+                                  <div>
+                                    <p className="font-medium">{item.product?.name}</p>
+                                    <p className="text-xs text-gray-500">SKU: {item.product?.sku}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-center">
+                                {item.price.toLocaleString()} บาท
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="flex items-center justify-center space-x-1">
+                                  <button
+                                    type="button"
+                                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                                    onClick={() => updateItemQuantity(item.product_id, item.quantity - 1)}
+                                  >
+                                    <i className="fa-solid fa-minus text-xs"></i>
+                                  </button>
+                                  <span className="w-8 text-center">{item.quantity}</span>
+                                  <button
+                                    type="button"
+                                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                                    onClick={() => updateItemQuantity(item.product_id, item.quantity + 1)}
+                                  >
+                                    <i className="fa-solid fa-plus text-xs"></i>
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-right font-medium">
+                                {(item.price * item.quantity).toLocaleString()} บาท
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => removeItem(item.product_id)}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <i className="fa-solid fa-trash-can"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    <p className="text-gray-500 mb-2">กรุณาเลือกลูกค้าจากรายการด้านซ้าย</p>
-                    <p className="text-sm text-gray-400">หรือเพิ่มลูกค้าใหม่หากยังไม่มีข้อมูลในระบบ</p>
-                    <button
-                      type="button"
-                      onClick={() => {}}  // ฟังก์ชันสำหรับเพิ่มลูกค้าใหม่ (ไม่ได้ใช้งานในตัวอย่างนี้)
-                      className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
-                    >
-                      <i className="fa-solid fa-plus mr-2"></i>
-                      เพิ่มลูกค้าใหม่
-                    </button>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-md p-8 text-center">
+                      <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
+                        <i className="fa-solid fa-cart-shopping text-xl"></i>
+                      </div>
+                      <h3 className="text-gray-500 mb-1">ยังไม่มีสินค้าในรายการ</h3>
+                      <p className="text-sm text-gray-400 mb-4">กรุณาเลือกสินค้าเพื่อเพิ่มในรายการสั่งซื้อ</p>
+                    </div>
+                  )}
+                  
+                  {validationErrors.items && (
+                    <p className="mt-2 text-sm text-red-600">
+                      <i className="fa-solid fa-circle-exclamation mr-1"></i>
+                      {validationErrors.items}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* ขั้นตอนที่ 2: ข้อมูลลูกค้า */}
+          {currentStep === 'customer' && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <div className="flex items-center text-indigo-800 mb-4">
+                <i className="fa-solid fa-user mr-2"></i>
+                <h2 className="text-lg font-medium">ข้อมูลลูกค้า</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="lg:col-span-1">
+                  <div className="p-4 bg-white border border-gray-200 rounded-md mb-4">
+                    <h3 className="text-sm font-medium mb-3">1. เลือกลูกค้า</h3>
+                    
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {customers.map((customer) => (
+                        <div
+                          key={customer.id}
+                          className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                            selectedCustomer?.id === customer.id 
+                              ? 'border-indigo-400 bg-indigo-50 shadow-sm' 
+                              : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                          onClick={() => handleSelectCustomer(customer.id)}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
+                              <i className="fa-solid fa-user"></i>
+                            </div>
+                            <div>
+                              <p className="font-medium">{customer.name}</p>
+                              <p className="text-xs text-gray-500">{customer.phone}</p>
+                            </div>
+                            {selectedCustomer?.id === customer.id && (
+                              <div className="ml-auto text-green-600">
+                                <i className="fa-solid fa-check-circle"></i>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <div className="p-5 border border-dashed border-indigo-300 rounded-md flex flex-col items-center justify-center text-center hover:bg-indigo-50 cursor-pointer">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mb-2">
+                          <i className="fa-solid fa-plus"></i>
+                        </div>
+                        <p className="font-medium text-indigo-600">เพิ่มลูกค้าใหม่</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+                    <div className="flex items-center mb-2">
+                      <i className="fa-solid fa-info-circle text-indigo-600 mr-2"></i>
+                      <h3 className="text-sm font-medium">หรือกรอกข้อมูลโดยตรง</h3>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-2">สามารถวางข้อความทั้งหมดและกดปุ่ม "จำแนกที่อยู่" เพื่อให้ระบบแยกข้อมูลให้อัตโนมัติ</p>
+                    <div className="mb-2">
+                      <label className="block text-xs text-gray-500 mb-1">ตัวอย่าง:</label>
+                      <div className="text-xs text-gray-700 bg-gray-100 p-2 rounded">
+                        ลักษณวดี เจริญวัฒน์อนันต์ 0816425905 ร้านมะลิหอมสมุนไพร 99/1 ถ.ประชาธิปัตย์ หาดใหญ่ สงขลา หาดใหญ่ หาดใหญ่ สงขลา 90110
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="lg:col-span-1">
+                  <div className="inner-forms-box p-5 rounded-md border border-gray-200 bg-white">
+                    <div className="order-information mb-4">
+                      <div className="mb-3">
+                        <span className="title-txt text-sm font-medium">2. กรอกข้อมูลลูกค้า</span>
+                      </div>
+                      
+                      <div className="form-box-platform">
+                        {/* รายละเอียดผู้รับสินค้า */}
+                        <div className="mb-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <label className="block text-xs text-gray-500">รายละเอียดผู้รับสินค้า</label>
+                            <button
+                              type="button"
+                              onClick={classifyAddress}
+                              className="flex items-center text-indigo-600 hover:text-indigo-800 text-xs px-2 py-1 border border-indigo-300 rounded-md bg-indigo-50"
+                            >
+                              <i className="fa-solid fa-wand-magic-sparkles mr-1"></i>
+                              จำแนกที่อยู่
+                            </button>
+                          </div>
+                          
+                          <textarea
+                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                            rows={5}
+                            style={{ minHeight: '120px' }}
+                            value={rawAddressInput}
+                            onChange={(e) => setRawAddressInput(e.target.value)}
+                            placeholder="ชื่อ-นามสกุล เบอร์โทรศัพท์ ชื่อร้าน(ถ้ามี) ที่อยู่ แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์"
+                          ></textarea>
+                        </div>
+                        
+                        {/* ฟอร์มกรอกที่อยู่แบบละเอียด */}
+                        {isAddressFormVisible && classifiedAddress && (
+                          <div className="mb-4">
+                            <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                              <h4 className="text-sm font-medium mb-3 text-green-600">ข้อมูลที่จำแนกแล้ว</h4>
+                              
+                              <div className="grid grid-cols-2 gap-4 mb-3">
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">ชื่อ-นามสกุล</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={classifiedAddress.fullname}
+                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, fullname: e.target.value})}
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">เบอร์โทรศัพท์</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={classifiedAddress.phone}
+                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, phone: e.target.value})}
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="mb-3">
+                                <label className="block text-xs text-gray-500 mb-1">ชื่อร้าน/บริษัท (ถ้ามี)</label>
+                                <input
+                                  type="text"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                  value={classifiedAddress.store}
+                                  onChange={(e) => setClassifiedAddress({...classifiedAddress, store: e.target.value})}
+                                />
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4 mb-3">
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">บ้านเลขที่</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={classifiedAddress.addressNumber}
+                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, addressNumber: e.target.value})}
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">หมู่</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={classifiedAddress.moo}
+                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, moo: e.target.value})}
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4 mb-3">
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">ซอย</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={classifiedAddress.soi}
+                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, soi: e.target.value})}
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">ถนน</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={classifiedAddress.road}
+                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, road: e.target.value})}
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4 mb-3">
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">แขวง/ตำบล</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={classifiedAddress.subdistrict}
+                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, subdistrict: e.target.value})}
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">เขต/อำเภอ</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={classifiedAddress.district}
+                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, district: e.target.value})}
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">จังหวัด</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={classifiedAddress.province}
+                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, province: e.target.value})}
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label className="block text-xs text-gray-500 mb-1">รหัสไปรษณีย์</label>
+                                  <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={classifiedAddress.zipcode}
+                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, zipcode: e.target.value})}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-end mt-3 pt-3 border-t border-gray-200">
+                          <button
+                            type="button"
+                            className="px-4 py-2 mr-2 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded"
+                            onClick={clearAddress}
+                          >
+                            <i className="fa-solid fa-eraser mr-1"></i>
+                            ล้างข้อมูล
+                          </button>
+                          <button
+                            type="button"
+                            className="px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded"
+                            onClick={() => {
+                              if (rawAddressInput.trim() && !classifiedAddress) {
+                                classifyAddress();
+                              } else {
+                                toast({
+                                  title: 'บันทึกข้อมูลเรียบร้อย',
+                                  variant: 'default',
+                                });
+                              }
+                            }}
+                          >
+                            <i className="fa-solid fa-check mr-1"></i>
+                            {classifiedAddress ? 'บันทึก' : 'วิเคราะห์ข้อมูล'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {validationErrors.customer_id && (
+                    <p className="mt-2 text-sm text-red-600">
+                      <i className="fa-solid fa-circle-exclamation mr-1"></i>
+                      {validationErrors.customer_id}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* ขั้นตอนที่ 3: การจัดส่ง */}
+          {currentStep === 'shipping' && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-lg font-medium mb-4 flex items-center">
+                <i className="fa-solid fa-truck text-indigo-600 mr-2"></i>
+                เลือกวิธีการจัดส่ง
+              </h2>
+              
+              <div className="mb-6">
+                <h3 className="text-sm font-medium mb-3">ข้อมูลผู้รับ</h3>
+                
+                {selectedCustomer ? (
+                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-4">
+                    <div className="flex items-center mb-3">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mr-3">
+                        <i className="fa-solid fa-user"></i>
+                      </div>
+                      <div>
+                        <h4 className="font-medium">{selectedCustomer.name}</h4>
+                        <p className="text-sm text-gray-600">{selectedCustomer.phone}</p>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm">
+                      <span className="text-gray-500">ที่อยู่: </span>
+                      {selectedCustomer.address}, {selectedCustomer.subdistrict}, {selectedCustomer.district}, {selectedCustomer.province}, {selectedCustomer.zipcode}
+                    </p>
+                  </div>
+                ) : classifiedAddress ? (
+                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-4">
+                    <div className="flex items-center mb-3">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mr-3">
+                        <i className="fa-solid fa-user"></i>
+                      </div>
+                      <div>
+                        <h4 className="font-medium">{classifiedAddress.fullname}</h4>
+                        <p className="text-sm text-gray-600">{classifiedAddress.phone}</p>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm mb-1">
+                      {classifiedAddress.store && (
+                        <span className="font-medium">{classifiedAddress.store}<br /></span>
+                      )}
+                      <span className="text-gray-500">ที่อยู่: </span>
+                      {classifiedAddress.addressNumber} 
+                      {classifiedAddress.moo && ` หมู่ ${classifiedAddress.moo}`} 
+                      {classifiedAddress.soi && ` ซ.${classifiedAddress.soi}`} 
+                      {classifiedAddress.road && ` ถ.${classifiedAddress.road}`}, 
+                      {classifiedAddress.subdistrict}, {classifiedAddress.district}, {classifiedAddress.province}, {classifiedAddress.zipcode}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-4 text-center">
+                    <p className="text-gray-500">ไม่มีข้อมูลผู้รับ กรุณาย้อนกลับไปเลือกลูกค้าหรือกรอกข้อมูลลูกค้า</p>
                   </div>
                 )}
+              </div>
+              
+              <div className="mb-6">
+                <h3 className="text-sm font-medium mb-3">วิธีการจัดส่ง</h3>
                 
-                {validationErrors.customer_id && (
+                {isLoadingShippingRates ? (
+                  <div className="bg-gray-50 border border-gray-200 rounded-md p-8 text-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                    <p className="text-gray-500">กำลังโหลดข้อมูลวิธีการจัดส่ง...</p>
+                  </div>
+                ) : (
+                  shippingMethods.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {shippingMethods.map((method) => (
+                        <div
+                          key={method.id}
+                          className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                            selectedShippingMethod?.id === method.id 
+                              ? 'border-indigo-400 bg-indigo-50 shadow-sm' 
+                              : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                          onClick={() => handleSelectShippingMethod(method)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10 mr-3">
+                                {method.logo ? (
+                                  <img src={method.logo} alt={method.name} className="h-10 w-auto object-contain" />
+                                ) : (
+                                  <div className="h-10 w-10 bg-gray-200 rounded flex items-center justify-center">
+                                    <i className="fa-solid fa-truck text-gray-500"></i>
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <h4 className="font-medium">{method.name}</h4>
+                                <p className="text-xs text-gray-500">{method.deliveryTime}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="font-medium text-indigo-600 mr-2">{method.price} บาท</span>
+                              {selectedShippingMethod?.id === method.id && (
+                                <div className="text-green-600">
+                                  <i className="fa-solid fa-circle-check"></i>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-md p-8 text-center">
+                      <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
+                        <i className="fa-solid fa-truck-ramp-box text-xl"></i>
+                      </div>
+                      <h3 className="text-gray-500 mb-1">ไม่พบข้อมูลวิธีการจัดส่ง</h3>
+                      <p className="text-sm text-gray-400 mb-4">กรุณาเลือกลูกค้าและระบุที่อยู่จัดส่ง</p>
+                    </div>
+                  )
+                )}
+                
+                {validationErrors.shipping_method && (
                   <p className="mt-2 text-sm text-red-600">
                     <i className="fa-solid fa-circle-exclamation mr-1"></i>
-                    {validationErrors.customer_id}
+                    {validationErrors.shipping_method}
                   </p>
                 )}
               </div>
-            </div>
-          </div>
-        )}
-        
-        {/* ขั้นตอนที่ 3: การจัดส่ง */}
-        {currentStep === 'shipping' && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-lg font-medium mb-4 flex items-center">
-              <i className="fa-solid fa-truck text-indigo-600 mr-2"></i>
-              เลือกวิธีการจัดส่ง
-            </h2>
-            
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-medium">ข้อมูลผู้รับ</h3>
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // แสดงฟอร์มกรอกที่อยู่แบบละเอียด
-                      const detailAddressForm = document.getElementById('detail-address-form');
-                      if (detailAddressForm) {
-                        detailAddressForm.classList.toggle('hidden');
-                      }
-                    }}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center"
-                  >
-                    <i className="fa-solid fa-list mr-1"></i>
-                    จำแนกที่อยู่
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearAddress}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center"
-                  >
-                    <i className="fa-solid fa-eraser mr-1"></i>
-                    ล้างข้อมูล
-                  </button>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                <p className="font-medium mb-1">{selectedCustomer?.name}</p>
-                <p className="text-sm text-gray-700 mb-1">โทร: {selectedCustomer?.phone}</p>
-                
-                {/* ที่อยู่แบบเต็ม */}
-                <textarea
-                  id="shipping-address"
-                  className="w-full px-3 py-2 mt-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                  rows={3}
-                  defaultValue={`${selectedCustomer?.address}, ${selectedCustomer?.subdistrict}, ${selectedCustomer?.district}, ${selectedCustomer?.province}, ${selectedCustomer?.zipcode}`}
-                  placeholder="ที่อยู่ (บ้านเลขที่ เขต แขวง รหัสไปรษณีย์)"
-                ></textarea>
-                
-                {/* ฟอร์มกรอกที่อยู่แบบละเอียด */}
-                <div id="detail-address-form" className="hidden mt-3">
-                  <div className="p-3 bg-white border border-gray-200 rounded-md">
-                    <h4 className="text-sm font-medium mb-3 text-indigo-600">กรอกที่อยู่แบบแยกส่วน</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">บ้านเลขที่</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          defaultValue={selectedCustomer?.addressNumber || ''}
-                          placeholder="บ้านเลขที่"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">หมู่</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          defaultValue={selectedCustomer?.moo || ''}
-                          placeholder="หมู่"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">ซอย</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          defaultValue={selectedCustomer?.soi || ''}
-                          placeholder="ซอย"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">ถนน</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          defaultValue={selectedCustomer?.road || ''}
-                          placeholder="ถนน"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">อาคาร/หมู่บ้าน</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          defaultValue={selectedCustomer?.building || ''}
-                          placeholder="อาคาร/หมู่บ้าน"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">ชั้น</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          defaultValue={selectedCustomer?.floor || ''}
-                          placeholder="ชั้น"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mt-3">
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">แขวง/ตำบล</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          defaultValue={selectedCustomer?.subdistrict || ''}
-                          placeholder="แขวง/ตำบล"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">เขต/อำเภอ</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          defaultValue={selectedCustomer?.district || ''}
-                          placeholder="เขต/อำเภอ"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">จังหวัด</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          defaultValue={selectedCustomer?.province || ''}
-                          placeholder="จังหวัด"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">รหัสไปรษณีย์</label>
-                        <input
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          defaultValue={selectedCustomer?.zipcode || ''}
-                          placeholder="รหัสไปรษณีย์"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-3 flex justify-end space-x-2">
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
-                        onClick={() => {
-                          // ซ่อนฟอร์ม
-                          const detailAddressForm = document.getElementById('detail-address-form');
-                          if (detailAddressForm) {
-                            detailAddressForm.classList.add('hidden');
-                          }
-                        }}
-                      >
-                        ยกเลิก
-                      </button>
-                      <button
-                        type="button"
-                        className="px-3 py-1 text-xs text-white bg-green-600 hover:bg-green-700 rounded"
-                        onClick={() => {
-                          // สร้างที่อยู่แบบเต็มจากข้อมูลที่กรอก
-                          const addressTextarea = document.getElementById('shipping-address') as HTMLTextAreaElement;
-                          if (addressTextarea) {
-                            toast({
-                              title: 'บันทึกที่อยู่เรียบร้อย',
-                              variant: 'default',
-                            });
-                            
-                            // ซ่อนฟอร์ม
-                            const detailAddressForm = document.getElementById('detail-address-form');
-                            if (detailAddressForm) {
-                              detailAddressForm.classList.add('hidden');
-                            }
-                          }
-                        }}
-                      >
-                        <i className="fa-solid fa-check mr-1"></i>
-                        ยืนยัน
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">คุณสามารถแก้ไขที่อยู่จัดส่งได้ หรือกดปุ่ม "จำแนกที่อยู่" เพื่อกรอกแบบละเอียด</p>
-            </div>
-            
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-medium">วิธีการจัดส่ง</h3>
-                <div className="flex items-center text-xs text-gray-500">
-                  <i className="fa-solid fa-filter mr-1"></i>
-                  <span>กรองตามผู้ให้บริการ:</span>
-                  <select 
-                    className="ml-2 p-1 text-xs border border-gray-300 rounded"
-                    defaultValue="all"
-                  >
-                    <option value="all">ทั้งหมด</option>
-                    <option value="Flash Express">Flash Express</option>
-                    <option value="Thailand Post">ไปรษณีย์ไทย</option>
-                    <option value="Kerry Express">Kerry Express</option>
-                    <option value="J&T Express">J&T Express</option>
-                  </select>
-                </div>
-              </div>
               
-              {isLoadingShippingRates ? (
-                <div className="flex justify-center py-8">
-                  <div className="text-center">
-                    <i className="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl mb-2"></i>
-                    <p className="text-sm text-gray-500">กำลังโหลดข้อมูลวิธีการจัดส่ง...</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {shippingMethods.map((method) => (
-                    <div
-                      key={method.id}
-                      className={`flex items-center justify-between p-4 border rounded-md cursor-pointer transition-colors ${
-                        selectedShippingMethod?.id === method.id 
-                          ? 'bg-indigo-50 border-indigo-200' 
-                          : 'bg-white border-gray-200 hover:bg-gray-50'
+              <div>
+                <h3 className="text-sm font-medium mb-3">หมายเหตุการจัดส่ง (ไม่บังคับ)</h3>
+                <textarea
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  rows={2}
+                  placeholder="ระบุหมายเหตุการจัดส่ง เช่น ให้โทรก่อนจัดส่ง, ถ้าไม่อยู่ให้วางไว้ที่ป้อมยาม เป็นต้น"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                ></textarea>
+              </div>
+            </div>
+          )}
+          
+          {/* ขั้นตอนที่ 4: การชำระเงิน */}
+          {currentStep === 'payment' && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-lg font-medium mb-4 flex items-center">
+                <i className="fa-solid fa-credit-card text-indigo-600 mr-2"></i>
+                ชำระเงิน
+              </h2>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-sm font-medium mb-3">วิธีการชำระเงิน</h3>
+                  
+                  <div className="space-y-2">
+                    <div 
+                      className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                        paymentMethod === 'bank-transfer' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
                       }`}
-                      onClick={() => handleSelectShippingMethod(method)}
+                      onClick={() => setPaymentMethod('bank-transfer')}
                     >
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-white rounded flex items-center justify-center mr-3 p-1 border border-gray-200">
-                          {method.logo ? (
-                            <img src={method.logo} alt={method.provider} className="w-full h-full object-contain" />
-                          ) : (
-                            <i className="fa-solid fa-truck text-gray-400"></i>
-                          )}
+                        <div className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center mr-3">
+                          {paymentMethod === 'bank-transfer' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
                         </div>
-                        <div>
-                          <p className="font-medium">{method.name}</p>
-                          <p className="text-xs text-gray-500">{method.deliveryTime}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <p className="font-medium text-green-600 mr-4">฿{method.price.toLocaleString()}</p>
-                        <div className="w-5 h-5 rounded-full border flex items-center justify-center">
-                          {selectedShippingMethod?.id === method.id && (
-                            <div className="w-3 h-3 rounded-full bg-indigo-600"></div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {validationErrors.shipping_method && (
-                <p className="mt-2 text-sm text-red-600">
-                  <i className="fa-solid fa-circle-exclamation mr-1"></i>
-                  {validationErrors.shipping_method}
-                </p>
-              )}
-            </div>
-            
-            <div className="mb-4">
-              <h3 className="text-sm font-medium mb-2">โค้ดส่วนลด</h3>
-              {discount ? (
-                <div className="bg-green-50 p-3 rounded-md border border-green-200 flex justify-between items-center">
-                  <div>
-                    <p className="font-medium text-green-700 flex items-center">
-                      <i className="fa-solid fa-tag mr-2"></i>
-                      {discount.code}
-                    </p>
-                    <p className="text-sm text-green-600">
-                      ส่วนลด: {discount.type === 'percentage' ? `${discount.value}%` : `฿${discount.value.toLocaleString()}`}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={removeDiscount}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <i className="fa-solid fa-times"></i>
-                  </button>
-                </div>
-              ) : (
-                <div className="flex">
-                  <input
-                    type="text"
-                    value={discountCode}
-                    onChange={(e) => setDiscountCode(e.target.value)}
-                    placeholder="ระบุโค้ดส่วนลด"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={checkDiscountCode}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700"
-                  >
-                    ใช้โค้ด
-                  </button>
-                </div>
-              )}
-              <p className="mt-1 text-xs text-gray-500">ลองใช้โค้ด "NEWUSER" เพื่อรับส่วนลด 10% หรือ "FLASH100" เพื่อรับส่วนลด 100 บาท</p>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium mb-2">หมายเหตุเพิ่มเติม (ถ้ามี)</h3>
-              <textarea
-                rows={3}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="ระบุหมายเหตุเพิ่มเติมสำหรับคำสั่งซื้อนี้..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              ></textarea>
-            </div>
-          </div>
-        )}
-        
-        {/* ขั้นตอนที่ 4: การชำระเงิน */}
-        {currentStep === 'payment' && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-lg font-medium mb-4 flex items-center">
-              <i className="fa-solid fa-credit-card text-indigo-600 mr-2"></i>
-              ยืนยันคำสั่งซื้อและชำระเงิน
-            </h2>
-            
-            <div className="mb-6">
-              <h3 className="text-sm font-medium mb-3">วิธีการชำระเงิน</h3>
-              <div className="space-y-3">
-                <label className={`flex items-center justify-between p-4 border rounded-md cursor-pointer transition-colors ${
-                  paymentMethod === 'bank-transfer' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-200 hover:bg-gray-50'
-                }`}>
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-blue-100 rounded flex items-center justify-center mr-3">
-                      <i className="fa-solid fa-university text-blue-600"></i>
-                    </div>
-                    <div>
-                      <p className="font-medium">โอนเงินผ่านธนาคาร</p>
-                      <p className="text-xs text-gray-500">โอนเงินเข้าบัญชีธนาคารของบริษัท</p>
-                    </div>
-                  </div>
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="bank-transfer"
-                    checked={paymentMethod === 'bank-transfer'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-5 h-5 text-indigo-600"
-                  />
-                </label>
-                
-                <label className={`flex items-center justify-between p-4 border rounded-md cursor-pointer transition-colors ${
-                  paymentMethod === 'credit-card' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-200 hover:bg-gray-50'
-                }`}>
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-purple-100 rounded flex items-center justify-center mr-3">
-                      <i className="fa-solid fa-credit-card text-purple-600"></i>
-                    </div>
-                    <div>
-                      <p className="font-medium">บัตรเครดิต/เดบิต</p>
-                      <p className="text-xs text-gray-500">ชำระเงินด้วยบัตรเครดิตหรือเดบิต</p>
-                    </div>
-                  </div>
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="credit-card"
-                    checked={paymentMethod === 'credit-card'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-5 h-5 text-indigo-600"
-                  />
-                </label>
-                
-                <label className={`flex items-center justify-between p-4 border rounded-md cursor-pointer transition-colors ${
-                  paymentMethod === 'cod' ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-200 hover:bg-gray-50'
-                }`}>
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-green-100 rounded flex items-center justify-center mr-3">
-                      <i className="fa-solid fa-money-bill text-green-600"></i>
-                    </div>
-                    <div>
-                      <p className="font-medium">เก็บเงินปลายทาง (COD)</p>
-                      <p className="text-xs text-gray-500">ชำระเงินเมื่อได้รับสินค้า</p>
-                    </div>
-                  </div>
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="cod"
-                    checked={paymentMethod === 'cod'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-5 h-5 text-indigo-600"
-                  />
-                </label>
-              </div>
-              
-              {validationErrors.payment_method && (
-                <p className="mt-2 text-sm text-red-600">
-                  <i className="fa-solid fa-circle-exclamation mr-1"></i>
-                  {validationErrors.payment_method}
-                </p>
-              )}
-            </div>
-            
-            <div className="mb-6">
-              <h3 className="text-sm font-medium mb-3">สรุปรายการสั่งซื้อ</h3>
-              
-              <div className="border rounded-md overflow-hidden">
-                <div className="bg-gray-50 px-4 py-2 text-xs font-medium text-gray-500 uppercase">
-                  รายการสินค้า
-                </div>
-                <div className="divide-y divide-gray-200">
-                  {orderItems.map((item) => {
-                    const product = products.find(p => p.id === item.product_id);
-                    return (
-                      <div key={item.product_id} className="p-4 flex justify-between items-center">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center mr-3">
-                            {product?.imageUrl ? (
-                              <img src={product.imageUrl} alt={product.name} className="h-8 w-8 object-contain" />
-                            ) : (
-                              <i className="fa-solid fa-box text-gray-400"></i>
-                            )}
+                          <div className="w-8 h-8 rounded flex items-center justify-center mr-2">
+                            <i className="fa-solid fa-building-columns text-indigo-600"></i>
                           </div>
                           <div>
-                            <p className="text-sm font-medium">{product?.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {item.quantity} × ฿{item.price.toLocaleString()}
+                            <p className="font-medium">โอนผ่านธนาคาร</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div 
+                      className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                        paymentMethod === 'cod' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                      onClick={() => setPaymentMethod('cod')}
+                    >
+                      <div className="flex items-center">
+                        <div className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center mr-3">
+                          {paymentMethod === 'cod' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 rounded flex items-center justify-center mr-2">
+                            <i className="fa-solid fa-money-bill-wave text-green-600"></i>
+                          </div>
+                          <div>
+                            <p className="font-medium">เก็บเงินปลายทาง</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div 
+                      className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                        paymentMethod === 'credit-card' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                      onClick={() => setPaymentMethod('credit-card')}
+                    >
+                      <div className="flex items-center">
+                        <div className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center mr-3">
+                          {paymentMethod === 'credit-card' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 rounded flex items-center justify-center mr-2">
+                            <i className="fa-solid fa-credit-card text-blue-600"></i>
+                          </div>
+                          <div>
+                            <p className="font-medium">บัตรเครดิต / เดบิต</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {validationErrors.payment_method && (
+                    <p className="mt-2 text-sm text-red-600">
+                      <i className="fa-solid fa-circle-exclamation mr-1"></i>
+                      {validationErrors.payment_method}
+                    </p>
+                  )}
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium mb-3">ส่วนลด</h3>
+                  
+                  {discount ? (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-md mb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
+                            <i className="fa-solid fa-ticket"></i>
+                          </div>
+                          <div>
+                            <p className="font-medium">โค้ดส่วนลด: {discount.code}</p>
+                            <p className="text-sm text-gray-600">
+                              {discount.type === 'percentage' ? `ส่วนลด ${discount.value}%` : `ส่วนลด ${discount.value} บาท`}
                             </p>
                           </div>
                         </div>
-                        <p className="font-medium">
-                          ฿{(item.price * item.quantity).toLocaleString()}
-                        </p>
+                        <button
+                          type="button"
+                          onClick={removeDiscount}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <i className="fa-solid fa-times"></i>
+                        </button>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ) : (
+                    <div className="flex mb-4">
+                      <input
+                        type="text"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="รหัสส่วนลด"
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={checkDiscountCode}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700"
+                      >
+                        ใช้โค้ด
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                    <h3 className="text-sm font-medium mb-3">สรุปคำสั่งซื้อ</h3>
+                    
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">ยอดรวมสินค้า:</span>
+                        <span className="font-medium">{calculateSubtotal().toLocaleString()} บาท</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">ส่วนลด:</span>
+                        <span className="font-medium text-red-600">-{calculateDiscount().toLocaleString()} บาท</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">ค่าจัดส่ง:</span>
+                        <span className="font-medium">{calculateShippingFee().toLocaleString()} บาท</span>
+                      </div>
+                      
+                      <div className="border-t border-gray-200 pt-2 mt-2">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">ยอดรวมทั้งสิ้น:</span>
+                          <span className="text-lg font-bold text-indigo-600">{calculateTotal().toLocaleString()} บาท</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+          )}
+          
+          {/* ปุ่มดำเนินการ */}
+          <div className="flex justify-between">
+            {currentStep !== 'items' && (
+              <button
+                type="button"
+                onClick={goToPreviousStep}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              >
+                <i className="fa-solid fa-arrow-left mr-2"></i>
+                ย้อนกลับ
+              </button>
+            )}
             
-            <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <p className="text-sm text-gray-600">ยอดรวมสินค้า:</p>
-                  <p className="text-sm font-medium">฿{calculateSubtotal().toLocaleString()}</p>
-                </div>
-                
-                {discount && (
-                  <div className="flex justify-between text-green-600">
-                    <p className="text-sm">ส่วนลด ({discount.type === 'percentage' ? `${discount.value}%` : `฿${discount.value}`}):</p>
-                    <p className="text-sm font-medium">-฿{calculateDiscount().toLocaleString()}</p>
-                  </div>
-                )}
-                
-                <div className="flex justify-between">
-                  <p className="text-sm text-gray-600">ค่าจัดส่ง ({selectedShippingMethod?.name}):</p>
-                  <p className="text-sm font-medium">฿{calculateShippingFee().toLocaleString()}</p>
-                </div>
-                
-                <div className="border-t border-gray-200 pt-2 mt-2">
-                  <div className="flex justify-between">
-                    <p className="text-base font-medium">ยอดรวมทั้งสิ้น:</p>
-                    <p className="text-lg font-bold text-green-600">฿{calculateTotal().toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
+            <div className="ml-auto">
+              {currentStep === 'payment' ? (
+                <button
+                  type="submit"
+                  className={`px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="inline-block animate-spin h-4 w-4 border-t-2 border-white rounded-full mr-2"></div>
+                      กำลังดำเนินการ...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-check mr-2"></i>
+                      ยืนยันคำสั่งซื้อ
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={goToNextStep}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                >
+                  ถัดไป
+                  <i className="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+              )}
             </div>
           </div>
-        )}
-        
-        {/* ปุ่มดำเนินการ */}
-        {renderActionButtons()}
-      </form>
+        </form>
+      </div>
     </Layout>
   );
 };

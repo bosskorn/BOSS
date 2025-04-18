@@ -9,7 +9,7 @@ import Dashboard from "@/pages/dashboard-with-layout";
 import CategoryManage from "@/pages/category-manage-enhanced";
 import ProductCreate from "@/pages/product-create-enhanced";
 import ProductList from "@/pages/product-list";
-import CreateOrder from "@/pages/create-order-new";
+import CreateOrder from "@/pages/create-order";
 
 function Router() {
   return (
