@@ -186,10 +186,23 @@ const ProductCreate: React.FC = () => {
   // ฟังก์ชันสำหรับดึงข้อมูลสินค้าที่ต้องการแก้ไข
   const fetchProductDetails = async (id: number) => {
     try {
-      const response = await axios.get(`/api/products/${id}`);
+      const response = await fetch(`/api/products/${id}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
       
-      if (response.data && response.data.success && response.data.data) {
-        const productData = response.data.data;
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      
+      if (responseData.success && responseData.data) {
+        const productData = responseData.data;
         
         // แปลงข้อมูลเป็นรูปแบบที่ฟอร์มใช้งานได้
         setProduct({
@@ -226,13 +239,13 @@ const ProductCreate: React.FC = () => {
           variant: 'default',
         });
       } else {
-        throw new Error(response.data?.message || 'ไม่สามารถโหลดข้อมูลสินค้าได้');
+        throw new Error(responseData.message || 'ไม่สามารถโหลดข้อมูลสินค้าได้');
       }
     } catch (error) {
       console.error('Error fetching product:', error);
       toast({
         title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถโหลดข้อมูลสินค้าได้',
+        description: error instanceof Error ? error.message : 'ไม่สามารถโหลดข้อมูลสินค้าได้',
         variant: 'destructive',
       });
     }
@@ -242,10 +255,23 @@ const ProductCreate: React.FC = () => {
   const fetchCategories = async () => {
     try {
       // เรียกข้อมูลจาก API จริง
-      const response = await axios.get('/api/categories');
+      const response = await fetch('/api/categories', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
       
-      if (response.data && response.data.success) {
-        const categoriesData = response.data.data || [];
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      
+      if (responseData.success) {
+        const categoriesData = responseData.data || [];
         
         // แปลงข้อมูลเป็นรูปแบบที่ต้องการ
         const mappedCategories: Category[] = categoriesData.map((cat: any) => ({
@@ -255,13 +281,13 @@ const ProductCreate: React.FC = () => {
         
         setCategories(mappedCategories);
       } else {
-        throw new Error(response.data?.message || 'ไม่สามารถโหลดข้อมูลหมวดหมู่ได้');
+        throw new Error(responseData.message || 'ไม่สามารถโหลดข้อมูลหมวดหมู่ได้');
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast({
         title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถโหลดข้อมูลหมวดหมู่ได้',
+        description: error instanceof Error ? error.message : 'ไม่สามารถโหลดข้อมูลหมวดหมู่ได้',
         variant: 'destructive',
       });
     }
@@ -507,18 +533,40 @@ const ProductCreate: React.FC = () => {
       // เลือกเส้นทาง API ตามโหมดการทำงาน (เพิ่มใหม่หรือแก้ไข)
       if (isEditMode && productId) {
         // แก้ไขสินค้า
-        response = await axios.put(`/api/products/${productId}`, productData, {
+        const res = await fetch(`/api/products/${productId}`, {
+          method: 'PUT',
           headers: {
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          },
+          body: JSON.stringify(productData),
+          credentials: 'include'
         });
+        
+        if (!res.ok) {
+          throw new Error(`Error ${res.status}: ${res.statusText}`);
+        }
+        
+        response = { data: await res.json() };
       } else {
         // เพิ่มสินค้าใหม่
-        response = await axios.post('/api/products', productData, {
+        const res = await fetch('/api/products', {
+          method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          },
+          body: JSON.stringify(productData),
+          credentials: 'include'
         });
+        
+        if (!res.ok) {
+          throw new Error(`Error ${res.status}: ${res.statusText}`);
+        }
+        
+        response = { data: await res.json() };
       }
 
       if (response.data && response.data.success) {
