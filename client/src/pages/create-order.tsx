@@ -434,9 +434,9 @@ const CreateOrder: React.FC = () => {
         const mockShippingMethods: ShippingMethod[] = [
           { 
             id: 'flash-express-normal', 
-            name: 'Flash Express - ปกติ', 
+            name: 'Flash Express - บริการมาตรฐาน', 
             deliveryTime: '2-3 วันทำการ', 
-            price: 50, 
+            price: 45, 
             provider: 'Flash Express',
             logo: shippingLogos['flash-express']
           },
@@ -444,7 +444,7 @@ const CreateOrder: React.FC = () => {
             id: 'flash-express-express', 
             name: 'Flash Express - ด่วนพิเศษ', 
             deliveryTime: '1-2 วันทำการ', 
-            price: 80, 
+            price: 75, 
             provider: 'Flash Express',
             logo: shippingLogos['flash-express']
           },
