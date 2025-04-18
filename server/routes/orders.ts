@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { storage } from '../storage';
 import { auth } from '../middleware/auth';
+import { createFlashExpressShipping } from '../services/flash-express';
 
 const router = Router();
 

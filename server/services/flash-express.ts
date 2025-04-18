@@ -95,7 +95,7 @@ export const getFlashExpressShippingOptions = async (
         deliveryTime: '1-2 วันทำการ',
         provider: 'Flash Express',
         serviceId: 'EXPRESS',
-        logo: 'https://cdn.flashexpress.co.th/uploads/images/flash.png'
+        logo: 'https://1000logos.net/wp-content/uploads/2020/09/Flash-Logo-640x400.png'
       },
       {
         id: 2,
@@ -104,7 +104,7 @@ export const getFlashExpressShippingOptions = async (
         deliveryTime: '2-3 วันทำการ', 
         provider: 'Flash Express',
         serviceId: 'NORMAL',
-        logo: 'https://cdn.flashexpress.co.th/uploads/images/flash.png'
+        logo: 'https://1000logos.net/wp-content/uploads/2020/09/Flash-Logo-640x400.png'
       }
     ];
   }
