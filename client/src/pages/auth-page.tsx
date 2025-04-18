@@ -174,19 +174,15 @@ const AuthPage: React.FC = () => {
       <div className="max-w-md w-full space-y-8 bg-white/90 p-8 rounded-lg shadow-xl backdrop-blur-xl relative z-10 float-box">
         <div className="text-center">
           <div className="flex flex-col items-center mb-4">
-            <LogoIcon size={60} />
+            <LogoIcon size={80} className="glow-purple" />
             <div className="mt-3 flex items-center justify-center">
-              <span className="text-2xl font-bold text-purple-700">PURPLE</span>
-              <span className="text-2xl font-bold text-purple-500">DASH</span>
+              <span className="text-3xl font-bold text-purple-700">PURPLE</span>
+              <span className="text-3xl font-bold text-purple-500">DASH</span>
             </div>
-            <div className="mt-1 text-sm text-purple-600 font-medium">ส่งด่วน ม่วงสะดุด!</div>
           </div>
-          <h2 className="text-2xl font-extrabold text-gray-900">
+          <h2 className="text-2xl font-extrabold text-gray-900 mt-3">
             {isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            กรุณากรอกข้อมูลเพื่อใช้งานระบบ
-          </p>
         </div>
         
         {isLogin ? (
