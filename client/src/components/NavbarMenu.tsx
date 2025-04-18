@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useRoute } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
 
 interface NavbarMenuProps {
   onToggleSidebar: () => void;
@@ -9,6 +10,9 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
   // State for active dropdown and mobile menu
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // ใช้ข้อมูลผู้ใช้จาก Auth Context
+  const { user } = useAuth();
   
   // Reference to navbar element for click outside detection
   const navbarRef = useRef<HTMLElement>(null);
@@ -248,13 +252,21 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
         </li>
         
         {/* Account */}
-        <li className="menu-item">
+        <li className="menu-item account-item">
           <button 
-            onClick={onToggleSidebar} 
+            onClick={(e) => {
+              onToggleSidebar();
+              if (mobileMenuOpen) {
+                toggleMobileMenu(); // ปิดเมนูมือถือเมื่อกดปุ่มบัญชี
+              }
+            }} 
             className="menu-link"
           >
             <i className="fas fa-user-circle"></i>
-            <span className="menu-text">บัญชี</span>
+            <span className="menu-text">
+              {user ? user.username : 'บัญชี'}
+              {user && <span className="user-balance">{user.balance?.toLocaleString() || 0} บาท</span>}
+            </span>
           </button>
         </li>
       </ul>

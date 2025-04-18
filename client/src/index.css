@@ -310,6 +310,34 @@
   body.menu-open {
     overflow: hidden;
   }
+  
+  /* ส่วนเมนูบัญชีและ sidebar แบบมือถือ */
+  @media (max-width: 992px) {
+    /* ทำให้ sidebar แสดงผลที่ถูกต้องบนมือถือ */
+    .fixed.inset-0.bg-black.bg-opacity-50.z-40 {
+      display: block;
+    }
+    
+    /* ปรับปรุงการแสดงผลของปุ่มปิดใน sidebar */
+    .menu-link:active, .menu-link:focus {
+      background-color: rgba(138, 43, 226, 0.1);
+    }
+    
+    /* ปรับแต่งปุ่มบัญชีให้แสดงผลได้ถูกต้องบนมือถือ */
+    .account-item .menu-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+    }
+    
+    .account-item .user-balance {
+      display: block;
+      font-size: 0.75rem;
+      color: #8A2BE2;
+      margin-top: 2px;
+    }
+  }
 }
 
 /* ปรับสำหรับอุปกรณ์ขนาดเล็กมาก */
