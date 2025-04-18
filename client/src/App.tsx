@@ -9,6 +9,7 @@ import Dashboard from "@/pages/dashboard-with-layout";
 import CategoryManage from "@/pages/category-manage-enhanced";
 import ProductCreate from "@/pages/product-create-enhanced";
 import ProductList from "@/pages/product-list";
+import CreateOrder from "@/pages/create-order";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/category-manage" component={CategoryManage} />
       <Route path="/product-create" component={ProductCreate} />
       <Route path="/product-list" component={ProductList} />
+      <Route path="/create-order" component={CreateOrder} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
