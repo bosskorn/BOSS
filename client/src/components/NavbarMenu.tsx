@@ -9,6 +9,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   
   // Refs สำหรับ dropdowns
+  const dashboardDropdownRef = useRef<HTMLLIElement>(null);
   const ordersDropdownRef = useRef<HTMLLIElement>(null);
   const productsDropdownRef = useRef<HTMLLIElement>(null);
   const reportsDropdownRef = useRef<HTMLLIElement>(null);
@@ -23,6 +24,12 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
+        activeDropdown === 'dashboard' && 
+        dashboardDropdownRef.current && 
+        !dashboardDropdownRef.current.contains(event.target as Node)
+      ) {
+        setActiveDropdown(null);
+      } else if (
         activeDropdown === 'orders' && 
         ordersDropdownRef.current && 
         !ordersDropdownRef.current.contains(event.target as Node)
@@ -63,11 +70,40 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
         </div>
         
         <ul className="flex flex-wrap justify-center md:justify-end space-x-1 md:space-x-4">
-          <li className="relative">
-            <Link href="/dashboard" className={`flex items-center px-3 py-2 text-sm rounded-md ${isDashboard ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-purple-50'}`}>
+          <li ref={dashboardDropdownRef} className="relative">
+            <button 
+              onClick={() => toggleDropdown('dashboard')}
+              className={`flex items-center px-3 py-2 text-sm text-gray-700 rounded-md ${isDashboard ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-purple-50'}`}
+              aria-haspopup="true" 
+              aria-expanded={activeDropdown === 'dashboard'}
+            >
               <i className="fa-solid fa-chart-pie mr-2"></i>
               <span>Dashboard</span>
-            </Link>
+              <i className={`fa-solid fa-caret-down ml-1 text-xs transition-transform ${activeDropdown === 'dashboard' ? 'rotate-180' : ''}`}></i>
+            </button>
+            
+            {activeDropdown === 'dashboard' && (
+              <ul className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                <li>
+                  <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <i className="fas fa-tachometer-alt mr-2"></i>
+                    <span>ภาพรวม</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dashboard/sales" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <i className="fas fa-money-bill-wave mr-2"></i>
+                    <span>ยอดขาย</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dashboard/analytics" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <i className="fas fa-chart-line mr-2"></i>
+                    <span>วิเคราะห์ข้อมูล</span>
+                  </Link>
+                </li>
+              </ul>
+            )}
           </li>
           
           <li className="relative">
