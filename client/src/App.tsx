@@ -5,10 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
-import CategoryManage from "@/pages/category-manage";
-import ProductCreate from "@/pages/product-create";
-import ProductList from "@/pages/product-list";
 import Dashboard from "@/pages/dashboard-with-layout";
+import CategoryManage from "@/pages/category-manage-with-layout";
+import ProductCreate from "@/pages/product-create-enhanced";
+import ProductList from "@/pages/product-list";
 
 function Router() {
   return (
