@@ -13,13 +13,13 @@ router.get("/", auth, async (req, res) => {
     
     let categories;
     if (parentId === 'null') {
-      // ดึงเฉพาะหมวดหมู่หลัก (parent_id เป็น null)
+      // ดึงเฉพาะหมวดหมู่หลัก (parentId เป็น null)
       const allCategories = await storage.getCategoriesByUserId(userId);
-      categories = allCategories.filter(cat => cat.parent_id === null);
+      categories = allCategories.filter(cat => cat.parentId === null);
     } else if (parentId) {
-      // ดึงเฉพาะหมวดหมู่ย่อยของ parent_id ที่ระบุ
+      // ดึงเฉพาะหมวดหมู่ย่อยของ parentId ที่ระบุ
       const allCategories = await storage.getCategoriesByUserId(userId);
-      categories = allCategories.filter(cat => cat.parent_id === parseInt(parentId as string));
+      categories = allCategories.filter(cat => cat.parentId === parseInt(parentId as string));
     } else {
       // ดึงทุกหมวดหมู่
       categories = await storage.getCategoriesByUserId(userId);
