@@ -56,10 +56,7 @@ const AdminRegisterPage: React.FC = () => {
         password: '******'
       });
       
-      const response = await axios.post('/api/register/admin', {
-        ...adminData,
-        role: 'admin'
-      });
+      const response = await axios.post('/api/register/admin', adminData);
       
       console.log('Admin Register response:', response);
       

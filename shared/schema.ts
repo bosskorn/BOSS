@@ -201,6 +201,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   fullname: true,
   email: true,
   phone: true,
+  role: true,
 });
 
 export const insertCustomerSchema = createInsertSchema(customers);
