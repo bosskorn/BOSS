@@ -67,8 +67,8 @@ const AdminRegisterPage: React.FC = () => {
           variant: 'default',
         });
         
-        // เข้าสู่ระบบโดยอัตโนมัติและนำทางไปยังหน้าแดชบอร์ด
-        setLocation('/dashboard');
+        // เข้าสู่ระบบโดยอัตโนมัติและนำทางไปยังหน้าแดชบอร์ดผู้ดูแลระบบ
+        setLocation('/admin-dashboard');
       } else {
         toast({
           title: 'สมัครสมาชิกผู้ดูแลระบบไม่สำเร็จ',
