@@ -15,14 +15,27 @@ router.get('/products', auth, async (req, res) => {
     // ดึงข้อมูลหมวดหมู่มาเพิ่มเติม
     const productsWithCategory = await Promise.all(
       products.map(async (product) => {
-        if (product.categoryId) {
-          const category = await storage.getCategory(product.categoryId);
-          return {
-            ...product,
-            category
-          };
+        // ตรวจสอบว่า categoryId เป็นตัวเลขจริงและไม่ใช่ NaN
+        if (product.categoryId && !isNaN(Number(product.categoryId))) {
+          try {
+            const category = await storage.getCategory(Number(product.categoryId));
+            return {
+              ...product,
+              category
+            };
+          } catch (error) {
+            console.error(`Error fetching category for product ${product.id}:`, error);
+            // กรณีเกิดข้อผิดพลาดในการดึงหมวดหมู่ ให้ส่งคืนสินค้าโดยไม่มีข้อมูลหมวดหมู่
+            return {
+              ...product,
+              category: null
+            };
+          }
         }
-        return product;
+        return {
+          ...product,
+          category: null
+        };
       })
     );
     
@@ -54,12 +67,20 @@ router.get('/products/:id', auth, async (req, res) => {
     
     // ดึงข้อมูลหมวดหมู่
     let productWithCategory = { ...product };
-    if (product.categoryId) {
-      const category = await storage.getCategory(product.categoryId);
-      productWithCategory = {
-        ...product,
-        categoryName
-      };
+    if (product.categoryId && !isNaN(Number(product.categoryId))) {
+      try {
+        const category = await storage.getCategory(Number(product.categoryId));
+        productWithCategory = {
+          ...product,
+          category
+        };
+      } catch (error) {
+        console.error(`Error fetching category for product ${product.id}:`, error);
+        productWithCategory = {
+          ...product,
+          category: null
+        };
+      }
     }
     
     res.json({ success: true, data: productWithCategory });
