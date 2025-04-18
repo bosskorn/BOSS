@@ -63,7 +63,7 @@ export async function apiRequest(
     } else {
       throw new Error(`Unsupported method: ${method}`);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`API Request Error: ${method} ${url}`, error);
     if (error.response) {
       return new Response(JSON.stringify(error.response.data), {
@@ -96,7 +96,7 @@ export const getQueryFn: <T>(options: {
       
       console.log('QueryFn response:', path, response.status);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('QueryFn error:', queryKey[0], error);
       
       // จัดการกรณี 401 แล้วรีเทิร์น null ถ้าตั้งค่าไว้
