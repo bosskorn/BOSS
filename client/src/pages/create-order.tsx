@@ -42,6 +42,7 @@ interface Discount {
   type: 'percentage' | 'fixed';
   value: number;
   code?: string;
+  id?: number; // เพิ่ม id เพื่อป้องกัน error
 }
 
 interface ShippingMethod {
@@ -51,6 +52,7 @@ interface ShippingMethod {
   price: number;
   provider: string;
   logo?: string;
+  serviceId?: string; // สำหรับใช้กับ Flash Express API
 }
 
 interface ValidationErrors {
@@ -110,14 +112,14 @@ const CreateOrder: React.FC = () => {
   
   // สถานะอื่นๆ
   const [note, setNote] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('bank-transfer');
+  const [paymentMethod, setPaymentMethod] = useState('bank_transfer'); // แก้ไขจาก bank-transfer เป็น bank_transfer ให้ตรงกับค่าใน enum
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [currentStep, setCurrentStep] = useState<'customer' | 'items' | 'shipping' | 'payment'>('customer');
   
-  // รูปภาพโลโก้ผู้ให้บริการจัดส่ง
+  // รูปภาพโลโก้ผู้ให้บริการจัดส่ง ใช้ URL แทน
   const shippingLogos = {
-    'flash-express': 'https://cdn.flashexpress.co.th/uploads/images/flash.png',
+    'flash-express': 'https://cdn.brandfetch.io/idzqDyW4sQ/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B',
     'thailand-post': 'https://track.thailandpost.co.th/css/dist/img/logo.png',
     'kerry-express': 'https://1000logos.net/wp-content/uploads/2021/07/Kerry-Express-Logo.png',
     'jnt-express': 'https://1000logos.net/wp-content/uploads/2021/08/J-T-Express-Logo.png',
@@ -1567,13 +1569,13 @@ const CreateOrder: React.FC = () => {
                     
                     <div 
                       className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                        paymentMethod === 'cod' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                        paymentMethod === 'cash_on_delivery' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
                       }`}
-                      onClick={() => setPaymentMethod('cod')}
+                      onClick={() => setPaymentMethod('cash_on_delivery')}
                     >
                       <div className="flex items-center">
                         <div className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center mr-3">
-                          {paymentMethod === 'cod' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
+                          {paymentMethod === 'cash_on_delivery' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
                         </div>
                         <div className="flex items-center">
                           <div className="w-8 h-8 rounded flex items-center justify-center mr-2">
@@ -1588,13 +1590,13 @@ const CreateOrder: React.FC = () => {
                     
                     <div 
                       className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                        paymentMethod === 'credit-card' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                        paymentMethod === 'credit_card' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
                       }`}
-                      onClick={() => setPaymentMethod('credit-card')}
+                      onClick={() => setPaymentMethod('credit_card')}
                     >
                       <div className="flex items-center">
                         <div className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center mr-3">
-                          {paymentMethod === 'credit-card' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
+                          {paymentMethod === 'credit_card' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
                         </div>
                         <div className="flex items-center">
                           <div className="w-8 h-8 rounded flex items-center justify-center mr-2">
