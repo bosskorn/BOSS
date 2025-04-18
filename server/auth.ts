@@ -44,10 +44,10 @@ export function setupAuth(app: Express) {
       createTableIfMissing: true 
     }),
     cookie: {
-      secure: false, // ปิดใช้งาน secure เพื่อให้ทำงานได้บน HTTP
+      secure: isProduction, // ใช้ secure เฉพาะใน production
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax', // 'none' เพื่อให้ทำงานกับ cross-site
       path: '/'
     }
   };
