@@ -66,15 +66,23 @@ const AuthPage: React.FC = () => {
       
       console.log('Login response:', response);
       
-      if (response.status === 200) {
+      if (response.data.success) {
         toast({
           title: 'เข้าสู่ระบบสำเร็จ',
-          description: 'ยินดีต้อนรับเข้าสู่ระบบ',
+          description: response.data.message || 'ยินดีต้อนรับเข้าสู่ระบบ',
           variant: 'default',
         });
         
         // นำทางไปยังหน้าแดชบอร์ด
         setLocation('/dashboard');
+      } else {
+        toast({
+          title: 'เข้าสู่ระบบไม่สำเร็จ',
+          description: response.data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+          variant: 'destructive',
+        });
+        
+        loginForm.reset({ username: data.username, password: '' });
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -108,16 +116,21 @@ const AuthPage: React.FC = () => {
       
       console.log('Register response:', response);
       
-      if (response.status === 201) {
+      if (response.data.success) {
         toast({
           title: 'สมัครสมาชิกสำเร็จ',
-          description: 'กรุณาเข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านที่สร้างขึ้น',
+          description: response.data.message || 'บัญชีของคุณถูกสร้างแล้ว กำลังเข้าสู่ระบบ...',
           variant: 'default',
         });
         
-        // รีเซ็ตฟอร์มและเปลี่ยนไปที่หน้าเข้าสู่ระบบ
-        registerForm.reset();
-        setIsLogin(true);
+        // เข้าสู่ระบบโดยอัตโนมัติและนำทางไปยังหน้าแดชบอร์ด
+        setLocation('/dashboard');
+      } else {
+        toast({
+          title: 'สมัครสมาชิกไม่สำเร็จ',
+          description: response.data.message || 'เกิดข้อผิดพลาดไม่สามารถสมัครสมาชิกได้',
+          variant: 'destructive',
+        });
       }
     } catch (error: any) {
       console.error('Register error:', error);
