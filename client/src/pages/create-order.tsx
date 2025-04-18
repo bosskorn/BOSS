@@ -23,6 +23,12 @@ interface Customer {
   district: string;
   subdistrict: string;
   zipcode: string;
+  addressNumber?: string;
+  moo?: string;
+  soi?: string;
+  road?: string;
+  building?: string;
+  floor?: string;
 }
 
 interface OrderItem {
@@ -158,18 +164,30 @@ const CreateOrder: React.FC = () => {
           province: 'กรุงเทพมหานคร', 
           district: 'จตุจักร', 
           subdistrict: 'ลาดยาว', 
-          zipcode: '10900'
+          zipcode: '10900',
+          addressNumber: '123/456',
+          moo: '9',
+          soi: 'รัชดา 42',
+          road: 'รัชดาภิเษก',
+          building: 'หมู่บ้านเดอะซิตี้',
+          floor: '-'
         },
         { 
           id: 2, 
           name: 'สมหญิง รักสวย', 
           email: 'somying@example.com', 
           phone: '0698765432', 
-          address: '789 อาคารเดอะไนน์', 
+          address: '789 อาคารเดอะไนน์ ชั้น 15', 
           province: 'กรุงเทพมหานคร', 
           district: 'พระโขนง', 
           subdistrict: 'คลองตัน', 
-          zipcode: '10110'
+          zipcode: '10110',
+          addressNumber: '789',
+          moo: '-',
+          soi: 'สุขุมวิท 31',
+          road: 'สุขุมวิท',
+          building: 'อาคารเดอะไนน์',
+          floor: '15'
         },
         { 
           id: 3, 
@@ -180,7 +198,13 @@ const CreateOrder: React.FC = () => {
           province: 'เชียงใหม่', 
           district: 'เมือง', 
           subdistrict: 'ช้างเผือก', 
-          zipcode: '50300'
+          zipcode: '50300',
+          addressNumber: '456',
+          moo: '3',
+          soi: 'ศรีวิชัย 5',
+          road: 'ศรีวิชัย',
+          building: 'หมู่บ้านศุภาลัย',
+          floor: '-'
         },
       ];
       
@@ -1041,8 +1065,53 @@ const CreateOrder: React.FC = () => {
                       
                       {showCustomerDetails && (
                         <div className="mt-4 pt-4 border-t border-gray-200">
-                          <p className="text-xs text-gray-500 mb-2">ประวัติการสั่งซื้อ</p>
-                          <p className="text-sm text-gray-700">ยังไม่มีประวัติการสั่งซื้อ</p>
+                          <h3 className="text-sm font-medium mb-3">ข้อมูลที่อยู่แบบละเอียด</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-white p-3 rounded border border-gray-200">
+                              <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                  <p className="text-xs text-gray-500">บ้านเลขที่:</p>
+                                  <p className="font-medium">{selectedCustomer.addressNumber || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">หมู่:</p>
+                                  <p className="font-medium">{selectedCustomer.moo || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">ซอย:</p>
+                                  <p className="font-medium">{selectedCustomer.soi || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">ถนน:</p>
+                                  <p className="font-medium">{selectedCustomer.road || '-'}</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="bg-white p-3 rounded border border-gray-200">
+                              <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                  <p className="text-xs text-gray-500">อาคาร/หมู่บ้าน:</p>
+                                  <p className="font-medium">{selectedCustomer.building || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">ชั้น:</p>
+                                  <p className="font-medium">{selectedCustomer.floor || '-'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">ตำบล/แขวง:</p>
+                                  <p className="font-medium">{selectedCustomer.subdistrict}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">อำเภอ/เขต:</p>
+                                  <p className="font-medium">{selectedCustomer.district}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-4">
+                            <p className="text-xs text-gray-500 mb-2">ประวัติการสั่งซื้อ</p>
+                            <p className="text-sm text-gray-700">ยังไม่มีประวัติการสั่งซื้อ</p>
+                          </div>
                         </div>
                       )}
                     </div>
