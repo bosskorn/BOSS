@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import NavbarMenu from './NavbarMenu';
+import NavbarMenuAdmin from './NavbarMenuAdmin';
 import SidebarMenuAdmin from './SidebarMenuAdmin';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
@@ -35,7 +35,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-kanit">
       {/* แถบนำทางด้านบน */}
-      <NavbarMenu onToggleSidebar={toggleSidebar} />
+      <NavbarMenuAdmin onToggleSidebar={toggleSidebar} />
       
       {/* เมนูด้านข้าง (สไลด์เข้าออก) */}
       <SidebarMenuAdmin 
