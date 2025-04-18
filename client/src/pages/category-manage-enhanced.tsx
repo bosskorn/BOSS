@@ -86,61 +86,23 @@ const CategoryManageEnhanced: React.FC = () => {
   // ฟังก์ชันเรียกข้อมูลหมวดหมู่จาก API
   const fetchCategories = async () => {
     try {
-      // สำหรับการสาธิต ใช้ข้อมูลจำลอง
-      // ในการใช้งานจริง ควรเปลี่ยนเป็น await axios.get('/api/categories')
-      const mockCategories: Category[] = [
-        { 
-          id: 1, 
-          name: 'อุปกรณ์อิเล็กทรอนิกส์', 
-          description: 'อุปกรณ์ไอทีและอิเล็กทรอนิกส์ทั้งหมด', 
-          isActive: true,
-          productCount: 24,
-          createdAt: '2023-01-15',
-          updatedAt: '2023-04-10',
-          icon: 'fa-tv'
-        },
-        { 
-          id: 2, 
-          name: 'เสื้อผ้าแฟชั่น', 
-          description: 'เสื้อผ้าและเครื่องแต่งกาย', 
-          isActive: true,
-          productCount: 45,
-          createdAt: '2023-02-05',
-          updatedAt: '2023-04-12',
-          icon: 'fa-shirt'
-        },
-        { 
-          id: 3, 
-          name: 'อาหารและเครื่องดื่ม', 
-          description: 'ผลิตภัณฑ์อาหารทุกประเภท', 
-          isActive: false,
-          productCount: 18,
-          createdAt: '2023-02-10',
-          updatedAt: '2023-03-15',
-          icon: 'fa-utensils'
-        },
-        { 
-          id: 4, 
-          name: 'ความงามและสุขภาพ', 
-          description: 'ผลิตภัณฑ์ดูแลผิวพรรณและสุขภาพ', 
-          isActive: true,
-          productCount: 32,
-          createdAt: '2023-03-01',
-          updatedAt: '2023-04-05',
-          icon: 'fa-spray-can'
-        },
-        { 
-          id: 5, 
-          name: 'ของใช้ในบ้าน', 
-          description: 'เครื่องใช้และอุปกรณ์ตกแต่งบ้าน', 
-          isActive: true,
-          productCount: 27,
-          createdAt: '2023-03-20',
-          updatedAt: '2023-04-01',
-          icon: 'fa-house'
-        }
-      ];
-      setCategories(mockCategories);
+      // เรียกข้อมูลจาก API จริง
+      const response = await axios.get('/api/categories');
+      const categoriesData = response.data.data || [];
+      
+      // แปลงข้อมูลให้ตรงกับโครงสร้างที่ใช้
+      const mappedCategories: Category[] = categoriesData.map((cat: any) => ({
+        id: cat.id,
+        name: cat.name,
+        description: cat.description || null,
+        isActive: cat.isActive === undefined ? true : cat.isActive,
+        productCount: 0, // จำนวนสินค้าต้องขอข้อมูลเพิ่มเติมแยกต่างหาก
+        createdAt: cat.createdAt ? new Date(cat.createdAt).toISOString().split('T')[0] : undefined,
+        updatedAt: cat.updatedAt ? new Date(cat.updatedAt).toISOString().split('T')[0] : undefined,
+        icon: cat.icon || 'fa-box'
+      }));
+      
+      setCategories(mappedCategories);
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast({
@@ -238,45 +200,57 @@ const CategoryManageEnhanced: React.FC = () => {
     setValidationErrors({});
 
     try {
-      // จำลองการเพิ่มข้อมูล (ในการใช้งานจริงควรใช้ axios.post)
-      const newId = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
-      const now = new Date().toISOString().split('T')[0];
-      
-      const newCategoryData: Category = {
-        id: newId,
+      // ส่งข้อมูลไปยัง API
+      const response = await axios.post('/api/categories', {
         name: newCategory.name.trim(),
         description: newCategory.description?.trim() || null,
         isActive: newCategory.isActive,
-        productCount: 0,
-        createdAt: now,
-        updatedAt: now,
-        icon: newCategory.icon
-      };
-      
-      // เพิ่มหมวดหมู่ใหม่เข้าไปในรายการ
-      setCategories([...categories, newCategoryData]);
-      
-      // รีเซ็ตฟอร์ม
-      setNewCategory({
-        id: 0,
-        name: '',
-        description: '',
-        isActive: true,
-        icon: 'fa-box'
+        icon: newCategory.icon,
+        parentId: null // ตั้งค่าเริ่มต้นให้เป็นหมวดหมู่หลัก
       });
       
-      setShowSuccessMessage(true);
-      setTimeout(() => {
-        setShowSuccessMessage(false);
-      }, 3000);
-      
-      setIsFormOpen(false);
-      
-      toast({
-        title: 'เพิ่มหมวดหมู่สำเร็จ',
-        description: `หมวดหมู่ "${newCategoryData.name}" ถูกเพิ่มเรียบร้อยแล้ว`,
-        variant: 'default',
-      });
+      if (response.data && response.data.success) {
+        // ดึงข้อมูลหมวดหมู่ใหม่จากการตอบกลับ
+        const newCategoryData = response.data.data;
+        
+        // เพิ่มหมวดหมู่ใหม่เข้าไปในรายการ
+        const updatedCategory: Category = {
+          id: newCategoryData.id,
+          name: newCategoryData.name,
+          description: newCategoryData.description || null,
+          isActive: newCategoryData.isActive === undefined ? true : newCategoryData.isActive,
+          productCount: 0,
+          createdAt: newCategoryData.createdAt ? new Date(newCategoryData.createdAt).toISOString().split('T')[0] : undefined,
+          updatedAt: newCategoryData.updatedAt ? new Date(newCategoryData.updatedAt).toISOString().split('T')[0] : undefined,
+          icon: newCategoryData.icon || 'fa-box'
+        };
+        
+        setCategories([...categories, updatedCategory]);
+        
+        // รีเซ็ตฟอร์ม
+        setNewCategory({
+          id: 0,
+          name: '',
+          description: '',
+          isActive: true,
+          icon: 'fa-box'
+        });
+        
+        setShowSuccessMessage(true);
+        setTimeout(() => {
+          setShowSuccessMessage(false);
+        }, 3000);
+        
+        setIsFormOpen(false);
+        
+        toast({
+          title: 'เพิ่มหมวดหมู่สำเร็จ',
+          description: `หมวดหมู่ "${updatedCategory.name}" ถูกเพิ่มเรียบร้อยแล้ว`,
+          variant: 'default',
+        });
+      } else {
+        throw new Error(response.data?.message || 'ไม่สามารถเพิ่มหมวดหมู่ได้');
+      }
     } catch (error) {
       console.error('Error adding category:', error);
       toast({
@@ -341,28 +315,43 @@ const CategoryManageEnhanced: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // จำลองการอัปเดตข้อมูล (ในการใช้งานจริงควรใช้ axios.put)
-      const now = new Date().toISOString().split('T')[0];
-      
-      const updatedCategories = categories.map(category => 
-        category.id === editingCategory.id 
-          ? { 
-              ...editingCategory, 
-              name: editingCategory.name.trim(),
-              description: editingCategory.description?.trim() || null,
-              updatedAt: now
-            } 
-          : category
-      );
-      
-      setCategories(updatedCategories);
-      setEditingCategory(null);
-      
-      toast({
-        title: 'แก้ไขหมวดหมู่สำเร็จ',
-        description: `หมวดหมู่ "${editingCategory.name}" ถูกแก้ไขเรียบร้อยแล้ว`,
-        variant: 'default',
+      // ส่งข้อมูลไปยัง API
+      const response = await axios.put(`/api/categories/${editingCategory.id}`, {
+        name: editingCategory.name.trim(),
+        description: editingCategory.description?.trim() || null,
+        isActive: editingCategory.isActive,
+        icon: editingCategory.icon
       });
+      
+      if (response.data && response.data.success) {
+        // ดึงข้อมูลจากการตอบกลับ
+        const updatedCategoryData = response.data.data;
+        
+        // อัปเดตข้อมูลในสถานะ
+        const updatedCategories = categories.map(category => 
+          category.id === editingCategory.id 
+            ? { 
+                ...category,
+                name: updatedCategoryData.name,
+                description: updatedCategoryData.description || null,
+                isActive: updatedCategoryData.isActive === undefined ? true : updatedCategoryData.isActive,
+                icon: updatedCategoryData.icon || category.icon,
+                updatedAt: updatedCategoryData.updatedAt ? new Date(updatedCategoryData.updatedAt).toISOString().split('T')[0] : category.updatedAt
+              } 
+            : category
+        );
+        
+        setCategories(updatedCategories);
+        setEditingCategory(null);
+        
+        toast({
+          title: 'แก้ไขหมวดหมู่สำเร็จ',
+          description: `หมวดหมู่ "${updatedCategoryData.name}" ถูกแก้ไขเรียบร้อยแล้ว`,
+          variant: 'default',
+        });
+      } else {
+        throw new Error(response.data?.message || 'ไม่สามารถแก้ไขหมวดหมู่ได้');
+      }
     } catch (error) {
       console.error('Error updating category:', error);
       toast({
@@ -392,15 +381,22 @@ const CategoryManageEnhanced: React.FC = () => {
     if (categoryToDelete === null) return;
 
     try {
-      // จำลองการลบข้อมูล (ในการใช้งานจริงควรใช้ axios.delete)
-      const updatedCategories = categories.filter(category => category.id !== categoryToDelete.id);
-      setCategories(updatedCategories);
+      // ส่งคำสั่งลบไปยัง API
+      const response = await axios.delete(`/api/categories/${categoryToDelete.id}`);
       
-      toast({
-        title: 'ลบหมวดหมู่สำเร็จ',
-        description: `หมวดหมู่ "${categoryToDelete.name}" ถูกลบออกจากระบบเรียบร้อยแล้ว`,
-        variant: 'default',
-      });
+      if (response.data && response.data.success) {
+        // ลบข้อมูลออกจากสถานะ
+        const updatedCategories = categories.filter(category => category.id !== categoryToDelete.id);
+        setCategories(updatedCategories);
+        
+        toast({
+          title: 'ลบหมวดหมู่สำเร็จ',
+          description: `หมวดหมู่ "${categoryToDelete.name}" ถูกลบออกจากระบบเรียบร้อยแล้ว`,
+          variant: 'default',
+        });
+      } else {
+        throw new Error(response.data?.message || 'ไม่สามารถลบหมวดหมู่ได้');
+      }
     } catch (error) {
       console.error('Error deleting category:', error);
       toast({
