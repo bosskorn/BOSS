@@ -620,9 +620,9 @@ const CreateOrder: React.FC = () => {
   const goToNextStep = () => {
     if (!validateStep()) return;
     
-    if (currentStep === 'items') {
-      setCurrentStep('customer');
-    } else if (currentStep === 'customer') {
+    if (currentStep === 'customer') {
+      setCurrentStep('items');
+    } else if (currentStep === 'items') {
       setCurrentStep('shipping');
     } else if (currentStep === 'shipping') {
       setCurrentStep('payment');
@@ -631,10 +631,10 @@ const CreateOrder: React.FC = () => {
 
   // ย้อนกลับไปขั้นตอนก่อนหน้า
   const goToPreviousStep = () => {
-    if (currentStep === 'customer') {
-      setCurrentStep('items');
-    } else if (currentStep === 'shipping') {
+    if (currentStep === 'items') {
       setCurrentStep('customer');
+    } else if (currentStep === 'shipping') {
+      setCurrentStep('items');
     } else if (currentStep === 'payment') {
       setCurrentStep('shipping');
     }
@@ -758,30 +758,30 @@ const CreateOrder: React.FC = () => {
         {/* ขั้นตอนการสั่งซื้อ */}
         <div className="bg-gray-100 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between">
-            <div className={`flex items-center ${currentStep === 'items' ? 'text-indigo-600' : 'text-gray-500'}`}>
+            <div className={`flex items-center ${currentStep === 'customer' ? 'text-indigo-600' : 'text-gray-500'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
-                currentStep === 'items' ? 'bg-indigo-600 text-white' : 
-                currentStep === 'customer' || currentStep === 'shipping' || currentStep === 'payment' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
+                currentStep === 'customer' ? 'bg-indigo-600 text-white' : 
+                currentStep === 'items' || currentStep === 'shipping' || currentStep === 'payment' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
               }`}>
-                {currentStep === 'customer' || currentStep === 'shipping' || currentStep === 'payment' ? 
+                {currentStep === 'items' || currentStep === 'shipping' || currentStep === 'payment' ? 
                   <i className="fa-solid fa-check"></i> : 
                   <span>1</span>}
               </div>
-              <span className="font-medium">เลือกสินค้า</span>
+              <span className="font-medium">ข้อมูลลูกค้า</span>
             </div>
             
             <div className="w-16 h-1 bg-gray-300"></div>
             
-            <div className={`flex items-center ${currentStep === 'customer' ? 'text-indigo-600' : 'text-gray-500'}`}>
+            <div className={`flex items-center ${currentStep === 'items' ? 'text-indigo-600' : 'text-gray-500'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
-                currentStep === 'customer' ? 'bg-indigo-600 text-white' : 
+                currentStep === 'items' ? 'bg-indigo-600 text-white' : 
                 currentStep === 'shipping' || currentStep === 'payment' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
               }`}>
                 {currentStep === 'shipping' || currentStep === 'payment' ? 
                   <i className="fa-solid fa-check"></i> : 
                   <span>2</span>}
               </div>
-              <span className="font-medium">ข้อมูลลูกค้า</span>
+              <span className="font-medium">เลือกสินค้า</span>
             </div>
             
             <div className="w-16 h-1 bg-gray-300"></div>
@@ -812,7 +812,7 @@ const CreateOrder: React.FC = () => {
         </div>
 
         <form onSubmit={createOrder}>
-          {/* ขั้นตอนที่ 1: เลือกสินค้า */}
+          {/* ขั้นตอนที่ 2: เลือกสินค้า */}
           {currentStep === 'items' && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-lg font-medium mb-4 flex items-center">
