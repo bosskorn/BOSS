@@ -104,7 +104,7 @@ router.put('/:id', auth, async (req, res) => {
     const updatedCustomer = await storage.updateCustomer(customerId, req.body);
     
     return res.json({ success: true, customer: updatedCustomer });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating customer:', error);
     return res.status(500).json({ 
       success: false, 

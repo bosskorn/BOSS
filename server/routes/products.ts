@@ -6,7 +6,7 @@ import { insertProductSchema } from '@shared/schema';
 const router = Router();
 
 // API สำหรับดึงข้อมูลสินค้าทั้งหมด
-router.get('/products', auth, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     // ดึงข้อมูลสินค้าของผู้ใช้ที่ล็อกอินเท่านั้น
     const userId = req.user!.id;
@@ -39,7 +39,7 @@ router.get('/products', auth, async (req, res) => {
       })
     );
     
-    res.json({ success: true, data: productsWithCategory });
+    res.json({ success: true, products: productsWithCategory });
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลสินค้า' });
@@ -47,7 +47,7 @@ router.get('/products', auth, async (req, res) => {
 });
 
 // API สำหรับดึงข้อมูลสินค้าตามรหัส
-router.get('/products/:id', auth, async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
     if (isNaN(productId)) {
@@ -91,7 +91,7 @@ router.get('/products/:id', auth, async (req, res) => {
 });
 
 // API สำหรับสร้างสินค้าใหม่
-router.post('/products', auth, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     // ตรวจสอบและแปลงข้อมูลตาม schema
     const productData = insertProductSchema.parse(req.body);
@@ -113,7 +113,7 @@ router.post('/products', auth, async (req, res) => {
 });
 
 // API สำหรับอัปเดตข้อมูลสินค้า
-router.put('/products/:id', auth, async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
     if (isNaN(productId)) {
