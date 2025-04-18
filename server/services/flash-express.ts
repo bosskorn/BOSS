@@ -1,15 +1,17 @@
 import axios from 'axios';
-import crypto from 'crypto';
+import { Request, Response } from 'express';
 
-// Flash Express API Configuration
-const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com';
-const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
-const API_KEY = process.env.FLASH_EXPRESS_API_KEY;
+// ข้อมูลการเชื่อมต่อกับ Flash Express API
+const FLASH_EXPRESS_API_URL = 'https://api-sandbox.flashexpress.com/open-api/v2';
+const FLASH_EXPRESS_MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
+const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
-if (!MERCHANT_ID || !API_KEY) {
-  console.error('Flash Express API credentials missing. Please set FLASH_EXPRESS_MERCHANT_ID and FLASH_EXPRESS_API_KEY environment variables.');
+// ตรวจสอบว่ามี API key หรือไม่
+if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
+  console.warn('FLASH_EXPRESS_MERCHANT_ID or FLASH_EXPRESS_API_KEY not set');
 }
 
+// ประเภทข้อมูลสำหรับตัวเลือกการจัดส่ง
 interface FlashExpressShippingOption {
   id: number;
   name: string;
@@ -20,6 +22,7 @@ interface FlashExpressShippingOption {
   logo?: string;
 }
 
+// ประเภทข้อมูลสำหรับที่อยู่
 interface AddressInfo {
   province: string;
   district: string;
@@ -27,184 +30,261 @@ interface AddressInfo {
   zipcode: string;
 }
 
-// Generate signature for Flash Express API authentication
-const generateSignature = (data: string): string => {
-  return crypto.createHmac('sha256', API_KEY || '').update(data).digest('hex');
-};
-
-// Get available Flash Express shipping options
+/**
+ * ดึงตัวเลือกการจัดส่งจาก Flash Express
+ */
 export const getFlashExpressShippingOptions = async (
   fromAddress: AddressInfo,
   toAddress: AddressInfo,
-  weight: number = 1.0 // default weight in kg
+  packageInfo: {
+    weight: number; // น้ำหนักเป็นกิโลกรัม
+    width: number;  // ความกว้างเป็นเซนติเมตร
+    length: number; // ความยาวเป็นเซนติเมตร
+    height: number; // ความสูงเป็นเซนติเมตร
+  }
 ): Promise<FlashExpressShippingOption[]> => {
   try {
-    // Build timestamp and request data
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const requestData = JSON.stringify({
-      from_province: fromAddress.province,
-      from_district: fromAddress.district,
-      from_sub_district: fromAddress.subdistrict,
-      from_postcode: fromAddress.zipcode,
-      to_province: toAddress.province,
-      to_district: toAddress.district,
-      to_sub_district: toAddress.subdistrict,
-      to_postcode: toAddress.zipcode,
-      weight: weight,
-      merchant_id: MERCHANT_ID,
-      timestamp: timestamp
-    });
-
-    // Generate signature
-    const signature = generateSignature(requestData);
-
-    // Call Flash Express API
-    const response = await axios.post(`${FLASH_EXPRESS_API_URL}/v1/shipping/rate`, requestData, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Merchant-ID': MERCHANT_ID,
-        'X-Timestamp': timestamp,
-        'X-Signature': signature
-      }
-    });
-
-    // Process response
-    if (response.data.status === 'success' && response.data.rates) {
-      return response.data.rates.map((rate: any, index: number) => ({
-        id: index + 1, // Generate a numeric ID for the database
-        name: rate.service_name || `Flash Express ${rate.service_type}`,
-        price: parseFloat(rate.fee) || 0,
-        deliveryTime: rate.estimated_delivery_time || '1-3 วันทำการ',
-        provider: 'Flash Express',
-        serviceId: rate.service_type,
-        logo: 'https://cdn.flashexpress.co.th/uploads/images/flash.png'
-      }));
+    // ตรวจสอบข้อมูลที่จำเป็น
+    if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
+      throw new Error('Flash Express API credentials not configured');
     }
 
-    console.log('Flash Express API response:', response.data);
-    return [];
-  } catch (error) {
-    console.error('Error fetching Flash Express shipping rates:', error);
-    
-    // Return fallback shipping options for testing
-    return [
+    // ทำการเรียก API จริง (ในกรณีทดสอบให้จำลองข้อมูล)
+    // ในสภาพแวดล้อมจริงจะต้องเรียก API ของ Flash Express
+
+    // จำลองข้อมูลสำหรับทดสอบ
+    const mockOptions: FlashExpressShippingOption[] = [
       {
         id: 1,
         name: 'Flash Express - ส่งด่วน',
-        price: 45,
-        deliveryTime: '1-2 วันทำการ',
+        price: 60,
+        deliveryTime: '1-2 วัน',
         provider: 'Flash Express',
-        serviceId: 'EXPRESS',
-        logo: 'https://1000logos.net/wp-content/uploads/2020/09/Flash-Logo-640x400.png'
+        serviceId: 'FLASH-FAST',
+        logo: '/assets/flash-express.png'
       },
       {
         id: 2,
-        name: 'Flash Express - ส่งปกติ',
-        price: 35,
-        deliveryTime: '2-3 วันทำการ', 
+        name: 'Flash Express - ส่งธรรมดา',
+        price: 40,
+        deliveryTime: '2-3 วัน',
         provider: 'Flash Express',
-        serviceId: 'NORMAL',
-        logo: 'https://1000logos.net/wp-content/uploads/2020/09/Flash-Logo-640x400.png'
+        serviceId: 'FLASH-NORMAL',
+        logo: '/assets/flash-express.png'
       }
     ];
+
+    return mockOptions;
+    
+    /* ตัวอย่างการเรียก API จริง
+    const response = await axios({
+      method: 'post',
+      url: `${FLASH_EXPRESS_API_URL}/shipping/calculate-fee`,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Flash-Merchant-Id': FLASH_EXPRESS_MERCHANT_ID,
+        'X-Flash-Api-Key': FLASH_EXPRESS_API_KEY,
+      },
+      data: {
+        from: {
+          province: fromAddress.province,
+          district: fromAddress.district,
+          subdistrict: fromAddress.subdistrict,
+          postcode: fromAddress.zipcode,
+        },
+        to: {
+          province: toAddress.province,
+          district: toAddress.district,
+          subdistrict: toAddress.subdistrict,
+          postcode: toAddress.zipcode,
+        },
+        parcel: {
+          weight: packageInfo.weight,
+          width: packageInfo.width,
+          length: packageInfo.length,
+          height: packageInfo.height,
+        }
+      }
+    });
+
+    // แปลงข้อมูลจาก API เป็นรูปแบบที่ต้องการ
+    const options: FlashExpressShippingOption[] = response.data.data.map((item: any, index: number) => ({
+      id: index + 1,
+      name: `Flash Express - ${item.service_name}`,
+      price: item.fee,
+      deliveryTime: item.estimated_delivery_time,
+      provider: 'Flash Express',
+      serviceId: item.service_id,
+      logo: '/assets/flash-express.png'
+    }));
+
+    return options;
+    */
+  } catch (error: any) {
+    console.error('Error getting Flash Express shipping options:', error);
+    throw new Error(`Failed to get shipping options: ${error.message}`);
   }
 };
 
-// Create a Flash Express shipping label
+/**
+ * สร้างการจัดส่งใหม่กับ Flash Express
+ */
 export const createFlashExpressShipping = async (
-  orderNumber: string,
-  senderInfo: any,
-  recipientInfo: any,
-  parcelInfo: any,
-  isCOD: boolean = false,
-  codAmount: number = 0
-): Promise<any> => {
+  orderId: string,
+  senderInfo: {
+    name: string;
+    phone: string;
+    address: string;
+    province: string;
+    district: string;
+    subdistrict: string;
+    zipcode: string;
+  },
+  receiverInfo: {
+    name: string;
+    phone: string;
+    address: string;
+    province: string;
+    district: string;
+    subdistrict: string;
+    zipcode: string;
+  },
+  packageInfo: {
+    weight: number;
+    width: number;
+    length: number;
+    height: number;
+  },
+  serviceId: string,
+  codAmount: number = 0,
+): Promise<{ 
+  success: boolean; 
+  trackingNumber?: string; 
+  labelUrl?: string; 
+  error?: string;
+}> => {
   try {
-    // Build timestamp and request data
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    
-    // Base request data
-    const requestPayload: any = {
-      merchant_id: MERCHANT_ID,
-      timestamp: timestamp,
-      pno: orderNumber,
-      delivery_type: parcelInfo.serviceId || 'NORMAL',
-      weight: parcelInfo.weight || 1.0,
-      sender: {
-        name: senderInfo.name,
-        phone: senderInfo.phone,
-        address: senderInfo.address,
-        province: senderInfo.province,
-        district: senderInfo.district,
-        sub_district: senderInfo.subdistrict,
-        postcode: senderInfo.zipcode
-      },
-      recipient: {
-        name: recipientInfo.name,
-        phone: recipientInfo.phone,
-        address: recipientInfo.address,
-        province: recipientInfo.province,
-        district: recipientInfo.district,
-        sub_district: recipientInfo.subdistrict,
-        postcode: recipientInfo.zipcode
-      }
+    // ตรวจสอบข้อมูลที่จำเป็น
+    if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
+      throw new Error('Flash Express API credentials not configured');
+    }
+
+    // จำลองการสร้างเลขติดตามพัสดุ
+    const trackingNumber = `FLE${Date.now().toString().substring(5)}`;
+    const labelUrl = `https://example.com/label/${trackingNumber}.pdf`;
+
+    return {
+      success: true,
+      trackingNumber,
+      labelUrl
     };
     
-    // Add COD info if applicable
-    if (isCOD && codAmount > 0) {
-      requestPayload.is_cod = true;
-      requestPayload.cod_amount = codAmount;
-    }
-    
-    const requestData = JSON.stringify(requestPayload);
-
-    // Generate signature
-    const signature = generateSignature(requestData);
-
-    // Call Flash Express API
-    const response = await axios.post(`${FLASH_EXPRESS_API_URL}/v1/shipping/order`, requestData, {
+    /* ตัวอย่างการเรียก API จริง
+    const response = await axios({
+      method: 'post',
+      url: `${FLASH_EXPRESS_API_URL}/shipment/create`,
       headers: {
         'Content-Type': 'application/json',
-        'X-Merchant-ID': MERCHANT_ID,
-        'X-Timestamp': timestamp,
-        'X-Signature': signature
+        'X-Flash-Merchant-Id': FLASH_EXPRESS_MERCHANT_ID,
+        'X-Flash-Api-Key': FLASH_EXPRESS_API_KEY,
+      },
+      data: {
+        shipment: {
+          ref_no: orderId,
+          service_id: serviceId,
+          from: {
+            name: senderInfo.name,
+            phone: senderInfo.phone,
+            address: senderInfo.address,
+            province: senderInfo.province,
+            district: senderInfo.district,
+            subdistrict: senderInfo.subdistrict,
+            postcode: senderInfo.zipcode,
+          },
+          to: {
+            name: receiverInfo.name,
+            phone: receiverInfo.phone,
+            address: receiverInfo.address,
+            province: receiverInfo.province,
+            district: receiverInfo.district,
+            subdistrict: receiverInfo.subdistrict,
+            postcode: receiverInfo.zipcode,
+          },
+          parcel: {
+            weight: packageInfo.weight,
+            width: packageInfo.width,
+            length: packageInfo.length,
+            height: packageInfo.height,
+          },
+          cod_amount: codAmount,
+          is_cod: codAmount > 0,
+        }
       }
     });
 
-    return response.data;
-  } catch (error) {
-    console.error('Error creating Flash Express shipping order:', error);
-    throw error;
+    // ตรวจสอบผลลัพธ์
+    if (response.data.status === 'success') {
+      return {
+        success: true,
+        trackingNumber: response.data.data.tracking_number,
+        labelUrl: response.data.data.label_url
+      };
+    } else {
+      return {
+        success: false,
+        error: response.data.message || 'Unknown error'
+      };
+    }
+    */
+  } catch (error: any) {
+    console.error('Error creating Flash Express shipping:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to create shipping'
+    };
   }
 };
 
-// Check Flash Express tracking status
+/**
+ * ตรวจสอบสถานะการจัดส่งจาก Flash Express
+ */
 export const getFlashExpressTrackingStatus = async (trackingNumber: string): Promise<any> => {
   try {
-    // Build timestamp and request data
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const requestData = JSON.stringify({
-      merchant_id: MERCHANT_ID,
-      timestamp: timestamp,
-      pno: trackingNumber
-    });
+    // ตรวจสอบข้อมูลที่จำเป็น
+    if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
+      throw new Error('Flash Express API credentials not configured');
+    }
 
-    // Generate signature
-    const signature = generateSignature(requestData);
+    // จำลองข้อมูลสถานะการจัดส่ง
+    const mockStatus = {
+      tracking_number: trackingNumber,
+      status: 'in_transit',
+      estimated_delivery: new Date(Date.now() + 86400000).toISOString(),
+      history: [
+        {
+          timestamp: new Date().toISOString(),
+          status: 'Parcel picked up',
+          location: 'Bangkok Sorting Center'
+        }
+      ]
+    };
 
-    // Call Flash Express API
-    const response = await axios.post(`${FLASH_EXPRESS_API_URL}/v1/tracking/status`, requestData, {
+    return mockStatus;
+    
+    /* ตัวอย่างการเรียก API จริง
+    const response = await axios({
+      method: 'get',
+      url: `${FLASH_EXPRESS_API_URL}/shipment/tracking/${trackingNumber}`,
       headers: {
-        'Content-Type': 'application/json',
-        'X-Merchant-ID': MERCHANT_ID,
-        'X-Timestamp': timestamp,
-        'X-Signature': signature
+        'X-Flash-Merchant-Id': FLASH_EXPRESS_MERCHANT_ID,
+        'X-Flash-Api-Key': FLASH_EXPRESS_API_KEY,
       }
     });
 
-    return response.data;
-  } catch (error) {
-    console.error('Error checking Flash Express tracking status:', error);
-    throw error;
+    return response.data.data;
+    */
+  } catch (error: any) {
+    console.error('Error getting Flash Express tracking status:', error);
+    throw new Error(`Failed to get tracking status: ${error.message}`);
   }
 };

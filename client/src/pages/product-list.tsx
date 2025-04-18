@@ -102,7 +102,9 @@ const ProductListPage: React.FC = () => {
   const { toast } = useToast();
 
   // หมวดหมู่ทั้งหมดของสินค้า
-  const categories = ['ทั้งหมด', ...new Set(SAMPLE_PRODUCTS.map(p => p.category))];
+  const allCategories = SAMPLE_PRODUCTS.map(p => p.category);
+  const uniqueCategories = [...new Set(allCategories)];
+  const categories = ['ทั้งหมด', ...uniqueCategories];
 
   // กรองและเรียงลำดับสินค้า
   useEffect(() => {

@@ -7,6 +7,13 @@ import { processFile } from '../services/file-processor';
 import { storage } from '../storage';
 import { insertProductSchema, insertCustomerSchema, insertOrderSchema } from '@shared/schema';
 
+// Type declaration for multer
+declare module 'express-serve-static-core' {
+  interface Request {
+    file?: Express.Multer.File;
+  }
+}
+
 const router = express.Router();
 
 // ตั้งค่า multer สำหรับการอัปโหลดไฟล์
@@ -19,10 +26,10 @@ if (!fs.existsSync(uploadDir)) {
 
 const upload = multer({
   storage: multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: function (req: any, file: any, cb: any) {
       cb(null, uploadDir);
     },
-    filename: function (req, file, cb) {
+    filename: function (req: any, file: any, cb: any) {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       const ext = path.extname(file.originalname);
       cb(null, file.fieldname + '-' + uniqueSuffix + ext);
@@ -31,7 +38,7 @@ const upload = multer({
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB
   },
-  fileFilter: function (req, file, cb) {
+  fileFilter: function (req: any, file: any, cb: any) {
     const filetypes = /xlsx|xls|csv/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = filetypes.test(file.mimetype);

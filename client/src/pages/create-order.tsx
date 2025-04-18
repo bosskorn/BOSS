@@ -1,1769 +1,1105 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'wouter';
-import axios from 'axios';
-import { toast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { useLocation } from 'wouter';
 import Layout from '@/components/Layout';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { 
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Truck, 
+  PackageCheck, 
+  User, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Package, 
+  Plus, 
+  Trash, 
+  AlertCircle,
+  CreditCard,
+  Banknote
+} from 'lucide-react';
+import api from '@/services/api';
 
-interface Product {
-  id: number;
-  sku: string;
-  name: string;
-  price: number;
-  stock: number;
-  imageUrl?: string;
-}
-
-interface Customer {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  province: string;
-  district: string;
-  subdistrict: string;
-  zipcode: string;
-  addressNumber?: string;
-  moo?: string;
+// Schema สำหรับแยกที่อยู่
+interface AddressComponents {
+  houseNumber?: string;
+  village?: string;
   soi?: string;
   road?: string;
+  subdistrict?: string;
+  district?: string;
+  province?: string;
+  zipcode?: string;
   building?: string;
   floor?: string;
+  roomNumber?: string;
+  storeName?: string;
 }
 
-interface OrderItem {
-  product_id: number;
-  quantity: number;
-  price: number;
-  product?: Product;
-}
-
-interface Discount {
-  type: 'percentage' | 'fixed';
-  value: number;
-  code?: string;
-  id?: number; // เพิ่ม id เพื่อป้องกัน error
-}
-
-interface ShippingMethod {
-  id: number;
-  name: string;
-  deliveryTime: string;
-  price: number;
-  provider: string;
-  logo?: string;
-  serviceId?: string; // สำหรับใช้กับ Flash Express API
-}
-
-interface ValidationErrors {
-  customer_id?: string;
-  items?: string;
-  shipping_method?: string;
-  payment_method?: string;
-}
-
-interface ClassifiedAddress {
-  fullname: string;
-  phone: string;
-  store: string;
-  addressNumber: string;
-  moo: string;
-  soi: string;
-  road: string;
-  subdistrict: string;
-  district: string;
-  province: string;
-  zipcode: string;
-}
-
-const CreateOrder: React.FC = () => {
-  // สถานะสำหรับข้อมูลสินค้า
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isProductLoading, setIsProductLoading] = useState(false);
+// สคีมาสำหรับฟอร์มสร้างออเดอร์
+const createOrderSchema = z.object({
+  // ข้อมูลลูกค้า
+  customerName: z.string().min(1, { message: 'กรุณากรอกชื่อลูกค้า' }),
+  customerPhone: z.string().min(1, { message: 'กรุณากรอกเบอร์โทรลูกค้า' }),
+  customerEmail: z.string().email({ message: 'รูปแบบอีเมลไม่ถูกต้อง' }).optional().or(z.literal('')),
   
-  // สถานะสำหรับข้อมูลลูกค้า
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  // ข้อมูลที่อยู่
+  fullAddress: z.string().min(1, { message: 'กรุณากรอกที่อยู่จัดส่ง' }),
+  houseNumber: z.string().optional(),
+  village: z.string().optional(),
+  soi: z.string().optional(),
+  road: z.string().optional(),
+  subdistrict: z.string().min(1, { message: 'กรุณากรอกตำบล/แขวง' }),
+  district: z.string().min(1, { message: 'กรุณากรอกอำเภอ/เขต' }),
+  province: z.string().min(1, { message: 'กรุณากรอกจังหวัด' }),
+  zipcode: z.string().min(5, { message: 'รหัสไปรษณีย์ไม่ถูกต้อง' }),
+  building: z.string().optional(),
+  floor: z.string().optional(),
+  roomNumber: z.string().optional(),
+  storeName: z.string().optional(),
   
-  // สถานะสำหรับรายการสั่งซื้อ
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [currentItem, setCurrentItem] = useState<OrderItem>({
-    product_id: 0,
-    quantity: 1,
-    price: 0
+  // สินค้า
+  items: z.array(
+    z.object({
+      productId: z.number().optional(),
+      name: z.string().min(1, { message: 'กรุณากรอกชื่อสินค้า' }),
+      quantity: z.number().min(1, { message: 'จำนวนต้องมากกว่า 0' }),
+      price: z.number().min(0, { message: 'ราคาต้องไม่ติดลบ' }),
+    })
+  ).min(1, { message: 'ต้องมีสินค้าอย่างน้อย 1 รายการ' }),
+  
+  // ขนส่ง
+  shippingMethod: z.string().min(1, { message: 'กรุณาเลือกวิธีการจัดส่ง' }),
+  shippingCost: z.number().min(0, { message: 'ค่าจัดส่งต้องไม่ติดลบ' }),
+  codAmount: z.number().min(0, { message: 'จำนวนเงินต้องไม่ติดลบ' }).optional(),
+  isCOD: z.boolean().default(false),
+  
+  // หมายเหตุ
+  note: z.string().optional(),
+  
+  // ราคารวม
+  total: z.number().min(0, { message: 'ราคารวมต้องไม่ติดลบ' }),
+});
+
+type CreateOrderFormValues = z.infer<typeof createOrderSchema>;
+
+const CreateOrderPage: React.FC = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [shippingOptions, setShippingOptions] = useState<any[]>([]);
+  const [addressFormatted, setAddressFormatted] = useState<AddressComponents>({});
+  const [fullAddressOriginal, setFullAddressOriginal] = useState('');
+  const [processingAddress, setProcessingAddress] = useState(false);
+  
+  // แบ่งส่วนของโค้ดเพื่อความชัดเจน
+  // 1. การจัดการฟอร์มด้วย react-hook-form
+  const form = useForm<CreateOrderFormValues>({
+    resolver: zodResolver(createOrderSchema),
+    defaultValues: {
+      customerName: '',
+      customerPhone: '',
+      customerEmail: '',
+      fullAddress: '',
+      houseNumber: '',
+      village: '',
+      soi: '',
+      road: '',
+      subdistrict: '',
+      district: '',
+      province: '',
+      zipcode: '',
+      building: '',
+      floor: '',
+      roomNumber: '',
+      storeName: '',
+      items: [
+        {
+          productId: undefined,
+          name: '',
+          quantity: 1,
+          price: 0
+        }
+      ],
+      shippingMethod: '',
+      shippingCost: 0,
+      codAmount: 0,
+      isCOD: false,
+      note: '',
+      total: 0
+    }
   });
   
-  // สถานะสำหรับการกรอกที่อยู่โดยตรง
-  const [rawAddressInput, setRawAddressInput] = useState('');
-  const [classifiedAddress, setClassifiedAddress] = useState<ClassifiedAddress | null>(null);
-  const [isAddressFormVisible, setIsAddressFormVisible] = useState(false);
+  // ตรวจสอบว่าผู้ใช้ล็อกอินแล้วหรือยัง
+  if (!user) {
+    // ให้แสดงข้อความแนะนำ
+    return (
+      <Layout>
+        <div className="container mx-auto py-16 px-4">
+          <Card className="w-full max-w-lg mx-auto">
+            <CardHeader>
+              <CardTitle>กรุณาเข้าสู่ระบบ</CardTitle>
+              <CardDescription>
+                คุณจำเป็นต้องเข้าสู่ระบบก่อนใช้งานหน้าสร้างออเดอร์
+              </CardDescription>
+            </CardHeader>
+            <CardFooter>
+              <Button onClick={() => setLocation('/auth')}>ไปยังหน้าเข้าสู่ระบบ</Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
   
-  // สถานะสำหรับโปรโมชันและส่วนลด
-  const [discount, setDiscount] = useState<Discount | null>(null);
-  const [discountCode, setDiscountCode] = useState('');
-  
-  // สถานะสำหรับการจัดส่ง
-  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
-  const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null);
-  const [isLoadingShippingRates, setIsLoadingShippingRates] = useState(false);
-  
-  // สถานะอื่นๆ
-  const [note, setNote] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('bank_transfer'); // แก้ไขจาก bank-transfer เป็น bank_transfer ให้ตรงกับค่าใน enum
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const [currentStep, setCurrentStep] = useState<'customer' | 'items' | 'shipping' | 'payment'>('customer');
-  
-  // รูปภาพโลโก้ผู้ให้บริการจัดส่ง ใช้ URL แทน
-  const shippingLogos = {
-    'flash-express': 'https://cdn.brandfetch.io/idzqDyW4sQ/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B',
-    'thailand-post': 'https://track.thailandpost.co.th/css/dist/img/logo.png',
-    'kerry-express': 'https://1000logos.net/wp-content/uploads/2021/07/Kerry-Express-Logo.png',
-    'jnt-express': 'https://1000logos.net/wp-content/uploads/2021/08/J-T-Express-Logo.png',
-  };
-
-  // โหลดข้อมูลเมื่อคอมโพเนนต์โหลด
+  // ดึงข้อมูลสินค้าเมื่อโหลดหน้า
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await api.get('/api/products');
+        if (response.data.success) {
+          setProducts(response.data.products || []);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+    
     fetchProducts();
-    fetchCustomers();
   }, []);
-
-  // ค้นหาสินค้า
+  
+  // คำนวณราคารวมเมื่อรายการสินค้าหรือค่าจัดส่งเปลี่ยนแปลง
   useEffect(() => {
-    if (searchTerm) {
-      const filtered = products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.sku.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredProducts(filtered);
-    } else {
-      setFilteredProducts(products);
-    }
-  }, [searchTerm, products]);
-
-  // ฟังก์ชันเรียกข้อมูลสินค้าจาก API
-  const fetchProducts = async () => {
-    setIsProductLoading(true);
-    try {
-      // เรียกข้อมูลสินค้าจาก API จริง (สินค้าจากผู้ใช้ 711296)
-      const response = await fetch('/api/products', {
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`เกิดข้อผิดพลาดในการดึงข้อมูล: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success && Array.isArray(result.products)) {
-        // กรองเฉพาะสินค้าของ user id 711296 ซึ่งเป็นค่า userId ที่ server กำหนดไว้
-        const userProducts = result.products;
-        setProducts(userProducts);
-        setFilteredProducts(userProducts);
-        console.log('โหลดสินค้าทั้งหมด:', userProducts.length, 'รายการ');
-      } else {
-        throw new Error('รูปแบบข้อมูลไม่ถูกต้อง');
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถโหลดข้อมูลสินค้าได้',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsProductLoading(false);
-    }
-  };
-
-  // ฟังก์ชันเรียกข้อมูลลูกค้า
-  const fetchCustomers = async () => {
-    try {
-      // เรียกข้อมูลลูกค้าจาก API จริง
-      const response = await fetch('/api/customers', {
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`เกิดข้อผิดพลาดในการดึงข้อมูลลูกค้า: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success && Array.isArray(result.customers)) {
-        // กรองเฉพาะลูกค้าของ user id 711296 ซึ่งเป็นค่า userId ที่ server กำหนดไว้
-        setCustomers(result.customers);
-        console.log('โหลดข้อมูลลูกค้าทั้งหมด:', result.customers.length, 'รายการ');
-      } else {
-        // ถ้าไม่มีข้อมูลลูกค้า ให้ใช้ข้อมูลตัวอย่าง
-        const defaultCustomers: Customer[] = [
-          { 
-            id: 1, 
-            name: 'ลูกค้าทดสอบ (711296)', 
-            email: 'test@purpledash.com', 
-            phone: '0812345678', 
-            address: '123/456 หมู่บ้านทดสอบ', 
-            province: 'กรุงเทพมหานคร', 
-            district: 'จตุจักร', 
-            subdistrict: 'ลาดยาว', 
-            zipcode: '10900',
-            addressNumber: '123/456',
-            moo: '',
-            soi: '',
-            road: 'พหลโยธิน',
-            building: '',
-            floor: ''
-          }
-        ];
-        
-        setCustomers(defaultCustomers);
-      }
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถโหลดข้อมูลลูกค้าได้',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // เลือกสินค้าสำหรับเพิ่มในรายการ
-  const selectProduct = (product: Product) => {
-    setCurrentItem({
-      product_id: product.id,
-      quantity: 1,
-      price: product.price,
-      product: product
-    });
-  };
-
-  // เปลี่ยนจำนวนสินค้า
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuantity = parseInt(e.target.value);
-    if (newQuantity > 0) {
-      setCurrentItem({ ...currentItem, quantity: newQuantity });
-    }
-  };
-
-  // เพิ่มสินค้าในรายการสั่งซื้อ
-  const addItemToOrder = () => {
-    if (!currentItem.product_id) {
-      toast({
-        title: 'กรุณาเลือกสินค้า',
-        variant: 'destructive',
-      });
-      return;
-    }
+    const items = form.getValues('items');
+    const shippingCost = form.getValues('shippingCost') || 0;
     
-    // ตรวจสอบสินค้าซ้ำ
-    const existingItem = orderItems.find(item => item.product_id === currentItem.product_id);
+    // คำนวณราคาสินค้าทั้งหมด
+    const itemsTotal = items.reduce((sum, item) => {
+      return sum + (item.price || 0) * (item.quantity || 0);
+    }, 0);
     
-    if (existingItem) {
-      // ถ้ามีสินค้านี้อยู่แล้ว ให้เพิ่มจำนวน
-      const updatedItems = orderItems.map(item => {
-        if (item.product_id === currentItem.product_id) {
-          return { ...item, quantity: item.quantity + currentItem.quantity };
-        }
-        return item;
-      });
-      setOrderItems(updatedItems);
-    } else {
-      // ถ้ายังไม่มี ให้เพิ่มใหม่
-      setOrderItems([...orderItems, currentItem]);
-    }
+    // คำนวณราคารวมทั้งหมด
+    const total = itemsTotal + shippingCost;
     
-    // รีเซ็ตค่า
-    setCurrentItem({
-      product_id: 0,
-      quantity: 1,
-      price: 0
-    });
-    
-    toast({
-      title: 'เพิ่มสินค้าเรียบร้อย',
-      variant: 'default',
-    });
-  };
-
-  // ลบสินค้าออกจากรายการสั่งซื้อ
-  const removeItem = (productId: number) => {
-    setOrderItems(orderItems.filter(item => item.product_id !== productId));
-  };
-
-  // เปลี่ยนจำนวนสินค้าในรายการ
-  const updateItemQuantity = (productId: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      // ถ้าจำนวนน้อยกว่าหรือเท่ากับ 0 ให้ลบสินค้า
-      removeItem(productId);
-      return;
-    }
-    
-    setOrderItems(orderItems.map(item => {
-      if (item.product_id === productId) {
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    }));
-  };
-
-  // เลือกลูกค้า
-  const handleSelectCustomer = (customerId: number) => {
-    const customer = customers.find(c => c.id === customerId);
-    if (customer) {
-      setSelectedCustomer(customer);
-      // ดึงข้อมูลวิธีการจัดส่งเมื่อเลือกลูกค้า
-      fetchShippingMethods(customer);
-      
-      // เปลี่ยนไปขั้นตอนการเลือกสินค้าโดยอัตโนมัติ
-      setCurrentStep('items');
-      
-      toast({
-        title: 'เลือกลูกค้าเรียบร้อย',
-        description: 'กรุณาเลือกสินค้าในขั้นตอนถัดไป',
-        variant: 'default',
-      });
-    }
-  };
-
-  // จำแนกที่อยู่อัตโนมัติ
-  const classifyAddress = () => {
-    if (!rawAddressInput.trim()) {
-      toast({
-        title: 'กรุณากรอกข้อมูลที่ต้องการจำแนก',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // ในสถานการณ์จริงนี่จะเป็นการเรียก AI API หรือระบบวิเคราะห์ที่อยู่
-    // สำหรับตัวอย่าง เราจะจำลองการแยกข้อมูลจาก pattern ที่คาดเดาได้
-    
-    try {
-      const demoAddress = "ลักษณวดี เจริญวัฒน์อนันต์ 0816425905 ร้านมะลิหอมสมุนไพร 99/1 ถ.ประชาธิปัตย์ หาดใหญ่ สงขลา หาดใหญ่ หาดใหญ่ สงขลา 90110";
-      // ถ้าใช้ input จริงจะเป็น:
-      // const inputText = rawAddressInput;
-      
-      const parts = rawAddressInput.split(' ');
-      
-      // จำลองการจำแนกข้อมูล (ในระบบจริงจะต้องมีการวิเคราะห์ที่ซับซ้อนกว่านี้)
-      let classified: ClassifiedAddress = {
-        fullname: '',
-        phone: '',
-        store: '',
-        addressNumber: '',
-        moo: '',
-        soi: '',
-        road: '',
-        subdistrict: '',
-        district: '',
-        province: '',
-        zipcode: '',
-      };
-
-      // ตัวอย่างเช่น: ถ้าเป็นข้อความตัวอย่างที่ให้มา
-      if (rawAddressInput.includes("สมุนไพร")) {
-        classified = {
-          fullname: "ลักษณวดี เจริญวัฒน์อนันต์",
-          phone: "0816425905",
-          store: "ร้านมะลิหอมสมุนไพร",
-          addressNumber: "99/1",
-          moo: "",
-          soi: "",
-          road: "ประชาธิปัตย์",
-          subdistrict: "หาดใหญ่",
-          district: "หาดใหญ่",
-          province: "สงขลา",
-          zipcode: "90110",
-        };
-      } else {
-        // ถ้าเป็นข้อความอื่น ลองวิเคราะห์อย่างง่าย
-        // แยกชื่อและนามสกุล (สมมติเป็น 2 คำแรก)
-        if (parts.length >= 2) {
-          classified.fullname = parts.slice(0, 2).join(' ');
-        }
-        
-        // มองหาเบอร์โทร (ตัวเลข 10 หลัก)
-        const phoneRegex = /\d{10}/;
-        const phoneMatch = rawAddressInput.match(phoneRegex);
-        if (phoneMatch) {
-          classified.phone = phoneMatch[0];
-        }
-        
-        // มองหารหัสไปรษณีย์ (ตัวเลข 5 หลัก)
-        const zipRegex = /\d{5}/;
-        const zipMatch = rawAddressInput.match(zipRegex);
-        if (zipMatch) {
-          classified.zipcode = zipMatch[0];
-        }
-        
-        // ทำต่อไปเรื่อยๆ - ในระบบจริงจะต้องมีการวิเคราะห์ที่ซับซ้อนกว่านี้
-      }
-      
-      setClassifiedAddress(classified);
-      setIsAddressFormVisible(true);
-      
-      toast({
-        title: 'จำแนกที่อยู่เรียบร้อย',
-        description: 'ระบบได้วิเคราะห์และจำแนกข้อมูลให้อัตโนมัติแล้ว',
-        variant: 'default',
-      });
-    } catch (error) {
-      console.error('Error classifying address:', error);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถจำแนกที่อยู่ได้ กรุณาลองใหม่อีกครั้ง',
-        variant: 'destructive',
-      });
-    }
-  };
+    form.setValue('total', total);
+  }, [form.watch('items'), form.watch('shippingCost')]);
   
-  // ล้างข้อมูลที่อยู่
-  const clearAddress = () => {
-    setRawAddressInput('');
-    setClassifiedAddress(null);
-    setIsAddressFormVisible(false);
+  // ดึงตัวเลือกการจัดส่งเมื่อกรอกข้อมูลที่อยู่ครบถ้วน
+  useEffect(() => {
+    const zipcode = form.watch('zipcode');
+    const province = form.watch('province');
+    const district = form.watch('district');
+    const subdistrict = form.watch('subdistrict');
     
-    toast({
-      title: 'ล้างข้อมูลเรียบร้อย',
-      variant: 'default',
-    });
-  };
-
-  // ดึงข้อมูลวิธีการจัดส่ง
-  const fetchShippingMethods = async (customer: Customer) => {
-    setIsLoadingShippingRates(true);
+    if (zipcode && province && district && subdistrict) {
+      fetchShippingOptions();
+    }
+  }, [form.watch('zipcode'), form.watch('province'), form.watch('district'), form.watch('subdistrict')]);
+  
+  // เมื่อเลือก COD ให้เปลี่ยนค่า codAmount เป็นค่า total
+  useEffect(() => {
+    const isCOD = form.watch('isCOD');
+    const total = form.watch('total');
     
+    if (isCOD) {
+      form.setValue('codAmount', total);
+    } else {
+      form.setValue('codAmount', 0);
+    }
+  }, [form.watch('isCOD'), form.watch('total')]);
+  
+  // ฟังก์ชันดึงตัวเลือกการจัดส่ง (จำลอง)
+  const fetchShippingOptions = async () => {
     try {
-      // สร้างข้อมูลต้นทางและปลายทางสำหรับส่งไป API
-      const fromAddress = {
-        province: 'กรุงเทพมหานคร',  // จากที่อยู่บริษัทของเรา
-        district: 'บางรัก',
-        subdistrict: 'สีลม',
-        zipcode: '10500'
-      };
-
-      const toAddress = {
-        province: customer.province,
-        district: customer.district,
-        subdistrict: customer.subdistrict,
-        zipcode: customer.zipcode
-      };
-
-      // เรียกใช้ API Flash Express จริง
-      const response = await fetch('/api/shipping-methods/flash-express/rates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      // จำลองการเรียก API ของ Flash Express
+      // ในกรณีจริงจะต้องส่งข้อมูลที่อยู่ไปยัง API ของ Flash Express
+      
+      // ข้อมูลตัวอย่าง (ในโปรเจ็คจริงควรดึงจาก API)
+      const mockOptions = [
+        {
+          id: 1,
+          name: 'Flash Express - ส่งด่วน',
+          price: 60,
+          deliveryTime: '1-2 วัน',
+          provider: 'Flash Express',
+          serviceId: 'FLASH-FAST',
+          logo: '/images/flash-express.png'
         },
-        body: JSON.stringify({
-          fromAddress,
-          toAddress,
-          weight: 1.0 // น้ำหนักกิโลกรัม
-        }),
-        credentials: 'include'
-      });
-        
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.success && data.shippingRates && data.shippingRates.length > 0) {
-          // แปลงข้อมูลจาก API ให้อยู่ในรูปแบบที่ใช้ใน state
-          setShippingMethods(data.shippingRates);
-          console.log('Flash Express shipping rates:', data.shippingRates);
-        } else {
-          // ถ้าไม่มีข้อมูลจาก API ให้แสดงตัวเลือกสำรอง
-          const fallbackShippingMethods: ShippingMethod[] = [
-            { 
-              id: 1, 
-              name: 'Flash Express - บริการมาตรฐาน', 
-              deliveryTime: '2-3 วันทำการ', 
-              price: 45, 
-              provider: 'Flash Express',
-              logo: shippingLogos['flash-express']
-            },
-            { 
-              id: 2, 
-              name: 'ไปรษณีย์ไทย - ธรรมดา', 
-              deliveryTime: '3-5 วันทำการ', 
-              price: 35, 
-              provider: 'Thailand Post',
-              logo: shippingLogos['thailand-post']
-            }
-          ];
-        
-          setShippingMethods(fallbackShippingMethods);
+        {
+          id: 2,
+          name: 'Flash Express - ส่งธรรมดา',
+          price: 40,
+          deliveryTime: '2-3 วัน',
+          provider: 'Flash Express',
+          serviceId: 'FLASH-NORMAL',
+          logo: '/images/flash-express.png'
+        },
+        {
+          id: 3,
+          name: 'ไปรษณีย์ไทย - EMS',
+          price: 50,
+          deliveryTime: '1-3 วัน',
+          provider: 'Thailand Post',
+          serviceId: 'TP-EMS',
+          logo: '/images/thailand-post.png'
+        },
+        {
+          id: 4,
+          name: 'ไปรษณีย์ไทย - ลงทะเบียน',
+          price: 30,
+          deliveryTime: '3-5 วัน',
+          provider: 'Thailand Post',
+          serviceId: 'TP-REG',
+          logo: '/images/thailand-post.png'
         }
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch shipping rates');
-      }
+      ];
       
+      setShippingOptions(mockOptions);
     } catch (error) {
-      console.error('Error fetching shipping methods:', error);
+      console.error('Error fetching shipping options:', error);
       toast({
         title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถโหลดข้อมูลวิธีการจัดส่งได้',
+        description: 'ไม่สามารถดึงข้อมูลตัวเลือกการจัดส่งได้',
         variant: 'destructive',
       });
-      setIsLoadingShippingRates(false);
-    } finally {
-      setIsLoadingShippingRates(false);
     }
   };
-
-  // เลือกวิธีการจัดส่ง
-  const handleSelectShippingMethod = (method: ShippingMethod) => {
-    setSelectedShippingMethod(method);
-  };
-
-  // ตรวจสอบโค้ดส่วนลด
-  const checkDiscountCode = () => {
-    if (!discountCode.trim()) {
+  
+  // 2. ฟังก์ชันวิเคราะห์ที่อยู่อัตโนมัติ
+  const analyzeAddress = async () => {
+    const fullAddress = form.getValues('fullAddress');
+    
+    if (!fullAddress) {
       toast({
-        title: 'กรุณาระบุโค้ดส่วนลด',
+        title: 'ข้อมูลไม่ครบถ้วน',
+        description: 'กรุณากรอกที่อยู่ก่อนวิเคราะห์',
         variant: 'destructive',
       });
       return;
     }
     
-    // จำลองการตรวจสอบโค้ดส่วนลด
-    if (discountCode.toUpperCase() === 'NEWUSER') {
-      setDiscount({
-        type: 'percentage',
-        value: 10,
-        code: discountCode.toUpperCase()
+    setProcessingAddress(true);
+    setFullAddressOriginal(fullAddress);
+    
+    try {
+      // ในโปรเจ็คจริงจะส่งไปยัง API วิเคราะห์ที่อยู่
+      // จำลองการวิเคราะห์ที่อยู่ด้วยระบบอย่างง่าย
+      
+      // ตรวจสอบรหัสไปรษณีย์
+      const zipcodeRegex = /\d{5}/g;
+      const zipcodeMatch = fullAddress.match(zipcodeRegex);
+      const zipcode = zipcodeMatch ? zipcodeMatch[0] : '';
+      
+      // ตรวจสอบจังหวัด
+      const provinces = ['กรุงเทพ', 'กรุงเทพฯ', 'เชียงใหม่', 'เชียงราย', 'นนทบุรี', 'ปทุมธานี'];
+      let province = '';
+      
+      for (const p of provinces) {
+        if (fullAddress.includes(p)) {
+          province = p;
+          break;
+        }
+      }
+      
+      // ตรวจสอบอำเภอ/เขต
+      const districts = ['บางรัก', 'ปทุมวัน', 'จตุจักร', 'ดินแดง', 'ลาดพร้าว', 'เมือง'];
+      let district = '';
+      
+      for (const d of districts) {
+        if (fullAddress.includes(d)) {
+          district = d;
+          break;
+        }
+      }
+      
+      // ตรวจสอบตำบล/แขวง
+      const subdistricts = ['สีลม', 'คลองตัน', 'ลาดยาว', 'พญาไท', 'ทุ่งพญาไท'];
+      let subdistrict = '';
+      
+      for (const s of subdistricts) {
+        if (fullAddress.includes(s)) {
+          subdistrict = s;
+          break;
+        }
+      }
+      
+      // ตรวจสอบเลขที่บ้าน
+      const houseNoRegex = /(\d+\/\d+|\d+)/;
+      const houseNoMatch = fullAddress.match(houseNoRegex);
+      const houseNumber = houseNoMatch ? houseNoMatch[0] : '';
+      
+      // ตรวจสอบซอย
+      const soiRegex = /ซอย\s*([^\s,]+)/i;
+      const soiMatch = fullAddress.match(soiRegex);
+      const soi = soiMatch ? soiMatch[1] : '';
+      
+      // ตรวจสอบถนน
+      const roadRegex = /ถนน\s*([^\s,]+)/i;
+      const roadMatch = fullAddress.match(roadRegex);
+      const road = roadMatch ? roadMatch[1] : '';
+      
+      // สร้างข้อมูลที่อยู่ที่แยกส่วนแล้ว
+      const addressComponents: AddressComponents = {
+        houseNumber,
+        soi,
+        road,
+        subdistrict,
+        district,
+        province,
+        zipcode,
+      };
+      
+      // อัพเดทแบบฟอร์ม
+      Object.entries(addressComponents).forEach(([key, value]) => {
+        if (value) {
+          form.setValue(key as keyof CreateOrderFormValues, value);
+        }
       });
+      
+      setAddressFormatted(addressComponents);
+      
       toast({
-        title: 'ใช้โค้ดส่วนลดสำเร็จ',
-        description: 'คุณได้รับส่วนลด 10%',
-        variant: 'default',
+        title: 'วิเคราะห์ที่อยู่สำเร็จ',
+        description: 'กรุณาตรวจสอบและแก้ไขข้อมูลที่อยู่ให้ถูกต้อง',
       });
-    } else if (discountCode.toUpperCase() === 'FLASH100') {
-      setDiscount({
-        type: 'fixed',
-        value: 100,
-        code: discountCode.toUpperCase()
-      });
+    } catch (error) {
+      console.error('Error analyzing address:', error);
       toast({
-        title: 'ใช้โค้ดส่วนลดสำเร็จ',
-        description: 'คุณได้รับส่วนลด 100 บาท',
-        variant: 'default',
-      });
-    } else {
-      toast({
-        title: 'โค้ดส่วนลดไม่ถูกต้อง',
-        description: 'โค้ดส่วนลดไม่ถูกต้องหรือหมดอายุแล้ว',
+        title: 'วิเคราะห์ที่อยู่ไม่สำเร็จ',
+        description: 'กรุณากรอกข้อมูลที่อยู่ด้วยตนเอง',
         variant: 'destructive',
       });
+    } finally {
+      setProcessingAddress(false);
     }
-  };
-
-  // ยกเลิกโค้ดส่วนลด
-  const removeDiscount = () => {
-    setDiscount(null);
-    setDiscountCode('');
-    toast({
-      title: 'ยกเลิกส่วนลดเรียบร้อย',
-      variant: 'default',
-    });
-  };
-
-  // คำนวณยอดรวมราคาสินค้า
-  const calculateSubtotal = () => {
-    return orderItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
-
-  // คำนวณส่วนลด
-  const calculateDiscount = () => {
-    if (!discount) return 0;
-    
-    const subtotal = calculateSubtotal();
-    
-    if (discount.type === 'percentage') {
-      return (subtotal * discount.value) / 100;
-    } else {
-      return Math.min(discount.value, subtotal); // ส่วนลดต้องไม่เกินยอดรวม
-    }
-  };
-
-  // คำนวณค่าจัดส่ง
-  const calculateShippingFee = () => {
-    return selectedShippingMethod ? selectedShippingMethod.price : 0;
-  };
-
-  // คำนวณยอดรวมสุทธิ
-  const calculateTotal = () => {
-    return calculateSubtotal() - calculateDiscount() + calculateShippingFee();
-  };
-
-  // ตรวจสอบข้อมูลในแต่ละขั้นตอน
-  const validateStep = () => {
-    const errors: ValidationErrors = {};
-    
-    if (currentStep === 'items') {
-      if (orderItems.length === 0) {
-        errors.items = 'กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ';
-      }
-    } else if (currentStep === 'customer') {
-      if (!selectedCustomer && !classifiedAddress) {
-        errors.customer_id = 'กรุณาเลือกลูกค้าหรือจำแนกที่อยู่';
-      }
-    } else if (currentStep === 'shipping') {
-      if (!selectedShippingMethod) {
-        errors.shipping_method = 'กรุณาเลือกวิธีการจัดส่ง';
-      }
-    } else if (currentStep === 'payment') {
-      if (!paymentMethod) {
-        errors.payment_method = 'กรุณาเลือกวิธีการชำระเงิน';
-      }
-    }
-    
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
   };
   
-  // ข้ามไปขั้นตอนการเลือกวิธีการจัดส่ง
-  const goToShippingStep = () => {
-    if (selectedCustomer) {
-      setCurrentStep('shipping');
-      fetchShippingMethods(selectedCustomer);
+  // 3. ฟังก์ชันเพิ่ม/ลบรายการสินค้า
+  const addItem = () => {
+    const currentItems = form.getValues('items');
+    form.setValue('items', [
+      ...currentItems,
+      {
+        productId: undefined,
+        name: '',
+        quantity: 1,
+        price: 0
+      }
+    ]);
+  };
+  
+  const removeItem = (index: number) => {
+    const currentItems = form.getValues('items');
+    if (currentItems.length > 1) {
+      form.setValue('items', currentItems.filter((_, i) => i !== index));
     } else {
       toast({
-        title: 'กรุณาเลือกลูกค้า',
-        description: 'ต้องเลือกลูกค้าก่อนไปหน้าเลือกวิธีการจัดส่ง',
+        title: 'ไม่สามารถลบรายการสินค้าได้',
+        description: 'ต้องมีสินค้าอย่างน้อย 1 รายการ',
         variant: 'destructive',
       });
     }
   };
-
-  // ไปยังขั้นตอนถัดไป
-  const goToNextStep = () => {
-    if (!validateStep()) return;
+  
+  const handleProductSelect = (index: number, productId: number) => {
+    const selectedProduct = products.find(p => p.id === productId);
+    if (selectedProduct) {
+      const currentItems = form.getValues('items');
+      currentItems[index] = {
+        ...currentItems[index],
+        productId,
+        name: selectedProduct.name,
+        price: selectedProduct.price
+      };
+      form.setValue('items', currentItems);
+    }
+  };
+  
+  // 4. ฟังก์ชันเมื่อเลือกตัวเลือกการจัดส่ง
+  const handleShippingMethodSelect = (shippingId: string) => {
+    const option = shippingOptions.find(o => o.id.toString() === shippingId);
+    if (option) {
+      form.setValue('shippingMethod', option.name);
+      form.setValue('shippingCost', option.price);
+    }
+  };
+  
+  // 5. ฟังก์ชันวิเคราะห์ที่อยู่จากข้อมูลลูกค้า
+  const handleFullCustomerDataPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const pastedText = e.clipboardData.getData('text');
     
-    if (currentStep === 'customer') {
-      setCurrentStep('items');
-    } else if (currentStep === 'items') {
-      setCurrentStep('shipping');
-    } else if (currentStep === 'shipping') {
-      setCurrentStep('payment');
-    }
-  };
-
-  // ย้อนกลับไปขั้นตอนก่อนหน้า
-  const goToPreviousStep = () => {
-    if (currentStep === 'items') {
-      setCurrentStep('customer');
-    } else if (currentStep === 'shipping') {
-      setCurrentStep('items');
-    } else if (currentStep === 'payment') {
-      setCurrentStep('shipping');
-    }
-  };
-
-  // สร้างคำสั่งซื้อ
-  const createOrder = async (e: React.FormEvent) => {
+    // ป้องกันการทำงานปกติของ paste
     e.preventDefault();
     
-    if (!validateStep()) return;
+    // ใส่ข้อมูลที่ paste ลงใน textarea
+    form.setValue('fullAddress', pastedText);
     
-    setIsSubmitting(true);
+    // วิเคราะห์ที่อยู่อัตโนมัติ และข้อมูลลูกค้า
+    processCustomerData(pastedText);
+  };
+  
+  const processCustomerData = (data: string) => {
+    try {
+      // แยกบรรทัด
+      const lines = data.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        return;
+      }
+      
+      // สมมติว่าบรรทัดแรกคือชื่อลูกค้า (อาจมีเบอร์โทรด้วย)
+      const firstLine = lines[0];
+      
+      // ตรวจสอบเบอร์โทร
+      const phoneRegex = /(\d{9,10})/g;
+      const phoneMatch = data.match(phoneRegex);
+      const phone = phoneMatch ? phoneMatch[0] : '';
+      
+      // ดึงชื่อลูกค้า (ถ้ามีเบอร์โทรในบรรทัดแรก ให้ตัดออก)
+      let name = firstLine;
+      if (phone && firstLine.includes(phone)) {
+        name = firstLine.replace(phone, '').trim();
+      }
+      
+      // ตรวจสอบอีเมล
+      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+      const emailMatch = data.match(emailRegex);
+      const email = emailMatch ? emailMatch[0] : '';
+      
+      // ที่อยู่คือทุกบรรทัดยกเว้นบรรทัดแรก (ถ้ามี)
+      const address = lines.slice(1).join(' ');
+      
+      // อัพเดทฟอร์ม
+      if (name) form.setValue('customerName', name);
+      if (phone) form.setValue('customerPhone', phone);
+      if (email) form.setValue('customerEmail', email);
+      if (address) form.setValue('fullAddress', address);
+      
+      // วิเคราะห์ที่อยู่ต่อ
+      if (address) {
+        analyzeAddress();
+      }
+      
+      toast({
+        title: 'นำเข้าข้อมูลลูกค้าสำเร็จ',
+        description: 'กรุณาตรวจสอบและแก้ไขข้อมูลให้ถูกต้อง',
+      });
+    } catch (error) {
+      console.error('Error processing customer data:', error);
+      toast({
+        title: 'นำเข้าข้อมูลลูกค้าไม่สำเร็จ',
+        description: 'กรุณากรอกข้อมูลด้วยตนเอง',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  // 6. ฟังก์ชันส่งฟอร์ม
+  const onSubmit = async (data: CreateOrderFormValues) => {
+    setIsLoading(true);
     
     try {
-      // สร้างข้อมูลคำสั่งซื้อในรูปแบบที่ตรงกับ API
-      const orderData = {
-        orderNumber: `ORD-${Date.now().toString().substring(6)}`,
-        customerId: selectedCustomer?.id || null,
-        shippingMethodId: selectedShippingMethod?.id || null,
-        discountId: discount?.id || null, // ถ้ามีปัญหากับ discount.id ให้ทดลองใช้ 1 หรือใช้ discount?.code
-        subtotal: calculateSubtotal(),
-        shippingFee: calculateShippingFee(),
-        discount: calculateDiscount(),
-        totalAmount: calculateTotal(),
-        paymentMethod: paymentMethod as any, // แปลงเป็น enum paymentMethodEnum
-        note: note,
-        status: "pending" as any, // แปลงเป็น enum orderStatusEnum
-        // userId จะถูกกำหนดจาก session บน backend
-      };
+      // จำลองการส่งข้อมูลไปยัง API
+      console.log('Order data:', data);
       
-      console.log('Sending order data to API:', orderData);
+      // ถ้าเป็น COD และมีการเลือกขนส่ง Flash Express
+      if (data.isCOD && data.shippingMethod.includes('Flash Express')) {
+        // จำลองการเรียก API Flash Express
+        const flashExpressResponse = await simulateFlashExpressAPI(data);
+        console.log('Flash Express response:', flashExpressResponse);
+      }
       
-      // ส่งข้อมูลไปยัง API จริง
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
-        credentials: 'include'
+      // แสดงข้อความสำเร็จ
+      toast({
+        title: 'สร้างออเดอร์สำเร็จ',
+        description: 'ออเดอร์ถูกสร้างเรียบร้อยแล้ว',
       });
       
-      // ตรวจสอบการตอบกลับจาก API
-      if (!response.ok) {
-        throw new Error(`เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ: ${response.status}`);
-      }
+      // รีเซ็ตฟอร์ม
+      form.reset();
       
-      const result = await response.json();
-      
-      // หลังจากบันทึกข้อมูลออเดอร์สำเร็จ ให้บันทึกรายการสินค้าในออเดอร์
-      if (result.success && result.order && result.order.id) {
-        const orderId = result.order.id;
-        
-        // บันทึกรายการสินค้าในออเดอร์
-        for (const item of orderItems) {
-          const orderItemData = {
-            orderId: orderId,
-            productId: item.product_id,
-            quantity: item.quantity,
-            price: item.price,
-            total: item.quantity * item.price,
-          };
-          
-          // ส่งข้อมูลรายการสินค้าไปยัง API
-          await fetch('/api/order-items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderItemData),
-            credentials: 'include'
-          });
-        }
-        
-        // แสดงข้อความสำเร็จ
-        toast({
-          title: 'สร้างคำสั่งซื้อสำเร็จ',
-          description: `หมายเลขคำสั่งซื้อ: #${orderData.orderNumber}`,
-          variant: 'default',
-        });
-        
-        // รีเซ็ตฟอร์ม
-        setOrderItems([]);
-        setSelectedCustomer(null);
-        setSelectedShippingMethod(null);
-        setDiscount(null);
-        setDiscountCode('');
-        setNote('');
-        setCurrentStep('items');
-        clearAddress();
-      } else {
-        throw new Error('ไม่สามารถสร้างคำสั่งซื้อได้');
-      }
-    } catch (error) {
+      // นำทางไปยังหน้ารายการออเดอร์
+      setLocation('/orders');
+    } catch (error: any) {
       console.error('Error creating order:', error);
       toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: error instanceof Error ? error.message : 'ไม่สามารถสร้างคำสั่งซื้อได้',
+        title: 'สร้างออเดอร์ไม่สำเร็จ',
+        description: error.message || 'ไม่สามารถสร้างออเดอร์ได้',
         variant: 'destructive',
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
+  };
+  
+  // จำลองการเรียก API Flash Express
+  const simulateFlashExpressAPI = async (data: CreateOrderFormValues) => {
+    // จำลองการเรียก API Flash Express
+    // ในกรณีจริงจะต้องส่งข้อมูลไปยัง API ของ Flash Express
+    
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          tracking_number: 'FLE' + Math.floor(Math.random() * 10000000),
+          label_url: 'https://example.com/label.pdf',
+        });
+      }, 1000);
+    });
+  };
+  
+  // 7. ฟังก์ชันแสดงผลสรุปราคา
+  const renderOrderSummary = () => {
+    const items = form.watch('items');
+    const shippingCost = form.watch('shippingCost');
+    const isCOD = form.watch('isCOD');
+    const total = form.watch('total');
+    
+    const subtotal = items.reduce((sum, item) => {
+      return sum + (item.price || 0) * (item.quantity || 0);
+    }, 0);
+    
+    return (
+      <Card className="bg-gray-50">
+        <CardHeader>
+          <CardTitle className="text-xl">สรุปรายการ</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex justify-between">
+            <span>ราคาสินค้ารวม:</span>
+            <span>฿{subtotal.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>ค่าจัดส่ง:</span>
+            <span>฿{shippingCost?.toLocaleString() || 0}</span>
+          </div>
+          {isCOD && (
+            <div className="flex justify-between text-orange-600">
+              <span>เก็บเงินปลายทาง (COD):</span>
+              <span>฿{total.toLocaleString()}</span>
+            </div>
+          )}
+          <Separator />
+          <div className="flex justify-between font-bold text-lg">
+            <span>ราคารวมทั้งสิ้น:</span>
+            <span>฿{total.toLocaleString()}</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
   
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">สร้างคำสั่งซื้อใหม่</h1>
-            <p className="text-gray-600">กรอกข้อมูลเพื่อสร้างออเดอร์สำหรับลูกค้า</p>
-          </div>
-          <div>
-            <button 
-              onClick={() => window.location.href = '/orders'} 
-              className="px-4 py-2 bg-gray-200 rounded-md text-gray-700 hover:bg-gray-300 mr-2"
-            >
-              <i className="fa-solid fa-arrow-left mr-2"></i>
-              กลับไปรายการออเดอร์
-            </button>
-          </div>
+      <div className="container mx-auto py-8 px-4 font-kanit">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">สร้างออเดอร์ใหม่</h1>
+          <p className="text-gray-600">กรอกข้อมูลออเดอร์ใหม่เพื่อเริ่มกระบวนการจัดส่ง</p>
         </div>
         
-        {/* ขั้นตอนการสั่งซื้อ */}
-        <div className="bg-gray-100 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className={`flex items-center ${currentStep === 'customer' ? 'text-indigo-600' : 'text-gray-500'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
-                currentStep === 'customer' ? 'bg-indigo-600 text-white' : 
-                currentStep === 'items' || currentStep === 'shipping' || currentStep === 'payment' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
-              }`}>
-                {currentStep === 'items' || currentStep === 'shipping' || currentStep === 'payment' ? 
-                  <i className="fa-solid fa-check"></i> : 
-                  <span>1</span>}
-              </div>
-              <span className="font-medium">ข้อมูลลูกค้า</span>
-            </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             
-            <div className="w-16 h-1 bg-gray-300"></div>
-            
-            <div className={`flex items-center ${currentStep === 'items' ? 'text-indigo-600' : 'text-gray-500'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
-                currentStep === 'items' ? 'bg-indigo-600 text-white' : 
-                currentStep === 'shipping' || currentStep === 'payment' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
-              }`}>
-                {currentStep === 'shipping' || currentStep === 'payment' ? 
-                  <i className="fa-solid fa-check"></i> : 
-                  <span>2</span>}
-              </div>
-              <span className="font-medium">เลือกสินค้า</span>
-            </div>
-            
-            <div className="w-16 h-1 bg-gray-300"></div>
-            
-            <div className={`flex items-center ${currentStep === 'shipping' ? 'text-indigo-600' : 'text-gray-500'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
-                currentStep === 'shipping' ? 'bg-indigo-600 text-white' : 
-                currentStep === 'payment' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
-              }`}>
-                {currentStep === 'payment' ? 
-                  <i className="fa-solid fa-check"></i> : 
-                  <span>3</span>}
-              </div>
-              <span className="font-medium">การจัดส่ง</span>
-            </div>
-            
-            <div className="w-16 h-1 bg-gray-300"></div>
-            
-            <div className={`flex items-center ${currentStep === 'payment' ? 'text-indigo-600' : 'text-gray-500'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
-                currentStep === 'payment' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'
-              }`}>
-                <span>4</span>
-              </div>
-              <span className="font-medium">การชำระเงิน</span>
-            </div>
-          </div>
-        </div>
-
-        <form onSubmit={createOrder}>
-          {/* ขั้นตอนที่ 2: เลือกสินค้า */}
-          {currentStep === 'items' && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-lg font-medium mb-4 flex items-center">
-                <i className="fa-solid fa-cart-shopping text-indigo-600 mr-2"></i>
-                เลือกสินค้า
-              </h2>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* ค้นหาสินค้า */}
-                <div className="lg:col-span-1 border-r border-gray-200 pr-4">
-                  <div className="mb-4">
-                    <label htmlFor="search" className="block text-sm font-medium mb-1">ค้นหาสินค้า</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        id="search"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md pr-10"
-                        placeholder="ชื่อสินค้า หรือ รหัสสินค้า"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <i className="fa-solid fa-search text-gray-400"></i>
-                      </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                {/* ข้อมูลลูกค้า */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center">
+                      <User className="w-5 h-5 mr-2 text-purple-600" />
+                      <CardTitle>ข้อมูลลูกค้า</CardTitle>
                     </div>
-                  </div>
-                  
-                  {isProductLoading ? (
-                    <div className="flex justify-center items-center py-4">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                    </div>
-                  ) : (
-                    <div className="max-h-96 overflow-y-auto pr-1">
-                      {filteredProducts.length > 0 ? (
-                        <div className="space-y-2">
-                          {filteredProducts.map((product) => (
-                            <div
-                              key={product.id}
-                              className={`p-3 rounded-md cursor-pointer transition-colors ${
-                                currentItem.product_id === product.id 
-                                  ? 'bg-green-50 border border-green-200' 
-                                  : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
-                              }`}
-                              onClick={() => selectProduct(product)}
-                            >
-                              <div className="flex items-start">
-                                {product.imageUrl && (
-                                  <img src={product.imageUrl} alt={product.name} className="w-12 h-12 object-cover rounded mr-3" />
-                                )}
-                                <div className="flex-1">
-                                  <p className="font-medium">{product.name}</p>
-                                  <div className="flex justify-between mt-1">
-                                    <span className="text-sm text-gray-500">SKU: {product.sku}</span>
-                                    <span className="text-sm font-medium text-green-600">{product.price.toLocaleString()} บาท</span>
-                                  </div>
-                                  <div className="mt-1 text-xs text-gray-500">
-                                    สต็อค: {product.stock} ชิ้น
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="bg-gray-50 p-4 rounded-md text-center">
-                          <p className="text-gray-500">ไม่พบสินค้าที่ค้นหา</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                
-                {/* เพิ่มสินค้าในรายการ */}
-                <div className="lg:col-span-2">
-                  <div className="mb-4">
-                    <h3 className="text-sm font-medium mb-3">เพิ่มสินค้าในรายการ</h3>
-                    <div className={`p-4 rounded-md ${currentItem.product_id ? 'bg-gray-50 border border-gray-200' : 'bg-gray-100 border border-dashed border-gray-300'}`}>
-                      {currentItem.product_id ? (
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center">
-                              {currentItem.product?.imageUrl && (
-                                <img src={currentItem.product.imageUrl} alt={currentItem.product.name} className="w-12 h-12 object-cover rounded mr-3" />
-                              )}
-                              <div>
-                                <h4 className="font-medium">{currentItem.product?.name}</h4>
-                                <p className="text-sm text-gray-500">SKU: {currentItem.product?.sku}</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium text-green-600">{currentItem.price.toLocaleString()} บาท / ชิ้น</p>
-                              <p className="text-sm text-gray-500">คงเหลือ: {currentItem.product?.stock} ชิ้น</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-end justify-between">
-                            <div>
-                              <label htmlFor="quantity" className="block text-sm mb-1">จำนวน:</label>
-                              <input
-                                type="number"
-                                id="quantity"
-                                className="px-3 py-1 border border-gray-300 rounded-md w-20"
-                                value={currentItem.quantity}
-                                onChange={handleQuantityChange}
-                                min="1"
-                              />
-                            </div>
-                            <div className="flex space-x-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setCurrentItem({
-                                    product_id: 0,
-                                    quantity: 1,
-                                    price: 0
-                                  });
-                                }}
-                                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm"
-                              >
-                                ยกเลิก
-                              </button>
-                              <button
-                                type="button"
-                                onClick={addItemToOrder}
-                                className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
-                              >
-                                <i className="fa-solid fa-plus mr-1"></i>
-                                เพิ่มสินค้า
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-6">
-                          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 mb-2">
-                            <i className="fa-solid fa-cart-plus"></i>
-                          </div>
-                          <p className="text-gray-500 mb-1">เลือกสินค้าจากรายการด้านซ้าย</p>
-                          <p className="text-sm text-gray-400">เพื่อเพิ่มสินค้าในรายการสั่งซื้อ</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-sm font-medium mb-3">รายการสินค้าที่เลือก</h3>
-                  
-                  {orderItems.length > 0 ? (
-                    <div className="border rounded-md overflow-hidden mb-4">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">สินค้า</th>
-                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-24">ราคา</th>
-                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-24">จำนวน</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-32">รวม</th>
-                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-16"></th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {orderItems.map((item) => (
-                            <tr key={item.product_id}>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  {item.product?.imageUrl && (
-                                    <img src={item.product.imageUrl} alt={item.product.name} className="w-8 h-8 object-cover rounded mr-2" />
-                                  )}
-                                  <div>
-                                    <p className="font-medium">{item.product?.name}</p>
-                                    <p className="text-xs text-gray-500">SKU: {item.product?.sku}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-center">
-                                {item.price.toLocaleString()} บาท
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <div className="flex items-center justify-center space-x-1">
-                                  <button
-                                    type="button"
-                                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
-                                    onClick={() => updateItemQuantity(item.product_id, item.quantity - 1)}
-                                  >
-                                    <i className="fa-solid fa-minus text-xs"></i>
-                                  </button>
-                                  <span className="w-8 text-center">{item.quantity}</span>
-                                  <button
-                                    type="button"
-                                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
-                                    onClick={() => updateItemQuantity(item.product_id, item.quantity + 1)}
-                                  >
-                                    <i className="fa-solid fa-plus text-xs"></i>
-                                  </button>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-right font-medium">
-                                {(item.price * item.quantity).toLocaleString()} บาท
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-right">
-                                <button
-                                  type="button"
-                                  onClick={() => removeItem(item.product_id)}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  <i className="fa-solid fa-trash-can"></i>
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-md p-8 text-center">
-                      <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
-                        <i className="fa-solid fa-cart-shopping text-xl"></i>
-                      </div>
-                      <h3 className="text-gray-500 mb-1">ยังไม่มีสินค้าในรายการ</h3>
-                      <p className="text-sm text-gray-400 mb-4">กรุณาเลือกสินค้าเพื่อเพิ่มในรายการสั่งซื้อ</p>
-                    </div>
-                  )}
-                  
-                  {validationErrors.items && (
-                    <p className="mt-2 text-sm text-red-600">
-                      <i className="fa-solid fa-circle-exclamation mr-1"></i>
-                      {validationErrors.items}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* ขั้นตอนที่ 2: ข้อมูลลูกค้า */}
-          {currentStep === 'customer' && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <div className="flex items-center text-indigo-800 mb-4">
-                <i className="fa-solid fa-user mr-2"></i>
-                <h2 className="text-lg font-medium">ข้อมูลลูกค้า</h2>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="lg:col-span-1">
-                  <div className="p-4 bg-white border border-gray-200 rounded-md mb-4">
-                    <h3 className="text-sm font-medium mb-3">1. เลือกลูกค้า</h3>
-                    
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {customers.map((customer) => (
-                        <div
-                          key={customer.id}
-                          className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                            selectedCustomer?.id === customer.id 
-                              ? 'border-indigo-400 bg-indigo-50 shadow-sm' 
-                              : 'border-gray-200 hover:bg-gray-50'
-                          }`}
-                          onClick={() => handleSelectCustomer(customer.id)}
-                        >
-                          <div className="flex items-center">
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
-                              <i className="fa-solid fa-user"></i>
-                            </div>
-                            <div>
-                              <p className="font-medium">{customer.name}</p>
-                              <p className="text-xs text-gray-500">{customer.phone}</p>
-                            </div>
-                            {selectedCustomer?.id === customer.id && (
-                              <div className="ml-auto text-green-600">
-                                <i className="fa-solid fa-check-circle"></i>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      <div className="p-5 border border-dashed border-indigo-300 rounded-md flex flex-col items-center justify-center text-center hover:bg-indigo-50 cursor-pointer">
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mb-2">
-                          <i className="fa-solid fa-plus"></i>
-                        </div>
-                        <p className="font-medium text-indigo-600">เพิ่มลูกค้าใหม่</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
-                    <div className="flex items-center mb-2">
-                      <i className="fa-solid fa-info-circle text-indigo-600 mr-2"></i>
-                      <h3 className="text-sm font-medium">หรือกรอกข้อมูลโดยตรง</h3>
-                    </div>
-                    <p className="text-xs text-gray-500 mb-2">สามารถวางข้อความทั้งหมดและกดปุ่ม "จำแนกที่อยู่" เพื่อให้ระบบแยกข้อมูลให้อัตโนมัติ</p>
-                    <div className="mb-2">
-                      <label className="block text-xs text-gray-500 mb-1">ตัวอย่าง:</label>
-                      <div className="text-xs text-gray-700 bg-gray-100 p-2 rounded">
-                        ลักษณวดี เจริญวัฒน์อนันต์ 0816425905 ร้านมะลิหอมสมุนไพร 99/1 ถ.ประชาธิปัตย์ หาดใหญ่ สงขลา หาดใหญ่ หาดใหญ่ สงขลา 90110
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="lg:col-span-1">
-                  <div className="inner-forms-box p-5 rounded-md border border-gray-200 bg-white">
-                    <div className="order-information mb-4">
-                      <div className="mb-3">
-                        <span className="title-txt text-sm font-medium">2. กรอกข้อมูลลูกค้า</span>
-                      </div>
-                      
-                      <div className="form-box-platform">
-                        {/* รายละเอียดผู้รับสินค้า */}
-                        <div className="mb-4">
-                          <div className="flex justify-between items-center mb-2">
-                            <label className="block text-xs text-gray-500">รายละเอียดผู้รับสินค้า</label>
-                            <button
-                              type="button"
-                              onClick={classifyAddress}
-                              className="flex items-center text-indigo-600 hover:text-indigo-800 text-xs px-2 py-1 border border-indigo-300 rounded-md bg-indigo-50"
-                            >
-                              <i className="fa-solid fa-wand-magic-sparkles mr-1"></i>
-                              จำแนกที่อยู่
-                            </button>
-                          </div>
-                          
-                          <textarea
-                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                            rows={5}
-                            style={{ minHeight: '120px' }}
-                            value={rawAddressInput}
-                            onChange={(e) => setRawAddressInput(e.target.value)}
-                            placeholder="ชื่อ-นามสกุล เบอร์โทรศัพท์ ชื่อร้าน(ถ้ามี) ที่อยู่ แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์"
-                          ></textarea>
-                        </div>
-                        
-                        {/* ฟอร์มกรอกที่อยู่แบบละเอียด */}
-                        {isAddressFormVisible && classifiedAddress && (
-                          <div className="mb-4">
-                            <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                              <h4 className="text-sm font-medium mb-3 text-green-600">ข้อมูลที่จำแนกแล้ว</h4>
-                              
-                              <div className="grid grid-cols-2 gap-4 mb-3">
-                                <div className="form-group">
-                                  <label className="block text-xs text-gray-500 mb-1">ชื่อ-นามสกุล</label>
-                                  <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    value={classifiedAddress.fullname}
-                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, fullname: e.target.value})}
-                                  />
-                                </div>
-                                <div className="form-group">
-                                  <label className="block text-xs text-gray-500 mb-1">เบอร์โทรศัพท์</label>
-                                  <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    value={classifiedAddress.phone}
-                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, phone: e.target.value})}
-                                  />
-                                </div>
-                              </div>
-                              
-                              <div className="mb-3">
-                                <label className="block text-xs text-gray-500 mb-1">ชื่อร้าน/บริษัท (ถ้ามี)</label>
-                                <input
-                                  type="text"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                  value={classifiedAddress.store}
-                                  onChange={(e) => setClassifiedAddress({...classifiedAddress, store: e.target.value})}
-                                />
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4 mb-3">
-                                <div className="form-group">
-                                  <label className="block text-xs text-gray-500 mb-1">บ้านเลขที่</label>
-                                  <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    value={classifiedAddress.addressNumber}
-                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, addressNumber: e.target.value})}
-                                  />
-                                </div>
-                                <div className="form-group">
-                                  <label className="block text-xs text-gray-500 mb-1">หมู่</label>
-                                  <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    value={classifiedAddress.moo}
-                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, moo: e.target.value})}
-                                  />
-                                </div>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4 mb-3">
-                                <div className="form-group">
-                                  <label className="block text-xs text-gray-500 mb-1">ซอย</label>
-                                  <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    value={classifiedAddress.soi}
-                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, soi: e.target.value})}
-                                  />
-                                </div>
-                                <div className="form-group">
-                                  <label className="block text-xs text-gray-500 mb-1">ถนน</label>
-                                  <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    value={classifiedAddress.road}
-                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, road: e.target.value})}
-                                  />
-                                </div>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4 mb-3">
-                                <div className="form-group">
-                                  <label className="block text-xs text-gray-500 mb-1">แขวง/ตำบล</label>
-                                  <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    value={classifiedAddress.subdistrict}
-                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, subdistrict: e.target.value})}
-                                  />
-                                </div>
-                                <div className="form-group">
-                                  <label className="block text-xs text-gray-500 mb-1">เขต/อำเภอ</label>
-                                  <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    value={classifiedAddress.district}
-                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, district: e.target.value})}
-                                  />
-                                </div>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="form-group">
-                                  <label className="block text-xs text-gray-500 mb-1">จังหวัด</label>
-                                  <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    value={classifiedAddress.province}
-                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, province: e.target.value})}
-                                  />
-                                </div>
-                                <div className="form-group">
-                                  <label className="block text-xs text-gray-500 mb-1">รหัสไปรษณีย์</label>
-                                  <input
-                                    type="text"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    value={classifiedAddress.zipcode}
-                                    onChange={(e) => setClassifiedAddress({...classifiedAddress, zipcode: e.target.value})}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="customerName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ชื่อลูกค้า</FormLabel>
+                            <FormControl>
+                              <Input placeholder="ชื่อ-นามสกุล" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                        
-                        <div className="flex justify-end mt-3 pt-3 border-t border-gray-200">
-                          <button
-                            type="button"
-                            className="px-4 py-2 mr-2 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded"
-                            onClick={clearAddress}
-                          >
-                            <i className="fa-solid fa-eraser mr-1"></i>
-                            ล้างข้อมูล
-                          </button>
-                          <button
-                            type="button"
-                            className="px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded"
-                            onClick={async () => {
-                              if (rawAddressInput.trim() && !classifiedAddress) {
-                                classifyAddress();
-                              } else if (classifiedAddress) {
-                                try {
-                                  console.log('กำลังบันทึกข้อมูลลูกค้าใหม่...');
-                                  
-                                  // ตรวจสอบการล็อกอิน
-                                  const userResponse = await fetch('/api/user', {
-                                    method: 'GET',
-                                    credentials: 'include',
-                                  });
-                                  
-                                  if (!userResponse.ok) {
-                                    throw new Error('กรุณาเข้าสู่ระบบก่อนบันทึกข้อมูลลูกค้า');
-                                  }
-                                  
-                                  // สร้างข้อมูลลูกค้าใหม่จากข้อมูลที่จำแนกแล้ว
-                                  const customerData = {
-                                    name: classifiedAddress.fullname,
-                                    phone: classifiedAddress.phone,
-                                    email: "", // ถ้ามีให้เพิ่มในฟอร์ม
-                                    address: classifiedAddress.addressNumber + 
-                                            (classifiedAddress.moo ? ` หมู่ ${classifiedAddress.moo}` : "") + 
-                                            (classifiedAddress.soi ? ` ซ.${classifiedAddress.soi}` : "") + 
-                                            (classifiedAddress.road ? ` ถ.${classifiedAddress.road}` : ""),
-                                    subdistrict: classifiedAddress.subdistrict,
-                                    district: classifiedAddress.district,
-                                    province: classifiedAddress.province,
-                                    zipcode: classifiedAddress.zipcode,
-                                    storeName: classifiedAddress.store || null,
-                                    addressNumber: classifiedAddress.addressNumber || null,
-                                    moo: classifiedAddress.moo || null,
-                                    soi: classifiedAddress.soi || null,
-                                    road: classifiedAddress.road || null
-                                  };
-                                  
-                                  console.log('กำลังส่งข้อมูล:', customerData);
-                                  
-                                  // บันทึกข้อมูลลูกค้าลงฐานข้อมูล
-                                  const response = await fetch('/api/customers', {
-                                    method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                    },
-                                    credentials: 'include',
-                                    body: JSON.stringify(customerData),
-                                  });
-                                  
-                                  // แสดงข้อมูลการตอบกลับจาก API เพื่อดีบัก
-                                  const responseText = await response.text();
-                                  console.log('การตอบกลับจาก API:', response.status, responseText);
-                                  
-                                  if (!response.ok) {
-                                    throw new Error(`ไม่สามารถบันทึกข้อมูลลูกค้าได้ (รหัส: ${response.status})`);
-                                  }
-                                  
-                                  // แปลงข้อความตอบกลับเป็น JSON
-                                  const result = JSON.parse(responseText);
-                                  
-                                  if (result.success && result.customer) {
-                                    console.log('บันทึกข้อมูลลูกค้าสำเร็จ:', result.customer);
-                                    
-                                    // อัปเดตรายการลูกค้าและเลือกลูกค้าที่เพิ่งสร้าง
-                                    setCustomers([...customers, result.customer]);
-                                    setSelectedCustomer(result.customer);
-                                    
-                                    // ดึงวิธีการจัดส่งเมื่อเลือกลูกค้า
-                                    fetchShippingMethods(result.customer);
-                                    
-                                    // ล้างข้อมูลที่ป้อนและที่จำแนก
-                                    clearAddress();
-                                    
-                                    toast({
-                                      title: 'บันทึกข้อมูลลูกค้าเรียบร้อย',
-                                      description: 'เพิ่มลูกค้าใหม่และเลือกเรียบร้อยแล้ว',
-                                      variant: 'default',
-                                    });
-                                  } else {
-                                    throw new Error(result.message || 'ไม่สามารถบันทึกข้อมูลลูกค้าได้');
-                                  }
-                                } catch (error) {
-                                  console.error('Error saving customer:', error);
-                                  toast({
-                                    title: 'เกิดข้อผิดพลาด',
-                                    description: error instanceof Error ? error.message : 'ไม่สามารถบันทึกข้อมูลลูกค้าได้',
-                                    variant: 'destructive',
-                                  });
-                                }
-                              }
-                            }}
-                          >
-                            <i className="fa-solid fa-check mr-1"></i>
-                            {classifiedAddress ? 'บันทึก' : 'วิเคราะห์ข้อมูล'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {validationErrors.customer_id && (
-                    <p className="mt-2 text-sm text-red-600">
-                      <i className="fa-solid fa-circle-exclamation mr-1"></i>
-                      {validationErrors.customer_id}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* ขั้นตอนที่ 3: การจัดส่ง */}
-          {currentStep === 'shipping' && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-lg font-medium mb-4 flex items-center">
-                <i className="fa-solid fa-truck text-indigo-600 mr-2"></i>
-                เลือกวิธีการจัดส่ง
-              </h2>
-              
-              <div className="mb-6">
-                <h3 className="text-sm font-medium mb-3">ข้อมูลผู้รับ</h3>
-                
-                {selectedCustomer ? (
-                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-4">
-                    <div className="flex items-center mb-3">
-                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mr-3">
-                        <i className="fa-solid fa-user"></i>
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{selectedCustomer.name}</h4>
-                        <p className="text-sm text-gray-600">{selectedCustomer.phone}</p>
-                      </div>
-                    </div>
-                    
-                    <p className="text-sm">
-                      <span className="text-gray-500">ที่อยู่: </span>
-                      {selectedCustomer.address}, {selectedCustomer.subdistrict}, {selectedCustomer.district}, {selectedCustomer.province}, {selectedCustomer.zipcode}
-                    </p>
-                  </div>
-                ) : classifiedAddress ? (
-                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-4">
-                    <div className="flex items-center mb-3">
-                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mr-3">
-                        <i className="fa-solid fa-user"></i>
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{classifiedAddress.fullname}</h4>
-                        <p className="text-sm text-gray-600">{classifiedAddress.phone}</p>
-                      </div>
-                    </div>
-                    
-                    <p className="text-sm mb-1">
-                      {classifiedAddress.store && (
-                        <span className="font-medium">{classifiedAddress.store}<br /></span>
-                      )}
-                      <span className="text-gray-500">ที่อยู่: </span>
-                      {classifiedAddress.addressNumber} 
-                      {classifiedAddress.moo && ` หมู่ ${classifiedAddress.moo}`} 
-                      {classifiedAddress.soi && ` ซ.${classifiedAddress.soi}`} 
-                      {classifiedAddress.road && ` ถ.${classifiedAddress.road}`}, 
-                      {classifiedAddress.subdistrict}, {classifiedAddress.district}, {classifiedAddress.province}, {classifiedAddress.zipcode}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-4 text-center">
-                    <p className="text-gray-500">ไม่มีข้อมูลผู้รับ กรุณาย้อนกลับไปเลือกลูกค้าหรือกรอกข้อมูลลูกค้า</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="mb-6">
-                <h3 className="text-sm font-medium mb-3">วิธีการจัดส่ง</h3>
-                
-                {isLoadingShippingRates ? (
-                  <div className="bg-gray-50 border border-gray-200 rounded-md p-8 text-center">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                    <p className="text-gray-500">กำลังโหลดข้อมูลวิธีการจัดส่ง...</p>
-                  </div>
-                ) : (
-                  shippingMethods.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {shippingMethods.map((method) => (
-                        <div
-                          key={method.id}
-                          className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                            selectedShippingMethod?.id === method.id 
-                              ? 'border-indigo-400 bg-indigo-50 shadow-sm' 
-                              : 'border-gray-200 hover:bg-gray-50'
-                          }`}
-                          onClick={() => handleSelectShippingMethod(method)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 mr-3">
-                                {method.logo ? (
-                                  <img src={method.logo} alt={method.name} className="h-10 w-auto object-contain" />
-                                ) : (
-                                  <div className="h-10 w-10 bg-gray-200 rounded flex items-center justify-center">
-                                    <i className="fa-solid fa-truck text-gray-500"></i>
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <h4 className="font-medium">{method.name}</h4>
-                                <p className="text-xs text-gray-500">{method.deliveryTime}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center">
-                              <span className="font-medium text-indigo-600 mr-2">{method.price} บาท</span>
-                              {selectedShippingMethod?.id === method.id && (
-                                <div className="text-green-600">
-                                  <i className="fa-solid fa-circle-check"></i>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-md p-8 text-center">
-                      <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
-                        <i className="fa-solid fa-truck-ramp-box text-xl"></i>
-                      </div>
-                      <h3 className="text-gray-500 mb-1">ไม่พบข้อมูลวิธีการจัดส่ง</h3>
-                      <p className="text-sm text-gray-400 mb-4">กรุณาเลือกลูกค้าและระบุที่อยู่จัดส่ง</p>
-                    </div>
-                  )
-                )}
-                
-                {validationErrors.shipping_method && (
-                  <p className="mt-2 text-sm text-red-600">
-                    <i className="fa-solid fa-circle-exclamation mr-1"></i>
-                    {validationErrors.shipping_method}
-                  </p>
-                )}
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium mb-3">หมายเหตุการจัดส่ง (ไม่บังคับ)</h3>
-                <textarea
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                  rows={2}
-                  placeholder="ระบุหมายเหตุการจัดส่ง เช่น ให้โทรก่อนจัดส่ง, ถ้าไม่อยู่ให้วางไว้ที่ป้อมยาม เป็นต้น"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                ></textarea>
-              </div>
-            </div>
-          )}
-          
-          {/* ขั้นตอนที่ 4: การชำระเงิน */}
-          {currentStep === 'payment' && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-lg font-medium mb-4 flex items-center">
-                <i className="fa-solid fa-credit-card text-indigo-600 mr-2"></i>
-                ชำระเงิน
-              </h2>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-sm font-medium mb-3">วิธีการชำระเงิน</h3>
-                  
-                  <div className="space-y-2">
-                    <div 
-                      className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                        paymentMethod === 'bank_transfer' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
-                      }`}
-                      onClick={() => setPaymentMethod('bank_transfer')}
-                    >
-                      <div className="flex items-center">
-                        <div className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center mr-3">
-                          {paymentMethod === 'bank_transfer' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 rounded flex items-center justify-center mr-2">
-                            <i className="fa-solid fa-building-columns text-indigo-600"></i>
-                          </div>
-                          <div>
-                            <p className="font-medium">โอนผ่านธนาคาร</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div 
-                      className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                        paymentMethod === 'cash_on_delivery' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
-                      }`}
-                      onClick={() => setPaymentMethod('cash_on_delivery')}
-                    >
-                      <div className="flex items-center">
-                        <div className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center mr-3">
-                          {paymentMethod === 'cash_on_delivery' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 rounded flex items-center justify-center mr-2">
-                            <i className="fa-solid fa-money-bill-wave text-green-600"></i>
-                          </div>
-                          <div>
-                            <p className="font-medium">เก็บเงินปลายทาง</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div 
-                      className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                        paymentMethod === 'credit_card' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
-                      }`}
-                      onClick={() => setPaymentMethod('credit_card')}
-                    >
-                      <div className="flex items-center">
-                        <div className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center mr-3">
-                          {paymentMethod === 'credit_card' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 rounded flex items-center justify-center mr-2">
-                            <i className="fa-solid fa-credit-card text-blue-600"></i>
-                          </div>
-                          <div>
-                            <p className="font-medium">บัตรเครดิต / เดบิต</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {validationErrors.payment_method && (
-                    <p className="mt-2 text-sm text-red-600">
-                      <i className="fa-solid fa-circle-exclamation mr-1"></i>
-                      {validationErrors.payment_method}
-                    </p>
-                  )}
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium mb-3">ส่วนลด</h3>
-                  
-                  {discount ? (
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-md mb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
-                            <i className="fa-solid fa-ticket"></i>
-                          </div>
-                          <div>
-                            <p className="font-medium">โค้ดส่วนลด: {discount.code}</p>
-                            <p className="text-sm text-gray-600">
-                              {discount.type === 'percentage' ? `ส่วนลด ${discount.value}%` : `ส่วนลด ${discount.value} บาท`}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={removeDiscount}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <i className="fa-solid fa-times"></i>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex mb-4">
-                      <input
-                        type="text"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="รหัสส่วนลด"
-                        value={discountCode}
-                        onChange={(e) => setDiscountCode(e.target.value)}
                       />
-                      <button
-                        type="button"
-                        onClick={checkDiscountCode}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700"
-                      >
-                        ใช้โค้ด
-                      </button>
+                      <FormField
+                        control={form.control}
+                        name="customerPhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>เบอร์โทรศัพท์</FormLabel>
+                            <FormControl>
+                              <div className="flex">
+                                <Phone className="w-4 h-4 mr-2 text-gray-400 self-center" />
+                                <Input placeholder="0812345678" {...field} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                  )}
-                  
-                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                    <h3 className="text-sm font-medium mb-3">สรุปคำสั่งซื้อ</h3>
+                    <FormField
+                      control={form.control}
+                      name="customerEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>อีเมล (ถ้ามี)</FormLabel>
+                          <FormControl>
+                            <div className="flex">
+                              <Mail className="w-4 h-4 mr-2 text-gray-400 self-center" />
+                              <Input placeholder="example@email.com" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+                
+                {/* ข้อมูลที่อยู่ */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center">
+                      <MapPin className="w-5 h-5 mr-2 text-purple-600" />
+                      <CardTitle>ที่อยู่จัดส่ง</CardTitle>
+                    </div>
+                    <CardDescription>
+                      วางข้อมูลลูกค้าทั้งหมด (Copy & Paste) เพื่อแยกข้อมูลอัตโนมัติ
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="fullAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ที่อยู่เต็ม</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="วางข้อความที่มีข้อมูลลูกค้าและที่อยู่ทั้งหมดที่นี่..." 
+                              rows={4} 
+                              onPaste={handleFullCustomerDataPaste}
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            <Button 
+                              type="button" 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={analyzeAddress}
+                              disabled={!field.value || processingAddress}
+                              className="mt-2"
+                            >
+                              {processingAddress ? 'กำลังวิเคราะห์...' : 'วิเคราะห์ที่อยู่อัตโนมัติ'}
+                            </Button>
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">ยอดรวมสินค้า:</span>
-                        <span className="font-medium">{calculateSubtotal().toLocaleString()} บาท</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">ส่วนลด:</span>
-                        <span className="font-medium text-red-600">-{calculateDiscount().toLocaleString()} บาท</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">ค่าจัดส่ง:</span>
-                        <span className="font-medium">{calculateShippingFee().toLocaleString()} บาท</span>
-                      </div>
-                      
-                      <div className="border-t border-gray-200 pt-2 mt-2">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">ยอดรวมทั้งสิ้น:</span>
-                          <span className="text-lg font-bold text-indigo-600">{calculateTotal().toLocaleString()} บาท</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="houseNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>บ้านเลขที่</FormLabel>
+                            <FormControl>
+                              <Input placeholder="บ้านเลขที่" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="village"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>หมู่บ้าน/อาคาร (ถ้ามี)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="ชื่อหมู่บ้านหรืออาคาร" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="soi"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ซอย (ถ้ามี)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="ซอย" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="road"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ถนน (ถ้ามี)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="ถนน" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="subdistrict"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ตำบล/แขวง</FormLabel>
+                            <FormControl>
+                              <Input placeholder="ตำบล/แขวง" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="district"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>อำเภอ/เขต</FormLabel>
+                            <FormControl>
+                              <Input placeholder="อำเภอ/เขต" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="province"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>จังหวัด</FormLabel>
+                            <FormControl>
+                              <Input placeholder="จังหวัด" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="zipcode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>รหัสไปรษณีย์</FormLabel>
+                            <FormControl>
+                              <Input placeholder="รหัสไปรษณีย์" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* สินค้า */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center">
+                      <Package className="w-5 h-5 mr-2 text-purple-600" />
+                      <CardTitle>รายการสินค้า</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {form.watch('items').map((item, index) => (
+                      <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="font-medium">สินค้ารายการที่ {index + 1}</h4>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeItem(index)}
+                          >
+                            <Trash className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="md:col-span-2">
+                            <FormLabel>สินค้า</FormLabel>
+                            <Select
+                              onValueChange={(value) => handleProductSelect(index, parseInt(value))}
+                              value={item.productId?.toString()}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="เลือกสินค้า" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {products.map(p => (
+                                  <SelectItem key={p.id} value={p.id.toString()}>
+                                    {p.name} - ฿{p.price}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.name`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ชื่อสินค้า</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="ชื่อสินค้า" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.price`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>ราคา</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      placeholder="0.00"
+                                      {...field}
+                                      onChange={(e) => {
+                                        field.onChange(parseFloat(e.target.value) || 0);
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.quantity`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>จำนวน</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      {...field}
+                                      onChange={(e) => {
+                                        field.onChange(parseInt(e.target.value) || 1);
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
                       </div>
+                    ))}
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addItem}
+                      className="w-full"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      เพิ่มสินค้า
+                    </Button>
+                  </CardContent>
+                </Card>
+                
+                {/* การจัดส่ง */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center">
+                      <Truck className="w-5 h-5 mr-2 text-purple-600" />
+                      <CardTitle>การจัดส่ง</CardTitle>
                     </div>
-                  </div>
-                </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* ตัวเลือกการจัดส่ง */}
+                    {shippingOptions.length > 0 ? (
+                      <div className="space-y-4">
+                        <FormLabel>เลือกวิธีการจัดส่ง</FormLabel>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {shippingOptions.map((option) => (
+                            <div
+                              key={option.id}
+                              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                                form.watch('shippingMethod') === option.name
+                                  ? 'border-purple-500 bg-purple-50'
+                                  : 'border-gray-200 hover:border-purple-300'
+                              }`}
+                              onClick={() => handleShippingMethodSelect(option.id.toString())}
+                            >
+                              <div className="flex justify-between items-center">
+                                <div className="space-y-1">
+                                  <div className="font-medium">{option.name}</div>
+                                  <div className="text-sm text-gray-500">
+                                    จัดส่งภายใน {option.deliveryTime}
+                                  </div>
+                                </div>
+                                <div className="text-lg font-semibold">
+                                  ฿{option.price}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start">
+                        <AlertCircle className="w-5 h-5 text-yellow-500 mr-2 mt-0.5" />
+                        <div>
+                          <p className="font-medium">รอข้อมูลที่อยู่</p>
+                          <p className="text-sm text-gray-600">
+                            กรุณากรอกข้อมูลที่อยู่ให้ครบถ้วนเพื่อดูตัวเลือกการจัดส่ง
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="mt-6">
+                      <FormField
+                        control={form.control}
+                        name="isCOD"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="flex items-center">
+                                <Banknote className="w-4 h-4 mr-2 text-orange-600" />
+                                เก็บเงินปลายทาง (COD)
+                              </FormLabel>
+                              <FormDescription>
+                                ลูกค้าชำระเงินเมื่อได้รับสินค้า
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    {form.watch('isCOD') && (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start">
+                        <CreditCard className="w-5 h-5 text-orange-500 mr-2 mt-0.5" />
+                        <div>
+                          <p className="font-medium">การเก็บเงินปลายทาง (COD)</p>
+                          <p className="text-sm text-gray-600">
+                            จำนวนเงินที่เก็บปลายทาง: ฿{form.watch('total').toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <FormField
+                      control={form.control}
+                      name="note"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>หมายเหตุ (ถ้ามี)</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="ระบุข้อความหรือหมายเหตุเพิ่มเติม เช่น คำแนะนำในการจัดส่ง"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* สรุปรายการและปุ่มสั่งซื้อ */}
+              <div className="space-y-6">
+                {renderOrderSummary()}
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-purple-600 hover:bg-purple-700"
+                      disabled={isLoading}
+                    >
+                      <PackageCheck className="w-4 h-4 mr-2" />
+                      {isLoading ? 'กำลังดำเนินการ...' : 'ยืนยันการสร้างออเดอร์'}
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             </div>
-          )}
-          
-          {/* ปุ่มดำเนินการ */}
-          <div className="flex justify-between">
-            {currentStep !== 'items' && (
-              <button
-                type="button"
-                onClick={goToPreviousStep}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                <i className="fa-solid fa-arrow-left mr-2"></i>
-                ย้อนกลับ
-              </button>
-            )}
-            
-            <div className="ml-auto">
-              {currentStep === 'payment' ? (
-                <button
-                  type="submit"
-                  className={`px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="inline-block animate-spin h-4 w-4 border-t-2 border-white rounded-full mr-2"></div>
-                      กำลังดำเนินการ...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-check mr-2"></i>
-                      ยืนยันคำสั่งซื้อ
-                    </>
-                  )}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={goToNextStep}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                >
-                  ถัดไป
-                  <i className="fa-solid fa-arrow-right ml-2"></i>
-                </button>
-              )}
-            </div>
-          </div>
-        </form>
+          </form>
+        </Form>
       </div>
     </Layout>
   );
 };
 
-export default CreateOrder;
+export default CreateOrderPage;
