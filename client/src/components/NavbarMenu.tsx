@@ -54,7 +54,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
   };
 
   return (
-    <nav className="bg-white shadow-md py-2 px-4 sticky top-0 z-30">
+    <nav className="bg-white shadow-md py-2 px-4 sticky top-0 z-30 border-b-2 border-emerald-500">
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
         <div className="flex items-center mb-4 md:mb-0">
           <Link href="/" className="flex items-center text-xl font-semibold text-gray-800 hover:text-green-600">

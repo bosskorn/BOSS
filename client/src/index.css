@@ -14,6 +14,100 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-kanit antialiased bg-gray-50 text-foreground;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-kanit font-medium tracking-tight;
+  }
+}
+
+/* คัสตอมสีสำหรับระบบขนส่ง */
+:root {
+  --primary-green: #10b981;  /* เขียวหลัก */
+  --primary-green-light: #d1fae5;  /* เขียวอ่อน */
+  --primary-green-dark: #047857;  /* เขียวเข้ม */
+  --primary-green-accent: #34d399;  /* เขียวสดเน้น */
+  
+  --neutral-grey-light: #f9fafb;  /* เทาอ่อน */
+  --neutral-grey: #9ca3af;  /* เทากลาง */
+  --neutral-grey-dark: #374151;  /* เทาเข้ม */
+  
+  --accent-orange: #f97316;  /* ส้มเน้น */
+  --accent-blue: #3b82f6;  /* น้ำเงินเน้น */
+  --accent-red: #ef4444;  /* แดงเน้น */
+}
+
+/* สไตล์สำหรับปุ่มสีเขียว */
+.btn-green {
+  @apply bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+}
+
+.btn-green-light {
+  @apply bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+}
+
+.btn-green-outline {
+  @apply border border-emerald-600 text-emerald-600 hover:bg-emerald-50 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+}
+
+/* สไตล์สำหรับแบนเนอร์และการ์ด */
+.status-card {
+  @apply bg-white rounded-lg shadow-md p-5 border-l-4;
+}
+
+.status-card.success {
+  @apply border-l-emerald-500;
+}
+
+.status-card.warning {
+  @apply border-l-amber-500;
+}
+
+.status-card.danger {
+  @apply border-l-red-500;
+}
+
+.status-card.info {
+  @apply border-l-blue-500;
+}
+
+/* สไตล์สำหรับแท็ก */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.badge-warning {
+  @apply bg-amber-100 text-amber-800;
+}
+
+.badge-danger {
+  @apply bg-red-100 text-red-800;
+}
+
+.badge-info {
+  @apply bg-blue-100 text-blue-800;
+}
+
+/* เอฟเฟกต์ฮฟเวอร์ */
+.hover-lift {
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-md;
+}
+
+/* สไตล์สำหรับไอคอน */
+.icon-green {
+  @apply text-emerald-600;
+}
+
+.icon-green-light {
+  @apply text-emerald-400;
+}
+
+/* อนิเมชันโหลดิ้ง */
+.loading-pulse {
+  @apply animate-pulse bg-emerald-100;
 }
