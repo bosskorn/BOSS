@@ -81,9 +81,66 @@
 @media (max-width: 767px) {
   .admin-navbar .navbar-menu.show {
     background-color: #2c1a4d;
+    border-left: 4px solid #8a2be2;
+  }
+  
+  /* เพิ่มป้ายบอกว่าเป็นระบบผู้ดูแลเมื่อเปิดเมนูมือถือ */
+  .admin-navbar .navbar-menu.show::before {
+    content: "ADMIN PANEL";
+    display: block;
+    background-color: #8a2be2;
+    color: white;
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
   }
   
   .admin-navbar .menu-item.account-item .menu-link {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* ปรับการแสดงเมนูย่อยในมือถือให้ชัดเจนยิ่งขึ้น */
+  .admin-navbar .dropdown-menu {
+    position: static;
+    display: none;
+    box-shadow: none;
+    border-left: 2px solid #8a2be2;
+    margin-left: 15px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  
+  .admin-navbar .dropdown-menu.show {
+    display: block;
+  }
+  
+  /* เพิ่มการแสดงกล่องบอกเมนูว่าเป็นระบบผู้ดูแล */
+  .admin-navbar .mobile-toggle {
+    position: relative;
+  }
+  
+  .admin-navbar .mobile-toggle::after {
+    content: "เมนูผู้ดูแล";
+    position: absolute;
+    top: -25px;
+    right: 0;
+    background-color: #8a2be2;
+    color: white;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  /* แสดงไอคอนที่ชัดเจนขึ้นในเวอร์ชั่นมือถือ */
+  .admin-navbar .mobile-toggle i {
+    color: #ffffff;
+    font-size: 1.5rem;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
   }
 }

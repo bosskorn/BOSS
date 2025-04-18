@@ -379,7 +379,7 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
       
       {/* Mobile Toggle */}
       <button className="mobile-toggle" onClick={toggleMobileMenu}>
-        <i className="fas fa-bars"></i>
+        <i className="fas fa-shield-alt"></i>
       </button>
     </nav>
   );
