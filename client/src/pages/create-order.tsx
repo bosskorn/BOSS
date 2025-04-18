@@ -146,17 +146,26 @@ const CreateOrder: React.FC = () => {
   const fetchProducts = async () => {
     setIsProductLoading(true);
     try {
-      // สำหรับการสาธิต ใช้ข้อมูลจำลอง
-      const mockProducts: Product[] = [
-        { id: 1, sku: 'ELEC-001', name: 'หูฟังไร้สาย Bluetooth 5.0', price: 1590, stock: 50, imageUrl: 'https://via.placeholder.com/150' },
-        { id: 2, sku: 'CLOTH-001', name: 'เสื้อยืดคอกลม Cotton 100%', price: 290, stock: 100, imageUrl: 'https://via.placeholder.com/150' },
-        { id: 3, sku: 'FOOD-001', name: 'ชาเขียวมัทฉะออร์แกนิค', price: 450, stock: 30, imageUrl: 'https://via.placeholder.com/150' },
-        { id: 4, sku: 'ELEC-002', name: 'แบตเตอรี่สำรอง 10000mAh', price: 890, stock: 45, imageUrl: 'https://via.placeholder.com/150' },
-        { id: 5, sku: 'HOME-001', name: 'หมอนเมมโมรี่โฟม', price: 750, stock: 25, imageUrl: 'https://via.placeholder.com/150' },
-      ];
+      // เรียกข้อมูลสินค้าจาก API จริง (สินค้าจากผู้ใช้ 711296)
+      const response = await fetch('/api/products', {
+        credentials: 'include'
+      });
       
-      setProducts(mockProducts);
-      setFilteredProducts(mockProducts);
+      if (!response.ok) {
+        throw new Error(`เกิดข้อผิดพลาดในการดึงข้อมูล: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && Array.isArray(result.products)) {
+        // กรองเฉพาะสินค้าของ user id 711296 ซึ่งเป็นค่า userId ที่ server กำหนดไว้
+        const userProducts = result.products;
+        setProducts(userProducts);
+        setFilteredProducts(userProducts);
+        console.log('โหลดสินค้าทั้งหมด:', userProducts.length, 'รายการ');
+      } else {
+        throw new Error('รูปแบบข้อมูลไม่ถูกต้อง');
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
       toast({
@@ -172,62 +181,45 @@ const CreateOrder: React.FC = () => {
   // ฟังก์ชันเรียกข้อมูลลูกค้า
   const fetchCustomers = async () => {
     try {
-      // สำหรับการสาธิต ใช้ข้อมูลจำลอง
-      const mockCustomers: Customer[] = [
-        { 
-          id: 1, 
-          name: 'สมชาย ใจดี', 
-          email: 'somchai@example.com', 
-          phone: '0812345678', 
-          address: '123/456 หมู่บ้านเดอะซิตี้', 
-          province: 'กรุงเทพมหานคร', 
-          district: 'จตุจักร', 
-          subdistrict: 'ลาดยาว', 
-          zipcode: '10900',
-          addressNumber: '123/456',
-          moo: '9',
-          soi: 'รัชดา 42',
-          road: 'รัชดาภิเษก',
-          building: 'หมู่บ้านเดอะซิตี้',
-          floor: '-'
-        },
-        { 
-          id: 2, 
-          name: 'สมหญิง รักสวย', 
-          email: 'somying@example.com', 
-          phone: '0698765432', 
-          address: '789 อาคารเดอะไนน์ ชั้น 15', 
-          province: 'กรุงเทพมหานคร', 
-          district: 'พระโขนง', 
-          subdistrict: 'คลองตัน', 
-          zipcode: '10110',
-          addressNumber: '789',
-          moo: '-',
-          soi: 'สุขุมวิท 31',
-          road: 'สุขุมวิท',
-          building: 'อาคารเดอะไนน์',
-          floor: '15'
-        },
-        { 
-          id: 3, 
-          name: 'วิชัย มากมี', 
-          email: 'wichai@example.com', 
-          phone: '0876543210', 
-          address: '456 หมู่บ้านศุภาลัย', 
-          province: 'เชียงใหม่', 
-          district: 'เมือง', 
-          subdistrict: 'ช้างเผือก', 
-          zipcode: '50300',
-          addressNumber: '456',
-          moo: '3',
-          soi: 'ศรีวิชัย 5',
-          road: 'ศรีวิชัย',
-          building: 'หมู่บ้านศุภาลัย',
-          floor: '-'
-        },
-      ];
+      // เรียกข้อมูลลูกค้าจาก API จริง
+      const response = await fetch('/api/customers', {
+        credentials: 'include'
+      });
       
-      setCustomers(mockCustomers);
+      if (!response.ok) {
+        throw new Error(`เกิดข้อผิดพลาดในการดึงข้อมูลลูกค้า: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && Array.isArray(result.customers)) {
+        // กรองเฉพาะลูกค้าของ user id 711296 ซึ่งเป็นค่า userId ที่ server กำหนดไว้
+        setCustomers(result.customers);
+        console.log('โหลดข้อมูลลูกค้าทั้งหมด:', result.customers.length, 'รายการ');
+      } else {
+        // ถ้าไม่มีข้อมูลลูกค้า ให้ใช้ข้อมูลตัวอย่าง
+        const defaultCustomers: Customer[] = [
+          { 
+            id: 1, 
+            name: 'ลูกค้าทดสอบ (711296)', 
+            email: 'test@purpledash.com', 
+            phone: '0812345678', 
+            address: '123/456 หมู่บ้านทดสอบ', 
+            province: 'กรุงเทพมหานคร', 
+            district: 'จตุจักร', 
+            subdistrict: 'ลาดยาว', 
+            zipcode: '10900',
+            addressNumber: '123/456',
+            moo: '',
+            soi: '',
+            road: 'พหลโยธิน',
+            building: '',
+            floor: ''
+          }
+        ];
+        
+        setCustomers(defaultCustomers);
+      }
     } catch (error) {
       console.error('Error fetching customers:', error);
       toast({
