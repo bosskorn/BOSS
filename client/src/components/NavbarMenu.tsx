@@ -57,8 +57,8 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
     <nav className="bg-white shadow-md py-2 px-4 sticky top-0 z-30 border-b-2 border-purple-500 purple-dash-line">
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
         <div className="flex items-center mb-4 md:mb-0">
-          <Link href="/" className="flex items-center">
-            <img src="/src/assets/purpledash-logo-clean.png" alt="PURPLEDASH" className="h-10" />
+          <Link href="/" className="flex items-center text-xl font-semibold text-gray-800 hover:text-purple-600">
+            <span className="text-purple-700">PURPLE</span><span className="text-purple-500">DASH</span>
           </Link>
           <Link href="/logo" className="ml-6 text-sm text-purple-600 hover:text-purple-800 font-medium">
             ดูโลโก้
