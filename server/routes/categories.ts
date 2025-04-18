@@ -80,7 +80,7 @@ router.get("/:id", auth, async (req, res) => {
 });
 
 // สร้างหมวดหมู่สินค้าใหม่
-router.post("/categories", auth, async (req, res) => {
+router.post("/", auth, async (req, res) => {
   try {
     // ตรวจสอบข้อมูลที่ส่งมา
     const categoryData = insertCategorySchema.parse({
@@ -107,7 +107,7 @@ router.post("/categories", auth, async (req, res) => {
 });
 
 // อัปเดตข้อมูลหมวดหมู่สินค้า
-router.put("/categories/:id", auth, async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   try {
     const categoryId = parseInt(req.params.id);
     const category = await storage.getCategory(categoryId);
