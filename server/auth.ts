@@ -34,20 +34,24 @@ async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   const isProduction = process.env.NODE_ENV === "production";
+  console.log('Setting up auth, environment:', isProduction ? 'production' : 'development');
+  
+  // ตั้งค่า express-session
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "purpledash-secret-key",
-    resave: true, // เปลี่ยนเป็น true เพื่อบันทึก session ทุกครั้ง
-    saveUninitialized: true, // เปลี่ยนเป็น true เพื่อบันทึก session แม้ยังไม่มีข้อมูล
+    secret: process.env.SESSION_SECRET || "purpledash-secure-secret-key-2025",
+    name: "purpledash.sid", // ตั้งชื่อ cookie ให้เป็นเอกลักษณ์
+    resave: true, // บันทึก session ทุกครั้งแม้ไม่มีการเปลี่ยนแปลง
+    saveUninitialized: true, // บันทึก session แม้ยังไม่มีข้อมูล
     store: new PostgresSessionStore({ 
       pool,
       tableName: 'session', // ชื่อตารางที่จะใช้เก็บข้อมูล session
       createTableIfMissing: true 
     }),
     cookie: {
-      secure: false, // กำหนดเป็น false เพื่อให้ทำงานได้บน HTTP
-      httpOnly: true,
+      secure: false, // จำเป็นต้องเป็น false สำหรับ HTTP ใน development
+      httpOnly: true, // ป้องกันการเข้าถึง cookie ด้วย JavaScript
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'none', // ใช้ none เพื่อรองรับ cross-site requests
+      sameSite: 'lax', // กลับไปใช้ lax เพื่อความเข้ากันได้ดีกว่า
       path: '/'
     }
   };

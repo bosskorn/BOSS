@@ -9,10 +9,11 @@ app.use(express.urlencoded({ extended: false }));
 
 // ตั้งค่า CORS ให้อนุญาตทุก origin และส่ง credentials
 app.use(cors({
-  origin: true,
+  origin: ["http://localhost:5000", "https://5000-replit-users-other.repl.run"],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Cookie'],
+  exposedHeaders: ['Set-Cookie'],
 }));
 
 app.use((req, res, next) => {
