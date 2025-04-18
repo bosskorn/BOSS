@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import categoriesRouter from "./routes/categories";
 import productsRouter from "./routes/products";
+import ordersRouter from "./routes/orders";
+import orderItemsRouter from "./routes/order-items";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // กำหนดค่า CORS สำหรับ API
@@ -23,17 +25,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ลงทะเบียน routes
   app.use("/api", categoriesRouter);
   app.use("/api", productsRouter);
-
-  // สร้าง API endpoint สำหรับดึงข้อมูล orders
-  app.get("/api/orders", async (req, res) => {
-    try {
-      const userId = req.user?.id || 0;
-      const orders = await storage.getOrdersByUserId(userId);
-      res.json({ success: true, data: orders });
-    } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  });
+  app.use("/api", ordersRouter);
+  app.use("/api", orderItemsRouter);
 
   const httpServer = createServer(app);
 

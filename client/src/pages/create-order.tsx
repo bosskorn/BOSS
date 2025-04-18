@@ -649,32 +649,66 @@ const CreateOrder: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // สร้างข้อมูลคำสั่งซื้อ
+      // สร้างข้อมูลคำสั่งซื้อในรูปแบบที่ตรงกับ API
       const orderData = {
-        customer_id: selectedCustomer?.id,
-        customer_data: classifiedAddress,
-        items: orderItems.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        shipping_method: selectedShippingMethod?.id,
-        shipping_fee: calculateShippingFee(),
-        discount_code: discount?.code,
-        discount_amount: calculateDiscount(),
-        total: calculateTotal(),
-        payment_method: paymentMethod,
+        orderNumber: `ORD-${Date.now().toString().substring(6)}`,
+        customerId: selectedCustomer?.id || null,
+        shippingMethodId: selectedShippingMethod?.id || null,
+        discountId: discount?.id || null, // ถ้ามีปัญหากับ discount.id ให้ทดลองใช้ 1 หรือใช้ discount?.code
+        subtotal: calculateSubtotal(),
+        shippingFee: calculateShippingFee(),
+        discount: calculateDiscount(),
+        totalAmount: calculateTotal(),
+        paymentMethod: paymentMethod as any, // แปลงเป็น enum paymentMethodEnum
         note: note,
+        status: "pending" as any, // แปลงเป็น enum orderStatusEnum
+        // userId จะถูกกำหนดจาก session บน backend
       };
       
-      // จำลองการส่งข้อมูลไป API
-      console.log('Order data:', orderData);
+      console.log('Sending order data to API:', orderData);
       
-      // สำหรับการสาธิต เราจะใช้ setTimeout เพื่อจำลองการประมวลผล
-      setTimeout(() => {
+      // ส่งข้อมูลไปยัง API จริง
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+        credentials: 'include'
+      });
+      
+      // ตรวจสอบการตอบกลับจาก API
+      if (!response.ok) {
+        throw new Error(`เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      // หลังจากบันทึกข้อมูลออเดอร์สำเร็จ ให้บันทึกรายการสินค้าในออเดอร์
+      if (result.success && result.order && result.order.id) {
+        const orderId = result.order.id;
+        
+        // บันทึกรายการสินค้าในออเดอร์
+        for (const item of orderItems) {
+          const orderItemData = {
+            orderId: orderId,
+            productId: item.product_id,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.quantity * item.price,
+          };
+          
+          // ส่งข้อมูลรายการสินค้าไปยัง API
+          await fetch('/api/order-items', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderItemData),
+            credentials: 'include'
+          });
+        }
+        
+        // แสดงข้อความสำเร็จ
         toast({
           title: 'สร้างคำสั่งซื้อสำเร็จ',
-          description: `หมายเลขคำสั่งซื้อ: #${Math.floor(100000 + Math.random() * 900000)}`,
+          description: `หมายเลขคำสั่งซื้อ: #${orderData.orderNumber}`,
           variant: 'default',
         });
         
@@ -686,17 +720,18 @@ const CreateOrder: React.FC = () => {
         setDiscountCode('');
         setNote('');
         setCurrentStep('items');
-        setIsSubmitting(false);
         clearAddress();
-      }, 1500);
-      
+      } else {
+        throw new Error('ไม่สามารถสร้างคำสั่งซื้อได้');
+      }
     } catch (error) {
       console.error('Error creating order:', error);
       toast({
         title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถสร้างคำสั่งซื้อได้',
+        description: error instanceof Error ? error.message : 'ไม่สามารถสร้างคำสั่งซื้อได้',
         variant: 'destructive',
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
