@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import CategoryManage from "@/pages/category-manage";
 import ProductCreate from "@/pages/product-create";
+import ProductList from "@/pages/product-list";
 import Dashboard from "@/pages/dashboard";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/category-manage" component={CategoryManage} />
       <Route path="/product-create" component={ProductCreate} />
+      <Route path="/product-list" component={ProductList} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
