@@ -9,7 +9,21 @@ const router = Router();
 router.get("/", auth, async (req, res) => {
   try {
     const userId = req.user!.id;
-    const categories = await storage.getCategoriesByUserId(userId);
+    const parentId = req.query.parentId;
+    
+    let categories;
+    if (parentId === 'null') {
+      // ดึงเฉพาะหมวดหมู่หลัก (parent_id เป็น null)
+      const allCategories = await storage.getCategoriesByUserId(userId);
+      categories = allCategories.filter(cat => cat.parent_id === null);
+    } else if (parentId) {
+      // ดึงเฉพาะหมวดหมู่ย่อยของ parent_id ที่ระบุ
+      const allCategories = await storage.getCategoriesByUserId(userId);
+      categories = allCategories.filter(cat => cat.parent_id === parseInt(parentId as string));
+    } else {
+      // ดึงทุกหมวดหมู่
+      categories = await storage.getCategoriesByUserId(userId);
+    }
     
     res.json({
       success: true,

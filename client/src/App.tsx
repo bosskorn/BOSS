@@ -12,6 +12,9 @@ import ProductList from "@/pages/product-list";
 import ProductListEnhanced from "@/pages/product-list-enhanced";
 import CreateOrder from "@/pages/create-order";
 import LogoDisplay from "@/pages/logo-display";
+import CategoryManagement from "@/pages/category-management";
+import ProductManagement from "@/pages/product-management";
+import { AuthProvider } from "@/hooks/use-auth";
 
 function Router() {
   return (
@@ -21,9 +24,11 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/category-manage" component={CategoryManage} />
+      <Route path="/category-management" component={CategoryManagement} />
       <Route path="/product-create" component={ProductCreate} />
       <Route path="/product-list" component={ProductListEnhanced} />
       <Route path="/product-list-old" component={ProductList} />
+      <Route path="/product-management" component={ProductManagement} />
       <Route path="/create-order" component={CreateOrder} />
       <Route path="/logo" component={LogoDisplay} />
       {/* Fallback to 404 */}
@@ -36,8 +41,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <AuthProvider>
+          <Toaster />
+          <Router />
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -64,6 +64,7 @@ export const categories = pgTable("categories", {
   description: text("description"),
   isActive: boolean("is_active").default(true),
   icon: text("icon"),
+  parentId: integer("parent_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   userId: integer("user_id").references(() => users.id),
@@ -71,7 +72,12 @@ export const categories = pgTable("categories", {
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
   user: one(users, { fields: [categories.userId], references: [users.id] }),
-  products: many(products)
+  products: many(products),
+  parent: one(categories, { 
+    fields: [categories.parentId], 
+    references: [categories.id] 
+  }),
+  children: many(categories, { relationName: "children" })
 }));
 
 // ตาราง products - ข้อมูลสินค้า

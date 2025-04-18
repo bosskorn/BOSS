@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import Layout from '@/components/Layout';
 import { Product, Category } from '@shared/schema';
 import { Loader2, Plus, Pencil, Search, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 
 const ProductManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,7 +14,7 @@ const ProductManagement: React.FC = () => {
   
   const { user } = useAuth();
   const { toast } = useToast();
-  const [, navigate] = useNavigate();
+  const [, navigate] = useLocation();
 
   // ดึงข้อมูลสินค้า
   const { 
