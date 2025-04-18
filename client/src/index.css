@@ -22,12 +22,12 @@
   }
 }
 
-/* คัสตอมสีสำหรับระบบขนส่ง */
+/* คัสตอมสีสำหรับระบบขนส่ง PURPLEDASH */
 :root {
-  --primary-green: #10b981;  /* เขียวหลัก */
-  --primary-green-light: #d1fae5;  /* เขียวอ่อน */
-  --primary-green-dark: #047857;  /* เขียวเข้ม */
-  --primary-green-accent: #34d399;  /* เขียวสดเน้น */
+  --primary-purple: #8A2BE2;  /* ม่วงหลัก */
+  --primary-purple-light: #E0CFFC;  /* ม่วงอ่อน */
+  --primary-purple-dark: #6A1CB2;  /* ม่วงเข้ม */
+  --primary-purple-accent: #A35AEA;  /* ม่วงสดเน้น */
   
   --neutral-grey-light: #f9fafb;  /* เทาอ่อน */
   --neutral-grey: #9ca3af;  /* เทากลาง */
@@ -38,17 +38,17 @@
   --accent-red: #ef4444;  /* แดงเน้น */
 }
 
-/* สไตล์สำหรับปุ่มสีเขียว */
-.btn-green {
-  @apply bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+/* สไตล์สำหรับปุ่มสีม่วง */
+.btn-purple {
+  @apply bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-all;
 }
 
-.btn-green-light {
-  @apply bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+.btn-purple-light {
+  @apply bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
 }
 
-.btn-green-outline {
-  @apply border border-emerald-600 text-emerald-600 hover:bg-emerald-50 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+.btn-purple-outline {
+  @apply border border-purple-600 text-purple-600 hover:bg-purple-50 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
 }
 
 /* สไตล์สำหรับแบนเนอร์และการ์ด */
@@ -56,8 +56,8 @@
   @apply bg-white rounded-lg shadow-md p-5 border-l-4;
 }
 
-.status-card.success {
-  @apply border-l-emerald-500;
+.status-card.purple {
+  @apply border-l-purple-500;
 }
 
 .status-card.warning {
@@ -77,8 +77,8 @@
   @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
 }
 
-.badge-success {
-  @apply bg-green-100 text-green-800;
+.badge-purple {
+  @apply bg-purple-100 text-purple-800;
 }
 
 .badge-warning {
@@ -99,15 +99,67 @@
 }
 
 /* สไตล์สำหรับไอคอน */
-.icon-green {
-  @apply text-emerald-600;
+.icon-purple {
+  @apply text-purple-600;
 }
 
-.icon-green-light {
-  @apply text-emerald-400;
+.icon-purple-light {
+  @apply text-purple-400;
 }
 
 /* อนิเมชันโหลดิ้ง */
 .loading-pulse {
-  @apply animate-pulse bg-emerald-100;
+  @apply animate-pulse bg-purple-100;
+}
+
+/* สไตล์สำหรับส่วนกราฟิกการจัดส่ง */
+.delivery-dash {
+  @apply relative py-1 px-3 font-bold;
+  background: linear-gradient(90deg, #8A2BE2 0%, #A35AEA 100%);
+  border-radius: 4px;
+  color: white;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+}
+
+.delivery-dash::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 8px solid #A35AEA;
+}
+
+/* สไตล์สำหรับพื้นหลังลาย gradient ม่วง */
+.purple-gradient-bg {
+  background: linear-gradient(135deg, #8A2BE2 0%, #A35AEA 100%);
+}
+
+/* สไตล์สำหรับเส้นประม่วง Animation */
+.purple-dash-line {
+  @apply relative overflow-hidden;
+}
+
+.purple-dash-line::after {
+  content: '';
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #8A2BE2, transparent);
+  animation: purpleDash 2s infinite linear;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+}
+
+@keyframes purpleDash {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }

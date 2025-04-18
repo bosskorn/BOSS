@@ -54,25 +54,25 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
   };
 
   return (
-    <nav className="bg-white shadow-md py-2 px-4 sticky top-0 z-30 border-b-2 border-emerald-500">
+    <nav className="bg-white shadow-md py-2 px-4 sticky top-0 z-30 border-b-2 border-purple-500 purple-dash-line">
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
         <div className="flex items-center mb-4 md:mb-0">
-          <Link href="/" className="flex items-center text-xl font-semibold text-gray-800 hover:text-green-600">
-            <i className="fa-solid fa-truck-fast mr-2 text-green-600"></i> ระบบจัดการข้อมูลขนส่ง
+          <Link href="/" className="flex items-center text-xl font-semibold text-gray-800 hover:text-purple-600">
+            <i className="fa-solid fa-truck-fast mr-2 text-purple-600"></i> <span className="text-purple-700">PURPLE</span><span className="text-purple-500">DASH</span>
           </Link>
         </div>
         
         <ul className="flex flex-wrap justify-center md:justify-end space-x-1 md:space-x-4">
           <li className="relative">
-            <Link href="/dashboard" className={`flex items-center px-3 py-2 text-sm rounded-md ${isDashboard ? 'bg-gray-100 text-green-600' : 'text-gray-700 hover:bg-gray-100'}`}>
+            <Link href="/dashboard" className={`flex items-center px-3 py-2 text-sm rounded-md ${isDashboard ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-purple-50'}`}>
               <i className="fa-solid fa-chart-pie mr-2"></i>
               <span>Dashboard</span>
             </Link>
           </li>
           
           <li className="relative">
-            <Link href="/topup" className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100">
-              <i className="fa-solid fa-plus-circle mr-2"></i>
+            <Link href="/topup" className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-purple-50">
+              <i className="fa-solid fa-plus-circle mr-2 text-purple-500"></i>
               <span>เติมเครดิต</span>
             </Link>
           </li>

@@ -31,10 +31,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
-              <p className="text-gray-600 text-sm">© 2025 ระบบจัดการข้อมูลขนส่ง. สงวนลิขสิทธิ์.</p>
+              <div className="flex items-center mb-2">
+                <i className="fa-solid fa-truck-fast mr-2 text-purple-600"></i>
+                <span className="text-purple-700 font-semibold">PURPLE</span>
+                <span className="text-purple-500 font-semibold">DASH</span>
+              </div>
+              <p className="text-gray-600 text-sm">© 2025 ส่งด่วน ม่วงสะดุด! สงวนลิขสิทธิ์.</p>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-emerald-600 font-medium">พัฒนาโดย บริษัท โลจิสติกส์ โซลูชั่นส์</span>
+              <span className="delivery-dash">ส่งด่วน ม่วงสะดุด!</span>
             </div>
           </div>
         </div>
