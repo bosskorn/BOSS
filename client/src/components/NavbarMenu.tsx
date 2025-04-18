@@ -74,7 +74,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
           <li ref={ordersDropdownRef} className="relative">
             <button 
               onClick={() => toggleDropdown('orders')}
-              className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100"
+              className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-purple-50"
               aria-haspopup="true" 
               aria-expanded={activeDropdown === 'orders'}
             >
@@ -84,7 +84,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             </button>
             
             {activeDropdown === 'orders' && (
-              <ul className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+              <ul className="absolute left-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                 <li>
                   <Link href="/orders-all" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     <i className="fa-solid fa-list-ul mr-2"></i>
@@ -116,7 +116,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
           <li ref={productsDropdownRef} className="relative">
             <button 
               onClick={() => toggleDropdown('products')}
-              className={`flex items-center px-3 py-2 text-sm rounded-md ${activeDropdown === 'products' || isProductsList || isProductCreate || isCategoryManage ? 'bg-gray-100 text-green-600' : 'text-gray-700 hover:bg-gray-100'}`}
+              className={`flex items-center px-3 py-2 text-sm rounded-md ${activeDropdown === 'products' || isProductsList || isProductCreate || isCategoryManage ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-purple-50'}`}
               aria-haspopup="true" 
               aria-expanded={activeDropdown === 'products'}
             >
@@ -126,9 +126,9 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             </button>
             
             {activeDropdown === 'products' && (
-              <ul className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+              <ul className="absolute left-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                 <li>
-                  <Link href="/product-list" className={`block px-4 py-2 text-sm ${isProductsList ? 'bg-gray-100 text-green-600' : 'text-gray-700 hover:bg-gray-100'}`}>
+                  <Link href="/product-list" className={`block px-4 py-2 text-sm ${isProductsList ? 'bg-purple-50 text-purple-600' : 'text-gray-700 hover:bg-purple-50'}`}>
                     <i className="fa-solid fa-tags mr-2"></i>
                     <span>สินค้าทั้งหมด</span>
                   </Link>
@@ -152,7 +152,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
           <li ref={reportsDropdownRef} className="relative">
             <button 
               onClick={() => toggleDropdown('reports')}
-              className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100"
+              className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-purple-50"
               aria-haspopup="true" 
               aria-expanded={activeDropdown === 'reports'}
             >
@@ -162,7 +162,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             </button>
             
             {activeDropdown === 'reports' && (
-              <ul className="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+              <ul className="absolute left-0 mt-2 py-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                 <li>
                   <Link href="/reports/overview" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     <i className="fas fa-tachometer-alt mr-2"></i>
@@ -206,7 +206,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
           <li className="relative">
             <button 
               onClick={onToggleSidebar} 
-              className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100"
+              className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-purple-50"
             >
               <i className="fa-solid fa-user mr-2"></i>
               <span>บัญชี</span>
