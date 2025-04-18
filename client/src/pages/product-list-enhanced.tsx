@@ -226,24 +226,31 @@ const ProductListPage: React.FC = () => {
     {
       accessorKey: 'name',
       header: 'ชื่อสินค้า',
-      cell: ({ row }) => (
-        <div className="flex items-center space-x-2">
-          {row.original.imageUrl ? (
-            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center overflow-hidden">
-              <img 
-                src={row.original.imageUrl} 
-                alt={row.original.name}
-                className="h-full w-full object-cover"
-              />
+      cell: ({ row }) => {
+        // แสดงตัวอักษรแรกของชื่อสินค้าแทนรูปภาพ
+        const productInitial = row.original.name.charAt(0);
+        const bgColors = [
+          'bg-red-100 text-red-600', 
+          'bg-blue-100 text-blue-600', 
+          'bg-green-100 text-green-600',
+          'bg-purple-100 text-purple-600',
+          'bg-amber-100 text-amber-600',
+          'bg-indigo-100 text-indigo-600'
+        ];
+        
+        // เลือกสีตามตัวอักษรแรกของชื่อสินค้า
+        const colorIndex = row.original.name.charCodeAt(0) % bgColors.length;
+        const colorClass = bgColors[colorIndex];
+        
+        return (
+          <div className="flex items-center space-x-2">
+            <div className={`h-8 w-8 rounded-md flex items-center justify-center font-bold ${colorClass}`}>
+              {productInitial}
             </div>
-          ) : (
-            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </div>
-          )}
-          <span className="font-medium">{row.original.name}</span>
-        </div>
-      ),
+            <span className="font-medium">{row.original.name}</span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'price',
