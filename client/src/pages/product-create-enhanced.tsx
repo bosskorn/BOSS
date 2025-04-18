@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import axios from 'axios';
 import { toast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
@@ -121,6 +121,11 @@ const TagInput: React.FC<{
 };
 
 const ProductCreate: React.FC = () => {
+  const [location] = useLocation();
+  // ดึงค่า ID จาก URL parameter
+  const params = new URLSearchParams(location.split('?')[1]);
+  const productId = params.get('id');
+  
   // สถานะสำหรับขั้นตอนการสร้างสินค้า
   const [activeStep, setActiveStep] = useState(1);
   const [stepsCompleted, setStepsCompleted] = useState<{[key: number]: boolean}>({
@@ -154,6 +159,9 @@ const ProductCreate: React.FC = () => {
       length: ''
     }
   });
+  
+  // สถานะสำหรับโหมดการแก้ไข
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // สถานะอื่นๆ
   const [categories, setCategories] = useState<Category[]>([]);
@@ -164,10 +172,71 @@ const ProductCreate: React.FC = () => {
   // Ref สำหรับ file input
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // โหลดข้อมูลหมวดหมู่เมื่อคอมโพเนนต์โหลด
+  // โหลดข้อมูลหมวดหมู่และข้อมูลสินค้าเมื่อคอมโพเนนต์โหลด
   useEffect(() => {
     fetchCategories();
-  }, []);
+    
+    // ถ้ามี ID สินค้า ให้โหลดข้อมูลสินค้า
+    if (productId) {
+      fetchProductDetails(parseInt(productId));
+      setIsEditMode(true);
+    }
+  }, [productId]);
+  
+  // ฟังก์ชันสำหรับดึงข้อมูลสินค้าที่ต้องการแก้ไข
+  const fetchProductDetails = async (id: number) => {
+    try {
+      const response = await axios.get(`/api/products/${id}`);
+      
+      if (response.data && response.data.success && response.data.data) {
+        const productData = response.data.data;
+        
+        // แปลงข้อมูลเป็นรูปแบบที่ฟอร์มใช้งานได้
+        setProduct({
+          sku: productData.sku || '',
+          name: productData.name || '',
+          category_id: productData.categoryId || '',
+          description: productData.description || '',
+          price: productData.price ? parseFloat(productData.price) : '',
+          cost: productData.cost ? parseFloat(productData.cost) : '',
+          stock: productData.stock || '',
+          weight: productData.weight ? parseFloat(productData.weight) : '',
+          image: null,
+          status: productData.status || 'active',
+          tags: productData.tags || [],
+          dimensions: {
+            width: productData.dimensions?.width || '',
+            height: productData.dimensions?.height || '',
+            length: productData.dimensions?.length || ''
+          }
+        });
+        
+        // ถ้ามีรูปภาพ ให้แสดง preview
+        if (productData.imageUrl) {
+          setImagePreview(productData.imageUrl);
+        }
+        
+        // ตั้งค่าขั้นตอนว่าทำสำเร็จแล้ว
+        setStepsCompleted({ 1: true, 2: true, 3: false });
+        setActiveStep(3);
+        
+        toast({
+          title: 'โหลดข้อมูลสำเร็จ',
+          description: 'ข้อมูลสินค้าพร้อมสำหรับการแก้ไขแล้ว',
+          variant: 'default',
+        });
+      } else {
+        throw new Error(response.data?.message || 'ไม่สามารถโหลดข้อมูลสินค้าได้');
+      }
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถโหลดข้อมูลสินค้าได้',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // ฟังก์ชันเรียกข้อมูลหมวดหมู่จาก API
   const fetchCategories = async () => {
@@ -399,8 +468,8 @@ const ProductCreate: React.FC = () => {
       errors.price = 'ราคาขายต้องมากกว่า 0';
     }
     
-    // ตรวจสอบรูปภาพ (บังคับ)
-    if (!product.image) {
+    // ตรวจสอบรูปภาพ (บังคับสำหรับสินค้าใหม่)
+    if (!isEditMode && !product.image && !imagePreview) {
       errors.image = 'กรุณาอัปโหลดรูปภาพสินค้า';
     }
 
@@ -433,12 +502,24 @@ const ProductCreate: React.FC = () => {
 
       console.log('Sending product data:', productData);
 
-      // ส่งข้อมูลไปยัง API
-      const response = await axios.post('/api/products', productData, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      let response;
+      
+      // เลือกเส้นทาง API ตามโหมดการทำงาน (เพิ่มใหม่หรือแก้ไข)
+      if (isEditMode && productId) {
+        // แก้ไขสินค้า
+        response = await axios.put(`/api/products/${productId}`, productData, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+      } else {
+        // เพิ่มสินค้าใหม่
+        response = await axios.post('/api/products', productData, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+      }
 
       if (response.data && response.data.success) {
         // รีเซ็ตฟอร์ม
@@ -463,11 +544,14 @@ const ProductCreate: React.FC = () => {
         setImagePreview(null);
         setActiveStep(1);
         setStepsCompleted({1: false, 2: false, 3: false});
+        setIsEditMode(false);
         
         // แสดงการแจ้งเตือน
         toast({
           title: 'บันทึกสำเร็จ',
-          description: 'สินค้าถูกบันทึกเข้าระบบเรียบร้อยแล้ว',
+          description: isEditMode 
+            ? 'แก้ไขข้อมูลสินค้าเรียบร้อยแล้ว' 
+            : 'สินค้าถูกบันทึกเข้าระบบเรียบร้อยแล้ว',
           variant: 'default',
         });
       } else {
@@ -475,7 +559,7 @@ const ProductCreate: React.FC = () => {
       }
       
     } catch (error: any) {
-      console.error('Error creating product:', error);
+      console.error('Error creating/updating product:', error);
       toast({
         title: 'เกิดข้อผิดพลาด',
         description: error.response?.data?.message || 'ไม่สามารถบันทึกข้อมูลสินค้าได้',
