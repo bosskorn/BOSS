@@ -172,16 +172,22 @@ const ProductCreate: React.FC = () => {
   // ฟังก์ชันเรียกข้อมูลหมวดหมู่จาก API
   const fetchCategories = async () => {
     try {
-      // สำหรับการสาธิต ใช้ข้อมูลจำลอง
-      // ในการใช้งานจริง ควรเปลี่ยนเป็น await axios.get('/api/categories')
-      const mockCategories: Category[] = [
-        { id: 1, name: 'อุปกรณ์อิเล็กทรอนิกส์' },
-        { id: 2, name: 'เสื้อผ้าแฟชั่น' },
-        { id: 3, name: 'อาหารและเครื่องดื่ม' },
-        { id: 4, name: 'เครื่องใช้ในบ้าน' },
-        { id: 5, name: 'เครื่องสำอาง' }
-      ];
-      setCategories(mockCategories);
+      // เรียกข้อมูลจาก API จริง
+      const response = await axios.get('/api/categories');
+      
+      if (response.data && response.data.success) {
+        const categoriesData = response.data.data || [];
+        
+        // แปลงข้อมูลเป็นรูปแบบที่ต้องการ
+        const mappedCategories: Category[] = categoriesData.map((cat: any) => ({
+          id: cat.id,
+          name: cat.name
+        }));
+        
+        setCategories(mappedCategories);
+      } else {
+        throw new Error(response.data?.message || 'ไม่สามารถโหลดข้อมูลหมวดหมู่ได้');
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast({
