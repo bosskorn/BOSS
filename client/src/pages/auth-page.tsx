@@ -59,9 +59,17 @@ const AuthPage: React.FC = () => {
     try {
       console.log('Sending login request with credentials:', { username: data.username, password: '******' });
       
+      // ตั้งค่า axios ให้ส่ง cookies ไปกับคำขอ
       const response = await axios.post('/api/login', {
         username: data.username,
         password: data.password
+      }, {
+        withCredentials: true, // สำคัญมาก ต้องส่ง cookies ไปด้วย
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
       });
       
       console.log('Login response:', response);
@@ -74,7 +82,7 @@ const AuthPage: React.FC = () => {
         });
         
         // นำทางไปยังหน้าแดชบอร์ด
-        setLocation('/dashboard');
+        window.location.href = '/dashboard'; // ใช้ window.location เพื่อให้มั่นใจว่ามีการโหลดหน้าใหม่
       } else {
         toast({
           title: 'เข้าสู่ระบบไม่สำเร็จ',
@@ -112,7 +120,15 @@ const AuthPage: React.FC = () => {
         fullname: userData.fullname
       });
       
-      const response = await axios.post('/api/register', userData);
+      // ตั้งค่า axios ให้ส่ง cookies ไปกับคำขอ
+      const response = await axios.post('/api/register', userData, {
+        withCredentials: true, // สำคัญมาก ต้องส่ง cookies ไปด้วย
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
       
       console.log('Register response:', response);
       
@@ -124,7 +140,7 @@ const AuthPage: React.FC = () => {
         });
         
         // เข้าสู่ระบบโดยอัตโนมัติและนำทางไปยังหน้าแดชบอร์ด
-        setLocation('/dashboard');
+        window.location.href = '/dashboard'; // ใช้ window.location เพื่อให้มั่นใจว่ามีการโหลดหน้าใหม่
       } else {
         toast({
           title: 'สมัครสมาชิกไม่สำเร็จ',
