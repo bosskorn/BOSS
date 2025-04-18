@@ -1270,14 +1270,74 @@ const CreateOrder: React.FC = () => {
                           <button
                             type="button"
                             className="px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded"
-                            onClick={() => {
+                            onClick={async () => {
                               if (rawAddressInput.trim() && !classifiedAddress) {
                                 classifyAddress();
-                              } else {
-                                toast({
-                                  title: 'บันทึกข้อมูลเรียบร้อย',
-                                  variant: 'default',
-                                });
+                              } else if (classifiedAddress) {
+                                try {
+                                  // สร้างข้อมูลลูกค้าใหม่จากข้อมูลที่จำแนกแล้ว
+                                  const customerData = {
+                                    name: classifiedAddress.fullname,
+                                    phone: classifiedAddress.phone,
+                                    email: "", // ถ้ามีให้เพิ่มในฟอร์ม
+                                    address: classifiedAddress.addressNumber + 
+                                            (classifiedAddress.moo ? ` หมู่ ${classifiedAddress.moo}` : "") + 
+                                            (classifiedAddress.soi ? ` ซ.${classifiedAddress.soi}` : "") + 
+                                            (classifiedAddress.road ? ` ถ.${classifiedAddress.road}` : ""),
+                                    subdistrict: classifiedAddress.subdistrict,
+                                    district: classifiedAddress.district,
+                                    province: classifiedAddress.province,
+                                    zipcode: classifiedAddress.zipcode,
+                                    storeName: classifiedAddress.store || null,
+                                    addressNumber: classifiedAddress.addressNumber || null,
+                                    moo: classifiedAddress.moo || null,
+                                    soi: classifiedAddress.soi || null,
+                                    road: classifiedAddress.road || null
+                                  };
+                                  
+                                  // บันทึกข้อมูลลูกค้าลงฐานข้อมูล
+                                  const response = await fetch('/api/customers', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    credentials: 'include',
+                                    body: JSON.stringify(customerData),
+                                  });
+                                  
+                                  if (!response.ok) {
+                                    throw new Error('ไม่สามารถบันทึกข้อมูลลูกค้าได้');
+                                  }
+                                  
+                                  const result = await response.json();
+                                  
+                                  if (result.success && result.customer) {
+                                    // อัปเดตรายการลูกค้าและเลือกลูกค้าที่เพิ่งสร้าง
+                                    setCustomers([...customers, result.customer]);
+                                    setSelectedCustomer(result.customer);
+                                    
+                                    // ดึงวิธีการจัดส่งเมื่อเลือกลูกค้า
+                                    fetchShippingMethods(result.customer);
+                                    
+                                    // ล้างข้อมูลที่ป้อนและที่จำแนก
+                                    clearAddress();
+                                    
+                                    toast({
+                                      title: 'บันทึกข้อมูลลูกค้าเรียบร้อย',
+                                      description: 'เพิ่มลูกค้าใหม่และเลือกเรียบร้อยแล้ว',
+                                      variant: 'default',
+                                    });
+                                  } else {
+                                    throw new Error('ไม่สามารถบันทึกข้อมูลลูกค้าได้');
+                                  }
+                                } catch (error) {
+                                  console.error('Error saving customer:', error);
+                                  toast({
+                                    title: 'เกิดข้อผิดพลาด',
+                                    description: error instanceof Error ? error.message : 'ไม่สามารถบันทึกข้อมูลลูกค้าได้',
+                                    variant: 'destructive',
+                                  });
+                                }
                               }
                             }}
                           >
