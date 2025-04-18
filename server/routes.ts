@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
+import categoriesRouter from "./routes/categories";
+import productsRouter from "./routes/products";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // กำหนดค่า CORS สำหรับ API
@@ -18,27 +20,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ตั้งค่าระบบ Authentication
   setupAuth(app);
 
-  // สร้าง API endpoint สำหรับดึงข้อมูล category
-  app.get("/api/categories", async (req, res) => {
-    try {
-      const userId = req.user?.id || 0;
-      const categories = await storage.getCategoriesByUserId(userId);
-      res.json({ success: true, data: categories });
-    } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  });
-
-  // สร้าง API endpoint สำหรับดึงข้อมูล product
-  app.get("/api/products", async (req, res) => {
-    try {
-      const userId = req.user?.id || 0;
-      const products = await storage.getProductsByUserId(userId);
-      res.json({ success: true, data: products });
-    } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  });
+  // ลงทะเบียน routes
+  app.use("/api/categories", categoriesRouter);
+  app.use("/api/products", productsRouter);
 
   // สร้าง API endpoint สำหรับดึงข้อมูล orders
   app.get("/api/orders", async (req, res) => {
