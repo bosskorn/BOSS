@@ -1548,13 +1548,13 @@ const CreateOrder: React.FC = () => {
                   <div className="space-y-2">
                     <div 
                       className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                        paymentMethod === 'bank-transfer' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
+                        paymentMethod === 'bank_transfer' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'
                       }`}
-                      onClick={() => setPaymentMethod('bank-transfer')}
+                      onClick={() => setPaymentMethod('bank_transfer')}
                     >
                       <div className="flex items-center">
                         <div className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center mr-3">
-                          {paymentMethod === 'bank-transfer' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
+                          {paymentMethod === 'bank_transfer' && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
                         </div>
                         <div className="flex items-center">
                           <div className="w-8 h-8 rounded flex items-center justify-center mr-2">

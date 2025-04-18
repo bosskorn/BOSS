@@ -48,7 +48,75 @@ router.get('/:id', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     const orderData = req.body;
+    
+    // Check for COD payment method to handle Flash Express integration
+    const isCashOnDelivery = orderData.payment_method === 'cash_on_delivery';
+    
+    // Store order in database
     const order = await storage.createOrder(orderData);
+    
+    // If this is a COD order, create shipping label with Flash Express
+    if (isCashOnDelivery && orderData.shipping_service_id && order.id) {
+      try {
+        // Get customer information
+        const customer = await storage.getCustomer(orderData.customer_id);
+        
+        if (customer) {
+          // Get user information (merchant/sender) from session
+          const user = req.user as any;
+          
+          // Prepare sender information (merchant)
+          const senderInfo = {
+            name: user.fullname || user.username,
+            phone: user.phone || '0800000000', // Fallback
+            address: user.address || 'PURPLEDASH Office',
+            province: 'กรุงเทพมหานคร', // Default or from user profile
+            district: 'บางรัก',
+            subdistrict: 'สีลม',
+            zipcode: '10500'
+          };
+          
+          // Prepare recipient information (customer)
+          const recipientInfo = {
+            name: customer.name,
+            phone: customer.phone,
+            address: customer.address,
+            province: customer.province,
+            district: customer.district,
+            subdistrict: customer.subdistrict,
+            zipcode: customer.zipcode
+          };
+          
+          // Prepare parcel information
+          const parcelInfo = {
+            serviceId: orderData.shipping_service_id,
+            weight: 1.0, // Default weight or calculate based on items
+          };
+          
+          // Call Flash Express API to create shipping label with COD
+          const flashExpressResponse = await createFlashExpressShipping(
+            order.orderNumber,
+            senderInfo,
+            recipientInfo,
+            parcelInfo,
+            true, // isCOD
+            orderData.total // COD amount
+          );
+          
+          // Store tracking information if available
+          if (flashExpressResponse && flashExpressResponse.tracking_number) {
+            await storage.updateOrder(order.id, {
+              trackingNumber: flashExpressResponse.tracking_number,
+              shippingLabel: flashExpressResponse.label_url
+            });
+          }
+        }
+      } catch (shippingError) {
+        // Log shipping error but don't fail order creation
+        console.error('Error creating Flash Express shipping for COD order:', shippingError);
+      }
+    }
+    
     res.status(201).json({
       success: true,
       order

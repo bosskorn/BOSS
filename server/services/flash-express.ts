@@ -115,12 +115,16 @@ export const createFlashExpressShipping = async (
   orderNumber: string,
   senderInfo: any,
   recipientInfo: any,
-  parcelInfo: any
+  parcelInfo: any,
+  isCOD: boolean = false,
+  codAmount: number = 0
 ): Promise<any> => {
   try {
     // Build timestamp and request data
     const timestamp = Math.floor(Date.now() / 1000).toString();
-    const requestData = JSON.stringify({
+    
+    // Base request data
+    const requestPayload: any = {
       merchant_id: MERCHANT_ID,
       timestamp: timestamp,
       pno: orderNumber,
@@ -144,7 +148,15 @@ export const createFlashExpressShipping = async (
         sub_district: recipientInfo.subdistrict,
         postcode: recipientInfo.zipcode
       }
-    });
+    };
+    
+    // Add COD info if applicable
+    if (isCOD && codAmount > 0) {
+      requestPayload.is_cod = true;
+      requestPayload.cod_amount = codAmount;
+    }
+    
+    const requestData = JSON.stringify(requestPayload);
 
     // Generate signature
     const signature = generateSignature(requestData);
