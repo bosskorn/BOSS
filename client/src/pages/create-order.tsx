@@ -428,63 +428,69 @@ const CreateOrder: React.FC = () => {
     setIsLoadingShippingRates(true);
     
     try {
-      // สำหรับการสาธิต ใช้ข้อมูลจำลอง
-      // จำลองการดึงข้อมูลจาก Flash Express API และผู้ให้บริการอื่นๆ
-      setTimeout(() => {
-        const mockShippingMethods: ShippingMethod[] = [
-          { 
-            id: 'flash-express-normal', 
-            name: 'Flash Express - บริการมาตรฐาน', 
-            deliveryTime: '2-3 วันทำการ', 
-            price: 45, 
-            provider: 'Flash Express',
-            logo: shippingLogos['flash-express']
-          },
-          { 
-            id: 'flash-express-express', 
-            name: 'Flash Express - ด่วนพิเศษ', 
-            deliveryTime: '1-2 วันทำการ', 
-            price: 75, 
-            provider: 'Flash Express',
-            logo: shippingLogos['flash-express']
-          },
-          { 
-            id: 'thailand-post-regular', 
-            name: 'ไปรษณีย์ไทย - ธรรมดา', 
-            deliveryTime: '3-5 วันทำการ', 
-            price: 35, 
-            provider: 'Thailand Post',
-            logo: shippingLogos['thailand-post']
-          },
-          { 
-            id: 'thailand-post-ems', 
-            name: 'ไปรษณีย์ไทย - EMS', 
-            deliveryTime: '1-2 วันทำการ', 
-            price: 65, 
-            provider: 'Thailand Post',
-            logo: shippingLogos['thailand-post']
-          },
-          { 
-            id: 'kerry-express-normal', 
-            name: 'Kerry Express', 
-            deliveryTime: '1-2 วันทำการ', 
-            price: 70, 
-            provider: 'Kerry Express',
-            logo: shippingLogos['kerry-express']
-          },
-          { 
-            id: 'jnt-express-normal', 
-            name: 'J&T Express', 
-            deliveryTime: '1-3 วันทำการ', 
-            price: 60, 
-            provider: 'J&T Express',
-            logo: shippingLogos['jnt-express']
-          },
-        ];
+      // สร้างข้อมูลต้นทางและปลายทางสำหรับส่งไป API
+      const fromAddress = {
+        province: 'กรุงเทพมหานคร',  // จากที่อยู่บริษัทของเรา
+        district: 'บางรัก',
+        subdistrict: 'สีลม',
+        zipcode: '10500'
+      };
+
+      const toAddress = {
+        province: customer.province,
+        district: customer.district,
+        subdistrict: customer.subdistrict,
+        zipcode: customer.zipcode
+      };
+
+      // เรียกใช้ API Flash Express จริง
+      const response = await fetch('/api/shipping-methods/flash-express/rates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fromAddress,
+          toAddress,
+          weight: 1.0 // น้ำหนักกิโลกรัม
+        }),
+        credentials: 'include'
+      });
         
-        setShippingMethods(mockShippingMethods);
-        setIsLoadingShippingRates(false);
-      }, 1000);
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.success && data.shippingRates && data.shippingRates.length > 0) {
+          // แปลงข้อมูลจาก API ให้อยู่ในรูปแบบที่ใช้ใน state
+          setShippingMethods(data.shippingRates);
+          console.log('Flash Express shipping rates:', data.shippingRates);
+        } else {
+          // ถ้าไม่มีข้อมูลจาก API ให้แสดงตัวเลือกสำรอง
+          const fallbackShippingMethods: ShippingMethod[] = [
+            { 
+              id: 1, 
+              name: 'Flash Express - บริการมาตรฐาน', 
+              deliveryTime: '2-3 วันทำการ', 
+              price: 45, 
+              provider: 'Flash Express',
+              logo: shippingLogos['flash-express']
+            },
+            { 
+              id: 2, 
+              name: 'ไปรษณีย์ไทย - ธรรมดา', 
+              deliveryTime: '3-5 วันทำการ', 
+              price: 35, 
+              provider: 'Thailand Post',
+              logo: shippingLogos['thailand-post']
+            }
+          ];
+        
+          setShippingMethods(fallbackShippingMethods);
+        }
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch shipping rates');
+      }
       
     } catch (error) {
       console.error('Error fetching shipping methods:', error);

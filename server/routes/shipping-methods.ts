@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { storage } from '../storage';
 import { auth } from '../middleware/auth';
 import { insertShippingMethodSchema } from '@shared/schema';
+import { getFlashExpressShippingOptions } from '../services/flash-express';
 
 const router = Router();
 
@@ -64,6 +65,38 @@ router.post('/', auth, async (req, res) => {
   } catch (error) {
     console.error('Error creating shipping method:', error);
     res.status(400).json({ success: false, message: 'เกิดข้อผิดพลาดในการสร้างวิธีการจัดส่ง', error: error });
+  }
+});
+
+// API สำหรับดึงข้อมูลค่าจัดส่งจาก Flash Express
+router.post('/flash-express/rates', auth, async (req, res) => {
+  try {
+    const { fromAddress, toAddress, weight } = req.body;
+    
+    if (!fromAddress || !toAddress) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุที่อยู่ต้นทางและปลายทาง'
+      });
+    }
+    
+    // เรียก API Flash Express เพื่อดึงข้อมูลค่าจัดส่ง
+    const shippingRates = await getFlashExpressShippingOptions(
+      fromAddress,
+      toAddress,
+      weight || 1.0
+    );
+    
+    res.json({
+      success: true,
+      shippingRates
+    });
+  } catch (error) {
+    console.error('Error fetching Flash Express shipping rates:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการดึงข้อมูลค่าจัดส่ง'
+    });
   }
 });
 
