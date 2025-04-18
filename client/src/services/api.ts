@@ -7,9 +7,13 @@ const API_URL = '/api'
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache'
   },
-  withCredentials: true
+  withCredentials: true, // ส่ง cookies และ credentials ไปด้วยทุกครั้ง
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN'
 })
 
 // Interceptor to add auth token to requests
