@@ -16,6 +16,9 @@ import LogoDisplay from "@/pages/logo-display";
 import CategoryManagement from "@/pages/category-management";
 import ProductManagement from "@/pages/product-management";
 import AdminDashboard from "@/pages/admin-dashboard";
+import OrderList from "@/pages/order-list";
+import OrderDetail from "@/pages/order-detail";
+import ShipmentList from "@/pages/shipment-list";
 import { AuthProvider } from "@/hooks/use-auth";
 
 function Router() {
@@ -36,6 +39,14 @@ function Router() {
       <Route path="/product-management" component={ProductManagement} />
       <Route path="/create-order" component={CreateOrder} />
       <Route path="/logo" component={LogoDisplay} />
+      
+      {/* คำสั่งซื้อ */}
+      <Route path="/order-list" component={OrderList} />
+      <Route path="/order-detail/:id" component={OrderDetail} />
+      
+      {/* พัสดุและการจัดส่ง */}
+      <Route path="/shipment-list" component={ShipmentList} />
+      
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

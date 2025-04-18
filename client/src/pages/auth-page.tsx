@@ -59,34 +59,40 @@ const AuthPage: React.FC = () => {
     try {
       console.log('Sending login request with credentials:', { username: data.username, password: '******' });
       
-      // ตั้งค่า axios ให้ส่ง cookies ไปกับคำขอ
-      const response = await axios.post('/api/login', {
-        username: data.username,
-        password: data.password
-      }, {
-        withCredentials: true, // สำคัญมาก ต้องส่ง cookies ไปด้วย
+      // ใช้ fetch แทน axios เพื่อให้สอดคล้องกับส่วนอื่นของแอปพลิเคชัน
+      const res = await fetch('/api/login', {
+        method: 'POST',
         headers: {
-          'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Cache-Control': 'no-cache'
-        }
+        },
+        body: JSON.stringify({
+          username: data.username,
+          password: data.password
+        }),
+        credentials: 'include' // สำคัญมาก ต้องส่ง cookies ไปและรับกลับมาด้วย
       });
       
-      console.log('Login response:', response);
+      // อ่านข้อมูลการตอบกลับ
+      const responseData = await res.json();
+      console.log('Login response status:', res.status, responseData);
       
-      if (response.data.success) {
+      if (res.ok && responseData.success) {
         toast({
           title: 'เข้าสู่ระบบสำเร็จ',
-          description: response.data.message || 'ยินดีต้อนรับเข้าสู่ระบบ',
+          description: responseData.message || 'ยินดีต้อนรับเข้าสู่ระบบ',
           variant: 'default',
         });
         
         // นำทางไปยังหน้าแดชบอร์ด
-        window.location.href = '/dashboard'; // ใช้ window.location เพื่อให้มั่นใจว่ามีการโหลดหน้าใหม่
+        setTimeout(() => {
+          window.location.href = '/dashboard'; // ใช้ window.location เพื่อให้มั่นใจว่ามีการโหลดหน้าใหม่
+        }, 1000); // รอ 1 วินาทีเพื่อให้ cookie ได้บันทึกเรียบร้อย
       } else {
         toast({
           title: 'เข้าสู่ระบบไม่สำเร็จ',
-          description: response.data.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+          description: responseData.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
           variant: 'destructive',
         });
         
@@ -97,7 +103,7 @@ const AuthPage: React.FC = () => {
       
       toast({
         title: 'เข้าสู่ระบบไม่สำเร็จ',
-        description: error.response?.data?.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+        description: error.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
         variant: 'destructive',
       });
       
@@ -120,31 +126,37 @@ const AuthPage: React.FC = () => {
         fullname: userData.fullname
       });
       
-      // ตั้งค่า axios ให้ส่ง cookies ไปกับคำขอ
-      const response = await axios.post('/api/register', userData, {
-        withCredentials: true, // สำคัญมาก ต้องส่ง cookies ไปด้วย
+      // ใช้ fetch แทน axios เพื่อให้สอดคล้องกับส่วนอื่นของแอปพลิเคชัน
+      const res = await fetch('/api/register', {
+        method: 'POST',
         headers: {
-          'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Cache-Control': 'no-cache'
-        }
+        },
+        body: JSON.stringify(userData),
+        credentials: 'include' // สำคัญมาก ต้องส่ง cookies ไปและรับกลับมาด้วย
       });
       
-      console.log('Register response:', response);
+      // อ่านข้อมูลการตอบกลับ
+      const responseData = await res.json();
+      console.log('Register response status:', res.status, responseData);
       
-      if (response.data.success) {
+      if (res.ok && responseData.success) {
         toast({
           title: 'สมัครสมาชิกสำเร็จ',
-          description: response.data.message || 'บัญชีของคุณถูกสร้างแล้ว กำลังเข้าสู่ระบบ...',
+          description: responseData.message || 'บัญชีของคุณถูกสร้างแล้ว กำลังเข้าสู่ระบบ...',
           variant: 'default',
         });
         
         // เข้าสู่ระบบโดยอัตโนมัติและนำทางไปยังหน้าแดชบอร์ด
-        window.location.href = '/dashboard'; // ใช้ window.location เพื่อให้มั่นใจว่ามีการโหลดหน้าใหม่
+        setTimeout(() => {
+          window.location.href = '/dashboard'; // ใช้ window.location เพื่อให้มั่นใจว่ามีการโหลดหน้าใหม่
+        }, 1000); // รอ 1 วินาทีเพื่อให้ cookie ได้บันทึกเรียบร้อย
       } else {
         toast({
           title: 'สมัครสมาชิกไม่สำเร็จ',
-          description: response.data.message || 'เกิดข้อผิดพลาดไม่สามารถสมัครสมาชิกได้',
+          description: responseData.message || 'เกิดข้อผิดพลาดไม่สามารถสมัครสมาชิกได้',
           variant: 'destructive',
         });
       }
@@ -153,7 +165,7 @@ const AuthPage: React.FC = () => {
       
       toast({
         title: 'สมัครสมาชิกไม่สำเร็จ',
-        description: error.response?.data?.message || 'เกิดข้อผิดพลาดในการสมัครสมาชิก',
+        description: error.message || 'เกิดข้อผิดพลาดในการสมัครสมาชิก',
         variant: 'destructive',
       });
     } finally {
