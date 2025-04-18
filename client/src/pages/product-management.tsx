@@ -29,7 +29,8 @@ const ProductManagement: React.FC = () => {
       
       const res = await apiRequest('GET', url);
       const result = await res.json();
-      return result.data;
+      console.log('Products API response:', result);
+      return result.products || [];
     },
     enabled: !!user,
   });
