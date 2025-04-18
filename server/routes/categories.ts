@@ -39,9 +39,16 @@ router.get("/", auth, async (req, res) => {
 });
 
 // ดึงข้อมูลหมวดหมู่สินค้าตาม ID
-router.get("/:id", auth, checkOwnership('id'), async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
     const categoryId = parseInt(req.params.id);
+    if (isNaN(categoryId)) {
+      return res.status(400).json({
+        success: false,
+        message: "รหัสหมวดหมู่ไม่ถูกต้อง"
+      });
+    }
+    
     const category = await storage.getCategory(categoryId);
     
     if (!category) {

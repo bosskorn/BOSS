@@ -104,8 +104,17 @@ export class DatabaseStorage implements IStorage {
   
   // Category operations
   async getCategory(id: number): Promise<Category | undefined> {
-    const [category] = await db.select().from(categories).where(eq(categories.id, id));
-    return category;
+    if (isNaN(id)) {
+      console.error(`Invalid category ID: ${id} is NaN`);
+      return undefined;
+    }
+    try {
+      const [category] = await db.select().from(categories).where(eq(categories.id, id));
+      return category;
+    } catch (error) {
+      console.error(`Error fetching category with ID ${id}:`, error);
+      return undefined;
+    }
   }
   
   async getCategoriesByUserId(userId: number): Promise<Category[]> {
