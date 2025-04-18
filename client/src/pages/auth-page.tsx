@@ -199,7 +199,7 @@ const AuthPage: React.FC = () => {
                 <input
                   id="login-username"
                   type="text"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                   placeholder="กรอกชื่อผู้ใช้งาน"
                   {...loginForm.register('username')}
                 />
@@ -215,7 +215,7 @@ const AuthPage: React.FC = () => {
                 <input
                   id="login-password"
                   type="password"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                   placeholder="กรอกรหัสผ่าน"
                   {...loginForm.register('password')}
                 />
@@ -261,7 +261,7 @@ const AuthPage: React.FC = () => {
                 <input
                   id="register-fullname"
                   type="text"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                   placeholder="กรอกชื่อ-นามสกุล"
                   {...registerForm.register('fullname')}
                 />
@@ -277,7 +277,7 @@ const AuthPage: React.FC = () => {
                 <input
                   id="register-username"
                   type="text"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                   placeholder="กรอกชื่อผู้ใช้งาน"
                   {...registerForm.register('username')}
                 />
@@ -293,7 +293,7 @@ const AuthPage: React.FC = () => {
                 <input
                   id="register-password"
                   type="password"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                   placeholder="กรอกรหัสผ่าน (อย่างน้อย 6 ตัว)"
                   {...registerForm.register('password')}
                 />
@@ -309,7 +309,7 @@ const AuthPage: React.FC = () => {
                 <input
                   id="register-confirm-password"
                   type="password"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                   placeholder="กรอกรหัสผ่านอีกครั้ง"
                   {...registerForm.register('confirmPassword')}
                 />
@@ -338,7 +338,7 @@ const AuthPage: React.FC = () => {
                 <button 
                   type="button" 
                   onClick={() => setIsLogin(true)} 
-                  className="font-medium text-green-600 hover:text-green-500"
+                  className="font-medium text-purple-600 hover:text-purple-500"
                 >
                   เข้าสู่ระบบที่นี่
                 </button>
