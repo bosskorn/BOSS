@@ -22,24 +22,18 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
   // ปิด dropdown เมื่อคลิกข้างนอก
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        activeDropdown === 'orders' && 
-        ordersDropdownRef.current && 
-        !ordersDropdownRef.current.contains(event.target as Node)
-      ) {
-        setActiveDropdown(null);
-      } else if (
-        activeDropdown === 'products' && 
-        productsDropdownRef.current && 
-        !productsDropdownRef.current.contains(event.target as Node)
-      ) {
-        setActiveDropdown(null);
-      } else if (
-        activeDropdown === 'reports' && 
-        reportsDropdownRef.current && 
-        !reportsDropdownRef.current.contains(event.target as Node)
-      ) {
-        setActiveDropdown(null);
+      if (activeDropdown === 'orders') {
+        if (ordersDropdownRef.current && !ordersDropdownRef.current.contains(event.target as Node)) {
+          setActiveDropdown(null);
+        }
+      } else if (activeDropdown === 'products') {
+        if (productsDropdownRef.current && !productsDropdownRef.current.contains(event.target as Node)) {
+          setActiveDropdown(null);
+        }
+      } else if (activeDropdown === 'reports') {
+        if (reportsDropdownRef.current && !reportsDropdownRef.current.contains(event.target as Node)) {
+          setActiveDropdown(null);
+        }
       }
     };
 
