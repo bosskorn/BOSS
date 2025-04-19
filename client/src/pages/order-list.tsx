@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import Layout from '@/components/Layout';
-import { Loader2, Search, Filter, ChevronDown, ChevronUp, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw } from 'lucide-react';
+import { Loader2, Search, Filter, ChevronDown, ChevronUp, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Table, 
   TableBody, 
@@ -58,6 +59,7 @@ const OrderList: React.FC = () => {
   const [shippingFilter, setShippingFilter] = useState<string>('all');
   const [isPrintingLabel, setIsPrintingLabel] = useState<boolean>(false);
   const [currentPrintingOrder, setCurrentPrintingOrder] = useState<number | null>(null);
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [sortConfig, setSortConfig] = useState<{key: keyof Order, direction: 'asc' | 'desc'}>({
     key: 'date',
     direction: 'desc'
@@ -498,6 +500,163 @@ const OrderList: React.FC = () => {
       });
     }
   };
+  
+  // ฟังก์ชันจัดการเลือกและยกเลิกการเลือกออเดอร์
+  const toggleOrderSelection = (orderId: number) => {
+    setSelectedOrders(prev => {
+      if (prev.includes(orderId)) {
+        return prev.filter(id => id !== orderId);
+      } else {
+        return [...prev, orderId];
+      }
+    });
+  };
+  
+  // ฟังก์ชันเลือกทั้งหมดที่แสดงในหน้า
+  const selectAllOrders = () => {
+    const orderIds = filteredOrders
+      .filter(order => order.trackingNumber) // เลือกเฉพาะรายการที่มีเลขพัสดุ
+      .map(order => order.id);
+    
+    setSelectedOrders(orderIds);
+  };
+  
+  // ฟังก์ชันยกเลิกการเลือกทั้งหมด
+  const clearAllSelections = () => {
+    setSelectedOrders([]);
+  };
+  
+  // ฟังก์ชันพิมพ์ใบลาเบลสำหรับรายการที่เลือก
+  const printSelectedLabels = async () => {
+    if (selectedOrders.length === 0) {
+      toast({
+        title: 'ไม่มีรายการที่เลือก',
+        description: 'กรุณาเลือกรายการที่ต้องการพิมพ์ใบลาเบล',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setIsPrintingLabel(true);
+    
+    try {
+      // สร้างหน้าต่างใหม่สำหรับพิมพ์
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        throw new Error('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ โปรดตรวจสอบการตั้งค่าป้องกันป๊อปอัพ');
+      }
+      
+      // หาออเดอร์ที่ต้องการพิมพ์
+      const ordersToPrint = orders.filter(order => 
+        selectedOrders.includes(order.id) && order.trackingNumber
+      );
+      
+      if (ordersToPrint.length === 0) {
+        throw new Error('ไม่มีรายการที่เลือกที่มีเลขพัสดุสำหรับพิมพ์');
+      }
+      
+      // สร้าง HTML เริ่มต้น
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>พิมพ์ใบลาเบล - รายการที่เลือก</title>
+          <style>
+            body { font-family: 'Kanit', sans-serif; margin: 0; padding: 0; }
+            .label-container { width: 100mm; height: 150mm; border: 1px solid #ccc; padding: 5mm; margin: 10px auto; page-break-after: always; }
+            .logo { text-align: center; margin-bottom: 5mm; font-size: 24px; font-weight: bold; color: #8A2BE2; }
+            .tracking { font-size: 16px; text-align: center; margin-bottom: 5mm; padding: 2mm; border: 1px solid #8A2BE2; }
+            .section { margin-bottom: 5mm; }
+            .title { font-weight: bold; margin-bottom: 2mm; font-size: 14px; }
+            .address { font-size: 14px; line-height: 1.5; }
+            .barcode { text-align: center; margin: 5mm 0; font-size: 16px; }
+            .footer { text-align: center; font-size: 12px; margin-top: 5mm; color: #666; }
+            .box { border: 1px solid #ccc; padding: 3mm; }
+            .print-button { text-align: center; margin: 20px; }
+            .print-button button { padding: 10px 20px; background: #8A2BE2; color: white; border: none; border-radius: 5px; cursor: pointer; }
+            @media print {
+              body { margin: 0; padding: 0; }
+              .print-button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-button">
+            <button onclick="window.print();">พิมพ์ใบลาเบล (${ordersToPrint.length} รายการ)</button>
+          </div>
+      `);
+      
+      // เพิ่มใบลาเบลแต่ละรายการ
+      ordersToPrint.forEach(order => {
+        printWindow.document.write(`
+          <div class="label-container">
+            <div class="logo">PURPLEDASH</div>
+            
+            <div class="tracking box">
+              <div>เลขพัสดุ</div>
+              <div style="font-size: 20px; font-weight: bold;">${order.trackingNumber}</div>
+            </div>
+            
+            <div class="section">
+              <div class="title">ผู้ส่ง:</div>
+              <div class="box address">
+                PURPLEDASH<br />
+                เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
+                ถนนพระราม 4 แขวงลุมพินี<br />
+                เขตปทุมวัน กรุงเทพฯ 10330<br />
+                โทร: 02-123-4567
+              </div>
+            </div>
+            
+            <div class="section">
+              <div class="title">ผู้รับ:</div>
+              <div class="box address">
+                ${order.recipientName || 'ไม่ระบุ'}<br />
+                ${order.recipientAddress || ''} ${order.recipientSubdistrict || ''}<br />
+                ${order.recipientDistrict || ''} ${order.recipientProvince || ''} ${order.recipientZipCode || ''}<br />
+                โทร: ${order.recipientPhone || 'ไม่ระบุ'}
+              </div>
+            </div>
+            
+            <div class="barcode box">
+              ${order.trackingNumber}
+            </div>
+            
+            <div class="footer">
+              ${order.paymentMethod === 'cash_on_delivery' ? 'เก็บเงินปลายทาง: ' + formatCurrency(order.total || parseFloat(order.totalAmount || '0')) : 'จ่ายเงินแล้ว'}
+            </div>
+          </div>
+        `);
+      });
+      
+      // ปิด HTML
+      printWindow.document.write(`
+        </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+      
+      // รอให้หน้าต่างพิมพ์โหลดเสร็จ
+      printWindow.addEventListener('load', () => {
+        // อัพเดตสถานะการพิมพ์ของแต่ละรายการ
+        ordersToPrint.forEach(order => {
+          updatePrintStatus(order.id);
+        });
+      });
+      
+    } catch (error) {
+      console.error('Error printing selected labels:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error instanceof Error ? error.message : 'ไม่สามารถพิมพ์ใบลาเบลได้',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPrintingLabel(false);
+    }
+  };
 
   return (
     <Layout>
@@ -576,6 +735,62 @@ const OrderList: React.FC = () => {
             </div>
           </div>
           
+          {/* ปุ่มพิมพ์ใบลาเบลด้านบน */}
+          <div className="mb-6 p-4 border border-purple-200 rounded-lg bg-purple-50">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex items-center">
+                <Printer className="h-5 w-5 text-purple-600 mr-2" />
+                <span className="font-medium">พิมพ์ใบลาเบลหลายรายการ</span>
+                {selectedOrders.length > 0 && (
+                  <Badge variant="secondary" className="ml-2 bg-purple-200 text-purple-800">
+                    เลือก {selectedOrders.length} รายการ
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={selectAllOrders}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                >
+                  <CheckSquare className="h-4 w-4 mr-1" />
+                  เลือกทั้งหมดที่มีเลขพัสดุ
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={clearAllSelections}
+                  className="border-gray-300"
+                  disabled={selectedOrders.length === 0}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  ยกเลิกการเลือก
+                </Button>
+                
+                <Button 
+                  onClick={printSelectedLabels}
+                  disabled={selectedOrders.length === 0 || isPrintingLabel}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {isPrintingLabel ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      กำลังพิมพ์...
+                    </>
+                  ) : (
+                    <>
+                      <Printer className="h-4 w-4 mr-1" />
+                      พิมพ์ใบลาเบล ({selectedOrders.length})
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+          
           {/* กรองตามบริษัทขนส่ง */}
           {availableShippingMethods.length > 0 && (
             <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
@@ -629,6 +844,18 @@ const OrderList: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[50px]">
+                      <Checkbox 
+                        checked={selectedOrders.length > 0 && selectedOrders.length === filteredOrders.filter(o => o.trackingNumber).length}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            selectAllOrders();
+                          } else {
+                            clearAllSelections();
+                          }
+                        }}
+                      />
+                    </TableHead>
                     <TableHead className="w-[150px] cursor-pointer" onClick={() => handleSort('orderNumber')}>
                       <div className="flex items-center">
                         เลขคำสั่งซื้อ
