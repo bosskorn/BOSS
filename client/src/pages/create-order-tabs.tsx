@@ -1137,7 +1137,8 @@ const CreateOrderTabsPage: React.FC = () => {
         }
       }
       
-      // ส่งข้อมูลไปยังเซิร์ฟเวอร์
+      console.log('กำลังส่งข้อมูลออเดอร์ไปยังเซิร์ฟเวอร์:', orderData);
+      // ส่งข้อมูลไปยังเซิร์ฟเวอร์ - ยังคงใช้ api.post() เนื่องจากมีการตั้งค่า interceptor สำหรับ auth token
       const response = await api.post('/api/orders', orderData);
       
       if (response.data.success) {
@@ -1156,6 +1157,12 @@ const CreateOrderTabsPage: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error creating order:', error);
+      // แสดงข้อมูลข้อผิดพลาดเพิ่มเติมเพื่อการดีบัก
+      if (error.response) {
+        console.error('Response error data:', error.response.data);
+        console.error('Response error status:', error.response.status);
+        console.error('Response error headers:', error.response.headers);
+      }
       toast({
         title: 'เกิดข้อผิดพลาด',
         description: error.message || 'ไม่สามารถสร้างออเดอร์ได้ โปรดลองอีกครั้ง',
@@ -1228,21 +1235,21 @@ const CreateOrderTabsPage: React.FC = () => {
       
       console.log('ส่งข้อมูลไปยัง Flash Express API:', flashExpressData);
       
-      // เรียกใช้ API สร้างการจัดส่ง
-      const response = await apiRequest('POST', '/api/shipping/create', flashExpressData);
-      const result = await response.json();
+      // แก้ไขจาก apiRequest เป็น api.post (ใช้ axios interceptor ที่จัดการ token ไว้แล้ว)
+      // เพื่อให้ทำงานได้ถูกต้องบนอุปกรณ์ iPad
+      const response = await api.post('/api/shipping/create', flashExpressData);
       
-      if (result.success && result.trackingNumber) {
-        console.log('สร้างเลขพัสดุสำเร็จ:', result.trackingNumber);
+      if (response.data.success && response.data.trackingNumber) {
+        console.log('สร้างเลขพัสดุสำเร็จ:', response.data.trackingNumber);
         
         // เพิ่มเลขพัสดุเข้าไปในข้อมูลออเดอร์
         return {
           orderNumber,
-          trackingNumber: result.trackingNumber,
-          sortCode: result.sortCode
+          trackingNumber: response.data.trackingNumber,
+          sortCode: response.data.sortCode
         };
       } else {
-        throw new Error(result.error || 'ไม่สามารถสร้างเลขพัสดุได้');
+        throw new Error(response.data.error || 'ไม่สามารถสร้างเลขพัสดุได้');
       }
     } catch (error: any) {
       console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API:', error);
