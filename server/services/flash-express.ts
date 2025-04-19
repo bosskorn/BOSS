@@ -206,7 +206,7 @@ export const createFlashExpressShipping = async (
       const nonceStr = generateNonceStr();
       
       // สร้างข้อมูลที่จะส่งไปยัง API
-      const requestData = {
+      const requestData: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
         outTradeNo: orderData.outTradeNo,
@@ -240,6 +240,7 @@ export const createFlashExpressShipping = async (
       };
       
       // สร้าง signature
+      // nonceStr ถูกรวมเป็นส่วนหนึ่งของ requestData แล้ว จึงไม่ต้องส่งแยกต่างหาก
       const sign = generateFlashExpressSignature(
         FLASH_EXPRESS_API_KEY as string,
         requestData,

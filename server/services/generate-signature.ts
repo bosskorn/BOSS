@@ -6,8 +6,8 @@
 import crypto from 'crypto';
 
 /**
- * สร้าง signature สำหรับ Flash Express API
- * @param apiKey คีย์ลับที่ได้รับจาก Flash Express
+ * สร้าง signature สำหรับ Flash Express API ตามเอกสารอ้างอิงของ Flash Express
+ * @param apiKey คีย์ลับที่ได้รับจาก Flash Express (secret_key)
  * @param params พารามิเตอร์ทั้งหมดที่จะส่งไปยัง API
  * @param nonceStr ตัวอักษรสุ่ม ความยาวไม่เกิน 32 ตัวอักษร
  * @returns signature ที่สร้างขึ้น
@@ -18,12 +18,18 @@ export function generateFlashExpressSignature(
   nonceStr: string
 ): string {
   try {
-    // 1. เรียงลำดับคีย์ของพารามิเตอร์ตามลำดับอักษร
+    // 1. เรียงลำดับคีย์ของพารามิเตอร์ตามลำดับอักษร ASCII
     const sortedKeys = Object.keys(params).sort();
     
-    // 2. สร้างสตริงในรูปแบบ key1=value1&key2=value2&...
-    const stringToSign = sortedKeys
-      .filter(key => params[key] !== undefined && params[key] !== null) // กรองเฉพาะค่าที่ไม่เป็น undefined หรือ null
+    // 2. สร้างสตริง stringA ในรูปแบบ key1=value1&key2=value2&...
+    const stringA = sortedKeys
+      .filter(key => {
+        // กรองเฉพาะค่าที่ไม่เป็น undefined, null หรือ ค่าว่าง (whitespace)
+        const value = params[key];
+        if (value === undefined || value === null) return false;
+        if (typeof value === 'string' && value.trim() === '') return false;
+        return true;
+      })
       .map(key => {
         // แปลงค่า Array หรือ Object เป็น JSON string
         let value = params[key];
@@ -34,13 +40,15 @@ export function generateFlashExpressSignature(
       })
       .join('&');
     
-    // 3. เพิ่ม nonceStr และ API key เข้าไป
-    const finalString = `${stringToSign}&nonceStr=${nonceStr}&key=${apiKey}`;
+    // 3. นำ stringA มาต่อกับ key ตามรูปแบบ (stringSignTemp)
+    const stringSignTemp = `${stringA}&key=${apiKey}`;
     
-    console.log('String to sign:', finalString);
+    console.log('String to sign (stringSignTemp):', stringSignTemp);
     
-    // 4. คำนวณ MD5 hash และแปลงเป็นตัวพิมพ์ใหญ่
-    const signature = crypto.createHash('md5').update(finalString).digest('hex').toUpperCase();
+    // 4. คำนวณ SHA256 hash และแปลงเป็นตัวพิมพ์ใหญ่
+    const signature = crypto.createHash('sha256').update(stringSignTemp).digest('hex').toUpperCase();
+    
+    console.log('ลายเซ็นที่สร้าง:', signature);
     
     return signature;
   } catch (error) {
@@ -56,7 +64,7 @@ export function generateFlashExpressSignature(
 export function generateNonceStr(): string {
   // ใช้ timestamp ปัจจุบันร่วมกับตัวอักษรสุ่ม
   const timestamp = Date.now().toString();
-  const randomPart = Math.random().toString(36).substring(2, 10); // ตัวอักษรสุ่ม 8 ตัว
+  const randomPart = Math.random().toString(36).substring(2, 15); // ตัวอักษรสุ่ม
   
   return `${timestamp}${randomPart}`.substring(0, 32); // จำกัดความยาวไม่เกิน 32 ตัวอักษร
 }
