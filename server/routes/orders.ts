@@ -192,14 +192,48 @@ router.post('/', auth, async (req, res) => {
           };
           
           // Call Flash Express API to create shipping label with COD
-          const flashExpressResponse = await createFlashExpressShipping(
-            order.orderNumber,
-            senderInfo,
-            recipientInfo,
-            parcelInfo,
-            true, // isCOD
-            orderData.total // COD amount
-          );
+          // ข้อมูลสำหรับการสร้าง Flash Express shipping ตามรูปแบบ API
+          const shippingData = {
+            outTradeNo: order.orderNumber,
+            // ข้อมูลผู้ส่ง (sender)
+            srcName: senderInfo.name,
+            srcPhone: senderInfo.phone,
+            srcProvinceName: senderInfo.province,
+            srcCityName: senderInfo.district,
+            srcDistrictName: senderInfo.subdistrict,
+            srcPostalCode: senderInfo.zipcode,
+            srcDetailAddress: senderInfo.address,
+            // ข้อมูลผู้รับ (recipient)
+            dstName: recipientInfo.name,
+            dstPhone: recipientInfo.phone,
+            dstHomePhone: recipientInfo.phone, // ใช้เบอร์เดียวกัน
+            dstProvinceName: recipientInfo.province,
+            dstCityName: recipientInfo.district, 
+            dstDistrictName: recipientInfo.subdistrict,
+            dstPostalCode: recipientInfo.zipcode,
+            dstDetailAddress: recipientInfo.address,
+            // ข้อมูลพัสดุ
+            articleCategory: 4, // Default - สินค้าทั่วไป
+            expressCategory: 1, // Standard delivery
+            weight: parcelInfo.weight * 1000, // แปลงเป็นกรัม
+            width: 20, // ค่าเริ่มต้น
+            length: 30, // ค่าเริ่มต้น
+            height: 10, // ค่าเริ่มต้น
+            insured: 0, // ไม่ได้ซื้อประกัน
+            codEnabled: 1, // เปิดใช้งาน COD
+            codAmount: Math.round(orderData.total * 100), // แปลงเป็นสตางค์
+            remark: `Order #${order.orderNumber}`,
+            // ข้อมูลสินค้าภายใน (สร้างข้อมูลจากตัวออเดอร์)
+            subItemTypes: [
+              {
+                itemName: `สินค้าออเดอร์ #${order.orderNumber}`,
+                itemQuantity: 1
+              }
+            ]
+          };
+          
+          // เรียกใช้ API
+          const flashExpressResponse = await createFlashExpressShipping(shippingData);
           
           // Store tracking information if available and successful
           if (flashExpressResponse && flashExpressResponse.success && flashExpressResponse.trackingNumber) {
@@ -216,12 +250,12 @@ router.post('/', auth, async (req, res) => {
             });
           }
         }
-      } catch (shippingError) {
+      } catch (error: any) {
         // Delete the order if shipping creation fails and return error
         await storage.deleteOrder(order.id);
         return res.status(400).json({
           success: false,
-          message: shippingError.message || 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง กรุณาลองใหม่อีกครั้ง'
+          message: error.message || 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง กรุณาลองใหม่อีกครั้ง'
         });
       }
     }
