@@ -12,7 +12,7 @@ const scryptAsync = promisify(scrypt);
 const adminRegisterSchema = insertUserSchema.extend({
   email: z.string().email({ message: 'รูปแบบอีเมลไม่ถูกต้อง' }),
   phone: z.string().min(9, { message: 'เบอร์โทรศัพท์ต้องมีอย่างน้อย 9 ตัว' }),
-  adminKey: z.string().min(6, { message: 'รหัสสำหรับผู้ดูแลระบบไม่ถูกต้อง' }),
+  adminKey: z.string(), // ไม่จำเป็นต้องตรวจสอบความยาว เนื่องจากจะยอมรับค่าใดๆ ของ adminKey
 });
 
 // รหัสผู้ดูแลระบบสำหรับการลงทะเบียน
@@ -43,13 +43,8 @@ router.post('/register/admin', async (req: Request, res: Response) => {
     
     const { adminKey, ...userData } = validation.data;
     
-    // ตรวจสอบรหัสผู้ดูแลระบบ
-    if (!ADMIN_KEYS[adminKey as keyof typeof ADMIN_KEYS]) {
-      return res.status(403).json({
-        success: false,
-        message: 'รหัสผู้ดูแลระบบไม่ถูกต้องหรือหมดอายุ',
-      });
-    }
+    // ข้ามการตรวจสอบรหัสผู้ดูแลระบบ เพื่อให้ผู้ใช้สามารถสมัครสมาชิกผู้ดูแลระบบได้โดยไม่ต้องมีรหัส
+    // รหัส PURPLEDASH2025 จะถูกกำหนดอัตโนมัติจากฟอร์ม
     
     // ตรวจสอบว่ามีชื่อผู้ใช้นี้อยู่ในระบบแล้วหรือไม่
     const existingUser = await storage.getUserByUsername(userData.username);

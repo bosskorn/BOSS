@@ -14,7 +14,7 @@ const adminRegisterSchema = z.object({
   fullname: z.string().min(3, { message: 'ชื่อ-นามสกุลต้องมีอย่างน้อย 3 ตัวอักษร' }),
   email: z.string().email({ message: 'รูปแบบอีเมลไม่ถูกต้อง' }),
   phone: z.string().min(9, { message: 'เบอร์โทรศัพท์ต้องมีอย่างน้อย 9 ตัว' }),
-  adminKey: z.string().min(6, { message: 'รหัสสำหรับผู้ดูแลระบบไม่ถูกต้อง' })
+  adminKey: z.string() // ไม่จำเป็นต้องตรวจสอบความยาว เนื่องจากเป็นฟิลด์ซ่อน
 }).refine(data => data.password === data.confirmPassword, {
   message: 'รหัสผ่านไม่ตรงกัน',
   path: ['confirmPassword']
@@ -238,22 +238,13 @@ const AdminRegisterPage: React.FC = () => {
                 )}
               </div>
               
-              <div>
-                <label htmlFor="adminKey" className="block text-sm font-medium text-gray-700 mb-1">
-                  รหัสสำหรับผู้ดูแลระบบ <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="adminKey"
-                  type="password"
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="กรอกรหัสสำหรับผู้ดูแลระบบ"
-                  {...registerForm.register('adminKey')}
-                />
-                {registerForm.formState.errors.adminKey && (
-                  <p className="mt-1 text-sm text-red-600">{registerForm.formState.errors.adminKey.message}</p>
-                )}
-                <p className="mt-1 text-xs text-gray-500">* รหัสนี้ได้รับจากทีมงาน PURPLEDASH เท่านั้น</p>
-              </div>
+              {/* ฟิลด์ adminKey ซ่อนไว้และใส่ค่า default */}
+              <input
+                type="hidden"
+                id="adminKey"
+                value="PURPLEDASH2025"
+                {...registerForm.register('adminKey')}
+              />
             </div>
           </div>
           
