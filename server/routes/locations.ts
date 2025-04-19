@@ -73,7 +73,8 @@ router.get("/zipcode/:zipcode", async (req: Request, res: Response) => {
     const { getAddressFromZipcode } = await import('../services/longdo-map');
     
     // ดึงข้อมูลที่อยู่จากรหัสไปรษณีย์
-    const result = await getAddressFromZipcode(zipcode);
+    let result = await getAddressFromZipcode(zipcode);
+    console.log(`ผลลัพธ์จาก Longdo API ของรหัสไปรษณีย์ ${zipcode}:`, JSON.stringify(result));
     
     if (!result.success) {
       console.log(`ไม่พบข้อมูลรหัสไปรษณีย์: ${zipcode}, ข้อความ: ${result.message}`);
