@@ -233,33 +233,12 @@ export const createFlashExpressShipping = async (
       const signData = { ...requestData };
       delete signData.subItemTypes;
       
-      // เรียงข้อมูลตามลำดับตัวอักษรเพื่อสร้างลายเซ็น
-      const sortedKeys = Object.keys(signData).sort();
-      const orderedSignData: Record<string, any> = {};
-      sortedKeys.forEach(key => {
-        if (signData[key] !== undefined && signData[key] !== '') {
-          orderedSignData[key] = signData[key];
-        }
-      });
-      
-      // เพิ่ม debug logs
-      console.log('ข้อมูลที่เรียงแล้วสำหรับสร้างลายเซ็น:', JSON.stringify(orderedSignData, null, 2));
-      
-      // สร้างลายเซ็นใหม่ตามเอกสาร Flash Express V3
-      // ในที่นี้เราจะสร้างลายเซ็นจากข้อมูลที่เรียงแล้วโดยตรง
-      // ไม่ผ่านฟังก์ชัน generateFlashExpressSignature
-      
-      const stringToSign = Object.entries(orderedSignData)
-        .map(([key, value]) => `${key}=${value}`)
-        .join('&') + `&key=${FLASH_EXPRESS_API_KEY}`;
-      
-      console.log('String to sign (raw):', stringToSign);
-      
-      // ใช้ชุดคำสั่ง import ที่เตรียมไว้แล้ว แทนการใช้ require
-      const newSign = crypto.createHash('sha256')
-        .update(stringToSign)
-        .digest('hex')
-        .toUpperCase();
+      // ใช้ฟังก์ชันที่ปรับปรุงแล้วตามเอกสาร Flash Express
+      const sign = generateFlashExpressSignature(
+        FLASH_EXPRESS_API_KEY as string,
+        signData,
+        nonceStr
+      );
       
       // เพิ่ม signature ที่คำนวณแล้วเข้าไปใน signData
       signData.sign = newSign;

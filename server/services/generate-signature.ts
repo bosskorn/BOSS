@@ -18,27 +18,39 @@ export function generateFlashExpressSignature(
   nonceStr: string
 ): string {
   try {
-    // ลบฟิลด์ sign และ subItemTypes ออกก่อน (ถ้ามี) เพราะไม่รวมในการคำนวณลายเซ็น
-    const { sign, subItemTypes, ...dataForSignature } = params;
+    // ตามเอกสาร Flash Express: ก่อนการสร้างลายเซ็น ต้องลบ sign ออกก่อน
+    // และไม่รวม subItemTypes ในการคำนวณ
+    const paramsCopy = { ...params };
+    delete paramsCopy.sign;
+    delete paramsCopy.subItemTypes;
     
-    // 1. เรียงลำดับคีย์ของพารามิเตอร์ตามลำดับอักษร ASCII
-    const sortedKeys = Object.keys(dataForSignature).sort();
+    // 1. เรียงลำดับคีย์ของพารามิเตอร์ตามลำดับอักษร ASCII (dictionary order)
+    const sortedKeys = Object.keys(paramsCopy).sort();
     
     // 2. สร้างสตริง stringA ในรูปแบบ key1=value1&key2=value2&...
+    // โดยกรองเฉพาะค่าที่ไม่เป็นค่าว่าง ตามที่ Flash Express กำหนด
     const stringA = sortedKeys
       .filter(key => {
-        // กรองเฉพาะค่าที่ไม่เป็น undefined, null หรือ ค่าว่าง (whitespace)
-        const value = dataForSignature[key];
-        if (value === undefined || value === null) return false;
-        if (typeof value === 'string' && value.trim() === '') return false;
+        const value = paramsCopy[key];
+        // กรองค่า null, undefined
+        if (value === null || value === undefined) return false;
+        
+        // กรองสตริงที่เป็นช่องว่าง (ต้องเช็คแบบละเอียดตามที่ Flash Express กำหนด)
+        if (typeof value === 'string') {
+          // เช็คว่าเป็นค่าว่างหรือไม่ (ประกอบด้วยอักขระเว้นวรรคทั้งหมด)
+          // \s คือ whitespace ทั้งหมด (รวม \t, \n, \r, space)
+          if (/^\s*$/.test(value)) return false;
+        }
+        
         return true;
       })
       .map(key => {
-        // แปลงค่า Array หรือ Object เป็น JSON string (ไม่ควรมี เพราะ subItemTypes ถูกลบออกไปแล้ว)
-        let value = dataForSignature[key];
+        // แปลงค่า Array หรือ Object เป็น JSON string 
+        let value = paramsCopy[key];
         if (typeof value === 'object' && value !== null) {
           value = JSON.stringify(value);
         }
+        // ไม่ต้อง URL encode ตอนสร้างลายเซ็น (ทำทีหลังตอนส่งข้อมูล)
         return `${key}=${value}`;
       })
       .join('&');
@@ -46,17 +58,17 @@ export function generateFlashExpressSignature(
     // 3. นำ stringA มาต่อกับ key ตามรูปแบบ (stringSignTemp)
     const stringSignTemp = `${stringA}&key=${apiKey}`;
     
-    console.log('String to sign (stringSignTemp):', stringSignTemp);
+    console.log('ข้อมูลที่ใช้สร้างลายเซ็น Flash Express:', stringSignTemp);
     
     // 4. คำนวณ SHA256 hash และแปลงเป็นตัวพิมพ์ใหญ่
     const signature = crypto.createHash('sha256').update(stringSignTemp).digest('hex').toUpperCase();
     
-    console.log('ลายเซ็นที่สร้าง:', signature);
+    console.log('ลายเซ็น Flash Express ที่สร้าง:', signature);
     
     return signature;
   } catch (error) {
     console.error('Error generating Flash Express signature:', error);
-    throw new Error('Failed to generate signature');
+    throw new Error('Failed to generate signature: ' + (error instanceof Error ? error.message : String(error)));
   }
 }
 
@@ -67,7 +79,7 @@ export function generateFlashExpressSignature(
 export function generateNonceStr(): string {
   // ใช้ timestamp ปัจจุบันร่วมกับตัวอักษรสุ่ม
   const timestamp = Date.now().toString();
-  const randomPart = Math.random().toString(36).substring(2, 15); // ตัวอักษรสุ่ม
+  const randomPart = Math.random().toString(36).substring(2, 10); // ตัวอักษรสุ่ม
   
   return `${timestamp}${randomPart}`.substring(0, 32); // จำกัดความยาวไม่เกิน 32 ตัวอักษร
 }
