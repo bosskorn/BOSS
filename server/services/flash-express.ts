@@ -58,50 +58,60 @@ export const getFlashExpressShippingOptions = async (
     console.log(`ข้อมูลที่ส่ง: จาก ${fromAddress.province} ถึง ${toAddress.province}, น้ำหนัก ${packageInfo.weight} กก.`);
     
     try {
+      // สร้าง nonce string
+      const nonceStr = generateNonceStr();
+      
+      // สร้างข้อมูลที่จะส่งไปยัง API
+      const requestData: Record<string, any> = {
+        mchId: FLASH_EXPRESS_MERCHANT_ID,
+        nonceStr: nonceStr,
+        fromPostalCode: fromAddress.zipcode,
+        toPostalCode: toAddress.zipcode, 
+        weight: packageInfo.weight * 1000, // แปลงจาก กก. เป็น กรัม
+      };
+      
+      // สร้าง signature
+      const sign = generateFlashExpressSignature(
+        FLASH_EXPRESS_API_KEY as string,
+        requestData,
+        nonceStr
+      );
+      
+      // เพิ่ม signature เข้าไปในข้อมูล
+      requestData.sign = sign;
+      
+      // แปลงข้อมูลเป็น form-urlencoded
+      const formData = new URLSearchParams();
+      for (const [key, value] of Object.entries(requestData)) {
+        if (value !== undefined) {
+          formData.append(key, value.toString());
+        }
+      }
+      
       // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
       const response = await axios({
         method: 'post',
-        url: `${FLASH_EXPRESS_API_URL}/shipping/calculate-fee`,
+        url: `${FLASH_EXPRESS_API_URL}/open/v3/express/fee`,
         headers: {
-          'Content-Type': 'application/json',
-          'X-Flash-Merchant-Id': FLASH_EXPRESS_MERCHANT_ID,
-          'X-Flash-Api-Key': FLASH_EXPRESS_API_KEY,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
         },
         timeout: API_TIMEOUT, // กำหนด timeout เพื่อไม่ให้รอนานเกินไป
-        data: {
-          from: {
-            province: fromAddress.province,
-            district: fromAddress.district,
-            subdistrict: fromAddress.subdistrict,
-            postcode: fromAddress.zipcode,
-          },
-          to: {
-            province: toAddress.province,
-            district: toAddress.district,
-            subdistrict: toAddress.subdistrict,
-            postcode: toAddress.zipcode,
-          },
-          parcel: {
-            weight: packageInfo.weight,
-            width: packageInfo.width || 20,
-            length: packageInfo.length || 30,
-            height: packageInfo.height || 10,
-          }
-        }
+        data: formData
       });
 
       console.log("ได้รับการตอบกลับจาก Flash Express API:", response.data);
 
       // แปลงข้อมูลจาก API เป็นรูปแบบที่ต้องการ
-      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      if (response.data && response.data.code === 1 && response.data.data && Array.isArray(response.data.data)) {
         const options: FlashExpressShippingOption[] = response.data.data.map((item: any, index: number) => ({
           id: index + 1,
-          name: `Flash Express - ${item.service_name || 'บริการขนส่ง'}`,
-          price: parseFloat(item.fee) || 0,
-          deliveryTime: item.estimated_delivery_time || '1-3 วัน',
+          name: `Flash Express - ${item.serviceName || 'บริการขนส่ง'}`,
+          price: parseFloat(item.fee) / 100 || 0, // แปลงจากสตางค์เป็นบาท
+          deliveryTime: item.estimatedDeliveryTime || '1-3 วัน',
           provider: 'Flash Express',
-          serviceId: item.service_id || `FLASH-${index}`,
-          logo: '/images/flash-express.png'
+          serviceId: item.serviceId || `FLASH-${index}`,
+          logo: '/assets/flash-express.png'
         }));
 
         console.log(`พบบริการขนส่ง ${options.length} รายการจาก Flash Express API`);
@@ -300,20 +310,50 @@ export const getFlashExpressTrackingStatus = async (trackingNumber: string): Pro
     console.log(`ตรวจสอบสถานะการจัดส่งจาก Flash Express สำหรับหมายเลขพัสดุ: ${trackingNumber}`);
     
     try {
+      // สร้าง nonce string
+      const nonceStr = generateNonceStr();
+      
+      // สร้างข้อมูลที่จะส่งไปยัง API
+      const requestData: Record<string, any> = {
+        mchId: FLASH_EXPRESS_MERCHANT_ID,
+        nonceStr: nonceStr,
+        pno: trackingNumber
+      };
+      
+      // สร้าง signature
+      const sign = generateFlashExpressSignature(
+        FLASH_EXPRESS_API_KEY as string,
+        requestData,
+        nonceStr
+      );
+      
+      // เพิ่ม signature เข้าไปในข้อมูล
+      requestData.sign = sign;
+      
+      // แปลงข้อมูลเป็น form-urlencoded
+      const formData = new URLSearchParams();
+      for (const [key, value] of Object.entries(requestData)) {
+        if (value !== undefined) {
+          formData.append(key, value.toString());
+        }
+      }
+      
       // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
       const response = await axios({
-        method: 'get',
-        url: `${FLASH_EXPRESS_API_URL}/shipment/tracking/${trackingNumber}`,
+        method: 'post',
+        url: `${FLASH_EXPRESS_API_URL}/open/v3/tracking`,
         headers: {
-          'X-Flash-Merchant-Id': FLASH_EXPRESS_MERCHANT_ID,
-          'X-Flash-Api-Key': FLASH_EXPRESS_API_KEY,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
         },
         timeout: API_TIMEOUT, // กำหนด timeout เพื่อไม่ให้รอนานเกินไป
+        data: formData
       });
 
       console.log("ได้รับข้อมูลสถานะการจัดส่งจาก Flash Express API:", response.data);
       
-      if (response.data && response.data.status === 'success' && response.data.data) {
+      // รูปแบบการตอบกลับของ V3 API แตกต่างจากเดิม
+      if (response.data && response.data.code === 1 && response.data.data) {
         return response.data.data;
       } else {
         throw new Error(response.data?.message || 'ไม่พบข้อมูลสถานะการจัดส่ง');
