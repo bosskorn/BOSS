@@ -712,12 +712,17 @@ const CreateOrderTabsPage: React.FC = () => {
   const analyzeAllCustomerData = (text: string | undefined) => {
     if (!text) return; // ตรวจสอบว่ามีข้อความที่วางหรือไม่
     
+    // เก็บข้อความเดิมไว้
+    const originalText = text;
+    
     // กำหนดข้อมูลที่ต้องการค้นหาและประมวลผล
     form.setValue('fullAddress', text); // ตั้งค่าข้อความเต็มไว้ก่อน
     
     // ค้นหาเบอร์โทรศัพท์ก่อน ควรทำก่อนที่จะวิเคราะห์ชื่อ
     let phoneFound = false;
     let foundPhoneNumber = "";
+    let phonePosition = -1;
+    let phoneLength = 0;
     
     // 1. รูปแบบเบอร์โทรที่ถูกครอบด้วยวงเล็บ (เช่น (0819876543))
     const phoneInParenthesesRegex = /\((\d{9,10})\)/;
@@ -727,19 +732,23 @@ const CreateOrderTabsPage: React.FC = () => {
       if (foundPhoneNumber.startsWith('0') && foundPhoneNumber.length >= 9 && foundPhoneNumber.length <= 10) {
         form.setValue('customerPhone', foundPhoneNumber);
         phoneFound = true;
+        phonePosition = text.indexOf(phoneInParenthesesMatch[0]);
+        phoneLength = phoneInParenthesesMatch[0].length;
         console.log("พบเบอร์โทรจากวงเล็บ:", foundPhoneNumber);
       }
     }
     
     // 2. รูปแบบที่มีคำนำหน้า (โทร, เบอร์, tel:, etc.)
     if (!phoneFound) {
-      const phoneWithPrefixRegex = /(?:โทร|เบอร์|tel|phone|:|\+66|0)[:\s]*(\d[\d\s-]{8,})/i;
+      const phoneWithPrefixRegex = /(?:โทร|เบอร์|tel|phone|:|\+66)[:\s]*(0\d[\d\s-]{7,})/i;
       const phoneWithPrefixMatch = text.match(phoneWithPrefixRegex);
       if (phoneWithPrefixMatch) {
         foundPhoneNumber = phoneWithPrefixMatch[1].replace(/[\s-]/g, '');
         if (foundPhoneNumber.startsWith('0') && foundPhoneNumber.length >= 9 && foundPhoneNumber.length <= 10) {
           form.setValue('customerPhone', foundPhoneNumber);
           phoneFound = true;
+          phonePosition = text.indexOf(phoneWithPrefixMatch[0]);
+          phoneLength = phoneWithPrefixMatch[0].length;
           console.log("พบเบอร์โทรจากคำนำหน้า:", foundPhoneNumber);
         }
       }
@@ -753,6 +762,8 @@ const CreateOrderTabsPage: React.FC = () => {
         foundPhoneNumber = simplePhoneMatch[1];
         form.setValue('customerPhone', foundPhoneNumber);
         phoneFound = true;
+        phonePosition = text.indexOf(simplePhoneMatch[0]);
+        phoneLength = simplePhoneMatch[0].length;
         console.log("พบเบอร์โทรแบบง่าย:", foundPhoneNumber);
       }
     }
@@ -766,6 +777,8 @@ const CreateOrderTabsPage: React.FC = () => {
         if (foundPhoneNumber.length >= 9 && foundPhoneNumber.length <= 10) {
           form.setValue('customerPhone', foundPhoneNumber);
           phoneFound = true;
+          phonePosition = text.indexOf(formattedPhoneMatch[0]);
+          phoneLength = formattedPhoneMatch[0].length;
           console.log("พบเบอร์โทรแบบมีรูปแบบ:", foundPhoneNumber);
         }
       }
@@ -788,79 +801,96 @@ const CreateOrderTabsPage: React.FC = () => {
     
     console.log('ข้อความที่วิเคราะห์ (หลังการทำความสะอาด):', lines);
 
-    // รูปแบบที่พบบ่อยสำหรับข้อมูลที่มีชื่อร้านค้า+ชื่อคน ตามด้วยเบอร์โทรในวงเล็บ
-    // เช่น "ร้านค้า A (น้องบี) (0819876543)"
+    // ค้นหาชื่อลูกค้า ตามรูปแบบต่างๆ
     let nameExtracted = false;
-    if (lines.length >= 1 && !form.getValues('customerName')) {
-      const shopNameWithPersonRegex = /^(.+?)(?:\((.+?)\))?\s*(?:\((\d{9,10})\))?/;
+    let namePosition = -1;
+    let nameLength = 0;
+    
+    // 1. รูปแบบชื่อบริษัท: "บริษัท XXX จำกัด"
+    if (!nameExtracted && !form.getValues('customerName')) {
+      const companyRegex = /(บริษัท\s+[\wก-๙]+\s+จำกัด)/i;
+      const companyMatch = text.match(companyRegex);
+      
+      if (companyMatch) {
+        form.setValue('customerName', companyMatch[1]);
+        nameExtracted = true;
+        namePosition = text.indexOf(companyMatch[1]);
+        nameLength = companyMatch[1].length;
+        console.log("พบชื่อบริษัท:", companyMatch[1]);
+      }
+    }
+    
+    // 2. รูปแบบที่พบบ่อยสำหรับข้อมูลที่มีชื่อร้านค้า+ชื่อคน ตามด้วยเบอร์โทรในวงเล็บ
+    // เช่น "ร้านค้า A (น้องบี) (0819876543)"
+    if (!nameExtracted && lines.length >= 1 && !form.getValues('customerName')) {
+      // ใช้ regex ที่มีความแม่นยำมากขึ้น
+      const shopNameWithPersonRegex = /^([^(]+)(?:\s*\(([^)]+)\))?/;
       const shopNameMatch = lines[0].match(shopNameWithPersonRegex);
       
       if (shopNameMatch) {
         let fullName = '';
         
-        // มีชื่อร้านค้า
+        // มีชื่อร้านค้า/บุคคล
         if (shopNameMatch[1] && shopNameMatch[1].trim()) {
           fullName = shopNameMatch[1].trim();
         }
         
         // มีชื่อคนในวงเล็บ
-        if (shopNameMatch[2] && shopNameMatch[2].trim()) {
-          if (fullName) {
-            fullName += ' (' + shopNameMatch[2].trim() + ')';
-          } else {
-            fullName = shopNameMatch[2].trim();
+        if (shopNameMatch[2] && shopNameMatch[2].trim() && shopNameMatch[2].trim().length < 15) {
+          // ตรวจสอบว่าในวงเล็บไม่ใช่เบอร์โทร
+          if (!/^\d+$/.test(shopNameMatch[2].trim())) {
+            if (fullName) {
+              fullName += ' (' + shopNameMatch[2].trim() + ')';
+            } else {
+              fullName = shopNameMatch[2].trim();
+            }
           }
         }
         
-        if (fullName) {
+        // ถ้าพบชื่อและเป็นชื่อที่สมเหตุสมผล (ไม่ใช่ส่วนของที่อยู่)
+        const addressKeywords = ['ตำบล', 'แขวง', 'อำเภอ', 'เขต', 'จังหวัด', 'รหัสไปรษณีย์'];
+        if (fullName && !addressKeywords.some(word => fullName.includes(word))) {
           form.setValue('customerName', fullName);
           nameExtracted = true;
-          console.log("พบชื่อลูกค้ารูปแบบร้านค้า+บุคคล:", fullName);
-        }
-        
-        // มีเบอร์โทรในวงเล็บและยังไม่ได้ตั้งค่าเบอร์โทร
-        if (!phoneFound && shopNameMatch[3] && /^\d{9,10}$/.test(shopNameMatch[3])) {
-          form.setValue('customerPhone', shopNameMatch[3]);
-          phoneFound = true;
-          console.log("พบเบอร์โทรในวงเล็บต่อจากชื่อ:", shopNameMatch[3]);
+          namePosition = text.indexOf(fullName);
+          nameLength = fullName.length;
+          console.log("พบชื่อลูกค้ารูปแบบร้านค้า/บุคคล:", fullName);
         }
       }
     }
     
-    // ถ้ายังไม่พบชื่อลูกค้า ลองวิธีอื่น
+    // 3. รูปแบบคุณ/นาย/นาง ตามด้วยชื่อ
+    if (!nameExtracted && !form.getValues('customerName')) {
+      const titleNameRegex = /(คุณ|นาย|นาง|น\.ส\.|น\.สาว|ดร\.|ดอกเตอร์|อาจารย์)\s+([\wก-๙\s]{2,}?)(?=\s+(?:โทร|เบอร์|0\d|เลข|บ้าน|ถนน|ซอย|\d|$))/i;
+      const titleNameMatch = text.match(titleNameRegex);
+      
+      if (titleNameMatch) {
+        const fullName = titleNameMatch[0].trim();
+        form.setValue('customerName', fullName);
+        nameExtracted = true;
+        namePosition = text.indexOf(fullName);
+        nameLength = fullName.length;
+        console.log("พบชื่อลูกค้าแบบมีคำนำหน้า:", fullName);
+      }
+    }
+    
+    // 4. ถ้ายังไม่พบชื่อลูกค้า ลองใช้บรรทัดแรก
     if (!nameExtracted && lines.length >= 1 && !form.getValues('customerName')) {
       // ตรวจสอบบรรทัดแรกว่าเป็นชื่อลูกค้าหรือไม่
       // ข้ามถ้าเป็นเบอร์โทรศัพท์ (ไม่ใช่ตัวเลขทั้งบรรทัด)
       const firstLine = lines[0].trim();
       if (!/^\d+$/.test(firstLine)) {
         // ตรวจสอบว่าไม่ใช่ที่อยู่ (ไม่มีคำที่เกี่ยวข้องกับที่อยู่)
-        const addressRelatedWords = ['บ้านเลขที่', 'ซอย', 'ถนน', 'หมู่', 'ตำบล', 'แขวง', 'อำเภอ', 'เขต', 'จังหวัด', 'รหัสไปรษณีย์'];
+        const addressRelatedWords = ['บ้านเลขที่', 'เลขที่', 'ซอย', 'ซ.', 'ถนน', 'ถ.', 'หมู่', 'ม.', 'ตำบล', 'ต.', 'แขวง', 'อำเภอ', 'อ.', 'เขต', 'จังหวัด', 'จ.', 'รหัสไปรษณีย์'];
         const isLikelyAddress = addressRelatedWords.some(word => firstLine.includes(word));
         
         // ถ้าไม่น่าจะเป็นที่อยู่ ให้ถือว่าเป็นชื่อลูกค้า
-        if (!isLikelyAddress) {
+        if (!isLikelyAddress && firstLine.length < 50) { // ถ้าความยาวไม่มากเกินไป
           form.setValue('customerName', firstLine);
+          nameExtracted = true;
+          namePosition = text.indexOf(firstLine);
+          nameLength = firstLine.length;
           console.log("พบชื่อลูกค้าจากบรรทัดแรก:", firstLine);
-        }
-      }
-    }
-    
-    // ถ้ายังไม่พบชื่อ แต่พบเบอร์โทร ให้ตรวจสอบบรรทัดถัดจากเบอร์โทร
-    if (!form.getValues('customerName') && phoneFound && lines.length >= 2) {
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].includes(foundPhoneNumber)) {
-          // ใช้บรรทัดถัดไปเป็นชื่อ (ถ้ามี)
-          if (i + 1 < lines.length) {
-            form.setValue('customerName', lines[i + 1].trim());
-            console.log("พบชื่อลูกค้าจากบรรทัดถัดจากเบอร์โทร:", lines[i + 1]);
-            break;
-          }
-          // หรือใช้บรรทัดก่อนหน้าเป็นชื่อ (ถ้ามี)
-          else if (i > 0) {
-            form.setValue('customerName', lines[i - 1].trim());
-            console.log("พบชื่อลูกค้าจากบรรทัดก่อนเบอร์โทร:", lines[i - 1]);
-            break;
-          }
         }
       }
     }
@@ -881,20 +911,26 @@ const CreateOrderTabsPage: React.FC = () => {
     
     // ระวัง: เมื่อวิเคราะห์ข้อมูลลูกค้าแล้ว ให้เอาเฉพาะส่วนของที่อยู่ไปวิเคราะห์ต่อ
     // กรองข้อมูลที่เป็นชื่อและเบอร์โทรออกก่อนวิเคราะห์ที่อยู่ เพื่อลดความสับสน
-    let addressOnly = text;
+    let addressOnly = originalText;
     
-    // ลบส่วนที่เป็นชื่อออก
-    if (form.getValues('customerName')) {
+    // ลบส่วนที่เป็นชื่อออก ถ้ารู้ตำแหน่ง
+    if (namePosition >= 0 && nameLength > 0) {
+      addressOnly = addressOnly.substring(0, namePosition) + ' ' + addressOnly.substring(namePosition + nameLength);
+    } else if (form.getValues('customerName')) {
+      // ถ้าไม่รู้ตำแหน่งแน่ชัด ลองใช้การแทนที่
       addressOnly = addressOnly.replace(form.getValues('customerName'), '');
     }
     
-    // ลบส่วนที่เป็นเบอร์โทรออก
-    if (form.getValues('customerPhone')) {
+    // ลบส่วนที่เป็นเบอร์โทรออก ถ้ารู้ตำแหน่ง
+    if (phonePosition >= 0 && phoneLength > 0) {
+      addressOnly = addressOnly.substring(0, phonePosition) + ' ' + addressOnly.substring(phonePosition + phoneLength);
+    } else if (form.getValues('customerPhone')) {
+      // ถ้าไม่รู้ตำแหน่งแน่ชัด ลองใช้การแทนที่
       addressOnly = addressOnly.replace(form.getValues('customerPhone'), '');
-      
-      // ลบวงเล็บว่างที่เหลือซึ่งอาจเกิดจากการลบเบอร์โทร
-      addressOnly = addressOnly.replace(/\(\s*\)/g, '');
     }
+    
+    // ลบวงเล็บว่างที่เหลือซึ่งอาจเกิดจากการลบเบอร์โทร
+    addressOnly = addressOnly.replace(/\(\s*\)/g, '');
     
     // ปรับรูปแบบข้อความ ลบบรรทัดว่าง และช่องว่างไม่จำเป็น
     addressOnly = addressOnly.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
