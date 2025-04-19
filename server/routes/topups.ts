@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { auth } from '../middleware/auth';
 import { storage } from '../storage';
-import { insertTopupSchema } from '@shared/schema';
+import { db } from '../db';
+import { insertTopupSchema, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 const router = Router();
@@ -103,14 +104,16 @@ router.get('/check/:referenceId', auth, async (req: Request, res: Response) => {
       
       // อัพเดตยอดเงินของผู้ใช้
       const user = await storage.getUser(req.user!.id);
-      if (user && user.balance !== null) {
-        const currentBalance = parseFloat(user.balance.toString() || '0');
-        const topupAmount = parseFloat(topup.amount.toString() || '0');
+      if (user) {
+        // Convert balance to number for calculation, default to 0 if null
+        const currentBalance = user.balance ? parseFloat(user.balance.toString()) : 0;
+        const topupAmount = parseFloat(topup.amount.toString());
         const newBalance = currentBalance + topupAmount;
         
-        await storage.updateUser(user.id, {
-          balance: newBalance.toString()
-        });
+        // ใช้ db.update โดยตรงเพื่อแก้ปัญหา TypeScript
+        await db.update(users)
+          .set({ balance: newBalance.toString(), updatedAt: new Date() })
+          .where(eq(users.id, user.id));
       }
       
       // ดึงข้อมูลผู้ใช้ที่อัพเดตแล้ว
