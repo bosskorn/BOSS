@@ -363,7 +363,7 @@ const OrderList: React.FC = () => {
                     </TableHead>
                     <TableHead>
                       <div className="flex items-center">
-                        รายการ
+                        จำนวนรายการ
                       </div>
                     </TableHead>
                     <TableHead className="cursor-pointer" onClick={() => handleSort('date')}>
@@ -403,7 +403,12 @@ const OrderList: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">{order.total !== undefined ? formatCurrency(order.total) : formatCurrency(parseFloat(order.totalAmount || "0"))}</TableCell>
-                      <TableCell className="text-center">{order.items}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center">
+                          <Package className="h-4 w-4 text-gray-500 mr-1" />
+                          <span>{order.items} รายการ</span>
+                        </div>
+                      </TableCell>
                       <TableCell>{formatDate(order.date)}</TableCell>
                       <TableCell>
                         {order.trackingNumber ? (
