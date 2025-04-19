@@ -300,7 +300,7 @@ const CreateOrderPage: React.FC = () => {
     }
   };
   
-  // 2. ฟังก์ชันวิเคราะห์ที่อยู่อัตโนมัติ
+  // 2. ฟังก์ชันวิเคราะห์ที่อยู่อัตโนมัติโดยใช้ Longdo Map API
   const analyzeAddress = async () => {
     const fullAddress = form.getValues('fullAddress');
     
@@ -317,81 +317,46 @@ const CreateOrderPage: React.FC = () => {
     setFullAddressOriginal(fullAddress);
     
     try {
-      // ในโปรเจ็คจริงจะส่งไปยัง API วิเคราะห์ที่อยู่
-      // จำลองการวิเคราะห์ที่อยู่ด้วยระบบอย่างง่าย
+      // เรียกใช้ API วิเคราะห์ที่อยู่ของ Longdo Map
+      const response = await apiRequest(
+        'POST',
+        '/api/shipping/analyze-address',
+        { fullAddress }
+      );
       
-      // ตรวจสอบรหัสไปรษณีย์
-      const zipcodeRegex = /\d{5}/g;
-      const zipcodeMatch = fullAddress.match(zipcodeRegex);
-      const zipcode = zipcodeMatch ? zipcodeMatch[0] : '';
-      
-      // ตรวจสอบจังหวัด
-      const provinces = ['กรุงเทพ', 'กรุงเทพฯ', 'เชียงใหม่', 'เชียงราย', 'นนทบุรี', 'ปทุมธานี'];
-      let province = '';
-      
-      for (const p of provinces) {
-        if (fullAddress.includes(p)) {
-          province = p;
-          break;
-        }
+      if (!response.ok) {
+        throw new Error('API วิเคราะห์ที่อยู่ล้มเหลว');
       }
       
-      // ตรวจสอบอำเภอ/เขต
-      const districts = ['บางรัก', 'ปทุมวัน', 'จตุจักร', 'ดินแดง', 'ลาดพร้าว', 'เมือง'];
-      let district = '';
+      const data = await response.json();
       
-      for (const d of districts) {
-        if (fullAddress.includes(d)) {
-          district = d;
-          break;
-        }
+      if (!data.success || !data.address) {
+        throw new Error('ไม่พบข้อมูลที่อยู่');
       }
       
-      // ตรวจสอบตำบล/แขวง
-      const subdistricts = ['สีลม', 'คลองตัน', 'ลาดยาว', 'พญาไท', 'ทุ่งพญาไท'];
-      let subdistrict = '';
+      // ตรวจสอบว่ามีข้อมูลที่อยู่ครบถ้วนหรือไม่
+      const addressComponents: AddressComponents = data.address;
       
-      for (const s of subdistricts) {
-        if (fullAddress.includes(s)) {
-          subdistrict = s;
-          break;
-        }
-      }
-      
-      // ตรวจสอบเลขที่บ้าน
-      const houseNoRegex = /(\d+\/\d+|\d+)/;
-      const houseNoMatch = fullAddress.match(houseNoRegex);
-      const houseNumber = houseNoMatch ? houseNoMatch[0] : '';
-      
-      // ตรวจสอบซอย
-      const soiRegex = /ซอย\s*([^\s,]+)/i;
-      const soiMatch = fullAddress.match(soiRegex);
-      const soi = soiMatch ? soiMatch[1] : '';
-      
-      // ตรวจสอบถนน
-      const roadRegex = /ถนน\s*([^\s,]+)/i;
-      const roadMatch = fullAddress.match(roadRegex);
-      const road = roadMatch ? roadMatch[1] : '';
-      
-      // สร้างข้อมูลที่อยู่ที่แยกส่วนแล้ว
-      const addressComponents: AddressComponents = {
-        houseNumber,
-        soi,
-        road,
-        subdistrict,
-        district,
-        province,
-        zipcode,
+      // เพื่อให้แน่ใจว่าไม่มีการกำหนดค่า undefined ให้กับฟอร์ม
+      const validatedComponents: AddressComponents = {
+        houseNumber: addressComponents.houseNumber || '',
+        village: addressComponents.village || '',
+        soi: addressComponents.soi || '',
+        road: addressComponents.road || '',
+        subdistrict: addressComponents.subdistrict || '',
+        district: addressComponents.district || '',
+        province: addressComponents.province || '',
+        zipcode: addressComponents.zipcode || '',
       };
       
       // อัพเดทแบบฟอร์ม
-      Object.entries(addressComponents).forEach(([key, value]) => {
+      Object.entries(validatedComponents).forEach(([key, value]) => {
         if (value) {
           form.setValue(key as keyof CreateOrderFormValues, value);
         }
       });
       
-      setAddressFormatted(addressComponents);
+      setAddressFormatted(validatedComponents);
       
       toast({
         title: 'วิเคราะห์ที่อยู่สำเร็จ',
