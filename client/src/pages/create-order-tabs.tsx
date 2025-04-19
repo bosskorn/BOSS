@@ -2032,6 +2032,58 @@ const CreateOrderTabsPage: React.FC = () => {
           </Form>
         </Tabs>
       </div>
+      
+      {/* Dialog แสดงผลหลังจากสร้างออเดอร์สำเร็จ */}
+      <Dialog open={dialog.open} onOpenChange={(open) => setDialog({ ...dialog, open })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center space-x-2">
+              <div className="bg-green-100 p-2 rounded-full">
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              </div>
+              <DialogTitle className="text-xl">{dialog.title}</DialogTitle>
+            </div>
+            <DialogDescription>
+              {dialog.description}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-gray-50 p-4 rounded-lg my-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">เลขออเดอร์:</p>
+                <p className="font-semibold">{dialog.orderNumber}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">เลขพัสดุ:</p>
+                <p className="font-semibold">{dialog.trackingNumber}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setDialog({ ...dialog, open: false });
+                window.location.reload(); // รีเฟรชหน้าเพื่อล้างฟอร์มและเริ่มสร้างออเดอร์ใหม่
+              }}
+              className="w-full sm:w-auto"
+            >
+              <Plus className="mr-2 h-4 w-4" /> สร้างออเดอร์ใหม่
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setDialog({ ...dialog, open: false });
+                setLocation('/orders');
+              }}
+              className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
+            >
+              <Truck className="mr-2 h-4 w-4" /> ดูรายการออเดอร์
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
