@@ -107,94 +107,112 @@ const AuthPage: React.FC = () => {
   // สำหรับแสดง 3D model หรือข้อความต้อนรับในฝั่งขวา
   const renderWelcomeSection = () => {
     return (
-      <div className="h-full flex flex-col justify-center items-center text-center px-6 bg-gradient-to-br from-purple-50 to-white">
-        <div className="mb-6">
-          <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-purple-800 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-white text-5xl font-bold">PD</span>
+      <div className="h-full flex flex-col justify-center items-center text-center px-6 bg-gradient-to-r from-purple-900 via-purple-800 to-purple-700 relative overflow-hidden">
+        {/* ลวดลายพื้นหลัง */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-full h-full">
+            <svg width="100%" height="100%" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 0 10 L 40 10 M 10 0 L 10 40" stroke="white" strokeWidth="0.5" fill="none" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-            PURPLEDASH
-          </h1>
-          <p className="text-xl italic text-purple-600 font-medium mt-1">
-            ส่งด่วน ม่วงสะดุด!
-          </p>
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-400 rounded-full filter blur-3xl opacity-20"></div>
+          <div className="absolute bottom-20 -left-20 w-80 h-80 bg-purple-300 rounded-full filter blur-3xl opacity-20"></div>
         </div>
         
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">
-            {activeTab === 'login' ? 'ยินดีต้อนรับกลับ!' : 'เริ่มต้นใช้งานเลย!'}
-          </h2>
-          <p className="text-gray-600 mb-4">
-            {activeTab === 'login'
-              ? 'เข้าสู่ระบบเพื่อจัดการการขนส่งของคุณอย่างมีประสิทธิภาพ'
-              : 'ลงทะเบียนเพื่อใช้งานระบบจัดการการขนส่งอัจฉริยะ'}
-          </p>
+        {/* เนื้อหาหลัก */}
+        <div className="relative z-10 max-w-lg">
+          <div className="mb-8">
+            <div className="w-24 h-24 bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg border border-white border-opacity-20 transform rotate-12">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center transform -rotate-12 shadow-inner">
+                <span className="text-white text-3xl font-extrabold">PD</span>
+              </div>
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-2">
+              <span className="inline-block">PURPLE</span>
+              <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-white">DASH</span>
+            </h1>
+            <p className="text-xl text-purple-200 font-medium italic">
+              ส่งด่วน ม่วงสะดุด!
+            </p>
+          </div>
           
-          <div className="space-y-4 text-left">
-            <div className="flex items-start">
-              <div className="bg-purple-100 p-2 rounded-full mr-3">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+          <div className="mb-8 text-white">
+            <h2 className="text-2xl font-bold mb-3">
+              {activeTab === 'login' ? 'ยินดีต้อนรับกลับ!' : 'เริ่มต้นใช้งานเลย!'}
+            </h2>
+            <p className="text-purple-200 mb-6">
+              {activeTab === 'login'
+                ? 'เข้าสู่ระบบเพื่อจัดการการขนส่งของคุณอย่างมีประสิทธิภาพ'
+                : 'ลงทะเบียนเพื่อใช้งานระบบจัดการการขนส่งอัจฉริยะ'}
+            </p>
+            
+            {/* คุณสมบัติที่น่าสนใจ */}
+            <div className="grid grid-cols-2 gap-5 text-left">
+              <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-xl border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
+                <div className="bg-gradient-to-br from-purple-400 to-purple-600 p-2 rounded-lg inline-block mb-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <h3 className="font-medium text-white">ติดตามพัสดุแบบเรียลไทม์</h3>
               </div>
-              <div>
-                <h3 className="font-medium text-gray-800">ติดตามพัสดุ</h3>
-                <p className="text-sm text-gray-600">ติดตามสถานะการจัดส่งแบบเรียลไทม์</p>
+              
+              <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-xl border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
+                <div className="bg-gradient-to-br from-purple-400 to-purple-600 p-2 rounded-lg inline-block mb-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="font-medium text-white">รายงานและวิเคราะห์ข้อมูล</h3>
+              </div>
+              
+              <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-xl border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
+                <div className="bg-gradient-to-br from-purple-400 to-purple-600 p-2 rounded-lg inline-block mb-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="font-medium text-white">ระบบเก็บเงินปลายทาง</h3>
+              </div>
+              
+              <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-xl border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
+                <div className="bg-gradient-to-br from-purple-400 to-purple-600 p-2 rounded-lg inline-block mb-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                  </svg>
+                </div>
+                <h3 className="font-medium text-white">นำเข้าข้อมูลอัตโนมัติ</h3>
               </div>
             </div>
-            
-            <div className="flex items-start">
-              <div className="bg-purple-100 p-2 rounded-full mr-3">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+          </div>
+          
+          {/* ไฮไลต์การเชื่อมต่อกับ Flash Express */}
+          <div className="relative mt-4">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-700 rounded-xl blur-md opacity-60"></div>
+            <div className="relative bg-white bg-opacity-15 backdrop-blur-md p-4 rounded-xl border border-white border-opacity-20">
+              <div className="flex items-center mb-2">
+                <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-2 rounded-md mr-3">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-white font-bold">Flash Express API</h3>
               </div>
-              <div>
-                <h3 className="font-medium text-gray-800">นำเข้าข้อมูล</h3>
-                <p className="text-sm text-gray-600">นำเข้าข้อมูลจาก Excel และ CSV ได้อย่างง่ายดาย</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start">
-              <div className="bg-purple-100 p-2 rounded-full mr-3">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-800">การจัดส่งแบบ COD</h3>
-                <p className="text-sm text-gray-600">รองรับการเก็บเงินปลายทางกับ Flash Express</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start">
-              <div className="bg-purple-100 p-2 rounded-full mr-3">
-                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-800">รายงานและการวิเคราะห์</h3>
-                <p className="text-sm text-gray-600">ดูรายงานและวิเคราะห์ข้อมูลการขนส่งเพื่อเพิ่มประสิทธิภาพ</p>
-              </div>
+              <p className="text-purple-100 text-sm">
+                ระบบเชื่อมต่อกับ Flash Express API อย่างสมบูรณ์ ให้คุณจัดการการขนส่งได้อย่างมีประสิทธิภาพสูงสุด
+              </p>
             </div>
           </div>
         </div>
         
-        <div className="w-full max-w-sm">
-          <Card className="bg-purple-50 border-purple-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-purple-700 text-xl flex items-center">
-                <Key className="w-5 h-5 mr-2" />
-                Flash Express API
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-purple-900 text-sm">
-                ระบบเชื่อมต่อกับ Flash Express API ช่วยให้คุณสามารถจัดการการขนส่งได้อย่างมีประสิทธิภาพ
-              </p>
-            </CardContent>
-          </Card>
+        {/* Footer */}
+        <div className="absolute bottom-4 text-xs text-white text-opacity-50">
+          PurpleDash Logistics Management System • v1.5.0
         </div>
       </div>
     );
