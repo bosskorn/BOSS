@@ -39,8 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // ดึง token จาก localStorage
         const token = localStorage.getItem('auth_token');
         
-        // ถ้าไม่มี token ให้ถือว่ายังไม่ได้เข้าสู่ระบบ
-        if (!token) {
+        // บันทึกล็อกเพื่อตรวจสอบสถานะ token
+        if (token) {
+          console.log('Auth token found in localStorage:', token.substring(0, 20) + '...');
+        } else {
           console.log('No auth token found in localStorage');
           return null;
         }
@@ -123,8 +125,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // แสดงผลดีบั๊ก
         console.log('Logged in successfully as:', data.user.username);
         
-        // ส่งข้อมูลผู้ใช้กลับไป
-        return data.user;
+        // บันทึก token ลงใน localStorage ถ้ามี
+        if (data.token) {
+          console.log('Found token in login API response, saving to localStorage');
+          localStorage.setItem('auth_token', data.token);
+        } else {
+          console.warn('No token returned from login API');
+        }
+        
+        // ส่งข้อมูลทั้งหมดกลับไป (รวมทั้ง token และ user)
+        return data;
       } catch (error: any) {
         console.error("Login error:", error.response?.data || error.message);
         
@@ -138,26 +148,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (data: any) => {
       console.log('Login successful, response data:', data);
       
-      // บันทึก token ลงใน localStorage
-      if (data.token) {
-        console.log('Found token in response, saving to localStorage');
-        localStorage.setItem('auth_token', data.token);
-      } else {
-        // ถ้าไม่พบ token ในข้อมูลโดยตรง ให้ตรวจสอบในรูปแบบการตอบกลับอื่น
-        if (typeof data === 'object' && data !== null) {
-          if (data.data?.token) {
-            console.log('Found token in data.data.token, saving to localStorage');
-            localStorage.setItem('auth_token', data.data.token);
-          }
+      try {
+        // ดึงข้อมูลจากการตอบกลับ Fetch API ซึ่งจะเป็น JSON ที่แปลงมาแล้ว
+        const responseData = data;
+        
+        if (responseData.token) {
+          console.log('Found token in response JSON, saving to localStorage:', responseData.token.substring(0, 20) + '...');
+          localStorage.setItem('auth_token', responseData.token);
+        } else {
+          console.log('No token found in response:', responseData);
         }
+        
+        // กำหนดข้อมูลผู้ใช้
+        const userData = responseData.user || responseData;
+        console.log('Saving user data to cache:', userData);
+        
+        // บันทึกข้อมูลผู้ใช้ลงใน cache
+        queryClient.setQueryData(["/api/user"], userData);
+      } catch (error) {
+        console.error('Error processing login response:', error);
       }
-      
-      // กำหนดข้อมูลผู้ใช้ให้ถูกต้อง
-      const userData = data.user || (data.data?.user) || data;
-      console.log('Saving user data to cache:', userData);
-      
-      // บันทึกข้อมูลผู้ใช้ลงใน cache
-      queryClient.setQueryData(["/api/user"], userData);
       
       // แสดงข้อความแจ้งเตือน
       toast({
@@ -212,7 +222,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error("ไม่ได้รับข้อมูลผู้ใช้จากเซิร์ฟเวอร์");
         }
         
-        return data.user;
+        // บันทึก token ลงใน localStorage ถ้ามี
+        if (data.token) {
+          console.log('Found token in registration API response, saving to localStorage');
+          localStorage.setItem('auth_token', data.token);
+        } else {
+          console.warn('No token returned from registration API');
+        }
+        
+        // ส่งข้อมูลทั้งหมดกลับไป (รวมทั้ง token และ user)
+        return data;
       } catch (error: any) {
         console.error("Register error:", error.response?.data || error.message);
         
@@ -226,20 +245,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: (data: any) => {
       console.log('Registration successful, response data:', data);
       
-      // บันทึก token ลงใน localStorage ถ้ามี
-      if (data.token) {
-        console.log('Found token in registration response, saving to localStorage');
-        localStorage.setItem('auth_token', data.token);
-      } else if (data.data?.token) {
-        console.log('Found token in data.data.token, saving to localStorage');
-        localStorage.setItem('auth_token', data.data.token);
+      try {
+        // บันทึก token ลงใน localStorage ถ้ามี
+        if (data.token) {
+          console.log('Found token in registration response, saving to localStorage:', data.token.substring(0, 20) + '...');
+          localStorage.setItem('auth_token', data.token);
+        } else {
+          console.log('No token found in registration response:', data);
+        }
+        
+        // กำหนดข้อมูลผู้ใช้
+        const userData = data.user || data;
+        
+        // บันทึกข้อมูลผู้ใช้ลงใน cache
+        queryClient.setQueryData(["/api/user"], userData);
+      } catch (error) {
+        console.error('Error processing registration response:', error);
       }
-      
-      // กำหนดข้อมูลผู้ใช้
-      const userData = data.user || (data.data?.user) || data;
-      
-      // บันทึกข้อมูลผู้ใช้ลงใน cache
-      queryClient.setQueryData(["/api/user"], userData);
       
       // แสดงข้อความแจ้งเตือน
       toast({
