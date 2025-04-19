@@ -37,21 +37,57 @@ import {
 
 // ประเภทข้อมูลสรุปสำหรับแดชบอร์ดผู้ดูแลระบบ
 interface AdminSummaryData {
+  // สถิติผู้ใช้และร้านค้า
   totalUsers: number;
   activeUsers: number;
+  newUsersToday: number;
+  userGrowthRate: number;
+  
+  // สถิติการขนส่ง
+  totalParcels: number;
+  pendingParcels: number;
+  inTransitParcels: number;
+  deliveredParcels: number;
+  returnedParcels: number;
+  parcelSuccessRate: number;
+  
+  // สถิติธุรกรรม
   totalOrders: number;
   pendingOrders: number;
   totalRevenue: number;
-  totalParcels: number;
+  averageOrderValue: number;
+  codRevenue: number;
+  avgDeliveryTime: string;
+  
+  // ข้อมูลทางภูมิศาสตร์
+  topDestinations: {
+    name: string;
+    count: number;
+    percentage: number;
+  }[];
+  
+  // ข้อมูลสถานะระบบ
   systemHealth: {
     databaseUsage: number;
     serverUptime: string;
     apiRequests: number;
     apiErrors: number;
+    serviceStatus: {
+      flashExpress: 'operational' | 'degraded' | 'down';
+      payment: 'operational' | 'degraded' | 'down';
+      tracking: 'operational' | 'degraded' | 'down';
+      notification: 'operational' | 'degraded' | 'down';
+    };
   };
+  
   recentActivities: Activity[];
   userGrowth: DataPoint[];
   orderTrend: DataPoint[];
+  deliveryPerformance: {
+    date: string;
+    onTime: number;
+    delayed: number;
+  }[];
 }
 
 interface Activity {
@@ -70,18 +106,61 @@ interface DataPoint {
 
 // ตัวอย่างข้อมูลเพื่อแสดงในหน้าแดชบอร์ด (ในการใช้งานจริงควรดึงจาก API)
 const initialData: AdminSummaryData = {
+  // สถิติผู้ใช้และร้านค้า
   totalUsers: 158,
   activeUsers: 92,
+  newUsersToday: 6,
+  userGrowthRate: 3.5,
+  
+  // สถิติการขนส่ง
+  totalParcels: 1892,
+  pendingParcels: 68,
+  inTransitParcels: 225,
+  deliveredParcels: 1542,
+  returnedParcels: 57,
+  parcelSuccessRate: 94.2,
+  
+  // สถิติธุรกรรม
   totalOrders: 1243,
   pendingOrders: 37,
   totalRevenue: 2584350.75,
-  totalParcels: 1892,
+  averageOrderValue: 2078.32,
+  codRevenue: 856450.25,
+  avgDeliveryTime: "1 วัน 14 ชม.",
+  
+  // ข้อมูลทางภูมิศาสตร์
+  topDestinations: [
+    { name: "กรุงเทพฯ", count: 582, percentage: 30.8 },
+    { name: "เชียงใหม่", count: 238, percentage: 12.6 },
+    { name: "ชลบุรี", count: 193, percentage: 10.2 },
+    { name: "ภูเก็ต", count: 157, percentage: 8.3 },
+    { name: "ขอนแก่น", count: 112, percentage: 5.9 }
+  ],
+  
+  // ข้อมูลสถานะระบบ
   systemHealth: {
     databaseUsage: 68,
     serverUptime: "15 วัน 7 ชม.",
     apiRequests: 12458,
     apiErrors: 24,
+    serviceStatus: {
+      flashExpress: 'operational',
+      payment: 'operational',
+      tracking: 'operational',
+      notification: 'degraded'
+    }
   },
+  
+  // ข้อมูลประสิทธิภาพการจัดส่ง
+  deliveryPerformance: [
+    { date: '2025-04-12', onTime: 185, delayed: 15 },
+    { date: '2025-04-13', onTime: 193, delayed: 12 },
+    { date: '2025-04-14', onTime: 202, delayed: 18 },
+    { date: '2025-04-15', onTime: 214, delayed: 16 },
+    { date: '2025-04-16', onTime: 225, delayed: 10 },
+    { date: '2025-04-17', onTime: 231, delayed: 13 },
+    { date: '2025-04-18', onTime: 242, delayed: 14 }
+  ],
   recentActivities: [
     { 
       id: 1, 

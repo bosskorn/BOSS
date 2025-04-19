@@ -48,96 +48,132 @@ const SidebarMenuAdmin: React.FC<SidebarMenuAdminProps> = ({ isOpen, onClose, us
       path: '/admin-dashboard', 
       icon: 'fa-chart-pie', 
       label: 'แดชบอร์ดผู้ดูแลระบบ', 
+      badge: 'new',
+      badgeColor: 'bg-purple-600'
     },
     { 
       path: '/admin/users', 
       icon: 'fa-users', 
-      label: 'จัดการผู้ใช้งาน', 
+      label: 'จัดการผู้ใช้และร้านค้า',
+      description: 'ข้อมูลผู้ใช้งาน ร้านค้า และสิทธิ์การเข้าถึง' 
     },
     { 
-      path: '/admin/orders', 
-      icon: 'fa-clipboard-list', 
-      label: 'จัดการคำสั่งซื้อทั้งหมด', 
+      path: '/admin/shipments', 
+      icon: 'fa-truck-fast', 
+      label: 'จัดการพัสดุทั้งหมด',
+      description: 'ติดตามและจัดการการขนส่งทั้งหมดในระบบ',
+      badge: '25',
+      badgeColor: 'bg-orange-500'
     },
     { 
       path: '/admin/shipping-providers', 
-      icon: 'fa-truck-fast', 
-      label: 'ผู้ให้บริการขนส่ง' 
+      icon: 'fa-truck-container', 
+      label: 'เครือข่ายขนส่ง',
+      description: 'จัดการผู้ให้บริการขนส่งและเครือข่าย'
     },
     { 
-      path: '/admin/products', 
-      icon: 'fa-box', 
-      label: 'จัดการสินค้าทั้งหมด' 
+      path: '/admin/areas', 
+      icon: 'fa-map-location-dot', 
+      label: 'จัดการพื้นที่และเขต',
+      description: 'กำหนดเขตพื้นที่ อัตราค่าส่ง และข้อจำกัด'
     },
     { 
-      path: '/admin/categories', 
-      icon: 'fa-folder-tree', 
-      label: 'หมวดหมู่ทั้งหมด' 
+      path: '/admin/warehouses', 
+      icon: 'fa-warehouse', 
+      label: 'คลังสินค้าและจุดรับส่ง',
+      description: 'จัดการคลังสินค้าและจุดรับส่งพัสดุ'
+    },
+    { 
+      path: '/admin/financial', 
+      icon: 'fa-money-bill-transfer', 
+      label: 'การเงินและบัญชี',
+      description: 'ธุรกรรมการเงิน COD และการชำระเงิน',
+      badge: '15',
+      badgeColor: 'bg-green-600'
+    },
+    { 
+      path: '/admin/billing', 
+      icon: 'fa-file-invoice-dollar', 
+      label: 'ใบแจ้งหนี้และการเรียกเก็บ',
+      description: 'ระบบใบแจ้งหนี้ การเรียกเก็บเงิน และส่วนลด'
+    },
+    { 
+      path: '/admin/pricing', 
+      icon: 'fa-tags', 
+      label: 'อัตราค่าบริการ',
+      description: 'กำหนดราคา ส่วนลด และแพ็คเกจ'
     },
     { 
       path: '/admin/reports', 
       icon: 'fa-chart-column', 
-      label: 'รายงานระบบ' 
+      label: 'รายงานและวิเคราะห์',
+      description: 'รายงานประสิทธิภาพ สถิติ และการวิเคราะห์'
+    },
+    { 
+      path: '/admin/marketing', 
+      icon: 'fa-bullhorn', 
+      label: 'การตลาดและโปรโมชั่น',
+      description: 'โปรโมชั่น คูปอง และแคมเปญการตลาด'
     },
     { 
       path: '/admin/logs', 
       icon: 'fa-list-check', 
-      label: 'บันทึกกิจกรรม' 
+      label: 'ประวัติการทำงาน',
+      description: 'บันทึกกิจกรรมและการใช้งานระบบ'
     },
     { 
-      path: '/admin/settings/payments', 
-      icon: 'fa-credit-card', 
-      label: 'ตั้งค่าการชำระเงิน' 
-    },
-    { 
-      path: '/admin/settings/api', 
-      icon: 'fa-code', 
-      label: 'การเชื่อมต่อ API' 
-    },
-    { 
-      path: '/admin/settings/security', 
-      icon: 'fa-shield-halved', 
-      label: 'ความปลอดภัย' 
-    },
-    { 
-      path: '/admin/settings/system', 
+      path: '/admin/system-settings', 
       icon: 'fa-gears', 
-      label: 'ตั้งค่าระบบ' 
+      label: 'ตั้งค่าระบบ',
+      description: 'การตั้งค่าทั่วไป API และระบบความปลอดภัย'
     },
     { 
-      path: '/admin/backup', 
-      icon: 'fa-database', 
-      label: 'สำรองข้อมูล' 
+      path: '/admin/integrations', 
+      icon: 'fa-plug-circle-bolt', 
+      label: 'การเชื่อมต่อภายนอก',
+      description: 'API Webhooks และบริการภายนอก',
+      badge: 'beta',
+      badgeColor: 'bg-blue-500'
     },
     { 
       path: '/dashboard', 
       icon: 'fa-arrow-right-from-bracket', 
-      label: 'กลับสู่โหมดผู้ใช้' 
+      label: 'กลับสู่โหมดผู้ใช้',
+      description: 'ออกจากโหมดผู้ดูแลระบบไปยังโหมดผู้ใช้งาน'
     },
     { 
       path: '/auth', 
       icon: 'fa-sign-out-alt', 
-      label: 'ออกจากระบบ' 
+      label: 'ออกจากระบบ',
+      description: 'ออกจากระบบและกลับไปยังหน้าเข้าสู่ระบบ'
     }
   ];
 
   // กลุ่มเมนูสำหรับการจัดแสดง
   const menuGroups = [
     {
-      title: 'ภาพรวมระบบ',
-      items: adminMenuItems.slice(0, 2),
+      title: 'แดชบอร์ด',
+      items: adminMenuItems.slice(0, 2), // แดชบอร์ด, จัดการผู้ใช้
     },
     {
-      title: 'การจัดการ',
-      items: adminMenuItems.slice(2, 8),
+      title: 'การจัดการโลจิสติกส์',
+      items: adminMenuItems.slice(2, 6), // พัสดุ, เครือข่ายขนส่ง, พื้นที่, คลังสินค้า
     },
     {
-      title: 'การตั้งค่า',
-      items: adminMenuItems.slice(8, 13),
+      title: 'การเงินและบัญชี',
+      items: adminMenuItems.slice(6, 9), // การเงิน, ใบแจ้งหนี้, อัตราค่าบริการ
     },
     {
-      title: 'บัญชี',
-      items: adminMenuItems.slice(13),
+      title: 'รายงานและการตลาด',
+      items: adminMenuItems.slice(9, 12), // รายงาน, การตลาด, ประวัติการทำงาน
+    },
+    {
+      title: 'ระบบและการตั้งค่า',
+      items: adminMenuItems.slice(12, 14), // ตั้งค่าระบบ, การเชื่อมต่อภายนอก
+    },
+    {
+      title: 'บัญชีผู้ใช้',
+      items: adminMenuItems.slice(14), // กลับสู่โหมดผู้ใช้, ออกจากระบบ
     },
   ];
 
@@ -199,13 +235,29 @@ const SidebarMenuAdmin: React.FC<SidebarMenuAdminProps> = ({ isOpen, onClose, us
                   <li key={item.path}>
                     <Link 
                       href={item.path}
-                      className={`flex items-center px-4 py-2 text-sm hover:bg-purple-50 ${
+                      className={`flex items-start px-4 py-3 text-sm hover:bg-purple-50 ${
                         location === item.path ? 'bg-purple-50 text-purple-800 font-medium' : 'text-gray-700'
                       }`}
                       onClick={onClose}
                     >
-                      <i className={`fa-solid ${item.icon} w-5 mr-3 ${location === item.path ? 'text-purple-800' : 'text-gray-500'}`}></i>
-                      <span>{item.label}</span>
+                      <div className="flex-shrink-0 mt-0.5">
+                        <i className={`fa-solid ${item.icon} w-5 ${location === item.path ? 'text-purple-800' : 'text-gray-500'}`}></i>
+                      </div>
+                      <div className="ml-3 flex-grow">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{item.label}</span>
+                          {item.badge && (
+                            <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full text-white ${item.badgeColor || 'bg-purple-600'}`}>
+                              {item.badge}
+                            </span>
+                          )}
+                        </div>
+                        {item.description && (
+                          <p className="text-xs text-gray-500 mt-0.5 pr-4 line-clamp-2">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
                     </Link>
                   </li>
                 ))}
