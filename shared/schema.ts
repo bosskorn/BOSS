@@ -7,6 +7,7 @@ import { relations } from "drizzle-orm";
 export const userRoleEnum = pgEnum('user_role', ['admin', 'user']);
 export const orderStatusEnum = pgEnum('order_status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled']);
 export const paymentMethodEnum = pgEnum('payment_method', ['bank_transfer', 'credit_card', 'cash_on_delivery', 'prompt_pay']);
+export const topupStatusEnum = pgEnum('topup_status', ['pending', 'completed', 'failed']);
 
 // ตาราง users - ข้อมูลผู้ใช้
 export const users = pgTable("users", {
@@ -199,6 +200,34 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
   items: many(orderItems)
 }));
 
+// ตาราง topups - ข้อมูลการเติมเงิน
+export const topups = pgTable("topups", {
+  id: serial("id").primaryKey(),
+  referenceId: text("reference_id").notNull().unique(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  method: text("method").notNull(), // prompt_pay, credit_card, bank_transfer
+  status: topupStatusEnum("status").default("pending"),
+  qrCodeUrl: text("qr_code_url"),
+  receiptUrl: text("receipt_url"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  userId: integer("user_id").notNull().references(() => users.id),
+});
+
+export const topupsRelations = relations(topups, ({ one }) => ({
+  user: one(users, { fields: [topups.userId], references: [users.id] }),
+}));
+
+// อัพเดต usersRelations เพื่อเพิ่มความสัมพันธ์กับ topups
+export const updateUsersRelations = relations(users, ({ many }) => ({
+  customers: many(customers),
+  products: many(products),
+  orders: many(orders),
+  categories: many(categories),
+  topups: many(topups),
+}));
+
 // สร้าง schemas สำหรับการ insert ข้อมูล
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -221,6 +250,7 @@ export const insertShippingMethodSchema = createInsertSchema(shippingMethods);
 export const insertDiscountSchema = createInsertSchema(discounts);
 export const insertOrderItemSchema = createInsertSchema(orderItems);
 export const insertOrderSchema = createInsertSchema(orders);
+export const insertTopupSchema = createInsertSchema(topups);
 
 // สร้าง types จาก schemas
 export type InsertUser = z.infer<typeof insertUserSchema>;

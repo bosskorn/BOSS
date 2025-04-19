@@ -139,8 +139,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       label: 'ตั้งค่า' 
     },
     { 
-      path: '/topup', 
-      icon: 'fa-plus-circle', 
+      path: '/top-up', 
+      icon: 'fa-wallet', 
       label: 'เติมเครดิต' 
     },
     { 
