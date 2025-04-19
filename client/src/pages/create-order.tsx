@@ -474,7 +474,7 @@ const CreateOrderPage: React.FC = () => {
     }
   };
   
-  // 2. ฟังก์ชันวิเคราะห์ที่อยู่อัตโนมัติโดยใช้ Longdo Map API
+  // 2. ฟังก์ชันวิเคราะห์ที่อยู่อัตโนมัติแบบไม่ใช้ API ภายนอก
   const analyzeAddress = async () => {
     const fullAddress = form.getValues('fullAddress');
     
@@ -491,25 +491,13 @@ const CreateOrderPage: React.FC = () => {
     setFullAddressOriginal(fullAddress);
     
     try {
-      // เรียกใช้ API วิเคราะห์ที่อยู่ของ Longdo Map
-      const response = await apiRequest(
-        'POST',
-        '/api/shipping/analyze-address',
-        { fullAddress }
-      );
+      // วิเคราะห์ที่อยู่ด้วยการแยกประเภทข้อมูลด้วยตนเอง
+      const addressComponents = parseAddressFromText(fullAddress);
       
-      if (!response.ok) {
-        throw new Error('API วิเคราะห์ที่อยู่ล้มเหลว');
+      // ถ้าไม่มีส่วนประกอบที่อยู่เลย แสดงว่าวิเคราะห์ไม่สำเร็จ
+      if (Object.keys(addressComponents).length === 0) {
+        throw new Error('ไม่สามารถวิเคราะห์ที่อยู่ได้');
       }
-      
-      const data = await response.json();
-      
-      if (!data.success || !data.address) {
-        throw new Error('ไม่พบข้อมูลที่อยู่');
-      }
-      
-      // ตรวจสอบว่ามีข้อมูลที่อยู่ครบถ้วนหรือไม่
-      const addressComponents: AddressComponents = data.address;
       
       // เพื่อให้แน่ใจว่าไม่มีการกำหนดค่า undefined ให้กับฟอร์ม
       const validatedComponents: AddressComponents = {
@@ -532,6 +520,13 @@ const CreateOrderPage: React.FC = () => {
       
       setAddressFormatted(validatedComponents);
       
+      // หากมีรหัสไปรษณีย์ ให้เรียกใช้ฟังก์ชันเมื่อจำเป็น
+      const zipcode = validatedComponents.zipcode;
+      if (zipcode && zipcode.length === 5) {
+        // เรียกฟังก์ชันเพื่อดึงตัวเลือกการจัดส่ง
+        fetchShippingOptions();
+      }
+      
       toast({
         title: 'วิเคราะห์ที่อยู่สำเร็จ',
         description: 'กรุณาตรวจสอบและแก้ไขข้อมูลที่อยู่ให้ถูกต้อง',
@@ -546,6 +541,107 @@ const CreateOrderPage: React.FC = () => {
     } finally {
       setProcessingAddress(false);
     }
+  };
+  
+  // ฟังก์ชันช่วยแยกประเภทข้อมูลที่อยู่จากข้อความ
+  const parseAddressFromText = (text: string): AddressComponents => {
+    const components: AddressComponents = {};
+    
+    // แยกตามบรรทัด
+    const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+    const addressText = lines.join(' ');
+    
+    // ดึงรหัสไปรษณีย์ (เป็นตัวเลข 5 หลักที่มักจะอยู่ท้ายที่อยู่)
+    const zipRegex = /\b(\d{5})\b/;
+    const zipMatch = addressText.match(zipRegex);
+    if (zipMatch) {
+      components.zipcode = zipMatch[1];
+    }
+    
+    // ดึงเลขที่บ้าน/อาคาร (ตัวเลข/ตัวเลข หรือตัวเลขอย่างเดียว ที่อยู่ต้นประโยค)
+    const houseNumberRegex = /(?:^|\s)([0-9\/\-]+)(?:\s|$)/;
+    const houseNumberMatch = addressText.match(houseNumberRegex);
+    if (houseNumberMatch) {
+      components.houseNumber = houseNumberMatch[1];
+    }
+    
+    // ดึงชื่อหมู่บ้าน/อาคาร หรือ หมู่ที่
+    const villageRegex = /(?:หมู่บ้าน|หมู่|ม\.|อาคาร|คอนโด)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    const villageMatch = addressText.match(villageRegex);
+    if (villageMatch) {
+      components.village = villageMatch[0].trim();
+    }
+    
+    // ดึงข้อมูลซอย
+    const soiRegex = /(?:ซอย|ซ\.)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    const soiMatch = addressText.match(soiRegex);
+    if (soiMatch) {
+      components.soi = soiMatch[0].trim();
+    }
+    
+    // ดึงข้อมูลถนน
+    const roadRegex = /(?:ถนน|ถ\.)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    const roadMatch = addressText.match(roadRegex);
+    if (roadMatch) {
+      components.road = roadMatch[0].trim();
+    }
+    
+    // รายชื่อจังหวัดและคำนำหน้าแขวง/ตำบล/อำเภอ/เขต
+    const provinceNames = [
+      "กรุงเทพ", "กรุงเทพฯ", "กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", 
+      "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท", "ชัยภูมิ", "ชุมพร", "เชียงราย", 
+      "เชียงใหม่", "ตรัง", "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม", "นครราชสีมา", 
+      "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", 
+      "ปทุมธานี", "ประจวบคีรีขันธ์", "ปราจีนบุรี", "ปัตตานี", "พะเยา", "พระนครศรีอยุธยา", 
+      "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์", "แพร่", "ภูเก็ต", 
+      "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", 
+      "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", 
+      "สมุทรปราการ", "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย", 
+      "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อ่างทอง", "อุดรธานี", 
+      "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี", "อำนาจเจริญ"
+    ];
+    
+    // ค้นหาจังหวัด
+    for (const province of provinceNames) {
+      if (addressText.includes(province)) {
+        components.province = province;
+        break;
+      }
+    }
+    
+    // ค้นหาแขวง/ตำบล และเขต/อำเภอ
+    const subdistrictRegex = /(?:แขวง|ตำบล|ต\.)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    const subdistrictMatch = addressText.match(subdistrictRegex);
+    if (subdistrictMatch) {
+      components.subdistrict = subdistrictMatch[0].trim();
+    }
+    
+    const districtRegex = /(?:เขต|อำเภอ|อ\.)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    const districtMatch = addressText.match(districtRegex);
+    if (districtMatch) {
+      components.district = districtMatch[0].trim();
+    }
+    
+    // หากไม่พบแขวง/ตำบล และเขต/อำเภอด้วยการค้นหาแบบมีคำนำหน้า 
+    // ให้ลองค้นหาจากคำที่มักมาก่อนจังหวัด
+    if (components.province && !components.district && !components.subdistrict) {
+      // ตัดตั้งแต่จังหวัดออกไป
+      const beforeProvince = addressText.split(components.province)[0];
+      const words = beforeProvince.split(/\s+/);
+      
+      // มักเรียงเป็น ตำบล -> อำเภอ -> จังหวัด หรือใช้ชื่อเลย
+      if (words.length >= 2) {
+        // อาจเป็นชื่ออำเภอโดยตรง
+        components.district = words[words.length - 1];
+        
+        // และอาจเป็นชื่อตำบลก่อนหน้านั้น
+        if (words.length >= 3) {
+          components.subdistrict = words[words.length - 2];
+        }
+      }
+    }
+    
+    return components;
   };
   
   // 3. ฟังก์ชันเพิ่ม/ลบรายการสินค้า
