@@ -9,6 +9,7 @@ import customersRoutes from './customers';
 import locationsRoutes from './locations';
 import shippingRoutes from './shipping';
 import adminAuthRoutes from './admin-auth';
+import testRoutes from './test';
 
 const router = Router();
 
@@ -23,6 +24,7 @@ router.use('/categories', categoriesRoutes);
 router.use('/customers', customersRoutes);
 router.use('/locations', locationsRoutes);
 router.use('/shipping', shippingRoutes);
+router.use('/test', testRoutes);
 
 // Base API route
 router.get('/', (req, res) => {
