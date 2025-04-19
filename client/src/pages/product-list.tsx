@@ -26,9 +26,10 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, ArrowUpDown, ShoppingBag, Loader2 } from 'lucide-react';
+import { Search, ShoppingBag, Loader2 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
 
 // ประเภทของสินค้าในระบบ
 interface ProductType {
@@ -59,15 +60,22 @@ interface ProductType {
     updatedAt: string;
     userId: number;
   } | null;
-  
-  // แปลงค่าให้ตรงกับที่ใช้ในหน้าจอ
-  isActive?: boolean;
-  image?: string | null;
+}
+
+// ประเภทของสินค้าที่จะแสดงในหน้าจอ
+interface DisplayProduct {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  category: string;
+  image: string | null;
+  isActive: boolean;
 }
 
 const ProductListPage: React.FC = () => {
-  const [apiProducts, setApiProducts] = useState<ProductType[]>([]);
-  const [formattedProducts, setFormattedProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<DisplayProduct[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ทั้งหมด');
   const [sortBy, setSortBy] = useState('name-asc');
@@ -80,17 +88,13 @@ const ProductListPage: React.FC = () => {
       try {
         setIsLoading(true);
         
-        const axios = (await import('axios')).default;
         const response = await axios.get('/api/products', {
           withCredentials: true
         });
         
         if (response.data && response.data.success && Array.isArray(response.data.products)) {
-          // แปลงข้อมูลให้อยู่ในรูปแบบที่เหมาะสม
-          setApiProducts(response.data.products);
-          
           // แปลงข้อมูลให้ตรงกับรูปแบบที่ใช้ในหน้าจอ
-          const products = response.data.products.map((product: ProductType) => ({
+          const displayProducts = response.data.products.map((product: ProductType) => ({
             id: product.id,
             name: product.name,
             description: product.description || '',
@@ -100,9 +104,10 @@ const ProductListPage: React.FC = () => {
             image: product.imageUrl,
             isActive: product.status === 'active' && product.stock > 0
           }));
-          setFormattedProducts(products);
+          
+          setProducts(displayProducts);
         } else {
-          console.error('ไม่พบข้อมูลสินค้าหรือข้อมูลไม่ถูกต้อง');
+          console.error('ไม่พบข้อมูลสินค้าหรือข้อมูลไม่ถูกต้อง', response.data);
           toast({
             title: 'ไม่สามารถโหลดข้อมูลสินค้าได้',
             description: 'ไม่พบข้อมูลสินค้าหรือรูปแบบข้อมูลไม่ถูกต้อง',
@@ -125,13 +130,15 @@ const ProductListPage: React.FC = () => {
   }, [toast]);
 
   // หมวดหมู่ทั้งหมดของสินค้า
-  const allCategories = formattedProducts.map(p => p.category);
-  const uniqueCategories = Array.from(new Set(allCategories));
-  const categories = ['ทั้งหมด', ...uniqueCategories];
+  const categories = useMemo(() => {
+    const allCategories = products.map(p => p.category);
+    const uniqueCategories = Array.from(new Set(allCategories));
+    return ['ทั้งหมด', ...uniqueCategories];
+  }, [products]);
 
   // กรองและเรียงลำดับสินค้า
   const filteredProducts = useMemo(() => {
-    let filtered = [...formattedProducts];
+    let filtered = [...products];
     
     // กรองตามคำค้นหา
     if (searchTerm) {
@@ -165,7 +172,7 @@ const ProductListPage: React.FC = () => {
     }
     
     return filtered;
-  }, [formattedProducts, searchTerm, categoryFilter, sortBy]);
+  }, [products, searchTerm, categoryFilter, sortBy]);
 
   const handleAddToCart = (productId: number) => {
     toast({
@@ -250,54 +257,54 @@ const ProductListPage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-            {filteredProducts.map((product: any) => (
-            <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="aspect-video bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
-                {product.image ? (
-                  <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="text-purple-500 text-5xl">
-                    <ShoppingBag size={50} />
-                  </div>
-                )}
-              </div>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{product.name}</CardTitle>
-                  {!product.isActive && (
-                    <Badge variant="outline" className="text-xs bg-gray-100">หมดสต็อก</Badge>
+            {filteredProducts.map((product) => (
+              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="aspect-video bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                  {product.image ? (
+                    <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="text-purple-500 text-5xl">
+                      <ShoppingBag size={50} />
+                    </div>
                   )}
                 </div>
-                <CardDescription className="line-clamp-2 h-10">
-                  {product.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-xl font-bold text-purple-600">฿{product.price.toLocaleString()}</p>
-                    <p className="text-sm text-gray-500">คงเหลือ: {product.stock} ชิ้น</p>
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg">{product.name}</CardTitle>
+                    {!product.isActive && (
+                      <Badge variant="outline" className="text-xs bg-gray-100">หมดสต็อก</Badge>
+                    )}
                   </div>
-                  <Badge>{product.category}</Badge>
-                </div>
-              </CardContent>
-              <CardFooter className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => handleAddToCart(product.id)}
-                  disabled={!product.isActive || product.stock <= 0}
-                >
-                  เพิ่มลงตะกร้า
-                </Button>
-                <Button 
-                  className="flex-1 bg-purple-600 hover:bg-purple-700"
-                >
-                  ซื้อเลย
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                  <CardDescription className="line-clamp-2 h-10">
+                    {product.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xl font-bold text-purple-600">฿{product.price.toLocaleString()}</p>
+                      <p className="text-sm text-gray-500">คงเหลือ: {product.stock} ชิ้น</p>
+                    </div>
+                    <Badge>{product.category}</Badge>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => handleAddToCart(product.id)}
+                    disabled={!product.isActive || product.stock <= 0}
+                  >
+                    เพิ่มลงตะกร้า
+                  </Button>
+                  <Button 
+                    className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  >
+                    ซื้อเลย
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
           </div>
         )}
 
