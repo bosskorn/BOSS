@@ -1992,7 +1992,12 @@ const CreateOrderTabsPage: React.FC = () => {
                             type="button"
                             className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
                             disabled={isLoading}
-                            onClick={() => form.handleSubmit(onSubmit)()}
+                            onClick={() => {
+                              console.log('กดปุ่มสร้างออเดอร์');
+                              const formValues = form.getValues();
+                              console.log('ค่าในฟอร์ม:', formValues);
+                              onSubmit(formValues);
+                            }}
                           >
                             {isLoading ? 'กำลังสร้างออเดอร์...' : 'สร้างออเดอร์'}
                           </Button>

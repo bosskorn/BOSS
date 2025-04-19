@@ -79,6 +79,11 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       label: 'สร้างออเดอร์' 
     },
     { 
+      path: '/bulk-order-import', 
+      icon: 'fa-file-import', 
+      label: 'นำเข้าออเดอร์จาก Excel' 
+    },
+    { 
       path: '/parcel-list', 
       icon: 'fa-box-open', 
       label: 'รายการพัสดุ' 
