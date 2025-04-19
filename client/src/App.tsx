@@ -21,6 +21,7 @@ import OrderDetail from "@/pages/order-detail";
 import ShipmentList from "@/pages/shipment-list";
 import Settings from "@/pages/settings";
 import TopUp from "@/pages/top-up";
+import ClaimsList from "@/pages/claims-list";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 
@@ -71,6 +72,9 @@ function Router() {
       
       {/* เติมเงิน - protected */}
       <ProtectedRoute path="/top-up" component={TopUp} />
+      
+      {/* การเคลม - protected */}
+      <ProtectedRoute path="/claims-list" component={ClaimsList} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
