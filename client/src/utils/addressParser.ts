@@ -570,45 +570,122 @@ export function parseAddressFromText(text: string): AddressComponents {
     }
   }
   
+  // สำหรับกรณีที่พบคำว่า "คลองเตย" หรือชื่อเขต/แขวงในกรุงเทพฯที่รู้จัก
+  const wellKnownBangkokDistricts = [
+    'คลองเตย', 'พระโขนง', 'วัฒนา', 'บางรัก', 'ปทุมวัน', 'สาทร', 'บางคอแหลม', 'ยานนาวา',
+    'ดินแดง', 'ห้วยขวาง', 'จตุจักร', 'ลาดพร้าว', 'บางกะปิ', 'วังทองหลาง', 'บึงกุ่ม', 'สวนหลวง',
+    'ประเวศ', 'คันนายาว', 'ลาดกระบัง', 'มีนบุรี', 'หนองจอก', 'ดอนเมือง', 'จอมทอง', 'ธนบุรี'
+  ];
+
+  // ตรวจหาชื่อเขตที่รู้จักในข้อความโดยตรง
+  if (!components.district || !components.subdistrict) {
+    for (const district of wellKnownBangkokDistricts) {
+      const regex = new RegExp(`\\b${district}\\b`, 'i');
+      if (regex.test(text)) {
+        if (!components.district) {
+          components.district = district;
+          console.log("พบเขตที่รู้จักในข้อความ:", district);
+        }
+        
+        // ถ้าพบเขตแต่ยังไม่พบแขวง และเป็นกรณีของกรุงเทพฯ ให้ใช้ชื่อเดียวกัน
+        if (!components.subdistrict && components.province && components.province.toLowerCase().includes('กรุงเทพ')) {
+          components.subdistrict = district;
+          console.log("กำหนดแขวงเป็นค่าเดียวกับเขต:", district);
+        }
+        break;
+      }
+    }
+  }
+
   // ถ้ายังไม่พบแขวง/ตำบล และไม่พบเขต/อำเภอ
-  if (!components.subdistrict && !components.district) {
+  if (!components.subdistrict || !components.district) {
     // ลองหาคำที่อาจจะเป็นแขวงหรือเขต จากคำในข้อความที่เหลือ
     // แยกคำจากข้อความที่เหลือ
     
     // ลบคำที่รู้จักแล้วออกจากข้อความ
     let remainingText = text;
-    for (const [key, value] of Object.entries(components)) {
-      if (value) {
-        remainingText = remainingText.replace(value, '');
+    
+    // ลบเลขที่บ้าน อาคาร และรหัสไปรษณีย์ออกก่อน
+    if (components.houseNumber) {
+      remainingText = remainingText.replace(components.houseNumber, '');
+    }
+    if (components.building) {
+      remainingText = remainingText.replace(components.building, '');
+    }
+    if (components.zipcode) {
+      remainingText = remainingText.replace(components.zipcode, '');
+    }
+    
+    // ลบชื่อบริษัท/ชื่อลูกค้า และเบอร์โทรออก
+    if (components.customerName) {
+      remainingText = remainingText.replace(components.customerName, '');
+    }
+    if (components.customerPhone) {
+      remainingText = remainingText.replace(components.customerPhone, '');
+    }
+    
+    // ลบคำนำหน้าต่างๆ ที่ไม่จำเป็น
+    remainingText = remainingText.replace(/เลขที่|บ้านเลขที่|ที่อยู่|จังหวัด|อำเภอ|ตำบล|แขวง|เขต|รหัสไปรษณีย์|ถนน|ซอย/gi, '');
+    
+    // ถ้าเป็นกรุงเทพฯ ค้นหาคำว่า "คลองเตย" หรือชื่อเขตกรุงเทพฯ อื่นๆ
+    if (components.province && components.province.toLowerCase().includes('กรุงเทพ')) {
+      for (const district of wellKnownBangkokDistricts) {
+        const regex = new RegExp(`\\b${district}\\b`, 'i');
+        const matches = remainingText.match(regex);
+        
+        if (matches) {
+          if (!components.district) {
+            components.district = district;
+            console.log("พบเขตจากคำที่เหลือ:", district);
+          }
+          
+          if (!components.subdistrict) {
+            components.subdistrict = district;
+            console.log("กำหนดแขวงจากคำที่เหลือเป็นค่าเดียวกับเขต:", district);
+          }
+          
+          // ลบคำที่เจอออกจากข้อความที่เหลือ
+          remainingText = remainingText.replace(district, '');
+          break;
+        }
       }
     }
     
-    // แยกคำที่เหลือ
+    // แยกคำที่เหลือและกรองคำที่ไม่เกี่ยวข้องออก
     const words = remainingText.split(/\s+/).filter(word => 
       word.length > 1 && 
-      !/^\d+$/.test(word) && // ไม่ใช่ตัวเลขล้วน
+      !/^\d+\/?(\d+)?$/.test(word) && // ไม่ใช่เลขที่บ้านหรือตัวเลข
+      !/^ชั้น/i.test(word) && // ไม่ใช่คำว่า "ชั้น"
+      !/^อาคาร/i.test(word) && // ไม่ใช่คำว่า "อาคาร"
       !['และ', 'กับ', 'ของ', 'ใน', 'ที่', 'ซึ่ง', 'โดย', 'จาก', 'ถึง', 'เพื่อ', 'แล้ว', 'บริษัท', 'จำกัด', 'เลขที่', 'โทร'].includes(word.toLowerCase()) // ไม่ใช่คำเชื่อมหรือคำทั่วไป
     );
     
     console.log("คำที่เหลือสำหรับวิเคราะห์:", words);
     
-    // ถ้ามีคำเหลือ ใช้คำแรกเป็นแขวง/ตำบล และคำที่สองเป็นเขต/อำเภอ
-    if (words.length >= 2) {
-      // หลีกเลี่ยงการซ้ำซ้อน
-      if (!components.district && words[0] && words[0].length > 1) {
-        components.district = words[0];
-        console.log("กำหนดเขต/อำเภอจากคำที่เหลือลำดับที่ 1:", components.district);
+    // ถ้ายังไม่พบแขวง/ตำบล หรือ เขต/อำเภอ และมีคำเหลือ
+    // ถ้ามีคำเหลือ ใช้คำที่น่าจะเป็นแขวง/เขต
+    for (const word of words) {
+      // ข้ามคำที่ไม่น่าใช่แขวงหรือเขต
+      if (word.length < 2 || /^\d+$/.test(word) || /^[a-zA-Z]+$/.test(word) || 
+          ['tower', 'place', 'building', 'ถ', 'จ'].includes(word.toLowerCase())) {
+        continue;
       }
       
-      if (!components.subdistrict && words[1] && words[1].length > 1) {
-        components.subdistrict = words[1];
-        console.log("กำหนดแขวง/ตำบลจากคำที่เหลือลำดับที่ 2:", components.subdistrict);
+      if (!components.district) {
+        components.district = word;
+        console.log("กำหนดเขต/อำเภอจากคำที่เหลือ:", word);
+        continue;
       }
-    } else if (words.length === 1 && words[0] && words[0].length > 1) {
-      // ถ้ามีแค่คำเดียว ให้ใช้เป็นแขวง/ตำบล
+      
       if (!components.subdistrict) {
-        components.subdistrict = words[0];
-        console.log("กำหนดแขวง/ตำบลจากคำที่เหลือเพียงคำเดียว:", components.subdistrict);
+        components.subdistrict = word;
+        console.log("กำหนดแขวง/ตำบลจากคำที่เหลือ:", word);
+        break;
+      }
+      
+      // ถ้าพบทั้งสองแล้วให้หยุด
+      if (components.district && components.subdistrict) {
+        break;
       }
     }
   }
