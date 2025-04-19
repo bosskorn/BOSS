@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
 import api, { apiRequest } from '@/services/api';
+import { parseCustomerAndAddressData } from '@/utils/addressParser';
 import Layout from '@/components/Layout';
 import { 
   Card, 
@@ -72,6 +73,8 @@ interface AddressComponents {
   floor?: string;
   roomNumber?: string;
   storeName?: string;
+  customerName?: string;
+  customerPhone?: string;
 }
 
 // สคีมาสำหรับฟอร์มสร้างออเดอร์
@@ -252,7 +255,10 @@ const CreateOrderTabsPage: React.FC = () => {
     
     try {
       // วิเคราะห์ที่อยู่ด้วยการแยกประเภทข้อมูลด้วยตนเอง
-      const addressComponents = parseAddressFromText(fullAddress);
+      // ใช้ฟังก์ชันใหม่ที่วิเคราะห์ทั้งข้อมูลลูกค้าและที่อยู่
+      const addressComponents = parseCustomerAndAddressData(fullAddress);
+      
+      console.log("ผลการวิเคราะห์:", addressComponents);
       
       // ถ้าไม่มีส่วนประกอบที่อยู่เลย แสดงว่าวิเคราะห์ไม่สำเร็จ
       if (Object.keys(addressComponents).length === 0) {
@@ -262,13 +268,15 @@ const CreateOrderTabsPage: React.FC = () => {
       // เพื่อให้แน่ใจว่าไม่มีการกำหนดค่า undefined ให้กับฟอร์ม
       const validatedComponents: AddressComponents = {
         houseNumber: addressComponents.houseNumber || '',
-        village: addressComponents.village || '',
+        village: addressComponents.building || '',  // ใช้ building ถ้ามี
         soi: addressComponents.soi || '',
         road: addressComponents.road || '',
         subdistrict: addressComponents.subdistrict || '',
         district: addressComponents.district || '',
         province: addressComponents.province || '',
         zipcode: addressComponents.zipcode || '',
+        customerName: addressComponents.customerName || '',
+        customerPhone: addressComponents.customerPhone || '',
       };
       
       // อัพเดทแบบฟอร์ม

@@ -249,70 +249,157 @@ export function parseAddressFromText(text: string): AddressComponents {
   const components: AddressComponents = {};
   console.log("กำลังวิเคราะห์ที่อยู่:", text);
   
+  // ล้างข้อมูลชื่อบริษัทออกจากข้อความที่จะวิเคราะห์ 
+  // แยกชื่อบริษัท/ชื่อร้านค้าออกไปก่อน
+  let cleanedText = text;
+  const companyRegex = /(บริษัท\s+[\wก-๙]+\s+จำกัด|ห้างหุ้นส่วนจำกัด\s+[\wก-๙]+|ร้าน[\wก-๙\s]+)/i;
+  const companyMatch = text.match(companyRegex);
+  if (companyMatch) {
+    components.customerName = companyMatch[0].trim();
+    cleanedText = cleanedText.replace(companyMatch[0], '');
+    console.log("แยกชื่อบริษัท/ร้านค้า:", components.customerName);
+  }
+  
+  // แยกเบอร์โทรศัพท์ออกไปก่อน
+  const phoneRegex = /\(?(\d{9,10})\)?|\d{3}[-\s]?\d{3}[-\s]?\d{4}/g;
+  const phoneMatches = cleanedText.match(phoneRegex);
+  if (phoneMatches) {
+    for (const phone of phoneMatches) {
+      // เอาเฉพาะตัวเลข
+      const digits = phone.replace(/\D/g, '');
+      if (digits.length >= 9 && digits.length <= 10 && digits.startsWith('0')) {
+        components.customerPhone = digits;
+        cleanedText = cleanedText.replace(phone, '');
+        console.log("แยกเบอร์โทรศัพท์:", components.customerPhone);
+        break;
+      }
+    }
+  }
+  
   // ค้นหารหัสไปรษณีย์
   const zipCodeRegex = /\b(\d{5})\b/;
-  const zipCodeMatch = text.match(zipCodeRegex);
+  const zipCodeMatch = cleanedText.match(zipCodeRegex);
   if (zipCodeMatch) {
     components.zipcode = zipCodeMatch[1];
     console.log("พบรหัสไปรษณีย์:", components.zipcode);
+    
+    // ลบรหัสไปรษณีย์ออกก่อนวิเคราะห์เลขที่บ้าน
+    cleanedText = cleanedText.replace(zipCodeMatch[0], '');
   }
   
   // ค้นหาบ้านเลขที่ (หลายรูปแบบ)
+  let houseNumberText = '';
+  
   // 1. รูปแบบที่มีคำว่า "บ้านเลขที่" หรือ "เลขที่" นำหน้า
   const houseNumberPrefixRegex = /(?:บ้านเลขที่|เลขที่)\s*([\d\/]+(?:\s*[ก-ฮa-zA-Z]*)?)/i;
-  const houseNumberPrefixMatch = text.match(houseNumberPrefixRegex);
+  const houseNumberPrefixMatch = cleanedText.match(houseNumberPrefixRegex);
+  
   if (houseNumberPrefixMatch) {
-    components.houseNumber = houseNumberPrefixMatch[0]; // เก็บทั้งคำว่า "เลขที่" และตัวเลข
+    const fullMatch = houseNumberPrefixMatch[0];
+    const numberOnly = houseNumberPrefixMatch[1];
+    components.houseNumber = numberOnly.trim();
+    houseNumberText = fullMatch;
     console.log("พบเลขที่บ้าน (จากคำนำหน้า):", components.houseNumber);
   } 
   // 2. รูปแบบตัวเลข/ตัวเลข เช่น 123/45 ที่อยู่ต้นประโยค
   else {
-    const houseNumberRegex = /^[^\d]*([\d\/]+(?:[ก-ฮa-zA-Z]*)?)/;
-    const houseNumberMatch = text.match(houseNumberRegex);
+    const houseNumberRegex = /^[^\d]*?([\d\/]+(?:[ก-ฮa-zA-Z]*)?)/;
+    const houseNumberMatch = cleanedText.match(houseNumberRegex);
     if (houseNumberMatch && houseNumberMatch[1]) {
-      components.houseNumber = houseNumberMatch[1];
+      components.houseNumber = houseNumberMatch[1].trim();
+      houseNumberText = houseNumberMatch[1];
       console.log("พบเลขที่บ้าน (จากต้นข้อความ):", components.houseNumber);
     } else {
       // 3. รูปแบบทั่วไป
-      const generalHouseNumberRegex = /\b(\d+\/\d+|\d+)\b/;
-      const generalHouseNumberMatch = text.match(generalHouseNumberRegex);
+      const generalHouseNumberRegex = /\b(\d+\/\d+|\d+)[ก-ฮ]?\b/;
+      const generalHouseNumberMatch = cleanedText.match(generalHouseNumberRegex);
       if (generalHouseNumberMatch) {
         components.houseNumber = generalHouseNumberMatch[1];
+        houseNumberText = generalHouseNumberMatch[0];
         console.log("พบเลขที่บ้าน (รูปแบบทั่วไป):", components.houseNumber);
       }
     }
   }
   
   // ค้นหาหมู่บ้าน/คอนโดที่มีคำนำหน้า
-  const villageRegex = /(?:หมู่บ้าน|วิลล่า|คอนโด|อาคาร)\s+([^,]+?)(?=\s+(?:ชั้น|เลข|ถนน|ซอย|แขวง|ตำบล|อำเภอ|เขต|จังหวัด|$))/i;
-  const villageMatch = text.match(villageRegex);
+  let buildingText = '';
+  
+  const villageRegex = /(?:หมู่บ้าน|วิลล่า|คอนโด|อาคาร)\s+([^\s,]+(?:\s+[^\s,]+){0,4}?)(?=\s+(?:ชั้น|ถนน|ซอย|แขวง|ตำบล|อำเภอ|เขต|จังหวัด|$))/i;
+  const villageMatch = cleanedText.match(villageRegex);
+  
   if (villageMatch) {
-    components.village = villageMatch[0]; // เก็บทั้งคำนำหน้าและชื่อหมู่บ้าน
-    console.log("พบหมู่บ้าน/อาคาร (จากคำนำหน้า):", components.village);
+    components.building = villageMatch[1].trim(); // เก็บเฉพาะชื่อหมู่บ้าน/อาคาร ไม่รวมคำนำหน้า
+    buildingText = villageMatch[0];
+    console.log("พบหมู่บ้าน/อาคาร:", components.building);
   }
   
   // ค้นหาชั้นในอาคาร
+  let floorText = '';
+  
   const floorRegex = /(?:ชั้น|ฟลอร์|floor)\s*(\d+)/i;
-  const floorMatch = text.match(floorRegex);
+  const floorMatch = cleanedText.match(floorRegex);
+  
   if (floorMatch) {
-    components.floor = floorMatch[0];
+    components.floor = floorMatch[1]; // เก็บเฉพาะตัวเลขชั้น
+    floorText = floorMatch[0];
     console.log("พบชั้นอาคาร:", components.floor);
   }
   
   // ค้นหาซอยที่มีคำนำหน้า
-  const soiRegex = /(?:ซอย|ซ\.)\s+([^,]+?)(?=\s+(?:ถนน|แขวง|ตำบล|อำเภอ|เขต|จังหวัด|$))/i;
-  const soiMatch = text.match(soiRegex);
+  let soiText = '';
+  
+  const soiRegex = /(?:ซอย|ซ\.)\s+([^\s,]+(?:\s+[^\s,]+){0,3}?)(?=\s+(?:ถนน|แขวง|ตำบล|อำเภอ|เขต|จังหวัด|$))/i;
+  const soiMatch = cleanedText.match(soiRegex);
+  
   if (soiMatch) {
-    components.soi = soiMatch[0]; // เก็บทั้งคำนำหน้าและชื่อซอย
-    console.log("พบซอย (จากคำนำหน้า):", components.soi);
+    components.soi = soiMatch[1].trim(); // เก็บเฉพาะชื่อซอย ไม่รวมคำนำหน้า
+    soiText = soiMatch[0];
+    console.log("พบซอย:", components.soi);
   }
   
   // ค้นหาถนนที่มีคำนำหน้า
-  const roadRegex = /(?:ถนน|ถ\.)\s+([^,]+?)(?=\s+(?:แขวง|ตำบล|อำเภอ|เขต|จังหวัด|$))/i;
-  const roadMatch = text.match(roadRegex);
+  let roadText = '';
+  
+  const roadRegex = /(?:ถนน|ถ\.)\s+([^\s,]+(?:\s+[^\s,]+){0,3}?)(?=\s+(?:แขวง|ตำบล|อำเภอ|เขต|จังหวัด|$))/i;
+  const roadMatch = cleanedText.match(roadRegex);
+  
   if (roadMatch) {
-    components.road = roadMatch[0]; // เก็บทั้งคำนำหน้าและชื่อถนน
-    console.log("พบถนน (จากคำนำหน้า):", components.road);
+    components.road = roadMatch[1].trim(); // เก็บเฉพาะชื่อถนน ไม่รวมคำนำหน้า
+    roadText = roadMatch[0];
+    console.log("พบถนน:", components.road);
+  }
+  
+  // สร้างข้อมูลรวมสำหรับบ้านเลขที่และถนน (ใช้แสดงในฟอร์ม) เพื่อให้มีรูปแบบตามที่ต้องการ
+  let fullAddressLine = '';
+  
+  if (components.houseNumber) {
+    fullAddressLine += components.houseNumber;
+  }
+  
+  if (components.building) {
+    if (fullAddressLine) fullAddressLine += ' ';
+    fullAddressLine += 'อาคาร' + components.building;
+  }
+  
+  if (components.floor) {
+    if (fullAddressLine) fullAddressLine += ' ';
+    fullAddressLine += 'ชั้น ' + components.floor;
+  }
+  
+  if (components.road) {
+    if (fullAddressLine) fullAddressLine += ' ';
+    fullAddressLine += 'ถนน' + components.road;
+  }
+  
+  if (components.soi) {
+    if (fullAddressLine) fullAddressLine += ' ';
+    fullAddressLine += 'ซอย' + components.soi;
+  }
+  
+  // ถ้ามีข้อมูลที่สร้างขึ้นใหม่ ให้ใช้ข้อมูลนี้แทนค่า houseNumber
+  if (fullAddressLine) {
+    components.houseNumber = fullAddressLine;
+    console.log("สร้างข้อมูลที่อยู่บรรทัดที่ 1 (บ้านเลขที่และถนน):", fullAddressLine);
   }
   
   // ค้นหาจังหวัด
