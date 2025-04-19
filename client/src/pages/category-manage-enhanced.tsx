@@ -96,17 +96,10 @@ const CategoryManageEnhanced: React.FC = () => {
   // ฟังก์ชันเรียกข้อมูลหมวดหมู่จาก API
   const fetchCategories = async () => {
     try {
-      console.log('เริ่มการดึงข้อมูลหมวดหมู่');
+      console.log('เริ่มการดึงข้อมูลหมวดหมู่ด้วย api service ที่สร้างไว้');
       
-      // เรียกข้อมูลจาก API จริง พร้อมส่ง credentials
-      const response = await axios.get('/api/categories', {
-        withCredentials: true,
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Content-Type': 'application/json'
-        }
-      });
+      // ใช้ api service ที่มีการตั้งค่า credentials ที่ถูกต้องแล้ว
+      const response = await api.get('/api/categories');
       
       console.log('ได้รับการตอบกลับจาก API:', response.data);
       
@@ -129,6 +122,11 @@ const CategoryManageEnhanced: React.FC = () => {
       
       console.log('ข้อมูลหมวดหมู่ที่ได้รับ:', categoriesData);
       
+      if (categoriesData.length === 0) {
+        console.warn('ไม่มีข้อมูลหมวดหมู่ที่ได้รับ หรือโครงสร้างไม่ถูกต้อง');
+        return; // ไม่ต้องประมวลผลต่อถ้าไม่มีข้อมูล
+      }
+      
       // แปลงข้อมูลให้ตรงกับโครงสร้างที่ใช้
       const mappedCategories: Category[] = categoriesData.map((cat: any) => ({
         id: cat.id,
@@ -142,18 +140,34 @@ const CategoryManageEnhanced: React.FC = () => {
       }));
       
       console.log('ข้อมูลหมวดหมู่หลังจากแปลง:', mappedCategories);
-      setCategories(mappedCategories);
+      
+      if (mappedCategories.length > 0) {
+        console.log('กำลังอัปเดตสถานะ categories ด้วยข้อมูลใหม่จำนวน', mappedCategories.length, 'รายการ');
+        setCategories(mappedCategories);
+      } else {
+        console.warn('ไม่มีข้อมูลหมวดหมู่หลังจากแปลงแล้ว');
+      }
     } catch (error: any) {
       console.error('Error fetching categories:', error);
       
       // ตรวจสอบการตอบกลับจาก API กรณีมีข้อผิดพลาด
       const errorMessage = error.response?.data?.message || 'ไม่สามารถโหลดข้อมูลหมวดหมู่ได้';
       
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      // ถ้าเป็น error 401 (Unauthorized) แสดงว่าต้องเข้าสู่ระบบใหม่
+      if (error.response?.status === 401) {
+        console.warn('คุณต้องเข้าสู่ระบบใหม่เพื่อเข้าถึงข้อมูลหมวดหมู่');
+        toast({
+          title: 'กรุณาเข้าสู่ระบบ',
+          description: 'เซสชั่นหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'เกิดข้อผิดพลาด',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -245,7 +259,7 @@ const CategoryManageEnhanced: React.FC = () => {
 
     try {
       // ส่งข้อมูลไปยัง API
-      const response = await axios.post('/api/categories', {
+      const response = await api.post('/api/categories', {
         name: newCategory.name.trim(),
         description: newCategory.description?.trim() || null,
         isActive: newCategory.isActive,
@@ -360,7 +374,7 @@ const CategoryManageEnhanced: React.FC = () => {
 
     try {
       // ส่งข้อมูลไปยัง API
-      const response = await axios.put(`/api/categories/${editingCategory.id}`, {
+      const response = await api.put(`/api/categories/${editingCategory.id}`, {
         name: editingCategory.name.trim(),
         description: editingCategory.description?.trim() || null,
         isActive: editingCategory.isActive,
@@ -426,7 +440,7 @@ const CategoryManageEnhanced: React.FC = () => {
 
     try {
       // ส่งคำสั่งลบไปยัง API
-      const response = await axios.delete(`/api/categories/${categoryToDelete.id}`);
+      const response = await api.delete(`/api/categories/${categoryToDelete.id}`);
       
       if (response.data && response.data.success) {
         // ลบข้อมูลออกจากสถานะ
