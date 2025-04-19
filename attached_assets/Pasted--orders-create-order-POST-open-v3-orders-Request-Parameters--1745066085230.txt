@@ -1,0 +1,187 @@
+สร้างออเดอร์ /orders
+สร้างออเดอร์/create order
+
+POST /open/v3/orders
+
+Request Parameters
+วิธีการกรอกที่อยู่ผู้ส่ง
+มีวิธีการกรอก 2 แบบดังนี้ วิธีที่1 กรอกแบบแยกข้อมูล：สามารถกรอกข้อมูลโดยละเอียดตาม parameters {srcName,srcPhone,srcProvinceName,srcCityName,srcPostalCode,srcDetailAddress}, สำหรับข้อมูลที่อยู่ผู้ส่งและสามารถตัด "warehouseNo" ออกจาก request
+วิธีที่2 กรอกรหัสคลัง：สามารถกรอกรหัสคลังใน parameter "warehouseNo" และสามารถตัด {srcName,srcPhone,srcProvinceName,srcCityName,srcPostalCode,srcDetailAddress} ออกจาก request
+ชื่อ (parameter)	ชื่อ (parameter)	Type	Required	คำอธิบาย
+mchId		string(32)	true	รหัสลูกค้า KA
+nonceStr		string(32)	true	random nonce string
+sign		string(64)	true	ลายเซ็น
+outTradeNo		string(64)	true	เลขออเดอร์
+expressCategory		integer	true	ประเภทการจัดส่ง
+warehouseNo		string(32)	false	รหัสคลัง สามารถเช็คผ่าน เรียกดูข้อมูลคลังสินค้า
+srcName		string(50)	true	ชื่อผู้ส่ง
+srcPhone		string(20)	true	เบอร์โทรผู้ส่ง
+srcProvinceName		string(150)	true	จังหวัดของผู้ส่ง
+srcCityName		string(150)	true	อำเภอของผู้ส่ง
+srcDistrictName		string(150)	false	ตำบลของผู้ส่ง
+srcPostalCode		string(20)	true	รหัสไปรษณีย์ของผู้ส่ง
+srcDetailAddress		string(300)	true	ที่อยู่โดยละเอียดของผู้ส่ง
+dstName		string(50)	true	ชื่อผู้รับ
+dstPhone		string(20)	true	เบอร์โทรผู้รับ
+dstHomePhone		string(20)	false	เบอร์โทรศัพท์บ้านผู้รับ
+dstProvinceName		string(150)	true	จังหวัดของผู้รับ
+dstCityName		string(150)	true	อำเภอของผู้รับ
+dstDistrictName		string(150)	false	ตำบลของผู้รับ
+dstPostalCode		string(20)	true	รหัสไปรษณีย์ของผู้รับ
+dstDetailAddress		string(300)	true	ที่อยู่โดยละเอียดของผู้รับ
+returnName		string(50)	false	ชื่อผู้ติดต่อของที่อยู่ตีกลับพัสดุ
+returnPhone		string(20)	false	เบอร์ผู้ติดต่อของที่อยู่ตีกลับพัสดุ
+returnProvinceName		string(150)	false	จังหวัดของที่อยู่ตีกลับพัสดุ
+returnCityName		string(150)	false	อำเภอของที่อยู่ตีกลับพัสดุ
+returnDistrictName		string(150)	false	ตำบลของที่อยู่ตีกลับพัสดุ
+returnPostalCode		string(20)	false	รหัสไปรษณีย์ของที่อยู่ตีกลับพัสดุ
+returnDetailAddress		string(300)	false	ที่อยู่โดยละเอียดของที่อยู่ตีกลับพัสดุ
+articleCategory		integer	true	ประเภทสินค้า
+weight		integer	true	น้ำหนัก (กรัม)
+width		integer	false	ความกว้าง (เซนติเมตร)
+length		integer	false	ความยาว (เซนติเมตร)
+height		integer	false	ความสูง (เซนติเมตร)
+insured		integer	true	ซื้อFlash careหรือไม่ (1: ซื้อ 0: ไม่ซื้อ)
+insureDeclareValue		integer	false	มูลค่าสินค้า (หน่วย:สตางค์)
+ซื้อบริการ Flash care โปรดระบุ ,ไม่ซื้อบริการ Flash care ไม่ต้องระบุ
+หมายเหตุ:1บาท=100 สตางค์
+opdInsureEnabled		integer	false	ซื้อBox Shieldหรือไม่ (1: ซื้อ 0: ไม่ซื้อ)
+codEnabled		integer	true	เป็นพัสดุ COD หรือไม่ (1: ใช่ 0: ไม่ใช่)
+codAmount		integer	false	ยอด COD (หน่วย:สตางค์)
+หากซื้อบริการCODโปรดกรอกมูลค่า แต่หากไม่ซื้อบริการนี้ไม่ต้องกรอกมูลค่า
+หมายเหตุ:1บาท=100 สตางค์
+subParcelQuantity		integer	false	จำนวนพัสดุหลักย่อย
+หากเป็น null，0，1：หมายถึงพัสดุปกติ
+เมื่อค่าเป็น 2（มากที่สุดคือ 99）หมายถึงพัสดุหลักย่อย
+subParcel		Json string	false	ข้อมูลพัสดุย่อย
+outTradeNo	string(20)	false	เลขออเดอร์ของพัสดุย่อย(เลขห้ามซ้ำ)
+weight	integer	false	น้ำหนักของพัสดุย่อย (กรัม)
+width	integer	false	ความกว้างของพัสดุย่อย (เซนติเมตร)
+length	integer	false	ความยาวของพัสดุย่อย (เซนติเมตร)
+height	integer	false	ความสูงของพัสดุย่อย (เซนติเมตร)
+remark	string(200)	false	หมายเหตุของพัสดุย่อย
+🔴 subItemTypes		Json string	false	รายละเอียดสินค้า
+หากซื้อบริการCODโปรดกรอกรายละเอียดสินค้า แต่หากไม่ซื้อบริการนี้ไม่ต้องกรอก (ค่ามากที่สุด คือ 10)
+itemName	string(200)	false	ชื่อสินค้า
+itemWeightSize	string(128)	false	ข้อมูลขนาด/ไซส์ของสินค้า
+itemColor	string(128)	false	สีของสินค้า
+itemQuantity	integer	false	จำนวนสินค้า (ค่าต้องมากกว่า 1, ค่าที่มากที่สุดคือ 999)
+remark		string(200)	false	หมายเหตุ
+settlementType		integer	false	วิธีชำระค่าขนส่ง (1: ผู้ส่งเป็นผู้ชำระ, 2: ผู้รับเป็นผู้ชำระ)
+POST /open/v3/orders HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+ตัวอย่าง request body
+
+mchId=AAXXXX&nonceStr=1536749552628&sign=D4515A46B6094589F1F7615ADCC988FBB03A79010F2A206DC982F27D396F93A0&outTradeNo=123456789XXXX&warehouseNo=AAXXXX_001&srcName=%E0%B8%AB%E0%B8%AD%E0%B8%A1%E0%B8%A3%E0%B8%A7%E0%B8%A1++create+order+test+name&srcPhone=0123456789&srcProvinceName=%E0%B8%AD%E0%B8%B8%E0%B8%9A%E0%B8%A5%E0%B8%A3%E0%B8%B2%E0%B8%8A%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%B5&srcCityName=%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B8%AD%E0%B8%B8%E0%B8%9A%E0%B8%A5%E0%B8%A3%E0%B8%B2%E0%B8%8A%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%B5&srcDistrictName=%E0%B9%83%E0%B8%99%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87&srcPostalCode=34000&srcDetailAddress=example%20detail%20address&dstName=%E0%B8%99%E0%B9%89%E0%B8%B3%E0%B8%9E%E0%B8%A3%E0%B8%B4%E0%B8%81%E0%B9%81%E0%B8%A1%E0%B9%88%E0%B8%AD%E0%B8%B3%E0%B8%9E%E0%B8%A3&dstPhone=0123456789&dstHomePhone=0123456789&dstProvinceName=%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88&dstCityName=%E0%B8%AA%E0%B8%B1%E0%B8%99%E0%B8%97%E0%B8%A3%E0%B8%B2%E0%B8%A2&dstDistrictName=%E0%B8%AA%E0%B8%B1%E0%B8%99%E0%B8%9E%E0%B8%A3%E0%B8%B0%E0%B9%80%E0%B8%99%E0%B8%95%E0%B8%A3&dstPostalCode=50210&dstDetailAddress=example%20detail%20address&returnName=%E0%B8%99%E0%B9%89%E0%B8%B3%E0%B8%9E%E0%B8%A3%E0%B8%B4%E0%B8%81%E0%B9%81%E0%B8%A1%E0%B9%88%E0%B8%AD%E0%B8%B3%E0%B8%9E%E0%B8%A3&returnPhone=0123456789&returnProvinceName=%E0%B8%AD%E0%B8%B8%E0%B8%9A%E0%B8%A5%E0%B8%A3%E0%B8%B2%E0%B8%8A%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%B5&returnCityName=%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B8%AD%E0%B8%B8%E0%B8%9A%E0%B8%A5%E0%B8%A3%E0%B8%B2%E0%B8%8A%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%B5&returnDistrictName=%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B8%AD%E0%B8%B8%E0%B8%9A%E0%B8%A5%E0%B8%A3%E0%B8%B2%E0%B8%8A%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%B5&returnPostalCode=34000&returnDetailAddress=example%20detail%20address&articleCategory=1&expressCategory=1&weight=1000&insured=1&insureDeclareValue=10000&opdInsureEnabled=1&codEnabled=1&codAmount=10000&remark=%E0%B8%82%E0%B8%B6%E0%B9%89%E0%B8%99%E0%B8%9A%E0%B8%B1%E0%B8%99%E0%B9%84%E0%B8%94
+คำอธิบายพารามิเตอร์
+
+mchId: 'AAXXXX'
+nonceStr: '1536749552628'
+sign: 'D4515A46B6094589F1F7615ADCC988FBB03A79010F2A206DC982F27D396F93A0'
+outTradeNo: '123456789XXXX'
+warehouseNo: 'AAXXXX_001'
+srcName: 'หอมรวม  create order test name'
+srcPhone: '0123456789'
+srcProvinceName: 'อุบลราชธานี'
+srcCityName: 'เมืองอุบลราชธานี'
+srcDistrictName: 'ในเมือง'
+srcPostalCode: '34000'
+srcDetailAddress: 'example detail address'
+dstName: 'น้ำพริกแม่อำพร'
+dstPhone: '0123456789'
+dstHomePhone: '0123456789'
+dstProvinceName: 'เชียงใหม่'
+dstCityName: 'สันทราย'
+dstDistrictName: 'สันพระเนตร'
+dstPostalCode: '50210'
+dstDetailAddress: 'example detail address'
+returnName: 'น้ำพริกแม่อำพร'
+returnPhone: '0123456789'
+returnProvinceName: 'อุบลราชธานี'
+returnCityName: 'เมืองอุบลราชธานี'
+returnPostalCode: '34000'
+returnDetailAddress: 'example detail address'
+articleCategory: 1
+expressCategory: 1
+weight: 1000
+insured: 1
+insureDeclareValue: 10000
+opdInsureEnabled: 1
+codEnabled: 1
+codAmount: 10000
+subParcelQuantity: 2
+subParcel:
+  [
+    {
+      "outTradeNo": "123456789XXXX1",
+      "weight": 21,
+      "width": 21,
+      "length": 21,
+      "height": 12,
+      "remark": "remark1"
+    },
+    {
+      "outTradeNo": "123456789XXXX2",
+      "weight": 21,
+      "width": 21,
+      "length": 21,
+      "height": 21,
+      "remark": "remark2"
+    }
+  ]
+subItemTypes:
+  [
+    {
+      "itemName": "item name description",
+      "itemWeightSize": "1*1*1 1Kg",
+      "itemColor": "red",
+      "itemQuantity": "1"
+    },
+    {
+      "itemName": "item name description",
+      "itemWeightSize": "2*2*2 1Kg",
+      "itemColor": "blue",
+      "itemQuantity": "2"
+    }
+  ]
+remark: 'ขึ้นบันได'
+Response Body
+Name	Type	Description
+pno	string(20)	เลขพัสดุ
+mchId	string(32)	รหัสลูกค้า KA
+outTradeNo	string(64)	เลขออเดอร์
+sortCode	string(13)	Flash Express รหัส3ส่วน
+dstStoreName	string(50)	สาขาปลายทาง
+sortingLineCode	string(5)	Flash Express เลขสายพาน
+earlyFlightEnabled	boolean	เป็น early flight หรือไม่
+packEnabled	boolean	พัสดุจำเป็นต้อง bagging หรือไม่
+upcountryCharge	boolean	เก็บค่าบริการพื้นที่ห่างไกล/พื้นที่ท่องเที่ยวพิเศษเพิ่มหรือไม่
+notice	string(255)	ข้อมูลป๊อปอัพ
+ตัวอย่าง response body
+
+{
+  "code": 1,
+  "message": "success",
+  "tid": "646f4573f7be152d640e1c96",
+  "data": {
+    "pno": "TH0112XXXXXX",
+    "mchId": "AAXXXX",
+    "outTradeNo": "123456789XXXX",
+    "sortCode": "16C-05B002-00",
+    "lineCode": "03",
+    "sortingLineCode": "A03",
+    "dstStoreName": "TKU_SP-ทุ่งครุ",
+    "earlyFlightEnabled": false,
+    "packEnabled": true,
+    "upcountry": false,
+    "upcountryAmount": 0,
+    "upcountryCharge": false,
+    "sameProvince": true,
+    "notice": null,
+    "srcPostalCode": "10220",
+    "dstPostalCode": "10140",
+    "subPno": null,
+    "subParcel": null
+  }
+}

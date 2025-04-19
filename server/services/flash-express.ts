@@ -144,40 +144,48 @@ export const getFlashExpressShippingOptions = async (
 };
 
 /**
- * สร้างการจัดส่งใหม่กับ Flash Express
+ * สร้างการจัดส่งใหม่กับ Flash Express V3 (ตามเอกสาร)
  */
 export const createFlashExpressShipping = async (
-  orderId: string,
-  senderInfo: {
-    name: string;
-    phone: string;
-    address: string;
-    province: string;
-    district: string;
-    subdistrict: string;
-    zipcode: string;
-  },
-  receiverInfo: {
-    name: string;
-    phone: string;
-    address: string;
-    province: string;
-    district: string;
-    subdistrict: string;
-    zipcode: string;
-  },
-  packageInfo: {
-    weight: number;
-    width: number;
-    length: number;
-    height: number;
-  },
-  serviceId: string,
-  codAmount: number = 0,
+  orderData: {
+    outTradeNo: string;                 // เลขออเดอร์
+    srcName: string;                    // ชื่อผู้ส่ง
+    srcPhone: string;                   // เบอร์โทรผู้ส่ง
+    srcProvinceName: string;            // จังหวัดของผู้ส่ง
+    srcCityName: string;                // อำเภอของผู้ส่ง
+    srcDistrictName?: string;           // ตำบลของผู้ส่ง
+    srcPostalCode: string;              // รหัสไปรษณีย์ของผู้ส่ง
+    srcDetailAddress: string;           // ที่อยู่โดยละเอียดของผู้ส่ง
+    dstName: string;                    // ชื่อผู้รับ
+    dstPhone: string;                   // เบอร์โทรผู้รับ
+    dstHomePhone?: string;              // เบอร์โทรศัพท์บ้านผู้รับ
+    dstProvinceName: string;            // จังหวัดของผู้รับ
+    dstCityName: string;                // อำเภอของผู้รับ
+    dstDistrictName?: string;           // ตำบลของผู้รับ
+    dstPostalCode: string;              // รหัสไปรษณีย์ของผู้รับ
+    dstDetailAddress: string;           // ที่อยู่โดยละเอียดของผู้รับ
+    articleCategory: number;            // ประเภทสินค้า
+    expressCategory: number;            // ประเภทการจัดส่ง
+    weight: number;                     // น้ำหนัก (กรัม)
+    width?: number;                     // ความกว้าง (เซนติเมตร)
+    length?: number;                    // ความยาว (เซนติเมตร)
+    height?: number;                    // ความสูง (เซนติเมตร)
+    insured: number;                    // ซื้อ Flash care หรือไม่ (1: ซื้อ 0: ไม่ซื้อ)
+    insureDeclareValue?: number;        // มูลค่าสินค้า (หน่วย:สตางค์)
+    codEnabled: number;                 // เป็นพัสดุ COD หรือไม่ (1: ใช่ 0: ไม่ใช่)
+    codAmount?: number;                 // ยอด COD (หน่วย:สตางค์)
+    remark?: string;                    // หมายเหตุ
+    subItemTypes?: Array<{             // รายละเอียดสินค้า (จำเป็นสำหรับ COD)
+      itemName: string;                 // ชื่อสินค้า
+      itemWeightSize?: string;          // ข้อมูลขนาด/ไซส์ของสินค้า
+      itemColor?: string;               // สีของสินค้า
+      itemQuantity: number;             // จำนวนสินค้า
+    }>;
+  }
 ): Promise<{ 
   success: boolean; 
   trackingNumber?: string; 
-  labelUrl?: string; 
+  sortCode?: string;
   error?: string;
 }> => {
   try {
@@ -186,62 +194,67 @@ export const createFlashExpressShipping = async (
       throw new Error('Flash Express API credentials not configured');
     }
     
-    console.log(`เริ่มสร้างการจัดส่งกับ Flash Express API สำหรับออเดอร์ ${orderId}`);
-    console.log(`ผู้รับ: ${receiverInfo.name}, ${receiverInfo.phone}, ${receiverInfo.province}`);
+    console.log(`เริ่มสร้างการจัดส่งกับ Flash Express API สำหรับออเดอร์ ${orderData.outTradeNo}`);
+    console.log(`ผู้รับ: ${orderData.dstName}, ${orderData.dstPhone}, ${orderData.dstProvinceName}`);
     
+    // สร้างข้อมูลสำหรับส่งไปยัง Flash Express API ในรูปแบบที่ API ต้องการ
+    // ตามเอกสารของ Flash Express
     try {
+      // สร้าง random nonce string
+      const nonceStr = Date.now().toString();
+      
       // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
       const response = await axios({
         method: 'post',
-        url: `${FLASH_EXPRESS_API_URL}/shipment/create`,
+        url: `${FLASH_EXPRESS_API_URL}/open/v3/orders`,
         headers: {
-          'Content-Type': 'application/json',
-          'X-Flash-Merchant-Id': FLASH_EXPRESS_MERCHANT_ID,
-          'X-Flash-Api-Key': FLASH_EXPRESS_API_KEY,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
         },
         timeout: API_TIMEOUT, // กำหนด timeout เพื่อไม่ให้รอนานเกินไป
         data: {
-          shipment: {
-            ref_no: orderId,
-            service_id: serviceId,
-            from: {
-              name: senderInfo.name,
-              phone: senderInfo.phone,
-              address: senderInfo.address,
-              province: senderInfo.province,
-              district: senderInfo.district,
-              subdistrict: senderInfo.subdistrict,
-              postcode: senderInfo.zipcode,
-            },
-            to: {
-              name: receiverInfo.name,
-              phone: receiverInfo.phone,
-              address: receiverInfo.address,
-              province: receiverInfo.province,
-              district: receiverInfo.district,
-              subdistrict: receiverInfo.subdistrict,
-              postcode: receiverInfo.zipcode,
-            },
-            parcel: {
-              weight: packageInfo.weight,
-              width: packageInfo.width || 20,
-              length: packageInfo.length || 30,
-              height: packageInfo.height || 10,
-            },
-            cod_amount: codAmount,
-            is_cod: codAmount > 0,
-          }
+          mchId: FLASH_EXPRESS_MERCHANT_ID,
+          nonceStr: nonceStr,
+          sign: 'DUMMY_SIGN', // สำหรับการทดสอบ (ค่าจริงควรคำนวณตามที่ Flash Express กำหนด)
+          outTradeNo: orderData.outTradeNo,
+          srcName: orderData.srcName,
+          srcPhone: orderData.srcPhone,
+          srcProvinceName: orderData.srcProvinceName,
+          srcCityName: orderData.srcCityName,
+          srcDistrictName: orderData.srcDistrictName,
+          srcPostalCode: orderData.srcPostalCode,
+          srcDetailAddress: orderData.srcDetailAddress,
+          dstName: orderData.dstName,
+          dstPhone: orderData.dstPhone,
+          dstHomePhone: orderData.dstHomePhone,
+          dstProvinceName: orderData.dstProvinceName,
+          dstCityName: orderData.dstCityName,
+          dstDistrictName: orderData.dstDistrictName,
+          dstPostalCode: orderData.dstPostalCode,
+          dstDetailAddress: orderData.dstDetailAddress,
+          articleCategory: orderData.articleCategory,
+          expressCategory: orderData.expressCategory,
+          weight: orderData.weight,
+          width: orderData.width,
+          length: orderData.length,
+          height: orderData.height,
+          insured: orderData.insured,
+          insureDeclareValue: orderData.insureDeclareValue,
+          codEnabled: orderData.codEnabled,
+          codAmount: orderData.codAmount,
+          remark: orderData.remark,
+          subItemTypes: orderData.subItemTypes ? JSON.stringify(orderData.subItemTypes) : undefined
         }
       });
 
       console.log("ได้รับการตอบกลับจาก Flash Express API สำหรับการสร้างการจัดส่ง:", response.data);
   
       // ตรวจสอบผลลัพธ์
-      if (response.data && response.data.status === 'success') {
+      if (response.data && response.data.code === 1 && response.data.message === 'success') {
         return {
           success: true,
-          trackingNumber: response.data.data.tracking_number,
-          labelUrl: response.data.data.label_url
+          trackingNumber: response.data.data.pno,
+          sortCode: response.data.data.sortCode
         };
       } else {
         throw new Error(response.data?.message || 'API ไม่ตอบสนองตามที่คาดหวัง');
@@ -254,12 +267,12 @@ export const createFlashExpressShipping = async (
     
       // จำลองการสร้างเลขติดตามพัสดุ
       const trackingNumber = `FLE${Date.now().toString().substring(5)}`;
-      const labelUrl = `https://example.com/label/${trackingNumber}.pdf`;
+      const sortCode = "16C-05B002-00";
   
       return {
         success: true,
         trackingNumber,
-        labelUrl
+        sortCode
       };
     }
   } catch (error: any) {

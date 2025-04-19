@@ -112,42 +112,77 @@ router.post('/options', auth, async (req: Request, res: Response) => {
 });
 
 /**
- * API สำหรับสร้างการจัดส่งใหม่
+ * API สำหรับสร้างการจัดส่งใหม่ตามมาตรฐาน Flash Express V3
  */
 router.post('/create', auth, async (req: Request, res: Response) => {
   try {
     const {
-      orderId,
+      outTradeNo,
       senderInfo,
       receiverInfo,
       packageInfo,
-      serviceId,
-      codAmount = 0
+      codEnabled = 0,
+      codAmount = 0,
+      expressCategory = 1,
+      articleCategory = 1,
+      items = []
     } = req.body;
     
     // ตรวจสอบข้อมูลที่จำเป็น
-    if (!orderId || !senderInfo || !receiverInfo || !packageInfo || !serviceId) {
+    if (!outTradeNo || !senderInfo || !receiverInfo || !packageInfo) {
       return res.status(400).json({
         success: false,
         message: 'Missing required information'
       });
     }
     
+    // แปลงข้อมูลให้อยู่ในรูปแบบที่ Flash Express ต้องการ
+    const orderData = {
+      outTradeNo,
+      srcName: senderInfo.name,
+      srcPhone: senderInfo.phone,
+      srcProvinceName: senderInfo.province,
+      srcCityName: senderInfo.district,
+      srcDistrictName: senderInfo.subdistrict,
+      srcPostalCode: senderInfo.zipcode,
+      srcDetailAddress: senderInfo.address,
+      dstName: receiverInfo.name,
+      dstPhone: receiverInfo.phone,
+      dstHomePhone: receiverInfo.homePhone || receiverInfo.phone,
+      dstProvinceName: receiverInfo.province,
+      dstCityName: receiverInfo.district,
+      dstDistrictName: receiverInfo.subdistrict,
+      dstPostalCode: receiverInfo.zipcode,
+      dstDetailAddress: receiverInfo.address,
+      articleCategory,
+      expressCategory,
+      weight: packageInfo.weight * 1000, // แปลงจาก กก. เป็น กรัม
+      width: packageInfo.width,
+      length: packageInfo.length,
+      height: packageInfo.height,
+      insured: packageInfo.insured || 0,
+      insureDeclareValue: packageInfo.insureDeclareValue,
+      codEnabled,
+      codAmount: codAmount ? codAmount * 100 : undefined, // แปลงจากบาทเป็นสตางค์
+      remark: packageInfo.remark,
+      subItemTypes: items.length > 0 ? items.map((item: any) => ({
+        itemName: item.name,
+        itemWeightSize: item.weightSize || `${item.weight || 1}Kg`,
+        itemColor: item.color || '',
+        itemQuantity: item.quantity || 1
+      })) : undefined
+    };
+    
+    console.log('ข้อมูลสำหรับสร้างการจัดส่ง Flash Express:', orderData);
+    
     // สร้างการจัดส่ง
-    const result = await createFlashExpressShipping(
-      orderId,
-      senderInfo,
-      receiverInfo,
-      packageInfo,
-      serviceId,
-      codAmount
-    );
+    const result = await createFlashExpressShipping(orderData);
     
     if (result.success) {
       res.json({
         success: true,
         trackingNumber: result.trackingNumber,
-        labelUrl: result.labelUrl
+        sortCode: result.sortCode
       });
     } else {
       res.status(400).json({
