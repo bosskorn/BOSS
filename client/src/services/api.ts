@@ -70,5 +70,27 @@ export const uploadFile = async (formData: FormData) => {
   }
 }
 
+// Function for making API requests using fetch API
+export const apiRequest = async (
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  url: string,
+  data?: any
+) => {
+  const options: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    credentials: 'include',
+  };
+
+  if (data && (method === 'POST' || method === 'PUT')) {
+    options.body = JSON.stringify(data);
+  }
+
+  return fetch(url.startsWith('/') ? url : `/${url}`, options);
+};
+
 // Export API functions
 export default api
