@@ -14,6 +14,10 @@ const profileUpdateSchema = z.object({
   email: z.string().email().optional().nullable(),
   phone: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
+  province: z.string().optional().nullable(),
+  district: z.string().optional().nullable(),
+  subdistrict: z.string().optional().nullable(),
+  zipcode: z.string().optional().nullable(),
 });
 
 // Schema สำหรับการเปลี่ยนรหัสผ่าน
@@ -53,7 +57,11 @@ router.put('/profile', auth, async (req: Request, res: Response) => {
       fullname: validatedData.fullname,
       email: validatedData.email || null,
       phone: validatedData.phone || null,
-      // ยังไม่มีฟิลด์ address ในฐานข้อมูล จะต้องเพิ่มเติมภายหลัง
+      address: validatedData.address || null,
+      province: validatedData.province || null,
+      district: validatedData.district || null,
+      subdistrict: validatedData.subdistrict || null,
+      zipcode: validatedData.zipcode || null,
     });
     
     if (!updatedUser) {

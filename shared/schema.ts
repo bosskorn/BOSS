@@ -18,6 +18,11 @@ export const users = pgTable("users", {
   balance: decimal("balance", { precision: 10, scale: 2 }).default("0"),
   email: text("email"),
   phone: text("phone"),
+  address: text("address"),
+  province: text("province"),
+  district: text("district"),
+  subdistrict: text("subdistrict"),
+  zipcode: text("zipcode"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -202,6 +207,11 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   phone: true,
   role: true,
+  address: true,
+  province: true,
+  district: true,
+  subdistrict: true,
+  zipcode: true,
 });
 
 export const insertCustomerSchema = createInsertSchema(customers);

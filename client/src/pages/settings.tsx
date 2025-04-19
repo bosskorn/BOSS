@@ -39,6 +39,10 @@ const profileFormSchema = z.object({
   email: z.string().email({ message: 'กรุณาระบุอีเมลที่ถูกต้อง' }).optional().or(z.literal('')),
   phone: z.string().optional().or(z.literal('')),
   address: z.string().optional().or(z.literal('')),
+  province: z.string().optional().or(z.literal('')),
+  district: z.string().optional().or(z.literal('')),
+  subdistrict: z.string().optional().or(z.literal('')),
+  zipcode: z.string().optional().or(z.literal('')),
 });
 
 const passwordFormSchema = z.object({
@@ -59,6 +63,11 @@ interface UserProfile {
   balance: string;
   email: string | null;
   phone: string | null;
+  address: string | null;
+  province: string | null;
+  district: string | null;
+  subdistrict: string | null;
+  zipcode: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -78,6 +87,10 @@ const SettingsPage: React.FC = () => {
       email: '',
       phone: '',
       address: '',
+      province: '',
+      district: '',
+      subdistrict: '',
+      zipcode: '',
     },
   });
 
@@ -109,7 +122,11 @@ const SettingsPage: React.FC = () => {
             fullname: userData.fullname || '',
             email: userData.email || '',
             phone: userData.phone || '',
-            address: '', // ยังไม่มีฟิลด์นี้ในฐานข้อมูล
+            address: userData.address || '',
+            province: userData.province || '',
+            district: userData.district || '',
+            subdistrict: userData.subdistrict || '',
+            zipcode: userData.zipcode || '',
           });
         } else {
           console.error('ไม่สามารถดึงข้อมูลผู้ใช้ได้', response.data);
