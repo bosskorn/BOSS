@@ -236,6 +236,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   phone: true,
   role: true,
+  balance: true,
   address: true,
   province: true,
   district: true,
@@ -276,3 +277,6 @@ export type OrderItem = typeof orderItems.$inferSelect;
 
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
+
+export type InsertTopup = z.infer<typeof insertTopupSchema>;
+export type Topup = typeof topups.$inferSelect;

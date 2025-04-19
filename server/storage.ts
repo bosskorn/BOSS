@@ -8,7 +8,8 @@ import {
   shippingMethods, type ShippingMethod, type InsertShippingMethod,
   discounts, type Discount, type InsertDiscount,
   orderItems, type OrderItem, type InsertOrderItem,
-  orders, type Order, type InsertOrder
+  orders, type Order, type InsertOrder,
+  topups, type Topup, type InsertTopup
 } from "@shared/schema";
 
 // ดัดแปลงอินเตอร์เฟสให้มีเมธอด CRUD ที่จำเป็น
@@ -62,6 +63,13 @@ export interface IStorage {
   // OrderItem operations
   getOrderItems(orderId: number): Promise<OrderItem[]>;
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
+  
+  // Topup operations
+  getTopup(id: number): Promise<Topup | undefined>;
+  getTopupByReferenceId(referenceId: string): Promise<Topup | undefined>;
+  getTopupsByUserId(userId: number): Promise<Topup[]>;
+  createTopup(topup: InsertTopup): Promise<Topup>;
+  updateTopup(id: number, topup: Partial<InsertTopup>): Promise<Topup | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -246,6 +254,34 @@ export class DatabaseStorage implements IStorage {
   async createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem> {
     const [newOrderItem] = await db.insert(orderItems).values(orderItem).returning();
     return newOrderItem;
+  }
+  
+  // Topup operations
+  async getTopup(id: number): Promise<Topup | undefined> {
+    const [topup] = await db.select().from(topups).where(eq(topups.id, id));
+    return topup;
+  }
+  
+  async getTopupByReferenceId(referenceId: string): Promise<Topup | undefined> {
+    const [topup] = await db.select().from(topups).where(eq(topups.referenceId, referenceId));
+    return topup;
+  }
+  
+  async getTopupsByUserId(userId: number): Promise<Topup[]> {
+    return await db.select().from(topups).where(eq(topups.userId, userId));
+  }
+  
+  async createTopup(topup: InsertTopup): Promise<Topup> {
+    const [newTopup] = await db.insert(topups).values(topup).returning();
+    return newTopup;
+  }
+  
+  async updateTopup(id: number, topupData: Partial<InsertTopup>): Promise<Topup | undefined> {
+    const [updatedTopup] = await db.update(topups)
+      .set({ ...topupData, updatedAt: new Date() })
+      .where(eq(topups.id, id))
+      .returning();
+    return updatedTopup;
   }
 }
 
