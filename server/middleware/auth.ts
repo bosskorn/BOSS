@@ -1,5 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { User } from "@shared/schema";
+import jwt from "jsonwebtoken";
+import { storage } from "../storage";
+
+// Environment variables with fallbacks
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 // เพิ่มการประกาศ type เพื่อให้ TypeScript รู้จัก user property ใน Request
 declare global {
@@ -11,24 +16,54 @@ declare global {
 }
 
 // Middleware สำหรับการตรวจสอบว่าผู้ใช้ได้เข้าสู่ระบบหรือไม่
-export const auth = (req: Request, res: Response, next: NextFunction) => {
+export const auth = async (req: Request, res: Response, next: NextFunction) => {
   // แสดงข้อมูลการตรวจสอบต่างๆ
   console.log('Auth middleware check:');
   console.log('- isAuthenticated:', req.isAuthenticated());
   console.log('- user:', req.user?.id, req.user?.username);
   console.log('- sessionID:', req.sessionID);
   console.log('- cookies:', req.headers.cookie);
+  console.log('- auth header:', req.headers.authorization);
   
-  if (!req.isAuthenticated()) {
-    console.log('Authentication failed: User is not authenticated');
-    return res.status(401).json({
-      success: false,
-      message: "กรุณาเข้าสู่ระบบ",
-    });
+  // ตรวจสอบการเข้าสู่ระบบด้วย session ก่อน (Passport.js)
+  if (req.isAuthenticated()) {
+    console.log('Authentication successful via session for:', req.user?.username);
+    return next();
   }
   
-  console.log('Authentication successful for:', req.user?.username);
-  next();
+  // ถ้าไม่มีการเข้าสู่ระบบด้วย session ให้ตรวจสอบ JWT token
+  const authHeader = req.headers.authorization;
+  
+  if (authHeader) {
+    const token = authHeader.split(' ')[1]; // แยก "Bearer" ออกจาก token
+    
+    if (token) {
+      try {
+        // ตรวจสอบความถูกต้องของ token
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        console.log('Token verification successful for user ID:', decoded.id);
+        
+        // ดึงข้อมูลผู้ใช้จาก ID ที่อยู่ใน token
+        const user = await storage.getUser(decoded.id);
+        
+        if (user) {
+          // กำหนดข้อมูลผู้ใช้ให้กับ request
+          req.user = user;
+          console.log('Authentication successful via token for:', user.username);
+          return next();
+        }
+      } catch (error: any) {
+        console.error('Token verification error:', error.message);
+      }
+    }
+  }
+  
+  // ถ้าไม่มีการเข้าสู่ระบบทั้ง session และ token
+  console.log('Authentication failed: Neither session nor token auth succeeded');
+  return res.status(401).json({
+    success: false,
+    message: "ไม่ได้เข้าสู่ระบบ",
+  });
 };
 
 // Middleware สำหรับการตรวจสอบว่าผู้ใช้มีสิทธิ์ในการเข้าถึงข้อมูลหรือไม่

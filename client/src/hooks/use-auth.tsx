@@ -36,12 +36,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         console.log('Checking authentication status...');
         
+        // ดึง token จาก localStorage
+        const token = localStorage.getItem('auth_token');
+        
+        // ถ้าไม่มี token ให้ถือว่ายังไม่ได้เข้าสู่ระบบ
+        if (!token) {
+          console.log('No auth token found in localStorage');
+          return null;
+        }
+        
         // ใช้ fetch API แทน axios เพื่อแก้ปัญหา cookie
         const response = await fetch('/api/user', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}` // ส่ง token ไปกับ request
           },
           credentials: 'include' // สำคัญสำหรับการส่ง cookie
         });
@@ -49,7 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // ถ้าไม่ได้รับรหัส 200 OK
         if (!response.ok) {
           if (response.status === 401) {
-            console.log('Not logged in (401)');
+            console.log('Not logged in or token expired (401)');
+            // ลบ token ที่หมดอายุ
+            localStorage.removeItem('auth_token');
             return null;
           }
           throw new Error(`API responded with status ${response.status}`);
@@ -61,15 +73,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // ตรวจสอบว่าการเข้าสู่ระบบสำเร็จหรือไม่
         if (data.success && data.user) {
-          console.log('User found in session:', data.user.username);
+          console.log('User found:', data.user.username);
           return data.user;
         } else {
-          console.log('No user in session or invalid response format');
+          console.log('No user found or invalid response format');
           console.log('API response data:', data);
           return null;
         }
       } catch (error: any) {
         console.error('Error checking auth:', error.message);
+        // ในกรณีที่มีข้อผิดพลาด ให้ลบ token
+        localStorage.removeItem('auth_token');
         return null;
       }
     },
@@ -121,9 +135,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    onSuccess: (user: SelectUser) => {
+    onSuccess: (data: any) => {
+      // บันทึก token ลงใน localStorage
+      if (data.token) {
+        localStorage.setItem('auth_token', data.token);
+      }
+      
       // บันทึกข้อมูลผู้ใช้ลงใน cache
-      queryClient.setQueryData(["/api/user"], user);
+      queryClient.setQueryData(["/api/user"], data.user || data);
       
       // แสดงข้อความแจ้งเตือน
       toast({
@@ -239,6 +258,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: () => {
+      // ลบ token ออกจาก localStorage
+      localStorage.removeItem('auth_token');
+      
       // ลบข้อมูลผู้ใช้ออกจาก cache
       queryClient.setQueryData(["/api/user"], null);
       

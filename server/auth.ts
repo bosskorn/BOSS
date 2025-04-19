@@ -8,8 +8,12 @@ import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { pool } from "./db";
 import connectPg from "connect-pg-simple";
+import jwt from "jsonwebtoken";
 
 const PostgresSessionStore = connectPg(session);
+
+// Environment variables with fallbacks
+const JWT_SECRET = process.env.JWT_SECRET || 'purpledash-secure-jwt-secret-key-2025';
 
 declare global {
   namespace Express {
@@ -164,11 +168,19 @@ export function setupAuth(app: Express) {
         // ส่งข้อมูลผู้ใช้กลับไป (ยกเว้นรหัสผ่าน)
         const { password, ...userWithoutPassword } = user;
         
+        // สร้าง JWT token
+        const token = jwt.sign(
+          { id: user.id, username: user.username, role: user.role },
+          JWT_SECRET,
+          { expiresIn: '7d' } // หมดอายุใน 7 วัน
+        );
+        
         // จัดรูปแบบข้อมูลให้ตรงกันทั้ง API
         res.json({
           success: true,
           message: "เข้าสู่ระบบสำเร็จ",
-          user: userWithoutPassword
+          user: userWithoutPassword,
+          token
         });
       });
     })(req, res, next);
@@ -181,14 +193,41 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "ไม่ได้เข้าสู่ระบบ" 
-      });
+  // สร้าง middleware เพื่อตรวจสอบการเข้าสู่ระบบ
+  const checkAuth = (req: Express.Request, res: any, next: any) => {
+    // ถ้ามีการเข้าสู่ระบบด้วย session
+    if (req.isAuthenticated()) {
+      return next();
     }
     
+    // ตรวจสอบ Authorization header
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      const token = authHeader.split(' ')[1]; // แยก "Bearer" ออกจาก token
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as any;
+          storage.getUser(decoded.id).then(user => {
+            if (user) {
+              req.user = user;
+              return next();
+            }
+            return res.status(401).json({ success: false, message: "ไม่พบข้อมูลผู้ใช้" });
+          }).catch(err => {
+            return res.status(401).json({ success: false, message: "ไม่สามารถดึงข้อมูลผู้ใช้ได้" });
+          });
+        } catch (error) {
+          return res.status(401).json({ success: false, message: "Token ไม่ถูกต้องหรือหมดอายุ" });
+        }
+      } else {
+        return res.status(401).json({ success: false, message: "รูปแบบ token ไม่ถูกต้อง" });
+      }
+    } else {
+      return res.status(401).json({ success: false, message: "กรุณาเข้าสู่ระบบ" });
+    }
+  };
+  
+  app.get("/api/user", checkAuth, (req, res) => {
     // ส่งข้อมูลผู้ใช้ที่เข้าสู่ระบบอยู่ (ยกเว้นรหัสผ่าน)
     const { password, ...userWithoutPassword } = req.user as SelectUser;
     res.json({
