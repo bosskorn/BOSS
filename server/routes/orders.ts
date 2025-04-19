@@ -261,12 +261,22 @@ router.post('/', auth, async (req, res) => {
               trackingNumber: flashExpressResponse.trackingNumber,
               status: 'processing'
             });
+            
+            console.log(`การสร้างเลขพัสดุสำเร็จ: ${flashExpressResponse.trackingNumber}`);
           } else {
             // If Flash Express API failed, delete the order and return error
             await storage.deleteOrder(order.id);
+            
+            const errorMessage = flashExpressResponse.error || 'ไม่สามารถสร้างเลขพัสดุได้ กรุณาลองใหม่อีกครั้ง';
+            console.error(`การสร้างเลขพัสดุล้มเหลว: ${errorMessage}`);
+            
             return res.status(400).json({
               success: false,
-              message: flashExpressResponse.error || 'ไม่สามารถสร้างเลขพัสดุได้ กรุณาลองใหม่อีกครั้ง'
+              message: errorMessage,
+              details: {
+                apiResponse: flashExpressResponse,
+                shippingData: shippingData
+              }
             });
           }
         }

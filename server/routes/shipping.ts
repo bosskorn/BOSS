@@ -140,37 +140,42 @@ router.post('/create', auth, async (req: Request, res: Response) => {
     const orderData = {
       outTradeNo,
       srcName: senderInfo.name,
-      srcPhone: senderInfo.phone,
+      srcPhone: senderInfo.phone.replace(/[-\s]/g, ''), // ลบช่องว่างและขีด
       srcProvinceName: senderInfo.province,
       srcCityName: senderInfo.district,
-      srcDistrictName: senderInfo.subdistrict,
+      srcDistrictName: senderInfo.subdistrict || '',
       srcPostalCode: senderInfo.zipcode,
       srcDetailAddress: senderInfo.address,
       dstName: receiverInfo.name,
-      dstPhone: receiverInfo.phone,
-      dstHomePhone: receiverInfo.homePhone || receiverInfo.phone,
+      dstPhone: receiverInfo.phone.replace(/[-\s]/g, ''), // ลบช่องว่างและขีด
+      dstHomePhone: receiverInfo.homePhone ? receiverInfo.homePhone.replace(/[-\s]/g, '') : receiverInfo.phone.replace(/[-\s]/g, ''),
       dstProvinceName: receiverInfo.province,
       dstCityName: receiverInfo.district,
-      dstDistrictName: receiverInfo.subdistrict,
+      dstDistrictName: receiverInfo.subdistrict || '',
       dstPostalCode: receiverInfo.zipcode,
       dstDetailAddress: receiverInfo.address,
-      articleCategory,
-      expressCategory,
-      weight: packageInfo.weight * 1000, // แปลงจาก กก. เป็น กรัม
-      width: packageInfo.width,
-      length: packageInfo.length,
-      height: packageInfo.height,
-      insured: packageInfo.insured || 0,
-      insureDeclareValue: packageInfo.insureDeclareValue,
-      codEnabled,
-      codAmount: codAmount ? codAmount * 100 : undefined, // แปลงจากบาทเป็นสตางค์
-      remark: packageInfo.remark,
+      articleCategory: Number(articleCategory),
+      expressCategory: Number(expressCategory),
+      weight: Math.round(packageInfo.weight * 1000), // แปลงจาก กก. เป็น กรัม และปัดเป็นจำนวนเต็ม
+      width: packageInfo.width ? Math.round(packageInfo.width) : 20,
+      length: packageInfo.length ? Math.round(packageInfo.length) : 30,
+      height: packageInfo.height ? Math.round(packageInfo.height) : 10,
+      insured: packageInfo.insured ? 1 : 0,
+      insureDeclareValue: packageInfo.insureDeclareValue ? Math.round(packageInfo.insureDeclareValue * 100) : undefined, // แปลงจากบาทเป็นสตางค์
+      codEnabled: Number(codEnabled),
+      codAmount: codAmount ? Math.round(codAmount * 100) : undefined, // แปลงจากบาทเป็นสตางค์และปัดเป็นจำนวนเต็ม
+      remark: packageInfo.remark || '',
       subItemTypes: items.length > 0 ? items.map((item: any) => ({
-        itemName: item.name,
+        itemName: item.name || 'สินค้าไม่ระบุชื่อ',
         itemWeightSize: item.weightSize || `${item.weight || 1}Kg`,
-        itemColor: item.color || '',
-        itemQuantity: item.quantity || 1
-      })) : undefined
+        itemColor: item.color || '-',
+        itemQuantity: Number(item.quantity) || 1
+      })) : [{
+        itemName: 'สินค้า',
+        itemWeightSize: '1Kg',
+        itemColor: '-',
+        itemQuantity: 1
+      }]
     };
     
     console.log('ข้อมูลสำหรับสร้างการจัดส่ง Flash Express:', orderData);

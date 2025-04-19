@@ -7,8 +7,8 @@ const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com';
 const FLASH_EXPRESS_MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
-// กำหนดค่า timeout สำหรับการเชื่อมต่อ API (เพิ่มขึ้นเป็น 10 วินาที)
-const API_TIMEOUT = 10000; // 10 วินาที
+// กำหนดค่า timeout สำหรับการเชื่อมต่อ API (เพิ่มขึ้นเป็น 15 วินาที)
+const API_TIMEOUT = 15000; // 15 วินาที
 
 // ตรวจสอบว่ามี API key หรือไม่
 if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
