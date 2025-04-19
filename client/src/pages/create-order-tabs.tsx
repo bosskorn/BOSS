@@ -454,7 +454,7 @@ const CreateOrderTabsPage: React.FC = () => {
     const words = addressText.split(/\s+|,+/).filter(Boolean);
     
     // คำที่ควรข้ามในการวิเคราะห์
-    const skipWords = ['ซอย', 'ซ.', 'ถนน', 'ถ.', 'หมู่', 'ม.', 'หมู่บ้าน', 'อาคาร', 'คอนโด', 'เพลส', 'แมนชั่น'];
+    const skipWords = ['ซอย', 'ซ.', 'ถนน', 'ถ.', 'หมู่', 'ม.', 'หมู่บ้าน', 'อาคาร', 'คอนโด', 'เพลส', 'แมนชั่น', 'อพาร์ทเม้นท์', 'แฟลต', 'เรสซิเดนซ์'];
     
     // รายชื่ออำเภอและตำบลที่มีชื่อเดียวกัน (มักพบในกรุงเทพฯ)
     const commonDistrictNames = [
@@ -510,8 +510,22 @@ const CreateOrderTabsPage: React.FC = () => {
     
     // หากยังไม่พบแขวง/ตำบล หรือ เขต/อำเภอ ให้วิเคราะห์จากคำทั่วไปที่เหลือ
     if (!components.district || !components.subdistrict) {
+      // ค้นหา "ลาดพร้าว" ก่อนเป็นพิเศษ (เคสที่พบบ่อย)
+      if (addressText.includes("ลาดพร้าว") && !components.district) {
+        components.district = "ลาดพร้าว";
+        console.log("กำหนดเขต/อำเภอเป็น 'ลาดพร้าว' (พบในข้อความ)");
+      }
+      
       // กรองคำที่ไม่เกี่ยวข้องออก
       const relevantWords = words.filter(word => {
+        // ตัดเครื่องหมายต่างๆ ออก
+        word = word.replace(/["']/g, '');
+        
+        // ข้ามคำที่เป็นเบอร์โทรศัพท์ 9-10 หลัก (เริ่มต้นด้วย 0)
+        if (/^0\d{8,9}$/.test(word)) {
+          return false;
+        }
+        
         // ข้ามคำที่เป็นคำนำหน้า ตัวเลข หรือคำที่สั้นเกินไป
         if (skipWords.some(skip => word.toLowerCase().includes(skip.toLowerCase())) || 
             /^\d+$/.test(word) || 
@@ -534,21 +548,60 @@ const CreateOrderTabsPage: React.FC = () => {
           return false;
         }
         
+        // ข้ามคำที่น่าจะเป็นชื่อลูกค้า (เช่น น้องซี, พี่ต้น)
+        const likelyThaiNamePrefixes = ['น้อง', 'พี่', 'คุณ', 'ป้า', 'ลุง', 'นาย', 'นาง', 'น.ส.'];
+        if (likelyThaiNamePrefixes.some(prefix => word.startsWith(prefix))) {
+          return false;
+        }
+        
         return true;
       });
       
       console.log("คำที่เหลือสำหรับวิเคราะห์:", relevantWords);
       
+      // ตรวจสอบชื่อเขตที่พบบ่อยใน contextual analysis
+      if (!components.district && components.province && components.province.includes("กรุงเทพ")) {
+        // อันดับแรกตรวจสอบจากคำที่มีในข้อความ
+        for (const districtName of commonDistrictNames) {
+          const districtRegex = new RegExp(`\\b${districtName}\\b`, 'i');
+          if (districtRegex.test(addressText)) {
+            components.district = districtName;
+            console.log("กำหนดเขตกรุงเทพฯ:", districtName);
+            break;
+          }
+        }
+      }
+      
       // ถ้ามีคำที่เหลือ และยังไม่พบเขต/อำเภอ
       if (relevantWords.length > 0 && !components.district) {
-        components.district = relevantWords[0];
-        console.log("กำหนดเขต/อำเภอจากคำที่เหลือ:", components.district);
+        // ตรวจสอบว่าคำแรกน่าจะเป็นชื่อถนนหรือไม่
+        if (commonRoadNames.includes(relevantWords[0])) {
+          // ถ้าเป็นชื่อถนน ให้ข้ามไป
+          console.log("ข้ามคำแรกเพราะเป็นชื่อถนน:", relevantWords[0]);
+          
+          if (relevantWords.length > 1) {
+            components.district = relevantWords[1];
+            console.log("กำหนดเขต/อำเภอจากคำที่เหลือ:", components.district);
+          }
+        } else {
+          components.district = relevantWords[0];
+          console.log("กำหนดเขต/อำเภอจากคำที่เหลือ:", components.district);
+        }
       }
       
       // ถ้ามีคำที่เหลือมากกว่า 1 คำ และยังไม่พบแขวง/ตำบล
       if (relevantWords.length > 1 && !components.subdistrict) {
-        components.subdistrict = relevantWords[1];
-        console.log("กำหนดแขวง/ตำบลจากคำที่เหลือ:", components.subdistrict);
+        // ตรวจสอบว่าคำที่สองน่าจะเป็นชื่อถนนหรือไม่
+        if (commonRoadNames.includes(relevantWords[1])) {
+          // ถ้าเป็นชื่อถนน และมีคำที่สาม ให้ใช้คำที่สาม
+          if (relevantWords.length > 2) {
+            components.subdistrict = relevantWords[2];
+            console.log("กำหนดแขวง/ตำบลจากคำที่เหลือ (ข้ามถนน):", components.subdistrict);
+          }
+        } else {
+          components.subdistrict = relevantWords[1];
+          console.log("กำหนดแขวง/ตำบลจากคำที่เหลือ:", components.subdistrict);
+        }
       }
     }
     
@@ -1111,9 +1164,9 @@ const CreateOrderTabsPage: React.FC = () => {
                               name="houseNumber"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>บ้านเลขที่ <span className="text-red-500">*</span></FormLabel>
+                                  <FormLabel>บ้านเลขที่และถนน <span className="text-red-500">*</span></FormLabel>
                                   <FormControl>
-                                    <Input placeholder="เลขที่" {...field} />
+                                    <Input placeholder="บ้านเลขที่และถนน" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -1148,19 +1201,7 @@ const CreateOrderTabsPage: React.FC = () => {
                                 </FormItem>
                               )}
                             />
-                            <FormField
-                              control={form.control}
-                              name="road"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>ถนน</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="ถนน (ถ้ามี)" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -1577,7 +1618,7 @@ const CreateOrderTabsPage: React.FC = () => {
                               {form.getValues('houseNumber')} 
                               {form.getValues('village') && ` ${form.getValues('village')}`}
                               {form.getValues('soi') && ` ${form.getValues('soi')}`}
-                              {form.getValues('road') && ` ${form.getValues('road')}`}
+
                               <br />
                               ต.{form.getValues('subdistrict')} อ.{form.getValues('district')} 
                               <br />
