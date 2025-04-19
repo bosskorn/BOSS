@@ -36,30 +36,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         console.log('Checking authentication status...');
         
-        // ใช้ axios ที่ตั้งค่าไว้แล้ว
-        const response = await api.get('/api/user');
+        // ใช้ fetch API แทน axios เพื่อแก้ปัญหา cookie
+        const response = await fetch('/api/user', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'include' // สำคัญสำหรับการส่ง cookie
+        });
         
-        console.log('Auth check response:', response.status, response.data);
+        // ถ้าไม่ได้รับรหัส 200 OK
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.log('Not logged in (401)');
+            return null;
+          }
+          throw new Error(`API responded with status ${response.status}`);
+        }
+        
+        // แปลงคำตอบเป็น JSON
+        const data = await response.json();
+        console.log('Auth check response:', response.status, data);
         
         // ตรวจสอบว่าการเข้าสู่ระบบสำเร็จหรือไม่
-        if (response.data.success && response.data.user) {
-          console.log('User found in session:', response.data.user.username);
-          return response.data.user;
+        if (data.success && data.user) {
+          console.log('User found in session:', data.user.username);
+          return data.user;
         } else {
           console.log('No user in session or invalid response format');
-          console.log('API response data:', response.data);
+          console.log('API response data:', data);
           return null;
         }
       } catch (error: any) {
-        console.error('Error checking auth:', error.response?.status, error.message);
-        
-        // ถ้าเป็น 401 แสดงว่ายังไม่ได้เข้าสู่ระบบ ให้ return null
-        if (error.response?.status === 401) {
-          console.log('Not logged in (401)');
-          return null;
-        }
-        
-        throw error;
+        console.error('Error checking auth:', error.message);
+        return null;
       }
     },
     staleTime: 10 * 60 * 1000, // 10 นาที
@@ -144,22 +155,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password: '[MASKED]'
         });
         
-        // ใช้ axios ที่ตั้งค่าไว้แล้ว
-        const response = await api.post("/api/register", userData);
+        // ใช้ fetch แทน axios เพื่อความสอดคล้อง
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData),
+          credentials: 'include' // สำคัญสำหรับการส่ง/รับ cookies
+        });
         
-        console.log('Register response:', response.status, response.data);
+        const data = await response.json();
+        console.log('Register response:', response.status, data);
         
         // ตรวจสอบว่าลงทะเบียนสำเร็จหรือไม่
-        if (!response.data.success) {
-          throw new Error(response.data.message || "ลงทะเบียนล้มเหลว");
+        if (!data.success) {
+          throw new Error(data.message || "ลงทะเบียนล้มเหลว");
         }
         
         // ตรวจสอบว่าได้รับข้อมูลผู้ใช้หรือไม่
-        if (!response.data.user) {
+        if (!data.user) {
           throw new Error("ไม่ได้รับข้อมูลผู้ใช้จากเซิร์ฟเวอร์");
         }
         
-        return response.data.user;
+        return data.user;
       } catch (error: any) {
         console.error("Register error:", error.response?.data || error.message);
         
@@ -201,14 +220,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         console.log('Logging out...');
         
-        // ใช้ axios ที่ตั้งค่าไว้แล้ว
-        const response = await api.post("/api/logout");
+        // ใช้ fetch แทน axios เพื่อความสอดคล้อง
+        const response = await fetch('/api/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include' // สำคัญสำหรับการส่ง cookie
+        });
         
-        console.log('Logout response:', response.status, response.data);
+        const data = await response.json();
+        console.log('Logout response:', response.status, data);
         
-        return response.data;
+        return data;
       } catch (error: any) {
-        console.error("Logout error:", error.response?.data || error.message);
+        console.error("Logout error:", error.message);
         throw error;
       }
     },
