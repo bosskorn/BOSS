@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -193,46 +193,49 @@ export function setupAuth(app: Express) {
     });
   });
 
-  // สร้าง middleware เพื่อตรวจสอบการเข้าสู่ระบบ
-  const checkAuth = (req: Express.Request, res: any, next: any) => {
+  // ใช้ middleware ตรวจสอบ JWT token
+  app.get("/api/user", async (req: any, res: any) => {
     // ถ้ามีการเข้าสู่ระบบด้วย session
-    if (req.isAuthenticated()) {
-      return next();
+    if (req.isAuthenticated() && req.user) {
+      const { password, ...userWithoutPassword } = req.user as SelectUser;
+      return res.json({
+        success: true,
+        user: userWithoutPassword
+      });
     }
     
     // ตรวจสอบ Authorization header
     const authHeader = req.headers.authorization;
-    if (authHeader) {
-      const token = authHeader.split(' ')[1]; // แยก "Bearer" ออกจาก token
-      if (token) {
-        try {
-          const decoded = jwt.verify(token, JWT_SECRET) as any;
-          storage.getUser(decoded.id).then(user => {
-            if (user) {
-              req.user = user;
-              return next();
-            }
-            return res.status(401).json({ success: false, message: "ไม่พบข้อมูลผู้ใช้" });
-          }).catch(err => {
-            return res.status(401).json({ success: false, message: "ไม่สามารถดึงข้อมูลผู้ใช้ได้" });
-          });
-        } catch (error) {
-          return res.status(401).json({ success: false, message: "Token ไม่ถูกต้องหรือหมดอายุ" });
-        }
-      } else {
-        return res.status(401).json({ success: false, message: "รูปแบบ token ไม่ถูกต้อง" });
-      }
-    } else {
+    if (!authHeader) {
       return res.status(401).json({ success: false, message: "กรุณาเข้าสู่ระบบ" });
     }
-  };
-  
-  app.get("/api/user", checkAuth, (req, res) => {
-    // ส่งข้อมูลผู้ใช้ที่เข้าสู่ระบบอยู่ (ยกเว้นรหัสผ่าน)
-    const { password, ...userWithoutPassword } = req.user as SelectUser;
-    res.json({
-      success: true,
-      user: userWithoutPassword
-    });
+
+    const token = authHeader.split(' ')[1]; // แยก "Bearer" ออกจาก token
+    if (!token) {
+      return res.status(401).json({ success: false, message: "รูปแบบ token ไม่ถูกต้อง" });
+    }
+
+    try {
+      // ตรวจสอบความถูกต้องของ token
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      
+      // ดึงข้อมูลผู้ใช้จาก ID ที่อยู่ใน token
+      storage.getUser(decoded.id).then(user => {
+        if (!user) {
+          return res.status(401).json({ success: false, message: "ไม่พบข้อมูลผู้ใช้" });
+        }
+        
+        // ส่งข้อมูลผู้ใช้กลับไป (ยกเว้นรหัสผ่าน)
+        const { password, ...userWithoutPassword } = user;
+        res.json({
+          success: true,
+          user: userWithoutPassword
+        });
+      }).catch(err => {
+        return res.status(500).json({ success: false, message: "ไม่สามารถดึงข้อมูลผู้ใช้ได้" });
+      });
+    } catch (error: any) {
+      return res.status(401).json({ success: false, message: "Token ไม่ถูกต้องหรือหมดอายุ" });
+    }
   });
 }

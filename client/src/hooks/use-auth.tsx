@@ -136,13 +136,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: (data: any) => {
+      console.log('Login successful, response data:', data);
+      
       // บันทึก token ลงใน localStorage
       if (data.token) {
+        console.log('Found token in response, saving to localStorage');
         localStorage.setItem('auth_token', data.token);
+      } else {
+        // ถ้าไม่พบ token ในข้อมูลโดยตรง ให้ตรวจสอบในรูปแบบการตอบกลับอื่น
+        if (typeof data === 'object' && data !== null) {
+          if (data.data?.token) {
+            console.log('Found token in data.data.token, saving to localStorage');
+            localStorage.setItem('auth_token', data.data.token);
+          }
+        }
       }
       
+      // กำหนดข้อมูลผู้ใช้ให้ถูกต้อง
+      const userData = data.user || (data.data?.user) || data;
+      console.log('Saving user data to cache:', userData);
+      
       // บันทึกข้อมูลผู้ใช้ลงใน cache
-      queryClient.setQueryData(["/api/user"], data.user || data);
+      queryClient.setQueryData(["/api/user"], userData);
       
       // แสดงข้อความแจ้งเตือน
       toast({
@@ -208,9 +223,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    onSuccess: (user: SelectUser) => {
+    onSuccess: (data: any) => {
+      console.log('Registration successful, response data:', data);
+      
+      // บันทึก token ลงใน localStorage ถ้ามี
+      if (data.token) {
+        console.log('Found token in registration response, saving to localStorage');
+        localStorage.setItem('auth_token', data.token);
+      } else if (data.data?.token) {
+        console.log('Found token in data.data.token, saving to localStorage');
+        localStorage.setItem('auth_token', data.data.token);
+      }
+      
+      // กำหนดข้อมูลผู้ใช้
+      const userData = data.user || (data.data?.user) || data;
+      
       // บันทึกข้อมูลผู้ใช้ลงใน cache
-      queryClient.setQueryData(["/api/user"], user);
+      queryClient.setQueryData(["/api/user"], userData);
       
       // แสดงข้อความแจ้งเตือน
       toast({

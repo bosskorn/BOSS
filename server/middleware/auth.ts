@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { storage } from "../storage";
 
 // Environment variables with fallbacks
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'purpledash-secure-jwt-secret-key-2025';
 
 // เพิ่มการประกาศ type เพื่อให้ TypeScript รู้จัก user property ใน Request
 declare global {

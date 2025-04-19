@@ -22,9 +22,10 @@ const api = axios.create({
 // Interceptor to add auth token to requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('auth_token')
     if (token) {
-      config.headers['x-auth-token'] = token
+      // เปลี่ยนจาก x-auth-token เป็น Authorization header แบบ Bearer token
+      config.headers['Authorization'] = `Bearer ${token}`
     }
     return config
   },
@@ -76,13 +77,21 @@ export const apiRequest = async (
   url: string,
   data?: any
 ) => {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+  
+  // เพิ่ม JWT token ถ้ามี
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const options: RequestInit = {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    credentials: 'include',
+    headers,
+    credentials: 'include', // ยังคงส่ง cookies สำหรับ session-based auth
   };
 
   if (data && (method === 'POST' || method === 'PUT')) {
