@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'wouter';
 import { 
   Card, 
@@ -26,95 +26,118 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, ArrowUpDown, ShoppingBag } from 'lucide-react';
+import { Search, ArrowUpDown, ShoppingBag, Loader2 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 
-// ข้อมูลตัวอย่าง (จะถูกแทนที่ด้วยข้อมูลจริงจาก API ในอนาคต)
-const SAMPLE_PRODUCTS = [
-  {
-    id: 1,
-    name: 'เสื้อยืดคอกลม',
-    description: 'เสื้อยืดคอกลมสีขาว ผ้าคอตตอน 100% ไซส์ S-XXL',
-    price: 250,
-    stock: 45,
-    category: 'เสื้อผ้า',
-    image: null,
-    isActive: true
-  },
-  {
-    id: 2,
-    name: 'กางเกงยีนส์ขายาว',
-    description: 'กางเกงยีนส์ทรงตรง สีน้ำเงินเข้ม ไซส์ 28-36',
-    price: 550,
-    stock: 30,
-    category: 'เสื้อผ้า',
-    image: null,
-    isActive: true
-  },
-  {
-    id: 3,
-    name: 'รองเท้าผ้าใบสีขาว',
-    description: 'รองเท้าผ้าใบสีขาวล้วน ไซส์ 37-44',
-    price: 890,
-    stock: 25,
-    category: 'รองเท้า',
-    image: null,
-    isActive: true
-  },
-  {
-    id: 4,
-    name: 'กระเป๋าสะพายข้าง',
-    description: 'กระเป๋าสะพายข้าง ผ้าแคนวาส สีน้ำตาล',
-    price: 490,
-    stock: 15,
-    category: 'กระเป๋า',
-    image: null,
-    isActive: true
-  },
-  {
-    id: 5,
-    name: 'หมวกแก๊ป',
-    description: 'หมวกแก๊ป สีดำ ปรับขนาดได้',
-    price: 290,
-    stock: 20,
-    category: 'เครื่องประดับ',
-    image: null,
-    isActive: true
-  },
-  {
-    id: 6,
-    name: 'ชุดเดรสแขนกุด',
-    description: 'ชุดเดรสแขนกุด สีเบจ ทรงหลวม ไซส์ S-L',
-    price: 690,
-    stock: 10,
-    category: 'เสื้อผ้า',
-    image: null,
-    isActive: false
-  }
-];
+// ประเภทของสินค้าในระบบ
+interface ProductType {
+  id: number;
+  sku: string;
+  name: string;
+  description: string;
+  price: string | number;
+  cost: string | number;
+  stock: number;
+  weight: string | number;
+  imageUrl: string | null;
+  status: string; 
+  categoryId: number;
+  tags: string[];
+  dimensions: any;
+  createdAt: string;
+  updatedAt: string;
+  userId: number;
+  category: {
+    id: number;
+    name: string;
+    description: string;
+    isActive: boolean;
+    icon: string;
+    parentId: number | null;
+    createdAt: string;
+    updatedAt: string;
+    userId: number;
+  } | null;
+  
+  // แปลงค่าให้ตรงกับที่ใช้ในหน้าจอ
+  isActive?: boolean;
+  image?: string | null;
+}
 
 const ProductListPage: React.FC = () => {
-  const [products, setProducts] = useState(SAMPLE_PRODUCTS);
+  const [apiProducts, setApiProducts] = useState<ProductType[]>([]);
+  const [formattedProducts, setFormattedProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ทั้งหมด');
   const [sortBy, setSortBy] = useState('name-asc');
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
+  // ดึงข้อมูลสินค้าจาก API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        
+        const axios = (await import('axios')).default;
+        const response = await axios.get('/api/products', {
+          withCredentials: true
+        });
+        
+        if (response.data && response.data.success && Array.isArray(response.data.products)) {
+          // แปลงข้อมูลให้อยู่ในรูปแบบที่เหมาะสม
+          setApiProducts(response.data.products);
+          
+          // แปลงข้อมูลให้ตรงกับรูปแบบที่ใช้ในหน้าจอ
+          const products = response.data.products.map((product: ProductType) => ({
+            id: product.id,
+            name: product.name,
+            description: product.description || '',
+            price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
+            stock: product.stock || 0,
+            category: product.category?.name || 'ไม่ระบุหมวดหมู่',
+            image: product.imageUrl,
+            isActive: product.status === 'active' && product.stock > 0
+          }));
+          setFormattedProducts(products);
+        } else {
+          console.error('ไม่พบข้อมูลสินค้าหรือข้อมูลไม่ถูกต้อง');
+          toast({
+            title: 'ไม่สามารถโหลดข้อมูลสินค้าได้',
+            description: 'ไม่พบข้อมูลสินค้าหรือรูปแบบข้อมูลไม่ถูกต้อง',
+            variant: 'destructive'
+          });
+        }
+      } catch (error) {
+        console.error('เกิดข้อผิดพลาดในการโหลดข้อมูล:', error);
+        toast({
+          title: 'เกิดข้อผิดพลาด',
+          description: 'ไม่สามารถโหลดข้อมูลสินค้าได้ กรุณาลองใหม่อีกครั้ง',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, [toast]);
+
   // หมวดหมู่ทั้งหมดของสินค้า
-  const allCategories = SAMPLE_PRODUCTS.map(p => p.category);
+  const allCategories = formattedProducts.map(p => p.category);
   const uniqueCategories = Array.from(new Set(allCategories));
   const categories = ['ทั้งหมด', ...uniqueCategories];
 
   // กรองและเรียงลำดับสินค้า
-  useEffect(() => {
-    let filtered = [...SAMPLE_PRODUCTS];
+  const filteredProducts = useMemo(() => {
+    let filtered = [...formattedProducts];
     
     // กรองตามคำค้นหา
     if (searchTerm) {
       filtered = filtered.filter(p => 
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        p.description.toLowerCase().includes(searchTerm.toLowerCase())
+        (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
@@ -141,8 +164,8 @@ const ProductListPage: React.FC = () => {
         break;
     }
     
-    setProducts(filtered);
-  }, [searchTerm, categoryFilter, sortBy]);
+    return filtered;
+  }, [formattedProducts, searchTerm, categoryFilter, sortBy]);
 
   const handleAddToCart = (productId: number) => {
     toast({
@@ -208,13 +231,26 @@ const ProductListPage: React.FC = () => {
         {/* แสดงจำนวนผลลัพธ์ */}
         <div className="mb-6">
           <p className="text-gray-600">
-            พบสินค้า {products.length} รายการ
+            พบสินค้า {filteredProducts.length} รายการ
           </p>
         </div>
 
         {/* รายการสินค้าแบบกริด */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-          {products.map((product) => (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center p-12">
+            <Loader2 className="w-16 h-16 text-purple-600 animate-spin mb-4" />
+            <h3 className="text-lg font-medium text-purple-800">กำลังโหลดข้อมูลสินค้า...</h3>
+            <p className="text-gray-500">โปรดรอสักครู่</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <ShoppingBag className="w-16 h-16 text-gray-300 mb-4" />
+            <h3 className="text-lg font-medium text-gray-700 mb-1">ไม่พบสินค้า</h3>
+            <p className="text-gray-500">ไม่พบสินค้าที่ตรงกับเงื่อนไขการค้นหา</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            {filteredProducts.map((product: any) => (
             <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-video bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
                 {product.image ? (
@@ -262,7 +298,8 @@ const ProductListPage: React.FC = () => {
               </CardFooter>
             </Card>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* สรุปคำแนะนำ */}
         <div className="bg-purple-50 rounded-lg p-6 mb-10">
