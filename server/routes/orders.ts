@@ -50,6 +50,19 @@ router.post('/', auth, async (req, res) => {
   try {
     const orderData = req.body;
     
+    // Generate order number if not provided
+    if (!orderData.order_number) {
+      // สร้างเลขออเดอร์ในรูปแบบ PD + ปีเดือนวัน + เลข 4 หลักสุดท้ายของ timestamp
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      orderData.order_number = `PD${year}${month}${day}${random}`;
+      
+      console.log(`สร้างเลขออเดอร์อัตโนมัติ: ${orderData.order_number}`);
+    }
+    
     // Check for COD payment method to handle Flash Express integration
     const isCashOnDelivery = orderData.payment_method === 'cash_on_delivery';
     
