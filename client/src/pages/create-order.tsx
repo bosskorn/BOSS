@@ -127,6 +127,14 @@ const CreateOrderPage: React.FC = () => {
   const [fullAddressOriginal, setFullAddressOriginal] = useState('');
   const [processingAddress, setProcessingAddress] = useState(false);
   
+  // สถานะสำหรับเก็บข้อมูลจังหวัด อำเภอ และตำบล
+  const [provinces, setProvinces] = useState<{id: string, name_th: string}[]>([]);
+  const [districts, setDistricts] = useState<{id: string, name_th: string}[]>([]);
+  const [subdistricts, setSubdistricts] = useState<{id: string, name_th: string, zip_code: string}[]>([]);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingSubdistricts, setLoadingSubdistricts] = useState(false);
+  
   // แบ่งส่วนของโค้ดเพื่อความชัดเจน
   // 1. การจัดการฟอร์มด้วย react-hook-form
   const form = useForm<CreateOrderFormValues>({
@@ -201,7 +209,121 @@ const CreateOrderPage: React.FC = () => {
     };
     
     fetchProducts();
+    
+    // ดึงข้อมูลจังหวัด
+    fetchProvinces();
   }, []);
+  
+  // ฟังก์ชันดึงข้อมูลจังหวัด
+  const fetchProvinces = async () => {
+    setLoadingProvinces(true);
+    try {
+      const response = await apiRequest('GET', '/api/locations/provinces');
+      if (!response.ok) {
+        throw new Error('ไม่สามารถดึงข้อมูลจังหวัดได้');
+      }
+      
+      const data = await response.json();
+      if (data.success && data.provinces) {
+        setProvinces(data.provinces);
+      }
+    } catch (error) {
+      console.error('Error fetching provinces:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถดึงข้อมูลจังหวัดได้',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingProvinces(false);
+    }
+  };
+  
+  // ฟังก์ชันดึงข้อมูลอำเภอตามจังหวัด
+  const fetchDistricts = async (provinceId: string) => {
+    setLoadingDistricts(true);
+    setDistricts([]);
+    form.setValue('district', '');
+    form.setValue('subdistrict', '');
+    form.setValue('zipcode', '');
+    
+    try {
+      const response = await apiRequest('GET', `/api/locations/districts?provinceId=${provinceId}`);
+      if (!response.ok) {
+        throw new Error('ไม่สามารถดึงข้อมูลอำเภอได้');
+      }
+      
+      const data = await response.json();
+      if (data.success && data.districts) {
+        setDistricts(data.districts);
+      }
+    } catch (error) {
+      console.error('Error fetching districts:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถดึงข้อมูลอำเภอได้',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingDistricts(false);
+    }
+  };
+  
+  // ฟังก์ชันดึงข้อมูลตำบลตามอำเภอ
+  const fetchSubdistricts = async (districtId: string) => {
+    setLoadingSubdistricts(true);
+    setSubdistricts([]);
+    form.setValue('subdistrict', '');
+    form.setValue('zipcode', '');
+    
+    try {
+      const response = await apiRequest('GET', `/api/locations/subdistricts?districtId=${districtId}`);
+      if (!response.ok) {
+        throw new Error('ไม่สามารถดึงข้อมูลตำบลได้');
+      }
+      
+      const data = await response.json();
+      if (data.success && data.subdistricts) {
+        setSubdistricts(data.subdistricts);
+      }
+    } catch (error) {
+      console.error('Error fetching subdistricts:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถดึงข้อมูลตำบลได้',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingSubdistricts(false);
+    }
+  };
+  
+  // ฟังก์ชันจัดการเมื่อเลือกจังหวัด
+  const handleProvinceChange = async (provinceId: string) => {
+    const province = provinces.find(p => p.id === provinceId);
+    if (province) {
+      form.setValue('province', province.name_th);
+      await fetchDistricts(provinceId);
+    }
+  };
+  
+  // ฟังก์ชันจัดการเมื่อเลือกอำเภอ
+  const handleDistrictChange = async (districtId: string) => {
+    const district = districts.find(d => d.id === districtId);
+    if (district) {
+      form.setValue('district', district.name_th);
+      await fetchSubdistricts(districtId);
+    }
+  };
+  
+  // ฟังก์ชันจัดการเมื่อเลือกตำบล
+  const handleSubdistrictChange = (subdistrictId: string) => {
+    const subdistrict = subdistricts.find(s => s.id === subdistrictId);
+    if (subdistrict) {
+      form.setValue('subdistrict', subdistrict.name_th);
+      form.setValue('zipcode', subdistrict.zip_code);
+    }
+  };
   
   // คำนวณราคารวมเมื่อรายการสินค้าหรือค่าจัดส่งเปลี่ยนแปลง
   useEffect(() => {
@@ -769,32 +891,6 @@ const CreateOrderPage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="subdistrict"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>ตำบล/แขวง</FormLabel>
-                            <FormControl>
-                              <Input placeholder="ตำบล/แขวง" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="district"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>อำเภอ/เขต</FormLabel>
-                            <FormControl>
-                              <Input placeholder="อำเภอ/เขต" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
                         name="province"
                         render={({ field }) => (
                           <FormItem>
@@ -802,10 +898,11 @@ const CreateOrderPage: React.FC = () => {
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
+                              disabled={loadingProvinces}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="เลือกจังหวัด" />
+                                  <SelectValue placeholder={loadingProvinces ? "กำลังโหลดข้อมูล..." : "เลือกจังหวัด"} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -827,6 +924,83 @@ const CreateOrderPage: React.FC = () => {
                                 ].map((province) => (
                                   <SelectItem key={province} value={province}>
                                     {province}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="district"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>อำเภอ/เขต</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              disabled={loadingDistricts || !form.watch('province')}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={loadingDistricts ? "กำลังโหลดข้อมูล..." : "เลือกอำเภอ/เขต"} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {[
+                                  "เมือง", "บางกรวย", "บางใหญ่", "บางบัวทอง", "บางพลี", "ลาดหลุมแก้ว", "สามพราน", 
+                                  "พระประแดง", "พุทธมณฑล", "ลำลูกกา", "ธัญบุรี", "คลองหลวง", "บางปะอิน", "บางไทร",
+                                  "เกาะสมุย", "หาดใหญ่", "ปากเกร็ด", "คลองเตย", "จตุจักร", "บางกะปิ", "บางเขน", 
+                                  "บางคอแหลม", "บางแค", "บางซื่อ", "บางนา", "บางบอน", "บางพลัด", "บางรัก", "บึงกุ่ม", 
+                                  "ปทุมวัน", "ประเวศ", "ป้อมปราบศัตรูพ่าย", "พญาไท", "พระโขนง", "พระนคร", "ภาษีเจริญ", 
+                                  "มีนบุรี", "ยานนาวา", "ราชเทวี", "ราษฎร์บูรณะ", "ลาดกระบัง", "ลาดพร้าว", "วังทองหลาง", 
+                                  "วัฒนา", "สวนหลวง", "สะพานสูง", "สัมพันธวงศ์", "สาทร", "สายไหม", "หนองจอก", "หนองแขม", 
+                                  "หลักสี่", "ห้วยขวาง", "ดอนเมือง", "ดินแดง", "ดุสิต", "ตลิ่งชัน", "ทวีวัฒนา", "ทุ่งครุ", 
+                                  "คันนายาว", "คลองสาน", "คลองสามวา", "จอมทอง"
+                                ].map((district) => (
+                                  <SelectItem key={district} value={district}>
+                                    {district}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="subdistrict"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ตำบล/แขวง</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              disabled={loadingSubdistricts || !form.watch('district')}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={loadingSubdistricts ? "กำลังโหลดข้อมูล..." : "เลือกตำบล/แขวง"} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {[
+                                  "บางซื่อ", "จตุจักร", "ลาดพร้าว", "ดอนเมือง", "สายไหม", "บางเขน", "หลักสี่", 
+                                  "วังทองหลาง", "บึงกุ่ม", "คันนายาว", "ห้วยขวาง", "ดินแดง", "พญาไท", "ราชเทวี", 
+                                  "วัฒนา", "คลองเตย", "บางนา", "ประเวศ", "สวนหลวง", "พระโขนง", "บางกะปิ", 
+                                  "สะพานสูง", "มีนบุรี", "หนองจอก", "ลาดกระบัง", "ยานนาวา", "สาทร", "บางคอแหลม", 
+                                  "บางรัก", "ปทุมวัน", "พระนคร", "ป้อมปราบศัตรูพ่าย", "สัมพันธวงศ์", "บางกอกน้อย", 
+                                  "บางกอกใหญ่", "ตลิ่งชัน", "ทวีวัฒนา", "ภาษีเจริญ", "บางแค", "หนองแขม", 
+                                  "ราษฎร์บูรณะ", "ทุ่งครุ", "จอมทอง", "คลองสาน", "ธนบุรี", "บางพลัด",
+                                  "สามเสนใน", "คลองจั่น", "ทุ่งพญาไท", "สีลม", "เสนานิคม", "วังใหม่", "อนุสาวรีย์",
+                                  "ท่าแร้ง", "แสนแสบ", "ทุ่งสองห้อง", "ถนนนครไชยศรี", "วัดพระยาไกร", "บางมด",
+                                  "ดุสิต", "คลองกุ่ม", "คลองถนน", "ลำผักชี", "บ้านเกาะ", "คลองเจ้าคุณสิงห์"
+                                ].map((subdistrict) => (
+                                  <SelectItem key={subdistrict} value={subdistrict}>
+                                    {subdistrict}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
