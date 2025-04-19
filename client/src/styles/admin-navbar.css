@@ -8,14 +8,25 @@
 /* Base styling for all menu texts */
 .admin-navbar .menu-text {
   color: white !important;
-  opacity: 0.9;
-  font-weight: 500;
+  opacity: 1;
+  font-weight: 600;
+  font-size: 16px;
+  display: inline-block !important;
+  visibility: visible !important;
 }
 
 /* Make sure the menu link itself is visible */
 .admin-navbar .menu-link {
   color: white !important;
-  opacity: 0.9;
+  opacity: 1;
+}
+
+/* Fix icon styles */
+.admin-navbar .menu-link i {
+  color: white !important;
+  margin-right: 10px;
+  font-size: 16px;
+  opacity: 1;
 }
 
 .admin-navbar .navbar-brand .logo-container {
@@ -63,10 +74,19 @@
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
-.admin-navbar .dropdown-menu a {
+.admin-navbar .dropdown-menu a,
+.admin-navbar .dropdown-menu li a {
   color: white !important;
   font-weight: 500;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.admin-navbar .dropdown-menu a i,
+.admin-navbar .dropdown-menu li a i {
+  color: white !important;
+  margin-right: 10px;
 }
 
 .admin-navbar .dropdown-menu a:hover {
