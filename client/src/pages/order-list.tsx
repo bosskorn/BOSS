@@ -22,14 +22,30 @@ interface Order {
   id: number;
   orderNumber: string;
   customerName?: string;
+  customerId?: number;
   total?: number;
   totalAmount?: string;
+  shippingFee?: number;
+  discount?: number;
+  subtotal?: number;
   date: string;
+  createdAt?: string;
+  updatedAt?: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   paymentMethod: string;
   shippingMethod: string;
+  shippingMethodId?: number;
+  shippingServiceId?: number;
   items: number;
   trackingNumber?: string;
+  recipientName?: string;
+  recipientPhone?: string;
+  recipientAddress?: string;
+  recipientProvince?: string;
+  recipientDistrict?: string;
+  recipientSubdistrict?: string;
+  recipientZipCode?: string;
+  notes?: string;
 }
 
 const OrderList: React.FC = () => {
@@ -374,6 +390,14 @@ const OrderList: React.FC = () => {
                         )}
                       </div>
                     </TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => handleSort('paymentMethod')}>
+                      <div className="flex items-center">
+                        วิธีชำระเงิน
+                        {sortConfig.key === 'paymentMethod' && (
+                          sortConfig.direction === 'asc' ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead className="cursor-pointer" onClick={() => handleSort('trackingNumber')}>
                       <div className="flex items-center">
                         เลขพัสดุ
@@ -413,6 +437,9 @@ const OrderList: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell>{formatDate(order.date)}</TableCell>
+                      <TableCell>
+                        {formatPaymentMethod(order.paymentMethod)}
+                      </TableCell>
                       <TableCell>
                         {order.trackingNumber ? (
                           <div className="flex items-center">

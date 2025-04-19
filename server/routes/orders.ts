@@ -17,11 +17,31 @@ router.get('/', auth, async (req, res) => {
     }
     
     const userId = req.user.id;
-    const orders = await storage.getOrdersByUserId(userId);
+    // ดึงข้อมูลออเดอร์พื้นฐาน
+    const basicOrders = await storage.getOrdersByUserId(userId);
+    
+    // เพิ่มข้อมูลที่จำเป็นสำหรับการแสดงผลในตาราง
+    const ordersWithDetails = await Promise.all(basicOrders.map(async (order) => {
+      // ดึงข้อมูลรายการสินค้าในออเดอร์
+      const orderItems = await storage.getOrderItems(order.id);
+      
+      // ดึงข้อมูลลูกค้า (ถ้ามี)
+      let customer = null;
+      if (order.customerId) {
+        customer = await storage.getCustomer(order.customerId);
+      }
+      
+      return {
+        ...order,
+        items: orderItems.length, // จำนวนรายการสินค้า
+        customerName: customer ? customer.name : 'ไม่ระบุ',
+        // ข้อมูลเพิ่มเติมอื่นๆ ที่ต้องการ
+      };
+    }));
     
     res.json({
       success: true,
-      data: orders // ส่งกลับในรูปแบบ data field ตามมาตรฐานของแอป
+      data: ordersWithDetails // ส่งกลับในรูปแบบ data field ตามมาตรฐานของแอป
     });
   } catch (error) {
     console.error('Error fetching orders:', error);
