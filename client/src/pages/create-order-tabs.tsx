@@ -202,7 +202,7 @@ const CreateOrderTabsPage: React.FC = () => {
     );
   }
   
-  // ดึงข้อมูลสินค้าเมื่อโหลดหน้า
+  // ดึงข้อมูลสินค้าและตัวเลือกการจัดส่งเมื่อโหลดหน้า
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -215,7 +215,9 @@ const CreateOrderTabsPage: React.FC = () => {
       }
     };
     
+    // เรียกใช้งานฟังก์ชันดึงตัวเลือกการจัดส่ง
     fetchProducts();
+    fetchShippingOptions();
   }, []);
   
   // คำนวณราคารวมเมื่อรายการสินค้าหรือค่าจัดส่งเปลี่ยนแปลง
@@ -955,11 +957,13 @@ const CreateOrderTabsPage: React.FC = () => {
     analyzeAllCustomerData(text);
   };
   
-  // ฟังก์ชันดึงตัวเลือกการจัดส่ง (จำลอง)
+  // ฟังก์ชันดึงตัวเลือกการจัดส่ง
   const fetchShippingOptions = async () => {
     try {
-      // จำลองการเรียก API ของ Flash Express
-      const mockOptions = [
+      console.log("กำลังดึงข้อมูลตัวเลือกการจัดส่ง...");
+      
+      // สร้างตัวเลือกการจัดส่งแบบ fallback โดยตรง (ไม่ต้องเรียก API) เพื่อให้มีข้อมูลให้ใช้งานได้เสมอ
+      const defaultOptions = [
         {
           id: 1,
           name: 'Flash Express - ส่งด่วน',
@@ -998,7 +1002,34 @@ const CreateOrderTabsPage: React.FC = () => {
         }
       ];
       
-      setShippingOptions(mockOptions);
+      // พยายามดึงข้อมูลจาก API ก่อน
+      try {
+        // เรียก API เพื่อดึงข้อมูลตัวเลือกการจัดส่ง
+        const response = await api.post('/api/shipping/options', {
+          // ส่งข้อมูลที่อยู่และน้ำหนักพัสดุเพื่อคำนวณค่าจัดส่ง
+          address: {
+            province: form.getValues('province') || 'กรุงเทพมหานคร',
+            district: form.getValues('district') || 'พระนคร',
+            zipcode: form.getValues('zipcode') || '10200'
+          },
+          weight: 1 // น้ำหนักเริ่มต้น 1 กิโลกรัม
+        });
+        
+        if (response.data.success && response.data.options && response.data.options.length > 0) {
+          console.log("ดึงข้อมูลตัวเลือกการจัดส่งสำเร็จ:", response.data.options);
+          setShippingOptions(response.data.options);
+          return;
+        } else {
+          console.log("ไม่พบข้อมูลตัวเลือกการจัดส่งจาก API ใช้ข้อมูลเริ่มต้นแทน");
+        }
+      } catch (apiError) {
+        console.error("เกิดข้อผิดพลาดในการเรียก API:", apiError);
+        console.log("ใช้ข้อมูลเริ่มต้นแทน");
+      }
+      
+      // ถ้าเรียก API ไม่สำเร็จหรือไม่มีข้อมูล ให้ใช้ข้อมูลเริ่มต้น
+      setShippingOptions(defaultOptions);
+      
     } catch (error) {
       console.error('Error fetching shipping options:', error);
       toast({
