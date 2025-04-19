@@ -21,8 +21,9 @@ import {
 interface Order {
   id: number;
   orderNumber: string;
-  customerName: string;
-  total: number;
+  customerName?: string;
+  total?: number;
+  totalAmount?: string;
   date: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   paymentMethod: string;
@@ -142,9 +143,11 @@ const OrderList: React.FC = () => {
         
         return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
       } else if (sortConfig.key === 'total') {
+        const aTotal = a.total !== undefined ? a.total : parseFloat(a.totalAmount || "0");
+        const bTotal = b.total !== undefined ? b.total : parseFloat(b.totalAmount || "0");
         return sortConfig.direction === 'asc' 
-          ? a[sortConfig.key] - b[sortConfig.key]
-          : b[sortConfig.key] - a[sortConfig.key];
+          ? aTotal - bTotal
+          : bTotal - aTotal;
       } else {
         const valueA = String(a[sortConfig.key]).toLowerCase();
         const valueB = String(b[sortConfig.key]).toLowerCase();
@@ -207,7 +210,8 @@ const OrderList: React.FC = () => {
   };
 
   // ฟังก์ชันฟอร์แมตเลขเป็นรูปแบบเงินบาท
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined) => {
+    if (amount === undefined) return "฿0.00";
     return new Intl.NumberFormat('th-TH', {
       style: 'currency',
       currency: 'THB',
@@ -398,7 +402,7 @@ const OrderList: React.FC = () => {
                           <span className="ml-2">{order.orderNumber}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">{formatCurrency(order.total)}</TableCell>
+                      <TableCell className="text-right">{order.total !== undefined ? formatCurrency(order.total) : formatCurrency(parseFloat(order.totalAmount || "0"))}</TableCell>
                       <TableCell className="text-center">{order.items}</TableCell>
                       <TableCell>{formatDate(order.date)}</TableCell>
                       <TableCell>
