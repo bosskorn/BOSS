@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import Layout from '@/components/Layout';
-import { Loader2, Search, Filter, ChevronDown, ChevronUp, FileText, Truck, Package, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, Search, Filter, ChevronDown, ChevronUp, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -46,6 +46,7 @@ interface Order {
   recipientSubdistrict?: string;
   recipientZipCode?: string;
   notes?: string;
+  isPrinted?: boolean;
 }
 
 const OrderList: React.FC = () => {
@@ -55,6 +56,8 @@ const OrderList: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [shippingFilter, setShippingFilter] = useState<string>('all');
+  const [isPrintingLabel, setIsPrintingLabel] = useState<boolean>(false);
+  const [currentPrintingOrder, setCurrentPrintingOrder] = useState<number | null>(null);
   const [sortConfig, setSortConfig] = useState<{key: keyof Order, direction: 'asc' | 'desc'}>({
     key: 'date',
     direction: 'desc'
@@ -317,6 +320,182 @@ const OrderList: React.FC = () => {
         return <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200">พร้อมเพย์</Badge>;
       default:
         return <Badge variant="outline">{method}</Badge>;
+    }
+  };
+  
+  // ฟังก์ชันแสดงสถานะการพิมพ์ใบลาเบล
+  const getPrintStatus = (isPrinted: boolean | undefined) => {
+    if (isPrinted) {
+      return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 flex items-center gap-1">
+        <CheckCircle className="h-3 w-3" />
+        <span>พิมพ์แล้ว</span>
+      </Badge>;
+    } else {
+      return <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">รอพิมพ์</Badge>;
+    }
+  };
+  
+  // ฟังก์ชันอัพเดตสถานะการพิมพ์
+  const handlePrintLabel = async (order: Order) => {
+    if (!order.trackingNumber) {
+      toast({
+        title: 'ไม่สามารถพิมพ์ใบลาเบลได้',
+        description: 'ไม่พบเลขพัสดุสำหรับคำสั่งซื้อนี้',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setCurrentPrintingOrder(order.id);
+    setIsPrintingLabel(true);
+    
+    try {
+      // สร้างหน้าต่างพิมพ์ใบลาเบล
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        throw new Error('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ โปรดตรวจสอบการตั้งค่าป้องกันป๊อปอัพ');
+      }
+      
+      // สร้าง HTML สำหรับใบลาเบล
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>พิมพ์ใบลาเบล - ${order.orderNumber}</title>
+          <style>
+            body { font-family: 'Kanit', sans-serif; margin: 0; padding: 0; }
+            .label-container { width: 100mm; height: 150mm; border: 1px solid #ccc; padding: 5mm; margin: 10px auto; }
+            .logo { text-align: center; margin-bottom: 5mm; font-size: 24px; font-weight: bold; color: #8A2BE2; }
+            .tracking { font-size: 16px; text-align: center; margin-bottom: 5mm; padding: 2mm; border: 1px solid #8A2BE2; }
+            .section { margin-bottom: 5mm; }
+            .title { font-weight: bold; margin-bottom: 2mm; font-size: 14px; }
+            .address { font-size: 14px; line-height: 1.5; }
+            .barcode { text-align: center; margin: 5mm 0; font-size: 16px; }
+            .footer { text-align: center; font-size: 12px; margin-top: 5mm; color: #666; }
+            .box { border: 1px solid #ccc; padding: 3mm; }
+            @media print {
+              body { margin: 0; padding: 0; }
+              .print-button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-button" style="text-align: center; margin: 20px;">
+            <button onclick="window.print();" style="padding: 10px 20px; background: #8A2BE2; color: white; border: none; border-radius: 5px; cursor: pointer;">
+              พิมพ์ใบลาเบล
+            </button>
+          </div>
+          
+          <div class="label-container">
+            <div class="logo">PURPLEDASH</div>
+            
+            <div class="tracking box">
+              <div>เลขพัสดุ</div>
+              <div style="font-size: 20px; font-weight: bold;">${order.trackingNumber}</div>
+            </div>
+            
+            <div class="section">
+              <div class="title">ผู้ส่ง:</div>
+              <div class="box address">
+                PURPLEDASH<br />
+                เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
+                ถนนพระราม 4 แขวงลุมพินี<br />
+                เขตปทุมวัน กรุงเทพฯ 10330<br />
+                โทร: 02-123-4567
+              </div>
+            </div>
+            
+            <div class="section">
+              <div class="title">ผู้รับ:</div>
+              <div class="box address">
+                ${order.recipientName || 'ไม่ระบุ'}<br />
+                ${order.recipientAddress || ''} ${order.recipientSubdistrict || ''}<br />
+                ${order.recipientDistrict || ''} ${order.recipientProvince || ''} ${order.recipientZipCode || ''}<br />
+                โทร: ${order.recipientPhone || 'ไม่ระบุ'}
+              </div>
+            </div>
+            
+            <div class="barcode box">
+              ${order.trackingNumber}
+            </div>
+            
+            <div class="footer">
+              ${order.paymentMethod === 'cash_on_delivery' ? 'เก็บเงินปลายทาง: ' + formatCurrency(order.total || parseFloat(order.totalAmount || '0')) : 'จ่ายเงินแล้ว'}
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+      
+      // รอให้หน้าต่างพิมพ์โหลดเสร็จ
+      printWindow.addEventListener('load', () => {
+        // อัพเดตสถานะการพิมพ์ที่ฐานข้อมูล
+        updatePrintStatus(order.id);
+      });
+      
+    } catch (error) {
+      console.error('Error printing label:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error instanceof Error ? error.message : 'ไม่สามารถพิมพ์ใบลาเบลได้',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPrintingLabel(false);
+      setCurrentPrintingOrder(null);
+    }
+  };
+  
+  // ฟังก์ชันอัพเดตสถานะการพิมพ์ที่ฐานข้อมูล
+  const updatePrintStatus = async (orderId: number) => {
+    try {
+      // ดึง token จาก localStorage
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch(`/api/orders/${orderId}/print-status`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({ isPrinted: true }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // อัพเดตสถานะในข้อมูลที่แสดง
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.id === orderId 
+              ? { ...order, isPrinted: true } 
+              : order
+          )
+        );
+        
+        toast({
+          title: 'สำเร็จ',
+          description: 'อัพเดตสถานะการพิมพ์ใบลาเบลเรียบร้อย',
+        });
+      } else {
+        throw new Error(data.message || 'ไม่สามารถอัพเดตสถานะการพิมพ์ได้');
+      }
+    } catch (error) {
+      console.error('Error updating print status:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error instanceof Error ? error.message : 'ไม่สามารถอัพเดตสถานะการพิมพ์ได้',
+        variant: 'destructive',
+      });
     }
   };
 
