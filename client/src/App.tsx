@@ -12,6 +12,7 @@ import ProductCreate from "@/pages/product-create-enhanced";
 import ProductList from "@/pages/product-list";
 import ProductListEnhanced from "@/pages/product-list-enhanced";
 import CreateOrder from "@/pages/create-order";
+import CreateOrderTabs from "@/pages/create-order-tabs";
 import LogoDisplay from "@/pages/logo-display";
 import CategoryManagement from "@/pages/category-management";
 import ProductManagement from "@/pages/product-management";
@@ -53,6 +54,7 @@ function Router() {
       <ProtectedRoute path="/product-list-old" component={ProductList} />
       <ProtectedRoute path="/product-management" component={ProductManagement} />
       <ProtectedRoute path="/create-order" component={CreateOrder} />
+      <ProtectedRoute path="/create-order-tabs" component={CreateOrderTabs} />
       
       {/* คำสั่งซื้อ - protected */}
       <ProtectedRoute path="/orders-all" component={OrderList} />
