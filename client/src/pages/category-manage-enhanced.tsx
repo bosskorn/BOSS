@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import axios from 'axios';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
+import api from '@/services/api';
 
 interface Category {
   id: number;
