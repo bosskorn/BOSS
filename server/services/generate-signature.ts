@@ -28,9 +28,9 @@ export function generateFlashExpressSignature(
       
       const value = params[key];
       
-      // ตรวจสอบค่าว่างตามเอกสาร Flash Express
+      // ตรวจสอบค่าว่างตามเอกสาร Flash Express - ทำให้ตรงกับตัวอย่างมากขึ้น
       if (value === null || value === undefined) continue;
-      if (typeof value === 'string' && /^\s*$/.test(value)) continue;
+      if (typeof value === 'string' && /^[ \t\n\f\r\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
       
       // เพิ่มคีย์-ค่าทีผ่านเงื่อนไขเข้าไปในชุดข้อมูลใหม่
       paramsCopy[key] = value;

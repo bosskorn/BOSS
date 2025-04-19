@@ -21,8 +21,8 @@ function createDirectSignature(params: Record<string, any>, apiKey: string): str
       const value = params[key];
       // ไม่รวมค่าว่าง null/undefined
       if (value !== null && value !== undefined) {
-        // ตรวจสอบสตริงที่เป็นช่องว่าง
-        if (typeof value === 'string' && /^\s*$/.test(value)) continue;
+        // ตรวจสอบสตริงที่เป็นช่องว่าง ตามเอกสาร
+        if (typeof value === 'string' && /^[ \t\n\f\r\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
         paramsCopy[key] = value;
       }
     }
