@@ -998,150 +998,35 @@ const CreateOrderPage: React.FC = () => {
                       />
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
                       <FormField
                         control={form.control}
-                        name="province"
-                        render={({ field }) => (
+                        name="addressFields"
+                        render={() => (
                           <FormItem>
-                            <FormLabel>จังหวัด</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                              disabled={loadingProvinces}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={loadingProvinces ? "กำลังโหลดข้อมูล..." : "เลือกจังหวัด"} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {[
-                                  "กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", 
-                                  "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท", "ชัยภูมิ", 
-                                  "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด", "ตาก", "นครนายก", 
-                                  "นครปฐม", "นครพนม", "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", 
-                                  "นนทบุรี", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", 
-                                  "ประจวบคีรีขันธ์", "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", 
-                                  "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์", 
-                                  "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", "ยโสธร", 
-                                  "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี", "ลพบุรี", "ลำปาง", 
-                                  "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ", 
-                                  "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี", 
-                                  "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", 
-                                  "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", 
-                                  "อุทัยธานี", "อุบลราชธานี"
-                                ].map((province) => (
-                                  <SelectItem key={province} value={province}>
-                                    {province}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="district"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>อำเภอ/เขต</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                              disabled={loadingDistricts || !form.watch('province')}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={loadingDistricts ? "กำลังโหลดข้อมูล..." : "เลือกอำเภอ/เขต"} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {[
-                                  "เมือง", "บางกรวย", "บางใหญ่", "บางบัวทอง", "บางพลี", "ลาดหลุมแก้ว", "สามพราน", 
-                                  "พระประแดง", "พุทธมณฑล", "ลำลูกกา", "ธัญบุรี", "คลองหลวง", "บางปะอิน", "บางไทร",
-                                  "เกาะสมุย", "หาดใหญ่", "ปากเกร็ด", "คลองเตย", "จตุจักร", "บางกะปิ", "บางเขน", 
-                                  "บางคอแหลม", "บางแค", "บางซื่อ", "บางนา", "บางบอน", "บางพลัด", "บางรัก", "บึงกุ่ม", 
-                                  "ปทุมวัน", "ประเวศ", "ป้อมปราบศัตรูพ่าย", "พญาไท", "พระโขนง", "พระนคร", "ภาษีเจริญ", 
-                                  "มีนบุรี", "ยานนาวา", "ราชเทวี", "ราษฎร์บูรณะ", "ลาดกระบัง", "ลาดพร้าว", "วังทองหลาง", 
-                                  "วัฒนา", "สวนหลวง", "สะพานสูง", "สัมพันธวงศ์", "สาทร", "สายไหม", "หนองจอก", "หนองแขม", 
-                                  "หลักสี่", "ห้วยขวาง", "ดอนเมือง", "ดินแดง", "ดุสิต", "ตลิ่งชัน", "ทวีวัฒนา", "ทุ่งครุ", 
-                                  "คันนายาว", "คลองสาน", "คลองสามวา", "จอมทอง"
-                                ].map((district) => (
-                                  <SelectItem key={district} value={district}>
-                                    {district}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="subdistrict"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>ตำบล/แขวง</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                              disabled={loadingSubdistricts || !form.watch('district')}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={loadingSubdistricts ? "กำลังโหลดข้อมูล..." : "เลือกตำบล/แขวง"} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {[
-                                  "บางซื่อ", "จตุจักร", "ลาดพร้าว", "ดอนเมือง", "สายไหม", "บางเขน", "หลักสี่", 
-                                  "วังทองหลาง", "บึงกุ่ม", "คันนายาว", "ห้วยขวาง", "ดินแดง", "พญาไท", "ราชเทวี", 
-                                  "วัฒนา", "คลองเตย", "บางนา", "ประเวศ", "สวนหลวง", "พระโขนง", "บางกะปิ", 
-                                  "สะพานสูง", "มีนบุรี", "หนองจอก", "ลาดกระบัง", "ยานนาวา", "สาทร", "บางคอแหลม", 
-                                  "บางรัก", "ปทุมวัน", "พระนคร", "ป้อมปราบศัตรูพ่าย", "สัมพันธวงศ์", "บางกอกน้อย", 
-                                  "บางกอกใหญ่", "ตลิ่งชัน", "ทวีวัฒนา", "ภาษีเจริญ", "บางแค", "หนองแขม", 
-                                  "ราษฎร์บูรณะ", "ทุ่งครุ", "จอมทอง", "คลองสาน", "ธนบุรี", "บางพลัด",
-                                  "สามเสนใน", "คลองจั่น", "ทุ่งพญาไท", "สีลม", "เสนานิคม", "วังใหม่", "อนุสาวรีย์",
-                                  "ท่าแร้ง", "แสนแสบ", "ทุ่งสองห้อง", "ถนนนครไชยศรี", "วัดพระยาไกร", "บางมด",
-                                  "ดุสิต", "คลองกุ่ม", "คลองถนน", "ลำผักชี", "บ้านเกาะ", "คลองเจ้าคุณสิงห์"
-                                ].map((subdistrict) => (
-                                  <SelectItem key={subdistrict} value={subdistrict}>
-                                    {subdistrict}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="zipcode"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>รหัสไปรษณีย์</FormLabel>
-                            <div className="relative">
-                              <FormControl>
-                                <Input 
-                                  placeholder="รหัสไปรษณีย์" 
-                                  {...field}
-                                  maxLength={5}
-                                  pattern="[0-9]*"
-                                  inputMode="numeric"
-                                  disabled={loadingZipcodeData}
-                                />
-                              </FormControl>
-                              {loadingZipcodeData && (
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
-                                </div>
-                              )}
-                            </div>
+                            <FormLabel>ที่อยู่จัดส่ง</FormLabel>
+                            <FormControl>
+                              <ThaiAddressSelect
+                                initialValues={{
+                                  province: form.getValues('province'),
+                                  district: form.getValues('district'),
+                                  subdistrict: form.getValues('subdistrict'),
+                                  zipcode: form.getValues('zipcode')
+                                }}
+                                onAddressChange={(address) => {
+                                  form.setValue('province', address.province);
+                                  form.setValue('district', address.district);
+                                  form.setValue('subdistrict', address.subdistrict);
+                                  form.setValue('zipcode', address.zipcode);
+                                  
+                                  // ดึงข้อมูลขนส่งเมื่อกรอกที่อยู่ครบ
+                                  if (address.province && address.district && 
+                                     address.subdistrict && address.zipcode) {
+                                    fetchShippingOptions();
+                                  }
+                                }}
+                              />
+                            </FormControl>
                             <FormDescription className="text-xs">
                               พิมพ์รหัสไปรษณีย์เพื่อดึงข้อมูลจังหวัด อำเภอ และตำบลอัตโนมัติ
                             </FormDescription>
