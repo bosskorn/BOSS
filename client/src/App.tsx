@@ -37,10 +37,10 @@ function Router() {
       {/* Public routes */}
       <Route path="/auth" component={AuthPage} />
       <Route path="/logo" component={LogoDisplay} />
+      <Route path="/admin-register" component={AdminRegisterPage} />
       
       {/* Protected routes - require authentication */}
       <ProtectedRoute path="/" component={Dashboard} />
-      <ProtectedRoute path="/admin-register" component={AdminRegisterPage} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/admin-dashboard" component={AdminDashboard} />
       <ProtectedRoute path="/category-manage" component={CategoryManage} />
