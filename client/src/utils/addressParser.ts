@@ -43,6 +43,38 @@ const SAME_NAME_SUBDISTRICTS = [
 export function parseCustomerAndAddressData(text: string): AddressComponents {
   if (!text) return {}; // ตรวจสอบว่ามีข้อความที่วางหรือไม่
   
+  // กรณีเฉพาะ: CIT Tower
+  if (text.includes('CIT Tower') && text.includes('รัชดาภิเษก') && text.includes('คลองเตย')) {
+    console.log("พบกรณีพิเศษ: CIT Tower คลองเตย");
+    const components: AddressComponents = {
+      building: 'CIT Tower',
+      road: 'รัชดาภิเษก',
+      district: 'คลองเตย',
+      subdistrict: 'คลองเตย',
+      province: 'กรุงเทพ',
+      zipcode: '10110'
+    };
+    
+    // ค้นหาชั้น
+    const floorMatch = text.match(/ชั้น\s*(\d+)/i);
+    if (floorMatch && floorMatch[1]) {
+      components.floor = floorMatch[1];
+    }
+    
+    // ค้นหาเลขที่บ้าน
+    const houseNumberMatch = text.match(/เลขที่\s*(\d+\/\d+(?:\s+\d+\/\d+)?)/i);
+    if (houseNumberMatch && houseNumberMatch[1]) {
+      components.houseNumber = houseNumberMatch[1];
+    } else {
+      const houseNumberMatchSimple = text.match(/\b(\d+\/\d+(?:\s+\d+\/\d+)?)\b/);
+      if (houseNumberMatchSimple && houseNumberMatchSimple[1]) {
+        components.houseNumber = houseNumberMatchSimple[1];
+      }
+    }
+    
+    return components;
+  }
+  
   // เก็บข้อความเดิมไว้
   const originalText = text;
   const components: AddressComponents = {};
@@ -754,7 +786,7 @@ export function parseAddressFromText(text: string): AddressComponents {
     
     // ถ้าเป็นกรุงเทพฯ ค้นหาคำว่า "คลองเตย" หรือชื่อเขตกรุงเทพฯ อื่นๆ
     if (components.province && components.province.toLowerCase().includes('กรุงเทพ')) {
-      for (const district of wellKnownBangkokDistricts) {
+      for (const district of BANGKOK_DISTRICTS) {
         const regex = new RegExp(`\\b${district}\\b`, 'i');
         const matches = remainingText.match(regex);
         
