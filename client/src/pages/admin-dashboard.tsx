@@ -336,87 +336,126 @@ const AdminDashboard: React.FC = () => {
           <>
             {/* แถวแรก: การ์ดสรุปภาพรวม */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <Card>
+              <Card className="border-l-4 border-l-purple-500">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">ผู้ใช้ทั้งหมด</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                    <Package className="h-4 w-4 mr-2 text-purple-600" />
+                    สถานะพัสดุทั้งหมด
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between items-end">
+                  <div className="flex justify-between items-end mb-2">
                     <div className="flex items-baseline">
-                      <span className="text-3xl font-bold">{summaryData.totalUsers}</span>
-                      <span className="text-sm text-muted-foreground ml-2">คน</span>
+                      <span className="text-3xl font-bold">{summaryData.totalParcels.toLocaleString()}</span>
+                      <span className="text-sm text-muted-foreground ml-2">ชิ้น</span>
                     </div>
-                    <Users className="h-8 w-8 text-purple-500" />
+                    <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                      {summaryData.parcelSuccessRate}% สำเร็จ
+                    </Badge>
                   </div>
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span>ผู้ใช้แอคทีฟ</span>
-                      <span>{activeUserPercentage}%</span>
+                  
+                  <div className="grid grid-cols-4 gap-1 mt-3 text-center text-xs">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-yellow-600">{summaryData.pendingParcels}</span>
+                      <span className="text-gray-500">รอส่ง</span>
                     </div>
-                    <Progress value={activeUserPercentage} className="h-1" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-blue-600">{summaryData.inTransitParcels}</span>
+                      <span className="text-gray-500">กำลังส่ง</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-green-600">{summaryData.deliveredParcels}</span>
+                      <span className="text-gray-500">ส่งแล้ว</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-red-600">{summaryData.returnedParcels}</span>
+                      <span className="text-gray-500">ตีกลับ</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-l-4 border-l-blue-500">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">คำสั่งซื้อทั้งหมด</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                    <ShoppingCart className="h-4 w-4 mr-2 text-blue-600" />
+                    คำสั่งซื้อและการจัดส่ง
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-end">
                     <div className="flex items-baseline">
-                      <span className="text-3xl font-bold">{summaryData.totalOrders}</span>
+                      <span className="text-3xl font-bold">{summaryData.totalOrders.toLocaleString()}</span>
                       <span className="text-sm text-muted-foreground ml-2">รายการ</span>
                     </div>
-                    <ShoppingCart className="h-8 w-8 text-purple-500" />
+                    <div className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                      {summaryData.avgDeliveryTime} เฉลี่ย
+                    </div>
                   </div>
-                  <div className="mt-4">
+                  
+                  <div className="mt-3">
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span>รอดำเนินการ</span>
+                      <span>รอดำเนินการ ({summaryData.pendingOrders} รายการ)</span>
                       <span>{pendingOrderPercentage}%</span>
                     </div>
-                    <Progress value={pendingOrderPercentage} className="h-1" />
+                    <Progress value={pendingOrderPercentage} className="h-1.5 bg-blue-100" />
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-l-4 border-l-green-500">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">รายได้รวม</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                    <DollarSign className="h-4 w-4 mr-2 text-green-600" />
+                    รายได้และธุรกรรม
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-end">
                     <div className="flex items-baseline">
                       <span className="text-3xl font-bold">฿{(summaryData.totalRevenue / 1000000).toFixed(2)}M</span>
                     </div>
-                    <TrendingUp className="h-8 w-8 text-green-500" />
-                  </div>
-                  <div className="mt-3">
-                    <div className="flex items-center text-xs text-green-500">
-                      <ChevronUp className="h-4 w-4" />
-                      <span className="ml-1">เพิ่มขึ้น 12.5% จากเดือนที่แล้ว</span>
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center text-xs text-green-600 mb-1">
+                        <ChevronUp className="h-3 w-3 mr-1" />
+                        <span>12.5% จากเดือนก่อน</span>
+                      </div>
+                      <div className="text-xs text-gray-500">฿{summaryData.averageOrderValue.toLocaleString()} เฉลี่ย/ออเดอร์</div>
                     </div>
+                  </div>
+                  
+                  <div className="mt-3 flex items-center justify-between bg-green-50 rounded-md p-2">
+                    <div className="text-xs text-gray-700">รายได้ COD</div>
+                    <div className="font-medium text-sm">฿{(summaryData.codRevenue / 1000).toFixed(0)}K</div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-l-4 border-l-orange-500">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">พัสดุทั้งหมด</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                    <Users className="h-4 w-4 mr-2 text-orange-600" />
+                    ผู้ใช้งานและร้านค้า
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between items-end">
-                    <div className="flex items-baseline">
-                      <span className="text-3xl font-bold">{summaryData.totalParcels}</span>
-                      <span className="text-sm text-muted-foreground ml-2">ชิ้น</span>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-3xl font-bold">{summaryData.totalUsers}</div>
+                      <div className="text-xs text-gray-500 mt-1">ผู้ใช้ทั้งหมด</div>
                     </div>
-                    <Package className="h-8 w-8 text-purple-500" />
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-orange-600">+{summaryData.newUsersToday}</div>
+                      <div className="text-xs text-gray-500">วันนี้</div>
+                    </div>
                   </div>
-                  <div className="mt-3">
-                    <div className="flex items-center text-xs text-purple-500">
-                      <Truck className="h-4 w-4" />
-                      <span className="ml-1">กำลังจัดส่ง {Math.round(summaryData.totalParcels * 0.15)} ชิ้น</span>
+                  
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span>ผู้ใช้แอคทีฟ</span>
+                      <span>{activeUserPercentage}% ({summaryData.activeUsers} คน)</span>
                     </div>
+                    <Progress value={activeUserPercentage} className="h-1.5 bg-orange-100" />
                   </div>
                 </CardContent>
               </Card>
@@ -427,7 +466,10 @@ const AdminDashboard: React.FC = () => {
               <div className="md:col-span-1">
                 <Card className="h-full">
                   <CardHeader>
-                    <CardTitle>สุขภาพระบบ</CardTitle>
+                    <CardTitle className="flex items-center">
+                      <Settings className="h-5 w-5 mr-2 text-purple-600" />
+                      สุขภาพระบบ
+                    </CardTitle>
                     <CardDescription>สถานะและประสิทธิภาพของระบบ</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -435,7 +477,13 @@ const AdminDashboard: React.FC = () => {
                       <div>
                         <div className="flex justify-between items-center mb-1 text-sm">
                           <span>การใช้งานฐานข้อมูล</span>
-                          <span>{summaryData.systemHealth.databaseUsage}%</span>
+                          <span className={`font-medium ${
+                            summaryData.systemHealth.databaseUsage > 80 
+                              ? 'text-red-500' 
+                              : summaryData.systemHealth.databaseUsage > 60 
+                              ? 'text-yellow-500' 
+                              : 'text-green-500'
+                          }`}>{summaryData.systemHealth.databaseUsage}%</span>
                         </div>
                         <Progress 
                           value={summaryData.systemHealth.databaseUsage} 
@@ -445,7 +493,7 @@ const AdminDashboard: React.FC = () => {
                               : summaryData.systemHealth.databaseUsage > 60 
                               ? 'bg-yellow-100' 
                               : 'bg-green-100'
-                          }`} 
+                          }`}
                         />
                       </div>
                       
@@ -468,9 +516,58 @@ const AdminDashboard: React.FC = () => {
                         </span>
                       </div>
                       
-                      <div className="mt-4">
-                        <Button variant="outline" className="w-full">
-                          ตรวจสอบเพิ่มเติม
+                      <div className="mt-2">
+                        <h4 className="text-sm font-medium mb-2">สถานะบริการ</h4>
+                        <div className="space-y-2">
+                          {summaryData.systemHealth.serviceStatus && (
+                            <>
+                              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                                <div className="flex items-center">
+                                  <Truck className="h-4 w-4 mr-2 text-gray-600" />
+                                  <span className="text-sm">Flash Express API</span>
+                                </div>
+                                <Badge variant={summaryData.systemHealth.serviceStatus.flashExpress === 'operational' ? 'outline' : 
+                                              summaryData.systemHealth.serviceStatus.flashExpress === 'degraded' ? 'secondary' : 'destructive'}>
+                                  {summaryData.systemHealth.serviceStatus.flashExpress === 'operational' ? 'พร้อมใช้งาน' : 
+                                   summaryData.systemHealth.serviceStatus.flashExpress === 'degraded' ? 'ประสิทธิภาพลดลง' : 'ไม่สามารถใช้งานได้'}
+                                </Badge>
+                              </div>
+                              
+                              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                                <div className="flex items-center">
+                                  <DollarSign className="h-4 w-4 mr-2 text-gray-600" />
+                                  <span className="text-sm">ระบบชำระเงิน</span>
+                                </div>
+                                <Badge variant={summaryData.systemHealth.serviceStatus.payment === 'operational' ? 'outline' : 
+                                              summaryData.systemHealth.serviceStatus.payment === 'degraded' ? 'secondary' : 'destructive'}>
+                                  {summaryData.systemHealth.serviceStatus.payment === 'operational' ? 'พร้อมใช้งาน' : 
+                                   summaryData.systemHealth.serviceStatus.payment === 'degraded' ? 'ประสิทธิภาพลดลง' : 'ไม่สามารถใช้งานได้'}
+                                </Badge>
+                              </div>
+                              
+                              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                                <div className="flex items-center">
+                                  <Package className="h-4 w-4 mr-2 text-gray-600" />
+                                  <span className="text-sm">ระบบติดตามพัสดุ</span>
+                                </div>
+                                <Badge variant={summaryData.systemHealth.serviceStatus.tracking === 'operational' ? 'outline' : 
+                                              summaryData.systemHealth.serviceStatus.tracking === 'degraded' ? 'secondary' : 'destructive'}>
+                                  {summaryData.systemHealth.serviceStatus.tracking === 'operational' ? 'พร้อมใช้งาน' : 
+                                   summaryData.systemHealth.serviceStatus.tracking === 'degraded' ? 'ประสิทธิภาพลดลง' : 'ไม่สามารถใช้งานได้'}
+                                </Badge>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 pt-2 flex gap-2">
+                        <Button variant="outline" size="sm" className="w-full flex items-center">
+                          <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                          รีเฟรช
+                        </Button>
+                        <Button variant="secondary" size="sm" className="w-full">
+                          รายละเอียด
                         </Button>
                       </div>
                     </div>
@@ -515,19 +612,124 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* แถวที่สาม: กราฟและแผนภูมิ */}
+            {/* แถวที่สาม: แผนภูมิการจัดส่งและพื้นที่จัดส่ง */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Truck className="h-4 w-4 mr-2 text-purple-600" />
+                    ประสิทธิภาพการจัดส่ง
+                  </CardTitle>
+                  <CardDescription>อัตราการจัดส่งตรงเวลาเทียบกับการจัดส่งล่าช้า</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] flex items-end relative pt-6">
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pt-6">
+                      <div className="border-b border-dashed border-gray-200 h-0"></div>
+                      <div className="border-b border-dashed border-gray-200 h-0"></div>
+                      <div className="border-b border-dashed border-gray-200 h-0"></div>
+                      <div className="border-b border-dashed border-gray-200 h-0"></div>
+                    </div>
+                    
+                    {summaryData.deliveryPerformance.map((point, index, array) => {
+                      const total = point.onTime + point.delayed;
+                      const onTimeHeight = (point.onTime / total) * 90;
+                      const delayedHeight = (point.delayed / total) * 90;
+                      
+                      return (
+                        <div key={index} className="flex-1 flex flex-col items-center h-full">
+                          <div className="flex flex-col w-full max-w-[50px] items-center">
+                            <div 
+                              className="w-full bg-red-400 rounded-t-sm mx-auto"
+                              style={{ height: `${delayedHeight}%` }}
+                            ></div>
+                            <div 
+                              className="w-full bg-green-500 mx-auto"
+                              style={{ height: `${onTimeHeight}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-xs mt-2 text-gray-600">
+                            {new Date(point.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }).split(' ')[0]}
+                          </div>
+                          <div className="text-[10px] text-gray-500">
+                            {Math.round((point.onTime / (point.onTime + point.delayed)) * 100)}%
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {/* คำอธิบายกราฟ */}
+                    <div className="absolute top-0 right-0 flex items-center space-x-4 text-xs">
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-green-500 mr-1"></div>
+                        <span>ตรงเวลา</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-red-400 mr-1"></div>
+                        <span>ล่าช้า</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-2 text-purple-600" />
+                    พื้นที่การจัดส่งยอดนิยม
+                  </CardTitle>
+                  <CardDescription>จังหวัดที่มีการจัดส่งสินค้ามากที่สุด</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {summaryData.topDestinations.map((destination, index) => (
+                      <div key={index} className="flex items-center">
+                        <div className="w-10 text-sm font-medium">{index + 1}.</div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center mb-1">
+                            <div className="text-sm font-medium">{destination.name}</div>
+                            <div className="text-sm text-muted-foreground">{destination.count} พัสดุ</div>
+                          </div>
+                          <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-purple-500 rounded-full" 
+                              style={{ width: `${destination.percentage}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-right mt-0.5 text-muted-foreground">
+                            {destination.percentage}%
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="pt-2 border-t mt-4">
+                      <Button variant="outline" size="sm" className="w-full">
+                        ดูรายงานพื้นที่เพิ่มเติม
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* แถวที่สี่: แนวโน้มผู้ใช้และคำสั่งซื้อ */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>การเติบโตของผู้ใช้งาน</CardTitle>
+                  <CardTitle className="flex items-center">
+                    <Users className="h-4 w-4 mr-2 text-orange-600" />
+                    การเติบโตของผู้ใช้งาน
+                  </CardTitle>
                   <CardDescription>จำนวนผู้ใช้งานในช่วง 7 วันที่ผ่านมา</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px] flex items-end">
+                  <div className="h-[260px] flex items-end">
                     {summaryData.userGrowth.map((point, index) => (
                       <div key={index} className="flex-1 flex flex-col items-center justify-end h-full">
                         <div 
-                          className="w-full max-w-[40px] bg-purple-500 rounded-t-md mx-auto"
+                          className="w-full max-w-[40px] bg-orange-500 rounded-t-md mx-auto"
                           style={{ 
                             height: `${(point.value / Math.max(...summaryData.userGrowth.map(p => p.value))) * 75}%`,
                             opacity: 0.6 + (index / (summaryData.userGrowth.length * 2))
@@ -536,19 +738,29 @@ const AdminDashboard: React.FC = () => {
                         <div className="text-xs mt-2 text-gray-600">
                           {new Date(point.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }).split(' ')[0]}
                         </div>
+                        <div className="text-[10px] text-gray-500">{point.value}</div>
                       </div>
                     ))}
+                  </div>
+                  
+                  <div className="flex justify-center items-center mt-2 text-xs text-gray-500">
+                    <div className="bg-orange-50 text-orange-800 px-2 py-1 rounded-full">
+                      อัตราการเติบโต: +{summaryData.userGrowthRate}%
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>แนวโน้มคำสั่งซื้อ</CardTitle>
+                  <CardTitle className="flex items-center">
+                    <ShoppingCart className="h-4 w-4 mr-2 text-blue-600" />
+                    แนวโน้มคำสั่งซื้อ
+                  </CardTitle>
                   <CardDescription>จำนวนคำสั่งซื้อในช่วง 7 วันที่ผ่านมา</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[300px] flex items-end relative">
+                  <div className="h-[260px] flex items-end relative">
                     <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                       <div className="border-b border-dashed border-gray-200 h-0"></div>
                       <div className="border-b border-dashed border-gray-200 h-0"></div>
@@ -564,7 +776,7 @@ const AdminDashboard: React.FC = () => {
                       return (
                         <div key={index} className="flex-1 flex flex-col items-center justify-end h-full">
                           <div 
-                            className="w-full max-w-[40px] bg-purple-500 rounded-t-md mx-auto"
+                            className="w-full max-w-[40px] bg-blue-500 rounded-t-md mx-auto"
                             style={{ 
                               height: `${normalized}%`,
                               opacity: 0.6 + (index / (array.length * 2))
@@ -573,9 +785,16 @@ const AdminDashboard: React.FC = () => {
                           <div className="text-xs mt-2 text-gray-600">
                             {new Date(point.date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }).split(' ')[0]}
                           </div>
+                          <div className="text-[10px] text-gray-500">{point.value}</div>
                         </div>
                       );
                     })}
+                  </div>
+                  
+                  <div className="flex justify-center items-center mt-2 text-xs text-gray-500">
+                    <div className="bg-blue-50 text-blue-800 px-2 py-1 rounded-full">
+                      เพิ่มขึ้น {summaryData.orderTrend[summaryData.orderTrend.length - 1].value - summaryData.orderTrend[0].value} รายการในสัปดาห์นี้
+                    </div>
                   </div>
                 </CardContent>
               </Card>
