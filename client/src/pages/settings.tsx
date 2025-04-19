@@ -128,6 +128,9 @@ const SettingsPage: React.FC = () => {
             subdistrict: userData.subdistrict || '',
             zipcode: userData.zipcode || '',
           });
+          
+          // แสดง log เพื่อดูข้อมูลที่ได้รับจาก API
+          console.log('ข้อมูลผู้ใช้จาก API:', userData);
         } else {
           console.error('ไม่สามารถดึงข้อมูลผู้ใช้ได้', response.data);
           toast({
@@ -172,6 +175,11 @@ const SettingsPage: React.FC = () => {
           fullname: data.fullname,
           email: data.email || null,
           phone: data.phone || null,
+          address: data.address || null,
+          province: data.province || null,
+          district: data.district || null,
+          subdistrict: data.subdistrict || null,
+          zipcode: data.zipcode || null,
         });
       } else {
         toast({
@@ -268,6 +276,22 @@ const SettingsPage: React.FC = () => {
                     <Store className="mr-2 h-4 w-4" />
                     <span>ยอดเงิน: ฿{parseFloat(userProfile?.balance || '0').toLocaleString()}</span>
                   </div>
+                  
+                  {userProfile?.address && (
+                    <div className="mt-2 pt-2 border-t border-gray-200">
+                      <h4 className="font-medium text-sm mb-1">ที่อยู่ผู้ส่ง</h4>
+                      <div className="flex items-start text-sm text-gray-600">
+                        <MapPin className="mr-2 h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <span>
+                          {userProfile.address}
+                          {userProfile.subdistrict && <>, {userProfile.subdistrict}</>}
+                          {userProfile.district && <>, {userProfile.district}</>}
+                          {userProfile.province && <>, {userProfile.province}</>}
+                          {userProfile.zipcode && <> {userProfile.zipcode}</>}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -333,24 +357,87 @@ const SettingsPage: React.FC = () => {
                           )}
                         />
                         
-                        <FormField
-                          control={profileForm.control}
-                          name="address"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>ที่อยู่</FormLabel>
-                              <FormControl>
-                                <Input placeholder="กรอกที่อยู่" {...field} value={field.value || ''} />
-                              </FormControl>
-                              <FormDescription>
-                                ที่อยู่จะถูกใช้เป็นค่าเริ่มต้นในการจัดส่งสินค้า
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <h3 className="text-lg font-medium mt-6 mb-3">ที่อยู่สำหรับรับพัสดุ</h3>
+                        <div className="border p-4 rounded-md bg-gray-50 dark:bg-gray-900 space-y-4">
+                          <FormField
+                            control={profileForm.control}
+                            name="address"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ที่อยู่</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="บ้านเลขที่ ถนน ซอย อาคาร" {...field} value={field.value || ''} />
+                                </FormControl>
+                                <FormDescription>
+                                  กรุณาระบุรายละเอียดที่อยู่ เช่น บ้านเลขที่ ถนน ซอย หรืออาคาร
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={profileForm.control}
+                              name="subdistrict"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>แขวง/ตำบล</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="แขวง/ตำบล" {...field} value={field.value || ''} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={profileForm.control}
+                              name="district"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>เขต/อำเภอ</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="เขต/อำเภอ" {...field} value={field.value || ''} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={profileForm.control}
+                              name="province"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>จังหวัด</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="จังหวัด" {...field} value={field.value || ''} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={profileForm.control}
+                              name="zipcode"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>รหัสไปรษณีย์</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="รหัสไปรษณีย์" {...field} value={field.value || ''} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
                         
-                        <Button type="submit" disabled={loadingProfile} className="bg-purple-600 hover:bg-purple-700">
+                        <Button type="submit" disabled={loadingProfile} className="bg-purple-600 hover:bg-purple-700 mt-4">
                           {loadingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                           บันทึกข้อมูล
                         </Button>
