@@ -28,7 +28,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, User, Lock, Store, MapPin, Phone, Mail } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, User, Lock, Store, MapPin, Phone, Mail, Info, Truck, AlertTriangle } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -54,6 +55,66 @@ const passwordFormSchema = z.object({
   path: ['confirmPassword'],
 });
 
+// Interface สำหรับตัวเลือกขนส่ง
+interface ShippingMethod {
+  id: number;
+  name: string;
+  enabled: boolean;
+  logo?: string;
+  basePrice: number;
+  description?: string;
+  estimatedDelivery?: string;
+}
+
+// Interface สำหรับการตั้งค่าขนส่ง
+interface ShippingSettings {
+  shipping_methods: ShippingMethod[];
+}
+
+// ข้อมูลขนส่งเริ่มต้น (จะถูกแทนที่ด้วยข้อมูลจริงจาก API)
+const defaultShippingMethods: ShippingMethod[] = [
+  {
+    id: 1,
+    name: 'Flash Express',
+    enabled: true,
+    basePrice: 35,
+    description: 'บริการขนส่งด่วนทั่วประเทศ',
+    estimatedDelivery: '1-2 วันทำการ'
+  },
+  {
+    id: 2,
+    name: 'Thailand Post (EMS)',
+    enabled: false,
+    basePrice: 42,
+    description: 'ไปรษณีย์ไทย บริการ EMS',
+    estimatedDelivery: '1-3 วันทำการ'
+  },
+  {
+    id: 3,
+    name: 'SCG Express',
+    enabled: false,
+    basePrice: 40,
+    description: 'บริการจัดส่งรวดเร็ว มาตรฐานสูง',
+    estimatedDelivery: '1-2 วันทำการ'
+  },
+  {
+    id: 4,
+    name: 'Kerry Express',
+    enabled: false,
+    basePrice: 38,
+    description: 'เครือข่ายครอบคลุมทั่วประเทศ',
+    estimatedDelivery: '1-2 วันทำการ'
+  },
+  {
+    id: 5,
+    name: 'J&T Express',
+    enabled: false,
+    basePrice: 36,
+    description: 'บริการจัดส่งพัสดุระดับภูมิภาค',
+    estimatedDelivery: '1-3 วันทำการ'
+  }
+];
+
 // ประเภทของข้อมูลผู้ใช้
 interface UserProfile {
   id: number;
@@ -77,6 +138,8 @@ const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingPassword, setLoadingPassword] = useState(false);
+  const [loadingShipping, setLoadingShipping] = useState(false);
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
   const { toast } = useToast();
 
   // ฟอร์มสำหรับข้อมูลโปรไฟล์
@@ -103,6 +166,91 @@ const SettingsPage: React.FC = () => {
       confirmPassword: '',
     },
   });
+
+  // ฟังก์ชันดึงข้อมูลขนส่งจาก API
+  const fetchShippingMethods = async () => {
+    try {
+      setLoadingShipping(true);
+      // ในบทความการทดสอบนี้ใช้ข้อมูลจำลอง แต่ในการใช้งานจริงควรดึงข้อมูลจาก API
+      // const response = await axios.get('/api/shipping/methods', { withCredentials: true });
+      // if (response.data && response.data.success) {
+      //   setShippingMethods(response.data.methods);
+      // }
+      
+      // ใช้ข้อมูลจำลองเริ่มต้น
+      setTimeout(() => {
+        setShippingMethods(defaultShippingMethods);
+        setLoadingShipping(false);
+      }, 500);
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการดึงข้อมูลขนส่ง:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถดึงข้อมูลขนส่งได้ กรุณาลองใหม่อีกครั้ง',
+        variant: 'destructive',
+      });
+      setLoadingShipping(false);
+    }
+  };
+
+  // ฟังก์ชันเปลี่ยนสถานะการเปิด/ปิดขนส่ง
+  const toggleShippingMethod = async (id: number, enabled: boolean) => {
+    try {
+      const updatedMethods = shippingMethods.map(method => 
+        method.id === id ? { ...method, enabled } : method
+      );
+      setShippingMethods(updatedMethods);
+      
+      // ส่งข้อมูลไปยัง API ในการใช้งานจริง
+      // await axios.put(`/api/shipping/methods/${id}`, { enabled }, { withCredentials: true });
+      
+      toast({
+        title: enabled ? 'เปิดใช้งานขนส่งสำเร็จ' : 'ปิดใช้งานขนส่งสำเร็จ',
+        description: `คุณได้${enabled ? 'เปิด' : 'ปิด'}ใช้งานขนส่ง ${shippingMethods.find(m => m.id === id)?.name} เรียบร้อยแล้ว`,
+      });
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการอัพเดตสถานะขนส่ง:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถอัพเดตสถานะขนส่งได้ กรุณาลองใหม่อีกครั้ง',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // ฟังก์ชันอัพเดตราคาขนส่ง
+  const updateShippingPrice = async (id: number, newPrice: number) => {
+    try {
+      if (newPrice < 0) {
+        toast({
+          title: 'ราคาไม่ถูกต้อง',
+          description: 'ราคาขนส่งต้องเป็นจำนวนบวก',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      const updatedMethods = shippingMethods.map(method => 
+        method.id === id ? { ...method, basePrice: newPrice } : method
+      );
+      setShippingMethods(updatedMethods);
+      
+      // ส่งข้อมูลไปยัง API ในการใช้งานจริง
+      // await axios.put(`/api/shipping/methods/${id}`, { basePrice: newPrice }, { withCredentials: true });
+      
+      toast({
+        title: 'อัพเดตราคาขนส่งสำเร็จ',
+        description: `คุณได้อัพเดตราคาขนส่ง ${shippingMethods.find(m => m.id === id)?.name} เป็น ฿${newPrice} เรียบร้อยแล้ว`,
+      });
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการอัพเดตราคาขนส่ง:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถอัพเดตราคาขนส่งได้ กรุณาลองใหม่อีกครั้ง',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // ดึงข้อมูลผู้ใช้จาก API
   useEffect(() => {
@@ -152,6 +300,8 @@ const SettingsPage: React.FC = () => {
     };
 
     fetchUserProfile();
+    // ดึงข้อมูลขนส่ง
+    fetchShippingMethods();
   }, [toast]);
 
   // อัพเดตข้อมูลโปรไฟล์
@@ -300,9 +450,10 @@ const SettingsPage: React.FC = () => {
           {/* แท็บตั้งค่า */}
           <div className="md:col-span-3">
             <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="profile">ข้อมูลส่วนตัว</TabsTrigger>
                 <TabsTrigger value="security">ความปลอดภัย</TabsTrigger>
+                <TabsTrigger value="shipping">ขนส่ง</TabsTrigger>
               </TabsList>
               
               {/* แท็บข้อมูลส่วนตัว */}
@@ -510,6 +661,103 @@ const SettingsPage: React.FC = () => {
                         </Button>
                       </form>
                     </Form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              {/* แท็บขนส่ง */}
+              <TabsContent value="shipping">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>ตั้งค่าขนส่ง</CardTitle>
+                    <CardDescription>จัดการตัวเลือกและราคาการจัดส่งสินค้าของคุณ</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingShipping ? (
+                      <div className="text-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-600" />
+                        <p className="mt-2 text-gray-500">กำลังโหลดข้อมูลขนส่ง...</p>
+                      </div>
+                    ) : shippingMethods.length === 0 ? (
+                      <div className="text-center py-8 border rounded-lg bg-gray-50 dark:bg-gray-900">
+                        <AlertTriangle className="h-12 w-12 mx-auto text-yellow-500 mb-3" />
+                        <h3 className="text-lg font-medium mb-1">ไม่พบข้อมูลขนส่ง</h3>
+                        <p className="text-gray-500 mb-4">ยังไม่มีตัวเลือกขนส่งในระบบ</p>
+                        <Button variant="outline" className="mx-auto">
+                          <span>รีเฟรช</span>
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-sm text-gray-500 mb-6 flex items-start">
+                          <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                          <p>
+                            เปิดหรือปิดบริการขนส่งตามที่ต้องการ โดยขนส่งที่ปิดจะไม่แสดงเป็นตัวเลือกในหน้าสร้างออเดอร์ 
+                            นอกจากนี้คุณยังสามารถปรับราคาขนส่งเริ่มต้นสำหรับแต่ละบริการได้ตามต้องการ
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-6">
+                          {shippingMethods.map((method) => (
+                            <div key={method.id} className="border rounded-lg p-4 bg-white dark:bg-gray-950">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <Truck className="h-8 w-8 text-purple-600 mr-3 flex-shrink-0" />
+                                  <div>
+                                    <h4 className="font-medium text-base">{method.name}</h4>
+                                    <p className="text-sm text-gray-500">{method.description}</p>
+                                    <p className="text-xs text-gray-400 mt-1">ระยะเวลาส่งโดยประมาณ: {method.estimatedDelivery}</p>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end">
+                                  <div className="flex items-center space-x-2 mb-2">
+                                    <span className="text-sm text-gray-500">{method.enabled ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</span>
+                                    <Switch 
+                                      checked={method.enabled} 
+                                      onCheckedChange={(checked) => toggleShippingMethod(method.id, checked)}
+                                    />
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-sm text-gray-500">ราคา:</span>
+                                    <div className="relative">
+                                      <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-500">฿</span>
+                                      <Input 
+                                        type="number"
+                                        value={method.basePrice.toString()}
+                                        onChange={(e) => {
+                                          const newPrice = parseFloat(e.target.value);
+                                          if (!isNaN(newPrice)) {
+                                            updateShippingPrice(method.id, newPrice);
+                                          }
+                                        }}
+                                        className="pl-6 w-24"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="flex justify-end mt-6">
+                          <Button
+                            onClick={() => fetchShippingMethods()}
+                            variant="outline"
+                            className="mr-2"
+                          >
+                            รีเซ็ต
+                          </Button>
+                          <Button 
+                            disabled={loadingShipping}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            {loadingShipping && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            บันทึกการตั้งค่า
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
