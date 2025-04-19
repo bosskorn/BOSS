@@ -432,8 +432,8 @@ const CreateOrderTabsPage: React.FC = () => {
     }
     
     // ค้นหาอำเภอ/เขต และ ตำบล/แขวง ที่มีคำนำหน้า
-    const districtWithPrefixRegex = /(อำเภอ|อ\.|เขต)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
-    const subdistrictWithPrefixRegex = /(ตำบล|ต\.|แขวง)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    const districtWithPrefixRegex = /(อำเภอ|อ\.|เขต)\s*([^\s,]+(?:\s+[^\s,]+)*?)(?=\s+|$|,|\s+แขวง|\s+ตำบล|\s+จังหวัด)/i;
+    const subdistrictWithPrefixRegex = /(ตำบล|ต\.|แขวง)\s*([^\s,]+(?:\s+[^\s,]+)*?)(?=\s+|$|,|\s+เขต|\s+อำเภอ|\s+จังหวัด)/i;
     
     const districtWithPrefixMatch = addressText.match(districtWithPrefixRegex);
     const subdistrictWithPrefixMatch = addressText.match(subdistrictWithPrefixRegex);
@@ -590,7 +590,10 @@ const CreateOrderTabsPage: React.FC = () => {
       }
     }
     
-    console.log('ข้อความที่วิเคราะห์:', lines);
+    // ตัดเครื่องหมายอัญประกาศหรือเครื่องหมายคำพูดออกจากข้อความทั้งหมด
+    lines = lines.map(line => line.replace(/["']/g, ''));
+    
+    console.log('ข้อความที่วิเคราะห์ (หลังการทำความสะอาด):', lines);
     
     // ค้นหาชื่อลูกค้า (มักเป็นบรรทัดแรก)
     if (lines.length >= 1 && !form.getValues('customerName')) {
@@ -676,7 +679,25 @@ const CreateOrderTabsPage: React.FC = () => {
       }
     }
     
-    // วิเคราะห์ที่อยู่แยกเป็นส่วนๆ
+    // ระวัง: เมื่อวิเคราะห์ข้อมูลลูกค้าแล้ว ให้เอาเฉพาะส่วนของที่อยู่ไปวิเคราะห์ต่อ
+    // กรองข้อมูลที่เป็นชื่อและเบอร์โทรออกก่อนวิเคราะห์ที่อยู่ เพื่อลดความสับสน
+    let addressOnly = text;
+    
+    // ลบส่วนที่เป็นชื่อออก (บรรทัดแรก)
+    if (lines.length >= 1 && form.getValues('customerName')) {
+      addressOnly = addressOnly.replace(form.getValues('customerName'), '');
+    }
+    
+    // ลบส่วนที่เป็นเบอร์โทรออก
+    if (form.getValues('customerPhone')) {
+      addressOnly = addressOnly.replace(form.getValues('customerPhone'), '');
+    }
+    
+    // ปรับรูปแบบข้อความ ลบบรรทัดว่าง และช่องว่างไม่จำเป็น
+    addressOnly = addressOnly.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
+    form.setValue('fullAddress', addressOnly);
+    
+    // วิเคราะห์ที่อยู่แยกเป็นส่วนๆ (ส่งเฉพาะข้อมูลที่อยู่ไปวิเคราะห์)
     analyzeAddress();
   };
   
