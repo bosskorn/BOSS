@@ -141,12 +141,8 @@ export const getFlashExpressShippingOptions = async (
         weight: packageInfo.weight * 1000, // แปลงจาก กก. เป็น กรัม
       };
       
-      // สร้าง signature
-      const sign = generateFlashExpressSignature(
-        FLASH_EXPRESS_API_KEY as string,
-        requestData,
-        nonceStr
-      );
+      // สร้าง signature ด้วยวิธีตามเอกสาร Flash Express
+      const sign = createDirectSignature(requestData, FLASH_EXPRESS_API_KEY as string);
       
       // เพิ่ม signature เข้าไปในข้อมูล
       requestData.sign = sign;
