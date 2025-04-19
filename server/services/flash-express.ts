@@ -1,17 +1,19 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
+import { generateFlashExpressSignature, generateNonceStr } from './generate-signature';
 
 // ข้อมูลการเชื่อมต่อกับ Flash Express API
-const FLASH_EXPRESS_API_URL = 'https://api-sandbox.flashexpress.com/open-api/v2';
+const FLASH_EXPRESS_API_URL = 'https://api-sandbox.flashexpress.com/open-api/v3';
 const FLASH_EXPRESS_MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
-// กำหนดค่า timeout สำหรับการเชื่อมต่อ API ให้สั้นลง
-const API_TIMEOUT = 5000; // 5 วินาที
+// กำหนดค่า timeout สำหรับการเชื่อมต่อ API (เพิ่มขึ้นเป็น 10 วินาที)
+const API_TIMEOUT = 10000; // 10 วินาที
 
 // ตรวจสอบว่ามี API key หรือไม่
 if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
   console.warn('FLASH_EXPRESS_MERCHANT_ID or FLASH_EXPRESS_API_KEY not set');
+  console.warn('กรุณาตั้งค่า FLASH_EXPRESS_MERCHANT_ID และ FLASH_EXPRESS_API_KEY ในไฟล์ .env');
 }
 
 // ประเภทข้อมูลสำหรับตัวเลือกการจัดส่ง
@@ -201,7 +203,53 @@ export const createFlashExpressShipping = async (
     // ตามเอกสารของ Flash Express
     try {
       // สร้าง random nonce string
-      const nonceStr = Date.now().toString();
+      const nonceStr = generateNonceStr();
+      
+      // สร้างข้อมูลที่จะส่งไปยัง API
+      const requestData = {
+        mchId: FLASH_EXPRESS_MERCHANT_ID,
+        nonceStr: nonceStr,
+        outTradeNo: orderData.outTradeNo,
+        srcName: orderData.srcName,
+        srcPhone: orderData.srcPhone,
+        srcProvinceName: orderData.srcProvinceName,
+        srcCityName: orderData.srcCityName,
+        srcDistrictName: orderData.srcDistrictName,
+        srcPostalCode: orderData.srcPostalCode,
+        srcDetailAddress: orderData.srcDetailAddress,
+        dstName: orderData.dstName,
+        dstPhone: orderData.dstPhone,
+        dstHomePhone: orderData.dstHomePhone,
+        dstProvinceName: orderData.dstProvinceName,
+        dstCityName: orderData.dstCityName,
+        dstDistrictName: orderData.dstDistrictName,
+        dstPostalCode: orderData.dstPostalCode,
+        dstDetailAddress: orderData.dstDetailAddress,
+        articleCategory: orderData.articleCategory,
+        expressCategory: orderData.expressCategory,
+        weight: orderData.weight,
+        width: orderData.width,
+        length: orderData.length,
+        height: orderData.height,
+        insured: orderData.insured,
+        insureDeclareValue: orderData.insureDeclareValue,
+        codEnabled: orderData.codEnabled,
+        codAmount: orderData.codAmount,
+        remark: orderData.remark,
+        subItemTypes: orderData.subItemTypes ? JSON.stringify(orderData.subItemTypes) : undefined
+      };
+      
+      // สร้าง signature
+      const sign = generateFlashExpressSignature(
+        FLASH_EXPRESS_API_KEY as string,
+        requestData,
+        nonceStr
+      );
+      
+      // เพิ่ม signature เข้าไปในข้อมูล
+      requestData.sign = sign;
+      
+      console.log('ส่งข้อมูลไปยัง Flash Express API:', JSON.stringify(requestData, null, 2));
       
       // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
       const response = await axios({
@@ -212,39 +260,7 @@ export const createFlashExpressShipping = async (
           'Accept': 'application/json'
         },
         timeout: API_TIMEOUT, // กำหนด timeout เพื่อไม่ให้รอนานเกินไป
-        data: {
-          mchId: FLASH_EXPRESS_MERCHANT_ID,
-          nonceStr: nonceStr,
-          sign: 'DUMMY_SIGN', // สำหรับการทดสอบ (ค่าจริงควรคำนวณตามที่ Flash Express กำหนด)
-          outTradeNo: orderData.outTradeNo,
-          srcName: orderData.srcName,
-          srcPhone: orderData.srcPhone,
-          srcProvinceName: orderData.srcProvinceName,
-          srcCityName: orderData.srcCityName,
-          srcDistrictName: orderData.srcDistrictName,
-          srcPostalCode: orderData.srcPostalCode,
-          srcDetailAddress: orderData.srcDetailAddress,
-          dstName: orderData.dstName,
-          dstPhone: orderData.dstPhone,
-          dstHomePhone: orderData.dstHomePhone,
-          dstProvinceName: orderData.dstProvinceName,
-          dstCityName: orderData.dstCityName,
-          dstDistrictName: orderData.dstDistrictName,
-          dstPostalCode: orderData.dstPostalCode,
-          dstDetailAddress: orderData.dstDetailAddress,
-          articleCategory: orderData.articleCategory,
-          expressCategory: orderData.expressCategory,
-          weight: orderData.weight,
-          width: orderData.width,
-          length: orderData.length,
-          height: orderData.height,
-          insured: orderData.insured,
-          insureDeclareValue: orderData.insureDeclareValue,
-          codEnabled: orderData.codEnabled,
-          codAmount: orderData.codAmount,
-          remark: orderData.remark,
-          subItemTypes: orderData.subItemTypes ? JSON.stringify(orderData.subItemTypes) : undefined
-        }
+        data: requestData
       });
 
       console.log("ได้รับการตอบกลับจาก Flash Express API สำหรับการสร้างการจัดส่ง:", response.data);
