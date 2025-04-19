@@ -20,6 +20,7 @@ import OrderList from "@/pages/order-list";
 import OrderDetail from "@/pages/order-detail";
 import ShipmentList from "@/pages/shipment-list";
 import Settings from "@/pages/settings";
+import TopUp from "@/pages/top-up";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 
@@ -67,6 +68,9 @@ function Router() {
       
       {/* ตั้งค่า - protected */}
       <ProtectedRoute path="/settings" component={Settings} />
+      
+      {/* เติมเงิน - protected */}
+      <ProtectedRoute path="/top-up" component={TopUp} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
