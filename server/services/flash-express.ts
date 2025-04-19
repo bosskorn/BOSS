@@ -408,12 +408,8 @@ export const getFlashExpressTrackingStatus = async (trackingNumber: string): Pro
         pno: trackingNumber
       };
       
-      // สร้าง signature
-      const sign = generateFlashExpressSignature(
-        FLASH_EXPRESS_API_KEY as string,
-        requestData,
-        nonceStr
-      );
+      // สร้าง signature ด้วยวิธีตามเอกสาร Flash Express
+      const sign = createDirectSignature(requestData, FLASH_EXPRESS_API_KEY as string);
       
       // เพิ่ม signature เข้าไปในข้อมูล
       requestData.sign = sign;
