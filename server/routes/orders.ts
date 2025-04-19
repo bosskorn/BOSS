@@ -439,4 +439,49 @@ router.get('/summary', auth, async (req, res) => {
   }
 });
 
+// อัพเดตสถานะการพิมพ์ใบลาเบล
+router.patch('/:id/print-status', auth, async (req, res) => {
+  try {
+    // ตรวจสอบข้อมูลผู้ใช้
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
+      });
+    }
+    
+    const userId = req.user.id;
+    const orderId = parseInt(req.params.id, 10);
+    const { isPrinted } = req.body;
+    
+    // ตรวจสอบว่าออเดอร์นี้เป็นของผู้ใช้นี้หรือไม่
+    const order = await storage.getOrder(orderId);
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบข้อมูลออเดอร์'
+      });
+    }
+    
+    // อัพเดตสถานะการพิมพ์
+    const updatedOrder = await storage.updateOrder(orderId, {
+      isPrinted: isPrinted
+    });
+    
+    return res.status(200).json({
+      success: true,
+      message: 'อัพเดตสถานะการพิมพ์ใบลาเบลเรียบร้อย',
+      data: updatedOrder
+    });
+    
+  } catch (error) {
+    console.error('Error updating print status:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการอัพเดตสถานะการพิมพ์ใบลาเบล'
+    });
+  }
+});
+
 export default router;

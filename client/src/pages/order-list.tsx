@@ -683,6 +683,11 @@ const OrderList: React.FC = () => {
                         )}
                       </div>
                     </TableHead>
+                    <TableHead>
+                      <div className="flex items-center">
+                        สถานะการพิมพ์
+                      </div>
+                    </TableHead>
                     <TableHead className="text-right">การดำเนินการ</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -720,6 +725,9 @@ const OrderList: React.FC = () => {
                         )}
                       </TableCell>
                       <TableCell>{getStatusBadge(order.status)}</TableCell>
+                      <TableCell>
+                        {getPrintStatus(order.isPrinted)}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
                           <Button variant="outline" size="sm" asChild>
@@ -727,6 +735,22 @@ const OrderList: React.FC = () => {
                               รายละเอียด
                             </Link>
                           </Button>
+                          {order.trackingNumber && (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
+                              disabled={currentPrintingOrder === order.id || isPrintingLabel}
+                              onClick={() => handlePrintLabel(order)}
+                            >
+                              {currentPrintingOrder === order.id ? (
+                                <RefreshCw className="h-3 w-3 animate-spin mr-1" />
+                              ) : (
+                                <Printer className="h-3 w-3 mr-1" />
+                              )}
+                              พิมพ์ใบลาเบล
+                            </Button>
+                          )}
                           {order.status === 'pending' && (
                             <Button variant="outline" size="sm" className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100" asChild>
                               <Link href={`/update-order/${order.id}`}>
