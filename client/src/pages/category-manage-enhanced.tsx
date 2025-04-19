@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import axios from 'axios';
+import { useAuth } from '@/hooks/use-auth';
 import { toast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 
@@ -22,6 +23,9 @@ interface ValidationErrors {
 }
 
 const CategoryManageEnhanced: React.FC = () => {
+  // ข้อมูลผู้ใช้จาก Auth Context
+  const { user } = useAuth();
+  
   // สถานะสำหรับการแสดงผลและจัดการข้อมูล
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,17 +82,52 @@ const CategoryManageEnhanced: React.FC = () => {
     { name: 'อื่นๆ', value: 'fa-tag' },
   ];
 
-  // โหลดข้อมูลหมวดหมู่เมื่อคอมโพเนนต์โหลด
+  // โหลดข้อมูลหมวดหมู่เมื่อคอมโพเนนต์โหลดและมีข้อมูลผู้ใช้
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    // ตรวจสอบว่ามีข้อมูลผู้ใช้แล้วหรือไม่
+    if (user) {
+      console.log('มีข้อมูลผู้ใช้แล้ว, ID:', user.id);
+      fetchCategories();
+    } else {
+      console.warn('ยังไม่มีข้อมูลผู้ใช้');
+    }
+  }, [user]); // เพิ่ม user เป็น dependency ให้ useEffect
 
   // ฟังก์ชันเรียกข้อมูลหมวดหมู่จาก API
   const fetchCategories = async () => {
     try {
-      // เรียกข้อมูลจาก API จริง
-      const response = await axios.get('/api/categories');
-      const categoriesData = response.data.data || [];
+      console.log('เริ่มการดึงข้อมูลหมวดหมู่');
+      
+      // เรียกข้อมูลจาก API จริง พร้อมส่ง credentials
+      const response = await axios.get('/api/categories', {
+        withCredentials: true,
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('ได้รับการตอบกลับจาก API:', response.data);
+      
+      // ตรวจสอบโครงสร้างข้อมูลที่ได้รับ
+      let categoriesData = [];
+      
+      if (response.data.categories && Array.isArray(response.data.categories)) {
+        console.log('พบข้อมูลในรูปแบบ response.data.categories');
+        categoriesData = response.data.categories;
+      } else if (response.data.data && Array.isArray(response.data.data)) {
+        console.log('พบข้อมูลในรูปแบบ response.data.data');
+        categoriesData = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        console.log('พบข้อมูลในรูปแบบ response.data (array)');
+        categoriesData = response.data;
+      } else {
+        console.warn('ไม่พบข้อมูลในรูปแบบที่คาดหวัง:', response.data);
+        categoriesData = [];
+      }
+      
+      console.log('ข้อมูลหมวดหมู่ที่ได้รับ:', categoriesData);
       
       // แปลงข้อมูลให้ตรงกับโครงสร้างที่ใช้
       const mappedCategories: Category[] = categoriesData.map((cat: any) => ({
@@ -102,12 +141,17 @@ const CategoryManageEnhanced: React.FC = () => {
         icon: cat.icon || 'fa-box'
       }));
       
+      console.log('ข้อมูลหมวดหมู่หลังจากแปลง:', mappedCategories);
       setCategories(mappedCategories);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching categories:', error);
+      
+      // ตรวจสอบการตอบกลับจาก API กรณีมีข้อผิดพลาด
+      const errorMessage = error.response?.data?.message || 'ไม่สามารถโหลดข้อมูลหมวดหมู่ได้';
+      
       toast({
         title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถโหลดข้อมูลหมวดหมู่ได้',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
