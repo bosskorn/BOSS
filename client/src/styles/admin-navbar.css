@@ -25,10 +25,29 @@
 .admin-navbar .menu-text {
   color: white !important;
   opacity: 1;
-  font-weight: 600;
-  font-size: 16px;
   display: inline-block !important;
   visibility: visible !important;
+  display: flex !important;
+  flex-direction: column;
+}
+
+/* Primary menu text */
+.admin-navbar .menu-text-primary {
+  font-weight: 600;
+  font-size: 16px;
+  color: white;
+  display: block;
+  transition: all 0.2s ease;
+}
+
+/* Secondary menu text (description) */
+.admin-navbar .menu-text-secondary {
+  font-weight: 400;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  display: block;
+  transition: all 0.2s ease;
+  margin-top: 2px;
 }
 
 /* Make sure the menu link itself is visible */
@@ -40,6 +59,13 @@
   display: flex;
   align-items: center;
   position: relative;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.admin-navbar .menu-link:hover {
+  border-bottom: 3px solid #8a2be2;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Fix icon styles */
@@ -80,17 +106,14 @@
   color: white;
 }
 
-/* ลบบรรทัดที่ซ้ำซ้อนออก */
-
-.admin-navbar .menu-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-}
+/* เพิ่มสีพื้นหลังเมื่อ active */
 
 .admin-navbar .menu-link.active {
   background-color: rgba(255, 255, 255, 0.15);
   color: white;
   font-weight: 500;
+  border-bottom: 3px solid #8a2be2;
+  box-shadow: 0 -3px 10px rgba(138, 43, 226, 0.3);
 }
 
 .admin-navbar .dropdown-menu {

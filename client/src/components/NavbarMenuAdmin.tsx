@@ -134,7 +134,10 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
             onClick={handleMenuLinkClick}
           >
             <i className="fas fa-users"></i>
-            <span className="menu-text">จัดการผู้ใช้งาน</span>
+            <span className="menu-text">
+              <span className="menu-text-primary">จัดการผู้ใช้งาน</span>
+              <span className="menu-text-secondary">ข้อมูลลูกค้า, สิทธิ์การใช้งาน</span>
+            </span>
           </Link>
         </li>
         
@@ -151,7 +154,10 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
             aria-expanded={activeDropdown === 'orders-admin'}
           >
             <i className="fas fa-clipboard-list"></i>
-            <span className="menu-text">จัดการคำสั่งซื้อ</span>
+            <span className="menu-text">
+              <span className="menu-text-primary">จัดการคำสั่งซื้อ</span>
+              <span className="menu-text-secondary">ตรวจสอบคำสั่งซื้อและการจัดส่ง</span>
+            </span>
             <i className="fas fa-chevron-down dropdown-arrow"></i>
           </a>
           
@@ -206,7 +212,10 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
             aria-expanded={activeDropdown === 'products-admin'}
           >
             <i className="fas fa-boxes"></i>
-            <span className="menu-text">จัดการสินค้า</span>
+            <span className="menu-text">
+              <span className="menu-text-primary">จัดการสินค้า</span>
+              <span className="menu-text-secondary">สินค้า, หมวดหมู่, และราคา</span>
+            </span>
             <i className="fas fa-chevron-down dropdown-arrow"></i>
           </a>
           
@@ -253,7 +262,10 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
             aria-expanded={activeDropdown === 'settings-admin'}
           >
             <i className="fas fa-cogs"></i>
-            <span className="menu-text">การตั้งค่า</span>
+            <span className="menu-text">
+              <span className="menu-text-primary">การตั้งค่า</span>
+              <span className="menu-text-secondary">การชำระเงิน, API, ความปลอดภัย</span>
+            </span>
             <i className="fas fa-chevron-down dropdown-arrow"></i>
           </a>
           
@@ -310,7 +322,10 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
             aria-expanded={activeDropdown === 'reports-admin'}
           >
             <i className="fas fa-chart-bar"></i>
-            <span className="menu-text">รายงาน/กิจกรรม</span>
+            <span className="menu-text">
+              <span className="menu-text-primary">รายงาน/กิจกรรม</span>
+              <span className="menu-text-secondary">วิเคราะห์ข้อมูล, บันทึกการใช้งาน</span>
+            </span>
             <i className="fas fa-chevron-down dropdown-arrow"></i>
           </a>
           
@@ -353,7 +368,10 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
             onClick={handleMenuLinkClick}
           >
             <i className="fas fa-user"></i>
-            <span className="menu-text">โหมดผู้ใช้</span>
+            <span className="menu-text">
+              <span className="menu-text-primary">โหมดผู้ใช้</span>
+              <span className="menu-text-secondary">สลับไปโหมดธุรกิจของคุณ</span>
+            </span>
           </Link>
         </li>
         
