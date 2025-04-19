@@ -221,8 +221,9 @@ export const createFlashExpressShipping = async (
         codEnabled: orderData.codEnabled,
         codAmount: orderData.codAmount,
         remark: orderData.remark,
-        // Flash Express API ต้องการ subItemTypes ในรูปแบบ JSON string
-        subItemTypesJson: orderData.subItemTypes ? JSON.stringify(orderData.subItemTypes) : undefined
+        // Flash Express API ต้องการ subItemTypes ในรูปแบบฟิลด์แยก
+        subItemTypesJson: orderData.subItemTypes && orderData.subItemTypes.length > 0 ? 
+          JSON.stringify(orderData.subItemTypes) : undefined
       };
       
       // สร้าง signature
