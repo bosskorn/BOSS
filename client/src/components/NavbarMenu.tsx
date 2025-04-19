@@ -265,7 +265,6 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             <i className="fas fa-user-circle"></i>
             <span className="menu-text">
               {user ? 'บัญชีของฉัน' : 'บัญชี'}
-              {user && <span className="user-balance">{user.balance?.toLocaleString() || 0} บาท</span>}
             </span>
           </button>
         </li>
