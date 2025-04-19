@@ -303,8 +303,19 @@ const CreateOrderPage: React.FC = () => {
   const handleProvinceChange = async (provinceId: string) => {
     const province = provinces.find(p => p.id === provinceId);
     if (province) {
+      // กำหนดชื่อจังหวัด
       form.setValue('province', province.name_th);
+      
+      // เคลียร์ค่าอำเภอและตำบลเมื่อเปลี่ยนจังหวัด
+      form.setValue('district', '');
+      form.setValue('subdistrict', '');
+      form.setValue('zipcode', '');
+      
+      // ดึงอำเภอในจังหวัดที่เลือก
       await fetchDistricts(provinceId);
+      
+      // เคลียร์ค่าตำบล
+      setSubdistricts([]);
     }
   };
   
@@ -312,8 +323,20 @@ const CreateOrderPage: React.FC = () => {
   const handleDistrictChange = async (districtId: string) => {
     const district = districts.find(d => d.id === districtId);
     if (district) {
+      // กำหนดชื่ออำเภอ
       form.setValue('district', district.name_th);
+      
+      // เคลียร์ค่าตำบลและรหัสไปรษณีย์
+      form.setValue('subdistrict', '');
+      form.setValue('zipcode', '');
+      
+      // ดึงตำบลในอำเภอที่เลือก
       await fetchSubdistricts(districtId);
+      
+      toast({
+        title: 'แสดงตำบลใน' + district.name_th,
+        description: 'แสดงเฉพาะตำบลที่อยู่ในอำเภอ' + district.name_th + ' เท่านั้น',
+      });
     }
   };
   
@@ -321,8 +344,14 @@ const CreateOrderPage: React.FC = () => {
   const handleSubdistrictChange = (subdistrictId: string) => {
     const subdistrict = subdistricts.find(s => s.id === subdistrictId);
     if (subdistrict) {
+      // กำหนดชื่อตำบลและรหัสไปรษณีย์
       form.setValue('subdistrict', subdistrict.name_th);
       form.setValue('zipcode', subdistrict.zip_code);
+      
+      toast({
+        title: 'เลือกตำบล' + subdistrict.name_th,
+        description: 'รหัสไปรษณีย์: ' + subdistrict.zip_code,
+      });
     }
   };
   
@@ -356,13 +385,6 @@ const CreateOrderPage: React.FC = () => {
     setLoadingZipcodeData(true);
     
     try {
-      // ทดสอบเรียกใช้ API โดยตรงเพื่อดีบัก
-      // const testUrl = `/api/locations/zipcode/${zipcode}`;
-      // console.log(`Direct testing URL: ${testUrl}`);
-      // const testResponse = await fetch(testUrl, { credentials: 'include' });
-      // const testData = await testResponse.json();
-      // console.log('Direct API test response:', testData);
-      
       // เรียกใช้ API ผ่านฟังก์ชัน apiRequest
       const response = await apiRequest('GET', `/api/locations/zipcode/${zipcode}`);
       const data = await response.json();
@@ -370,16 +392,45 @@ const CreateOrderPage: React.FC = () => {
       console.log('API response for zipcode:', data);
       
       if (data.success && data.address) {
+        const provinceName = data.address.province || '';
+        const districtName = data.address.district || '';
+        const subdistrictName = data.address.subdistrict || '';
+        
         // กำหนดค่าจังหวัด อำเภอ และตำบลจากข้อมูลที่ได้
-        form.setValue('province', data.address.province || '');
-        form.setValue('district', data.address.district || '');
-        form.setValue('subdistrict', data.address.subdistrict || '');
+        form.setValue('province', provinceName);
+        form.setValue('district', districtName);
+        form.setValue('subdistrict', subdistrictName);
+        
+        // อัพเดท dropdown โดยการค้นหาจังหวัดใน dropdown
+        const foundProvince = provinces.find(p => p.name_th === provinceName);
+        if (foundProvince) {
+          // ดึงอำเภอของจังหวัดที่เลือก
+          await fetchDistricts(foundProvince.id);
+          
+          // หลังจากได้อำเภอแล้ว ค้นหาอำเภอที่ตรงกับข้อมูลจาก API
+          setTimeout(() => {
+            const foundDistrict = districts.find(d => d.name_th === districtName);
+            if (foundDistrict) {
+              // ดึงตำบลของอำเภอที่เลือก
+              fetchSubdistricts(foundDistrict.id).then(() => {
+                // หลังจากได้ตำบลแล้ว ให้เลือกตำบลที่ตรงกับข้อมูลจาก API โดยอัตโนมัติ
+                setTimeout(() => {
+                  const foundSubdistrict = subdistricts.find(s => s.name_th === subdistrictName);
+                  if (foundSubdistrict) {
+                    // ไม่ต้องเซ็ตค่าอีกรอบ เพราะเซ็ตไว้ด้านบนแล้ว
+                    console.log(`รหัสไปรษณีย์ ${zipcode}: ${provinceName} > ${districtName} > ${subdistrictName}`);
+                  }
+                }, 300);
+              });
+            }
+          }, 300);
+        }
         
         toast({
           title: 'ดึงข้อมูลสำเร็จ',
           description: data.note 
-            ? `${data.note} - ${data.address.province}` 
-            : 'ได้รับข้อมูลจากรหัสไปรษณีย์เรียบร้อยแล้ว',
+            ? `${data.note} - ${provinceName}, ${districtName}, ${subdistrictName}` 
+            : `ได้รับข้อมูลจากรหัสไปรษณีย์ ${zipcode} เรียบร้อยแล้ว`,
         });
         
         return; // ออกจากฟังก์ชันหากสำเร็จ
