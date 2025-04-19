@@ -7,6 +7,7 @@ import {
 } from '../services/flash-express';
 import axios from 'axios';
 import crypto from 'crypto';
+import { generateFlashExpressSignature, generateNonceStr } from '../services/generate-signature';
 
 const router = express.Router();
 
@@ -163,10 +164,10 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
     // ทดสอบวิธีอื่นในการเรียก API โดยตรง
     try {
       // สร้าง nonce string
-      const nonceStr = Math.floor(Date.now() * Math.random()).toString();
+      const nonceStr = generateNonceStr();
       
       // ข้อมูลสำหรับส่ง API
-      const apiData = {
+      const apiData: Record<string, any> = {
         mchId: flashExpressMerchantId,
         nonceStr: nonceStr,
         outTradeNo: orderData.outTradeNo,
@@ -189,18 +190,12 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
         codAmount: orderData.codAmount
       };
       
-      // เรียงลำดับข้อมูลและสร้าง signature
-      const sortedKeys = Object.keys(apiData).sort();
-      const stringToSign = sortedKeys
-        .map(key => `${key}=${apiData[key]}`)
-        .join('&') + `&key=${flashExpressApiKey}`;
-      
-      console.log('Flash Express raw string to sign:', stringToSign);
-      
-      const sign = require('crypto').createHash('sha256')
-        .update(stringToSign)
-        .digest('hex')
-        .toUpperCase();
+      // ใช้ฟังก์ชัน generateFlashExpressSignature จาก generate-signature.ts
+      const sign = generateFlashExpressSignature(
+        flashExpressApiKey as string,
+        apiData,
+        nonceStr
+      );
       
       console.log('Flash Express calculated signature:', sign);
       

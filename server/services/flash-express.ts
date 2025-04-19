@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
 import { generateFlashExpressSignature, generateNonceStr } from './generate-signature';
+import crypto from 'crypto';
 
 // ข้อมูลการเชื่อมต่อกับ Flash Express API
 const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com';
@@ -254,7 +255,8 @@ export const createFlashExpressShipping = async (
       
       console.log('String to sign (raw):', stringToSign);
       
-      const newSign = require('crypto').createHash('sha256')
+      // ใช้ชุดคำสั่ง import ที่เตรียมไว้แล้ว แทนการใช้ require
+      const newSign = crypto.createHash('sha256')
         .update(stringToSign)
         .digest('hex')
         .toUpperCase();
