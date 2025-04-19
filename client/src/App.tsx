@@ -19,6 +19,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import OrderList from "@/pages/order-list";
 import OrderDetail from "@/pages/order-detail";
 import ShipmentList from "@/pages/shipment-list";
+import Settings from "@/pages/settings";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 
@@ -63,6 +64,9 @@ function Router() {
       <ProtectedRoute path="/reports/by-area" component={ReportsByArea} />
       <ProtectedRoute path="/reports/cod" component={ReportsCOD} />
       <ProtectedRoute path="/reports/returns" component={ReportsReturns} />
+      
+      {/* ตั้งค่า - protected */}
+      <ProtectedRoute path="/settings" component={Settings} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
