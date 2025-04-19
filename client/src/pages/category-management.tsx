@@ -106,8 +106,10 @@ const CategoryManagement: React.FC = () => {
         throw error;
       }
     },
-    enabled: !!user,
-    retry: 1
+    enabled: true, // แก้จาก !!user เป็น true เพื่อให้ดึงข้อมูลเสมอเมื่อโหลดหน้า
+    refetchOnWindowFocus: true, // เพิ่มเพื่อให้รีเฟรชข้อมูลเมื่อกลับมาที่หน้านี้
+    staleTime: 10 * 1000, // 10 วินาที (ลดลงจากค่า default)
+    retry: 2 // เพิ่มจำนวนครั้งในการลองใหม่หากเกิดข้อผิดพลาด
   });
   
   // Mutation สำหรับสร้างหมวดหมู่ใหม่
