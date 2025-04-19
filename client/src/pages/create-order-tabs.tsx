@@ -1158,7 +1158,7 @@ const CreateOrderTabsPage: React.FC = () => {
                         
                         <div className="bg-purple-50 p-4 rounded-lg">
                           <h3 className="text-purple-800 font-semibold mb-3">ที่อยู่จัดส่ง</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 gap-4">
                             <FormField
                               control={form.control}
                               name="houseNumber"
@@ -1167,19 +1167,6 @@ const CreateOrderTabsPage: React.FC = () => {
                                   <FormLabel>บ้านเลขที่และถนน <span className="text-red-500">*</span></FormLabel>
                                   <FormControl>
                                     <Input placeholder="บ้านเลขที่และถนน" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="village"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>หมู่บ้าน/คอนโด</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="ชื่อหมู่บ้านหรือคอนโด (ถ้ามี)" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -1600,9 +1587,7 @@ const CreateOrderTabsPage: React.FC = () => {
                           <div className="bg-purple-50/50 p-4 rounded-lg border border-purple-100">
                             <h3 className="font-medium text-purple-900 mb-2">ที่อยู่จัดส่ง</h3>
                             <p className="font-medium">
-                              {form.getValues('houseNumber')} 
-                              {form.getValues('village') && ` ${form.getValues('village')}`}
-                              {form.getValues('soi') && ` ${form.getValues('soi')}`}
+                              {form.getValues('houseNumber')}
 
                               <br />
                               ต.{form.getValues('subdistrict')} อ.{form.getValues('district')} 
