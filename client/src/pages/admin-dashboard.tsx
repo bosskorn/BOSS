@@ -28,6 +28,7 @@ import {
   Package,
   TrendingUp,
   ShoppingCart,
+  MapPin,
   AlertTriangle,
   Truck,
   Settings,
