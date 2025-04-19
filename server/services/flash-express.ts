@@ -226,35 +226,58 @@ export const createFlashExpressShipping = async (
         subItemTypes: undefined
       };
       
-      // สร้าง signature
-      // nonceStr ถูกรวมเป็นส่วนหนึ่งของ requestData แล้ว จึงไม่ต้องส่งแยกต่างหาก
-      const sign = generateFlashExpressSignature(
-        FLASH_EXPRESS_API_KEY as string,
-        requestData,
-        nonceStr
-      );
+      console.log('ข้อมูลก่อนสร้างลายเซ็น:', JSON.stringify(requestData, null, 2));
       
-      // เพิ่ม signature เข้าไปในข้อมูล
-      requestData.sign = sign;
+      // สร้าง sign data แยกต่างหาก ไม่รวม subItemTypes
+      const signData = { ...requestData };
+      delete signData.subItemTypes;
       
-      console.log('ส่งข้อมูลไปยัง Flash Express API:', JSON.stringify(requestData, null, 2));
+      // เรียงข้อมูลตามลำดับตัวอักษรเพื่อสร้างลายเซ็น
+      const sortedKeys = Object.keys(signData).sort();
+      const orderedSignData: Record<string, any> = {};
+      sortedKeys.forEach(key => {
+        if (signData[key] !== undefined && signData[key] !== '') {
+          orderedSignData[key] = signData[key];
+        }
+      });
+      
+      // เพิ่ม debug logs
+      console.log('ข้อมูลที่เรียงแล้วสำหรับสร้างลายเซ็น:', JSON.stringify(orderedSignData, null, 2));
+      
+      // สร้างลายเซ็นใหม่ตามเอกสาร Flash Express V3
+      // ในที่นี้เราจะสร้างลายเซ็นจากข้อมูลที่เรียงแล้วโดยตรง
+      // ไม่ผ่านฟังก์ชัน generateFlashExpressSignature
+      
+      const stringToSign = Object.entries(orderedSignData)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('&') + `&key=${FLASH_EXPRESS_API_KEY}`;
+      
+      console.log('String to sign (raw):', stringToSign);
+      
+      const newSign = crypto.createHash('sha256')
+        .update(stringToSign)
+        .digest('hex')
+        .toUpperCase();
+      
+      // เพิ่ม signature ที่คำนวณแล้วเข้าไปใน signData
+      signData.sign = newSign;
+      
+      console.log('ส่งข้อมูลไปยัง Flash Express API:', JSON.stringify(signData, null, 2));
       
       // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
       // ตาม API specification ต้องแปลงรูปแบบข้อมูลให้เป็น form-urlencoded format
       const formData = new URLSearchParams();
       
-      // เพิ่มข้อมูลทั่วไปจาก requestData
-      for (const [key, value] of Object.entries(requestData)) {
+      // เพิ่มข้อมูลทั่วไปจาก signData (รวม sign แล้ว)
+      for (const [key, value] of Object.entries(signData)) {
         if (value !== undefined) {
           formData.append(key, value.toString());
         }
       }
       
-      // จัดการกับ subItemTypes แยกต่างหาก
+      // จัดการกับ subItemTypes แยกต่างหากหลังจากสร้าง sign
       if (orderData.subItemTypes && orderData.subItemTypes.length > 0) {
-        // เพิ่ม subItemTypes ตามที่ Flash Express API ต้องการ
-        // โดยใช้ JSON.stringify ในรูปแบบที่ถูกต้อง
-        // เพิ่ม field ชื่อ subItemTypes ไม่ใช่ subItemTypesJson
+        // เพิ่ม subItemTypes หลังจากคำนวณ sign แล้ว
         formData.append('subItemTypes', JSON.stringify(orderData.subItemTypes));
       } else {
         // เพิ่มค่าเริ่มต้นถ้าไม่มีข้อมูล

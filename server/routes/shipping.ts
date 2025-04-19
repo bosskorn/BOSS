@@ -118,8 +118,33 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
   try {
     console.log('ได้รับคำขอทดสอบสร้างเลขพัสดุ:', req.body);
     
-    // ใช้ข้อมูลที่ส่งมาตรงๆ
-    const result = await createFlashExpressShipping(req.body);
+    // เพิ่มการตรวจสอบข้อมูลที่ส่งมา
+    if (!req.body.outTradeNo) {
+      req.body.outTradeNo = `PD${Date.now()}`;
+    }
+    
+    // เพิ่มการแสดงค่า API key ที่ใช้ (เฉพาะบางส่วน เพื่อความปลอดภัย)
+    const flashExpressMerchantId = process.env.FLASH_EXPRESS_MERCHANT_ID;
+    const flashExpressApiKey = process.env.FLASH_EXPRESS_API_KEY;
+    
+    console.log('Flash Express API credentials:');
+    console.log(`- Merchant ID: ${flashExpressMerchantId}`);
+    console.log(`- API Key: ${flashExpressApiKey ? `${flashExpressApiKey.substring(0, 5)}...${flashExpressApiKey.substring(flashExpressApiKey.length - 5)}` : 'ไม่พบ'}`);
+    
+    // กำหนดข้อมูลที่จำเป็นเพิ่มเติมถ้าไม่มี
+    const orderData = {
+      ...req.body,
+      srcPhone: req.body.srcPhone?.replace(/[-\s]/g, ''),
+      dstPhone: req.body.dstPhone?.replace(/[-\s]/g, ''),
+      weight: Number(req.body.weight) || 1000,
+      width: Number(req.body.width) || 20,
+      length: Number(req.body.length) || 30,
+      height: Number(req.body.height) || 10,
+    };
+    
+    // ทดสอบ API
+    console.log('ข้อมูลที่ส่งไปยัง Flash Express API (หลังปรับปรุง):', orderData);
+    const result = await createFlashExpressShipping(orderData);
     
     if (result.success) {
       res.json({
@@ -131,7 +156,7 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
     } else {
       res.status(400).json({
         success: false,
-        message: result.error || 'ไม่สามารถสร้างเลขพัสดุได้',
+        message: result.error || 'ไม่สามารถสร้างเลขพัสดุจาก Flash Express ได้ กรุณาลองใหม่อีกครั้ง',
         errorDetails: 'Flash Express API ไม่สามารถสร้างเลขพัสดุได้ กรุณาตรวจสอบข้อมูลให้ถูกต้องและลองใหม่อีกครั้ง'
       });
     }
@@ -140,7 +165,8 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to test create order',
-      stack: error.stack
+      stack: error.stack,
+      detailedError: JSON.stringify(error)
     });
   }
 });
