@@ -70,8 +70,20 @@ const OrderList: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        setOrders(data.data);
-        setFilteredOrders(data.data);
+        // ตรวจสอบรูปแบบข้อมูลว่ามาในรูปแบบไหน
+        if (Array.isArray(data.data)) {
+          console.log('ข้อมูลออเดอร์อยู่ใน data field:', data.data.length, 'รายการ');
+          setOrders(data.data);
+          setFilteredOrders(data.data);
+        } else if (Array.isArray(data.orders)) {
+          console.log('ข้อมูลออเดอร์อยู่ใน orders field:', data.orders.length, 'รายการ');
+          setOrders(data.orders);
+          setFilteredOrders(data.orders);
+        } else {
+          console.warn('ไม่พบข้อมูลออเดอร์ในรูปแบบที่คาดหวัง:', data);
+          setOrders([]);
+          setFilteredOrders([]);
+        }
       } else {
         throw new Error(data.message || 'ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้');
       }

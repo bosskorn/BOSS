@@ -8,10 +8,20 @@ const router = Router();
 // Get all orders
 router.get('/', auth, async (req, res) => {
   try {
-    const orders = await storage.getAllOrders();
+    // ดึงข้อมูลออเดอร์ตาม user ID จากผู้ใช้ที่ล็อกอิน
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
+      });
+    }
+    
+    const userId = req.user.id;
+    const orders = await storage.getOrdersByUserId(userId);
+    
     res.json({
       success: true,
-      orders
+      data: orders // ส่งกลับในรูปแบบ data field ตามมาตรฐานของแอป
     });
   } catch (error) {
     console.error('Error fetching orders:', error);
@@ -25,7 +35,15 @@ router.get('/', auth, async (req, res) => {
 // Get order by ID
 router.get('/:id', auth, async (req, res) => {
   try {
-    const order = await storage.getOrderById(req.params.id);
+    const orderId = parseInt(req.params.id, 10);
+    if (isNaN(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'รูปแบบ ID ไม่ถูกต้อง'
+      });
+    }
+    
+    const order = await storage.getOrder(orderId);
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -224,8 +242,16 @@ router.post('/', auth, async (req, res) => {
 // Update order
 router.put('/:id', auth, async (req, res) => {
   try {
+    const orderId = parseInt(req.params.id, 10);
+    if (isNaN(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'รูปแบบ ID ไม่ถูกต้อง'
+      });
+    }
+    
     const orderData = req.body;
-    const order = await storage.updateOrder(req.params.id, orderData);
+    const order = await storage.updateOrder(orderId, orderData);
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -248,7 +274,15 @@ router.put('/:id', auth, async (req, res) => {
 // Delete order
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const result = await storage.deleteOrder(req.params.id);
+    const orderId = parseInt(req.params.id, 10);
+    if (isNaN(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'รูปแบบ ID ไม่ถูกต้อง'
+      });
+    }
+    
+    const result = await storage.deleteOrder(orderId);
     if (!result) {
       return res.status(404).json({
         success: false,
@@ -271,8 +305,77 @@ router.delete('/:id', auth, async (req, res) => {
 // Get summary data for dashboard
 router.get('/summary', auth, async (req, res) => {
   try {
-    const summary = await storage.getOrdersSummary();
-    res.json(summary);
+    // ดึงข้อมูลออเดอร์ของผู้ใช้ปัจจุบัน
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
+      });
+    }
+    
+    const userId = req.user.id;
+    const orders = await storage.getOrdersByUserId(userId);
+    
+    // คำนวณข้อมูลสรุปต่างๆ
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const todayOrders = orders.filter(order => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate >= today;
+    });
+    
+    const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthOrders = orders.filter(order => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate >= thisMonth;
+    });
+    
+    // คำนวณยอดขาย 7 วันล่าสุด
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+      
+      const dayOrders = orders.filter(order => {
+        const orderDate = new Date(order.createdAt);
+        return orderDate >= date && orderDate < nextDate;
+      });
+      
+      const total = dayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+      
+      last7Days.push({
+        date: date.toISOString().split('T')[0],
+        total
+      });
+    }
+    
+    // รายการออเดอร์ล่าสุด 5 รายการ
+    const latestOrders = [...orders]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5)
+      .map(order => ({
+        id: order.id.toString(),
+        orderNumber: order.orderNumber,
+        customer: order.customerName,
+        total: order.totalAmount || 0
+      }));
+    
+    const summary = {
+      todayTotal: todayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0),
+      monthTotal: monthOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0),
+      last7Days,
+      latestOrders
+    };
+    
+    res.json({
+      success: true,
+      data: summary
+    });
   } catch (error) {
     console.error('Error fetching orders summary:', error);
     res.status(500).json({
