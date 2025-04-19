@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
-import axios from 'axios';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import api from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 // สร้าง Schema สำหรับการตรวจสอบข้อมูลการสมัครสมาชิกผู้ดูแลระบบ
@@ -36,7 +36,7 @@ const AdminRegisterPage: React.FC = () => {
       fullname: '',
       email: '',
       phone: '',
-      adminKey: ''
+      adminKey: 'PURPLEDASH2025' // กำหนดค่าเริ่มต้นให้กับ adminKey
     }
   });
 
@@ -56,7 +56,7 @@ const AdminRegisterPage: React.FC = () => {
         password: '******'
       });
       
-      const response = await axios.post('/api/register/admin', adminData);
+      const response = await api.post('/register/admin', adminData);
       
       console.log('Admin Register response:', response);
       
