@@ -356,22 +356,34 @@ export function parseAddressFromText(text: string): AddressComponents {
     houseNumberText = fullMatch;
     console.log("พบเลขที่บ้าน (จากคำนำหน้า):", components.houseNumber);
   } 
-  // 2. รูปแบบตัวเลข/ตัวเลข เช่น 123/45 ที่อยู่ต้นประโยค
+  // 2. ค้นหารูปแบบเลขที่บ้านที่พบบ่อย NN/NNN
   else {
-    const houseNumberRegex = /^[^\d]*?([\d\/]+(?:[ก-ฮa-zA-Z]*)?)/;
-    const houseNumberMatch = cleanedText.match(houseNumberRegex);
-    if (houseNumberMatch && houseNumberMatch[1]) {
-      components.houseNumber = houseNumberMatch[1].trim();
-      houseNumberText = houseNumberMatch[1];
-      console.log("พบเลขที่บ้าน (จากต้นข้อความ):", components.houseNumber);
-    } else {
-      // 3. รูปแบบทั่วไป
-      const generalHouseNumberRegex = /\b(\d+\/\d+|\d+)[ก-ฮ]?\b/;
-      const generalHouseNumberMatch = cleanedText.match(generalHouseNumberRegex);
-      if (generalHouseNumberMatch) {
-        components.houseNumber = generalHouseNumberMatch[1];
-        houseNumberText = generalHouseNumberMatch[0];
-        console.log("พบเลขที่บ้าน (รูปแบบทั่วไป):", components.houseNumber);
+    // จับรูปแบบที่มีตัวเลข/ตัวเลข เช่น 12/345 หรือ 191/43-44
+    const commonHouseNumberRegex = /\b(\d+\/\d+(?:-\d+)?)\b/;
+    const commonHouseNumberMatch = cleanedText.match(commonHouseNumberRegex);
+    
+    if (commonHouseNumberMatch) {
+      components.houseNumber = commonHouseNumberMatch[1].trim();
+      houseNumberText = commonHouseNumberMatch[0];
+      console.log("พบเลขที่บ้านรูปแบบทั่วไป:", components.houseNumber);
+    } 
+    // 3. รูปแบบตัวเลข/ตัวเลข ที่อยู่ต้นประโยค
+    else {
+      const houseNumberRegex = /^[^\d]*?([\d\/]+(?:[ก-ฮa-zA-Z]*)?)/;
+      const houseNumberMatch = cleanedText.match(houseNumberRegex);
+      if (houseNumberMatch && houseNumberMatch[1]) {
+        components.houseNumber = houseNumberMatch[1].trim();
+        houseNumberText = houseNumberMatch[1];
+        console.log("พบเลขที่บ้าน (จากต้นข้อความ):", components.houseNumber);
+      } else {
+        // 4. รูปแบบทั่วไป
+        const generalHouseNumberRegex = /\b(\d+\/\d+|\d+)[ก-ฮ]?\b/;
+        const generalHouseNumberMatch = cleanedText.match(generalHouseNumberRegex);
+        if (generalHouseNumberMatch) {
+          components.houseNumber = generalHouseNumberMatch[1];
+          houseNumberText = generalHouseNumberMatch[0];
+          console.log("พบเลขที่บ้าน (รูปแบบทั่วไป):", components.houseNumber);
+        }
       }
     }
   }
@@ -647,15 +659,51 @@ export function parseAddressFromText(text: string): AddressComponents {
   }
   
   // สำหรับกรณีที่พบคำว่า "คลองเตย" หรือชื่อเขต/แขวงในกรุงเทพฯที่รู้จัก
-  const wellKnownBangkokDistricts = [
-    'คลองเตย', 'พระโขนง', 'วัฒนา', 'บางรัก', 'ปทุมวัน', 'สาทร', 'บางคอแหลม', 'ยานนาวา',
-    'ดินแดง', 'ห้วยขวาง', 'จตุจักร', 'ลาดพร้าว', 'บางกะปิ', 'วังทองหลาง', 'บึงกุ่ม', 'สวนหลวง',
-    'ประเวศ', 'คันนายาว', 'ลาดกระบัง', 'มีนบุรี', 'หนองจอก', 'ดอนเมือง', 'จอมทอง', 'ธนบุรี'
-  ];
-
-  // ตรวจหาชื่อเขตที่รู้จักในข้อความโดยตรง
-  if (!components.district || !components.subdistrict) {
-    for (const district of wellKnownBangkokDistricts) {
+  
+  // ตรวจหาชื่อเขตที่รู้จักในข้อความโดยตรง หากยังไม่พบเขตหรือแขวง
+  if ((!components.district || !components.subdistrict) && 
+       (components.province === 'กรุงเทพ' || text.toLowerCase().includes('กรุงเทพ'))) {
+    
+    // ข้อมูลที่อยู่พิเศษ: คลองเตย-คลองตัน
+    if (text.toLowerCase().includes('คลองเตย')) {
+      if (!components.district) {
+        components.district = 'คลองเตย';
+        console.log("พบเขตคลองเตยในข้อความ (ตรวจสอบโดยตรง)");
+      }
+      
+      // ถ้าพบคลองตันในข้อความ ให้กำหนดเป็นแขวงคลองตัน
+      if (text.toLowerCase().includes('คลองตัน') && !components.subdistrict) {
+        components.subdistrict = 'คลองตัน';
+        console.log("พบแขวงคลองตันในข้อความ (ตรวจสอบโดยตรง)");
+      } 
+      // ถ้าไม่พบคลองตัน ให้กำหนดแขวงเป็นคลองเตย
+      else if (!components.subdistrict) {
+        components.subdistrict = 'คลองเตย';
+        console.log("กำหนดแขวงคลองเตย (ตามเขต, ตรวจสอบโดยตรง)");
+      }
+      
+      // พบแล้วทั้งเขตและแขวง
+      return components;
+    }
+    
+    // ลาดพร้าว
+    if (text.toLowerCase().includes('ลาดพร้าว')) {
+      if (!components.district) {
+        components.district = 'ลาดพร้าว';
+        console.log("พบเขตลาดพร้าวในข้อความ (ตรวจสอบโดยตรง)");
+      }
+      
+      if (!components.subdistrict) {
+        components.subdistrict = 'ลาดพร้าว';
+        console.log("กำหนดแขวงลาดพร้าว (ตามเขต, ตรวจสอบโดยตรง)");
+      }
+      
+      // พบแล้วทั้งเขตและแขวง
+      return components;
+    }
+    
+    // ตรวจสอบชื่อเขตอื่นๆ ในกรุงเทพฯ
+    for (const district of BANGKOK_DISTRICTS) {
       const regex = new RegExp(`\\b${district}\\b`, 'i');
       if (regex.test(text)) {
         if (!components.district) {
@@ -663,8 +711,9 @@ export function parseAddressFromText(text: string): AddressComponents {
           console.log("พบเขตที่รู้จักในข้อความ:", district);
         }
         
-        // ถ้าพบเขตแต่ยังไม่พบแขวง และเป็นกรณีของกรุงเทพฯ ให้ใช้ชื่อเดียวกัน
-        if (!components.subdistrict && components.province && components.province.toLowerCase().includes('กรุงเทพ')) {
+        // ถ้าพบเขตแต่ยังไม่พบแขวง และเป็นกรณีของกรุงเทพฯ
+        // ตรวจสอบว่าเป็นเขตที่มีชื่อเดียวกับแขวงหรือไม่
+        if (!components.subdistrict && SAME_NAME_SUBDISTRICTS.includes(district)) {
           components.subdistrict = district;
           console.log("กำหนดแขวงเป็นค่าเดียวกับเขต:", district);
         }
