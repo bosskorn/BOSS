@@ -187,7 +187,8 @@ router.post('/create', auth, async (req: Request, res: Response) => {
     } else {
       res.status(400).json({
         success: false,
-        message: result.error || 'Failed to create shipping'
+        message: result.error || 'Missing required information',
+        errorDetails: 'Flash Express API ไม่สามารถสร้างเลขพัสดุได้ กรุณาตรวจสอบข้อมูลให้ถูกต้องและลองใหม่อีกครั้ง'
       });
     }
   } catch (error: any) {

@@ -1154,44 +1154,39 @@ const CreateOrderTabsPage: React.FC = () => {
         orderData.orderNumber = shippingInfo.orderNumber;
         orderData.trackingNumber = shippingInfo.trackingNumber;
         orderData.sortCode = shippingInfo.sortCode;
+        
+        // ส่งข้อมูลไปยังเซิร์ฟเวอร์เมื่อได้รับเลขพัสดุจริงเท่านั้น
+        console.log('กำลังส่งข้อมูลออเดอร์ไปยังเซิร์ฟเวอร์:', orderData);
+        const response = await api.post('/api/orders', orderData);
+        
+        if (response.data.success) {
+          // ใช้ Dialog แทน toast สำหรับแสดงผลแบบป๊อบอัพและมีตัวเลือกการนำทาง
+          setDialog({
+            open: true,
+            title: 'สร้างออเดอร์สำเร็จ',
+            description: `สร้างออเดอร์หมายเลข ${response.data.order.id || orderData.orderNumber} และเลขพัสดุ ${orderData.trackingNumber} เรียบร้อยแล้ว`,
+            orderNumber: response.data.order.id || orderData.orderNumber,
+            trackingNumber: orderData.trackingNumber
+          });
+          
+          // เคลียร์ฟอร์ม
+          form.reset();
+        } else {
+          throw new Error(response.data.message || 'เกิดข้อผิดพลาดในการสร้างออเดอร์');
+        }
       } catch (shippingError: any) {
         console.error('เกิดข้อผิดพลาดในการสร้างเลขพัสดุ:', shippingError);
         
-        if (data.isCOD) {
-          // กรณีที่เป็น COD และไม่สามารถสร้างเลขพัสดุได้ ให้แจ้งเตือนและยกเลิกการสร้างออเดอร์
-          throw new Error(`ไม่สามารถสร้างเลขพัสดุสำหรับ COD ได้: ${shippingError.message}`);
-        } else {
-          // กรณีที่ไม่ใช่ COD ให้แจ้งเตือนว่าจะใช้เลขพัสดุชั่วคราว
-          toast({
-            title: 'ไม่สามารถสร้างเลขพัสดุได้',
-            description: 'จะใช้เลขพัสดุชั่วคราว คุณสามารถอัพเดทเลขพัสดุในภายหลัง',
-            variant: 'destructive',
-          });
-          
-          // สร้างเลขพัสดุชั่วคราว
-          orderData.orderNumber = `PD${Date.now()}`;
-          orderData.trackingNumber = `TMP${Date.now().toString().slice(-9)}`;
-        }
-      }
-      
-      console.log('กำลังส่งข้อมูลออเดอร์ไปยังเซิร์ฟเวอร์:', orderData);
-      // ส่งข้อมูลไปยังเซิร์ฟเวอร์ - ยังคงใช้ api.post() เนื่องจากมีการตั้งค่า interceptor สำหรับ auth token
-      const response = await api.post('/api/orders', orderData);
-      
-      if (response.data.success) {
-        // ใช้ Dialog แทน toast สำหรับแสดงผลแบบป๊อบอัพและมีตัวเลือกการนำทาง
-        setDialog({
+        // ไม่ว่าจะเป็น COD หรือไม่ ถ้าไม่สามารถสร้างเลขพัสดุได้ จะแจ้งเตือนและยกเลิกการสร้างออเดอร์
+        setAlertDialog({
           open: true,
-          title: 'สร้างออเดอร์สำเร็จ',
-          description: `สร้างออเดอร์หมายเลข ${response.data.order.id || orderData.orderNumber} และเลขพัสดุ ${orderData.trackingNumber} เรียบร้อยแล้ว`,
-          orderNumber: response.data.order.id || orderData.orderNumber,
-          trackingNumber: orderData.trackingNumber
+          title: 'ไม่สามารถสร้างเลขพัสดุได้',
+          description: 'กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้ง',
+          errorDetails: shippingError.message || 'ไม่สามารถเชื่อมต่อกับบริการขนส่งได้'
         });
         
-        // เคลียร์ฟอร์ม
-        form.reset();
-      } else {
-        throw new Error(response.data.message || 'เกิดข้อผิดพลาดในการสร้างออเดอร์');
+        // ยกเลิกการสร้างออเดอร์เมื่อไม่สามารถรับเลขพัสดุได้
+        throw new Error('ไม่สามารถสร้างเลขพัสดุจาก Flash Express ได้');
       }
     } catch (error: any) {
       console.error('Error creating order:', error);
@@ -1315,31 +1310,14 @@ const CreateOrderTabsPage: React.FC = () => {
           // ถ้าไม่มี success หรือไม่มี trackingNumber (แต่ไม่มี error)
           console.error('Flash Express API response ไม่มีข้อมูลที่จำเป็น:', response.data);
           
-          // กรณีเป็น COD จำเป็นต้องมีเลขพัสดุจริง
-          if (data.isCOD) {
-            setAlertDialog({
-              open: true,
-              title: 'ไม่สามารถสร้างเลขพัสดุ COD ได้',
-              description: 'ออเดอร์ที่มีการเก็บเงินปลายทาง (COD) จำเป็นต้องมีเลขพัสดุจริงจาก Flash Express',
-              errorDetails: response.data.message || 'API ไม่ตอบสนองหรือข้อมูลไม่ครบถ้วน โปรดตรวจสอบข้อมูลให้ถูกต้อง'
-            });
-            throw new Error(response.data.error || 'ไม่สามารถสร้างเลขพัสดุ COD ได้');
-          }
-          
-          // สำหรับออเดอร์ทั่วไป (ไม่ใช่ COD) ให้แสดงป๊อปอัพเตือน
           setAlertDialog({
             open: true,
-            title: 'ไม่สามารถสร้างเลขพัสดุจริงได้',
-            description: 'ระบบจะใช้เลขพัสดุชั่วคราวแทน คุณสามารถอัพเดทเลขพัสดุในภายหลัง',
-            errorDetails: response.data.message || 'Flash Express API ไม่ตอบสนองหรือมีข้อผิดพลาด'
+            title: 'ไม่สามารถสร้างเลขพัสดุได้',
+            description: 'ไม่สามารถสร้างเลขพัสดุจาก Flash Express API ได้',
+            errorDetails: response.data.message || 'API ไม่ตอบสนองหรือข้อมูลไม่ครบถ้วน โปรดตรวจสอบข้อมูลให้ถูกต้อง'
           });
           
-          // ใช้เลขพัสดุชั่วคราวสำหรับออเดอร์ปกติ (ไม่ใช่ COD)
-          return {
-            orderNumber,
-            trackingNumber: `TMP${Date.now().toString().slice(-10)}`,
-            sortCode: ''
-          };
+          throw new Error('ไม่สามารถสร้างเลขพัสดุจาก Flash Express API ได้');
         }
       } catch (apiError: any) {
         console.error('Flash Express API error', apiError);
@@ -1357,31 +1335,15 @@ const CreateOrderTabsPage: React.FC = () => {
           }, null, 2);
         }
         
-        // กรณีเป็น COD จำเป็นต้องมีเลขพัสดุจริง ให้แสดงป๊อปอัพแจ้งเตือนข้อผิดพลาด
-        if (data.isCOD) {
-          setAlertDialog({
-            open: true,
-            title: 'ไม่สามารถสร้างเลขพัสดุ COD ได้',
-            description: errorMessage,
-            errorDetails: errorDetails
-          });
-          throw apiError;
-        }
-        
-        // สำหรับออเดอร์ทั่วไป (ไม่ใช่ COD) ให้แสดงป๊อปอัพเตือน
+        // แสดงป๊อปอัพแจ้งเตือนข้อผิดพลาด
         setAlertDialog({
           open: true,
-          title: 'ไม่สามารถสร้างเลขพัสดุจริงได้',
-          description: 'ระบบจะใช้เลขพัสดุชั่วคราวแทน คุณสามารถอัพเดทเลขพัสดุในภายหลัง',
-          errorDetails: errorMessage
+          title: 'ไม่สามารถสร้างเลขพัสดุได้',
+          description: errorMessage,
+          errorDetails: errorDetails
         });
         
-        // ใช้เลขพัสดุชั่วคราวสำหรับออเดอร์ปกติ (ไม่ใช่ COD)
-        return {
-          orderNumber,
-          trackingNumber: `TMP${Date.now().toString().slice(-10)}`,
-          sortCode: ''
-        };
+        throw apiError;
       }
     } catch (error: any) {
       console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API:', error);

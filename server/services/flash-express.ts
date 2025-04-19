@@ -254,12 +254,19 @@ export const createFlashExpressShipping = async (
     } catch (apiError: any) {
       console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API สำหรับการสร้างการจัดส่ง:', apiError.message);
       
-      // กรณีที่ API ไม่ตอบสนองหรือมีปัญหา แจ้งข้อผิดพลาด
+      // กรณีที่ API ไม่ตอบสนองหรือมีปัญหา ให้ส่งข้อผิดพลาดกลับไปยังผู้ใช้
       console.log('ไม่สามารถสร้างเลขพัสดุได้ กรุณาลองใหม่อีกครั้ง');
+      
+      // อ่านข้อผิดพลาดจาก API response ถ้ามี
+      let errorMessage = 'ไม่สามารถสร้างเลขพัสดุจาก Flash Express ได้ กรุณาลองใหม่อีกครั้ง';
+      if (apiError.response && apiError.response.data) {
+        errorMessage = `Flash Express API error: ${apiError.response.data.message || apiError.response.statusText}`;
+      }
   
+      // ส่งกลับข้อผิดพลาดที่ชัดเจน
       return {
         success: false,
-        error: 'ไม่สามารถสร้างเลขพัสดุจาก Flash Express ได้ กรุณาลองใหม่อีกครั้ง'
+        error: errorMessage
       };
     }
   } catch (error: any) {
