@@ -12,23 +12,58 @@ import axios from 'axios';
  */
 export async function getAddressFromZipcode(zipcode: string) {
   try {
+    // ตรวจสอบค่า API key และแสดงผลในคอนโซล (ไม่แสดงค่า key ทั้งหมดเพื่อความปลอดภัย)
+    if (process.env.LONGDO_MAP_API_KEY) {
+      const keyLength = process.env.LONGDO_MAP_API_KEY.length;
+      const maskedKey = process.env.LONGDO_MAP_API_KEY.substring(0, 4) + '...' + 
+                       process.env.LONGDO_MAP_API_KEY.substring(keyLength - 4);
+      console.log(`พบ LONGDO_MAP_API_KEY: ${maskedKey} (ความยาว ${keyLength} ตัวอักษร)`);
+    }
+    
     // ตรวจสอบ API key สำหรับเรียกใช้ Longdo Map API จริง
     if (!process.env.LONGDO_MAP_API_KEY) {
       console.log('LONGDO_MAP_API_KEY ไม่ได้ถูกตั้งค่า ใช้ข้อมูลตัวอย่างแทน');
       
       // ข้อมูลตัวอย่างสำหรับรหัสไปรษณีย์ทั่วไป
       const sampleData: Record<string, any> = {
+        // กรุงเทพมหานคร
         '10200': { province: 'กรุงเทพมหานคร', district: 'พระนคร', subdistrict: 'วังบูรพาภิรมย์' },
         '10300': { province: 'กรุงเทพมหานคร', district: 'ดุสิต', subdistrict: 'ดุสิต' },
         '10310': { province: 'กรุงเทพมหานคร', district: 'ห้วยขวาง', subdistrict: 'ห้วยขวาง' },
+        '10330': { province: 'กรุงเทพมหานคร', district: 'ปทุมวัน', subdistrict: 'ปทุมวัน' },
         '10400': { province: 'กรุงเทพมหานคร', district: 'พญาไท', subdistrict: 'สามเสนใน' },
         '10500': { province: 'กรุงเทพมหานคร', district: 'สัมพันธวงศ์', subdistrict: 'สัมพันธวงศ์' },
         '10600': { province: 'กรุงเทพมหานคร', district: 'ตลิ่งชัน', subdistrict: 'ตลิ่งชัน' },
         '10700': { province: 'กรุงเทพมหานคร', district: 'บางกอกใหญ่', subdistrict: 'วัดท่าพระ' },
         '10800': { province: 'กรุงเทพมหานคร', district: 'บางเขน', subdistrict: 'ท่าแร้ง' },
+        '10900': { province: 'กรุงเทพมหานคร', district: 'พระโขนง', subdistrict: 'บางจาก' },
+        '10230': { province: 'กรุงเทพมหานคร', district: 'บางกะปิ', subdistrict: 'คลองจั่น' },
+        
+        // จังหวัดอื่นๆ ในภาคกลาง
+        '11000': { province: 'สมุทรปราการ', district: 'เมืองสมุทรปราการ', subdistrict: 'ปากน้ำ' },
+        '12000': { province: 'นนทบุรี', district: 'เมืองนนทบุรี', subdistrict: 'สวนใหญ่' },
+        '13000': { province: 'ปทุมธานี', district: 'เมืองปทุมธานี', subdistrict: 'บางปรอก' },
+        '14000': { province: 'พระนครศรีอยุธยา', district: 'พระนครศรีอยุธยา', subdistrict: 'ประตูชัย' },
+        '20000': { province: 'ชลบุรี', district: 'เมืองชลบุรี', subdistrict: 'บางปลาสร้อย' },
+        '22000': { province: 'จันทบุรี', district: 'เมืองจันทบุรี', subdistrict: 'ตลาด' },
+        '22120': { province: 'จันทบุรี', district: 'แหลมสิงห์', subdistrict: 'ปากน้ำแหลมสิงห์' },
+        '22170': { province: 'จันทบุรี', district: 'ท่าใหม่', subdistrict: 'ท่าใหม่' },
+        
+        // ภาคเหนือ
         '50000': { province: 'เชียงใหม่', district: 'เมืองเชียงใหม่', subdistrict: 'ศรีภูมิ' },
-        '50200': { province: 'เชียงใหม่', district: 'จอมทอง', subdistrict: 'หนองควาย' },
-        '90000': { province: 'สงขลา', district: 'เมืองสงขลา', subdistrict: 'บ่อยาง' }
+        '50200': { province: 'เชียงใหม่', district: 'จอมทอง', subdistrict: 'บ้านหลวง' },
+        '53000': { province: 'อุตรดิตถ์', district: 'เมืองอุตรดิตถ์', subdistrict: 'ท่าอิฐ' },
+        
+        // ภาคอีสาน
+        '30000': { province: 'นครราชสีมา', district: 'เมืองนครราชสีมา', subdistrict: 'ในเมือง' },
+        '34000': { province: 'อุบลราชธานี', district: 'เมืองอุบลราชธานี', subdistrict: 'ในเมือง' },
+        '40000': { province: 'ขอนแก่น', district: 'เมืองขอนแก่น', subdistrict: 'ในเมือง' },
+        
+        // ภาคใต้
+        '80000': { province: 'นครศรีธรรมราช', district: 'เมืองนครศรีธรรมราช', subdistrict: 'ในเมือง' },
+        '83000': { province: 'ภูเก็ต', district: 'เมืองภูเก็ต', subdistrict: 'ตลาดใหญ่' },
+        '90000': { province: 'สงขลา', district: 'เมืองสงขลา', subdistrict: 'บ่อยาง' },
+        '90110': { province: 'สงขลา', district: 'หาดใหญ่', subdistrict: 'หาดใหญ่' }
       };
       
       if (sampleData[zipcode]) {
@@ -87,6 +122,14 @@ export async function getAddressFromZipcode(zipcode: string) {
  */
 export async function analyzeAddress(fullAddress: string) {
   try {
+    // ตรวจสอบค่า API key และแสดงผลในคอนโซล (ไม่แสดงค่า key ทั้งหมดเพื่อความปลอดภัย)
+    if (process.env.LONGDO_MAP_API_KEY) {
+      const keyLength = process.env.LONGDO_MAP_API_KEY.length;
+      const maskedKey = process.env.LONGDO_MAP_API_KEY.substring(0, 4) + '...' + 
+                       process.env.LONGDO_MAP_API_KEY.substring(keyLength - 4);
+      console.log(`พบ LONGDO_MAP_API_KEY สำหรับวิเคราะห์ที่อยู่: ${maskedKey} (ความยาว ${keyLength} ตัวอักษร)`);
+    }
+    
     if (!process.env.LONGDO_MAP_API_KEY) {
       console.log('LONGDO_MAP_API_KEY ไม่ได้ถูกตั้งค่า ใช้ข้อมูลตัวอย่างสำหรับวิเคราะห์ที่อยู่แทน');
       
