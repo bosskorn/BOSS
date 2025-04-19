@@ -241,7 +241,7 @@ export const createFlashExpressShipping = async (
       );
       
       // เพิ่ม signature ที่คำนวณแล้วเข้าไปใน signData
-      signData.sign = newSign;
+      signData.sign = sign;
       
       console.log('ส่งข้อมูลไปยัง Flash Express API:', JSON.stringify(signData, null, 2));
       

@@ -27,33 +27,38 @@ export function generateFlashExpressSignature(
     // 1. เรียงลำดับคีย์ของพารามิเตอร์ตามลำดับอักษร ASCII (dictionary order)
     const sortedKeys = Object.keys(paramsCopy).sort();
     
-    // 2. สร้างสตริง stringA ในรูปแบบ key1=value1&key2=value2&...
-    // โดยกรองเฉพาะค่าที่ไม่เป็นค่าว่าง ตามที่ Flash Express กำหนด
-    const stringA = sortedKeys
-      .filter(key => {
-        const value = paramsCopy[key];
-        // กรองค่า null, undefined
-        if (value === null || value === undefined) return false;
-        
-        // กรองสตริงที่เป็นช่องว่าง (ต้องเช็คแบบละเอียดตามที่ Flash Express กำหนด)
+    // สร้าง object ใหม่ที่เรียงลำดับตามตัวอักษร
+    const sortedParams: Record<string, any> = {};
+    for (const key of sortedKeys) {
+      const value = paramsCopy[key];
+      // ตรวจสอบว่าค่าไม่ใช่ค่าว่าง (null, undefined หรือสตริงว่าง)
+      if (value !== null && value !== undefined) {
         if (typeof value === 'string') {
           // เช็คว่าเป็นค่าว่างหรือไม่ (ประกอบด้วยอักขระเว้นวรรคทั้งหมด)
-          // \s คือ whitespace ทั้งหมด (รวม \t, \n, \r, space)
-          if (/^\s*$/.test(value)) return false;
+          if (!/^\s*$/.test(value)) {
+            sortedParams[key] = value;
+          }
+        } else {
+          sortedParams[key] = value;
         }
-        
-        return true;
-      })
-      .map(key => {
-        // แปลงค่า Array หรือ Object เป็น JSON string 
-        let value = paramsCopy[key];
-        if (typeof value === 'object' && value !== null) {
-          value = JSON.stringify(value);
-        }
-        // ไม่ต้อง URL encode ตอนสร้างลายเซ็น (ทำทีหลังตอนส่งข้อมูล)
-        return `${key}=${value}`;
-      })
-      .join('&');
+      }
+    }
+    
+    // 2. สร้างสตริง stringA ในรูปแบบ key1=value1&key2=value2&...
+    let stringA = '';
+    for (const key of Object.keys(sortedParams)) {
+      if (stringA !== '') {
+        stringA += '&';
+      }
+      let value = sortedParams[key];
+      
+      // แปลงค่า Array หรือ Object เป็น JSON string
+      if (typeof value === 'object' && value !== null) {
+        value = JSON.stringify(value);
+      }
+      
+      stringA += `${key}=${value}`;
+    }
     
     // 3. นำ stringA มาต่อกับ key ตามรูปแบบ (stringSignTemp)
     const stringSignTemp = `${stringA}&key=${apiKey}`;
