@@ -120,6 +120,11 @@ const createOrderSchema = z.object({
   
   // ราคารวม
   total: z.number().min(0, { message: 'ราคารวมต้องไม่ติดลบ' }),
+  
+  // ข้อมูลการจัดส่ง (เพิ่มเติม)
+  orderNumber: z.string().optional(),
+  trackingNumber: z.string().optional(),
+  sortCode: z.string().optional(),
 });
 
 type CreateOrderFormValues = z.infer<typeof createOrderSchema>;
@@ -176,7 +181,10 @@ const CreateOrderTabsPage: React.FC = () => {
       codAmount: 0,
       isCOD: false,
       note: '',
-      total: 0
+      total: 0,
+      orderNumber: '',
+      trackingNumber: '',
+      sortCode: ''
     }
   });
   
@@ -1096,22 +1104,53 @@ const CreateOrderTabsPage: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // จำลองการเรียก API ของ Flash Express เมื่อเลือก COD
-      if (data.isCOD) {
-        await simulateFlashExpressAPI(data);
+      // สร้างข้อมูลสำหรับส่งไปยังเซิร์ฟเวอร์
+      const orderData = { ...data };
+      
+      // เรียกใช้ Flash Express API เพื่อสร้างเลขพัสดุ
+      let shippingInfo;
+      try {
+        shippingInfo = await createFlashExpressShipping(data);
+        console.log('ได้รับข้อมูลการจัดส่งจาก Flash Express:', shippingInfo);
+        
+        // เพิ่มข้อมูลเลขพัสดุและรหัสการเรียงลำดับเข้าไปในออเดอร์
+        orderData.orderNumber = shippingInfo.orderNumber;
+        orderData.trackingNumber = shippingInfo.trackingNumber;
+        orderData.sortCode = shippingInfo.sortCode;
+      } catch (shippingError: any) {
+        console.error('เกิดข้อผิดพลาดในการสร้างเลขพัสดุ:', shippingError);
+        
+        if (data.isCOD) {
+          // กรณีที่เป็น COD และไม่สามารถสร้างเลขพัสดุได้ ให้แจ้งเตือนและยกเลิกการสร้างออเดอร์
+          throw new Error(`ไม่สามารถสร้างเลขพัสดุสำหรับ COD ได้: ${shippingError.message}`);
+        } else {
+          // กรณีที่ไม่ใช่ COD ให้แจ้งเตือนว่าจะใช้เลขพัสดุชั่วคราว
+          toast({
+            title: 'ไม่สามารถสร้างเลขพัสดุได้',
+            description: 'จะใช้เลขพัสดุชั่วคราว คุณสามารถอัพเดทเลขพัสดุในภายหลัง',
+            variant: 'destructive',
+          });
+          
+          // สร้างเลขพัสดุชั่วคราว
+          orderData.orderNumber = `PD${Date.now()}`;
+          orderData.trackingNumber = `TMP${Date.now().toString().slice(-9)}`;
+        }
       }
       
       // ส่งข้อมูลไปยังเซิร์ฟเวอร์
-      const response = await api.post('/api/orders', data);
+      const response = await api.post('/api/orders', orderData);
       
       if (response.data.success) {
         toast({
           title: 'สร้างออเดอร์สำเร็จ',
-          description: `สร้างออเดอร์หมายเลข ${response.data.order.id} เรียบร้อยแล้ว`,
+          description: `สร้างออเดอร์หมายเลข ${response.data.order.id || orderData.orderNumber} และเลขพัสดุ ${orderData.trackingNumber} เรียบร้อยแล้ว`,
         });
         
-        // กระโดดไปหน้าดูออเดอร์
-        setLocation(`/order/${response.data.order.id}`);
+        // เคลียร์ฟอร์ม
+        form.reset();
+        
+        // กระโดดไปหน้ารายการออเดอร์ทั้งหมด (แทนที่จะไปหน้าดูออเดอร์เดียว)
+        setLocation('/orders');
       } else {
         throw new Error(response.data.message || 'เกิดข้อผิดพลาดในการสร้างออเดอร์');
       }
@@ -1127,36 +1166,88 @@ const CreateOrderTabsPage: React.FC = () => {
     }
   };
   
-  // ฟังก์ชันจำลองการเรียก API ของ Flash Express
-  const simulateFlashExpressAPI = async (data: CreateOrderFormValues) => {
-    // ในสถานการณ์จริง จะต้องเรียก API ของ Flash Express เพื่อสร้างใบเสร็จ COD
-    console.log('ข้อมูลที่จะส่งไปยัง Flash Express API สำหรับ COD:', {
-      orderInfo: {
-        customerName: data.customerName,
-        customerPhone: data.customerPhone,
-        deliveryAddress: {
-          houseNumber: data.houseNumber,
-          village: data.village,
-          soi: data.soi,
-          road: data.road,
-          subdistrict: data.subdistrict,
-          district: data.district,
-          province: data.province,
-          zipcode: data.zipcode,
-        },
-        items: data.items,
-        codAmount: data.codAmount,
-        total: data.total,
+  // เรียกใช้ Flash Express API สำหรับสร้างเลขพัสดุ
+  const createFlashExpressShipping = async (data: CreateOrderFormValues) => {
+    try {
+      console.log('กำลังเรียกใช้ Flash Express API เพื่อสร้างเลขพัสดุ...');
+      
+      // สร้างเลขออเดอร์
+      const orderNumber = `PD${Date.now()}`;
+      
+      // ข้อมูลที่จะส่งไปยัง Flash Express API
+      const flashExpressData = {
+        outTradeNo: orderNumber,
+        srcName: 'บริษัท เพอร์เพิลแดช จำกัด', // ชื่อบริษัทผู้ส่ง (สามารถดึงจากระบบ)
+        srcPhone: '0812345678', // เบอร์โทรผู้ส่ง (สามารถดึงจากระบบ)
+        srcProvinceName: 'กรุงเทพมหานคร', // จังหวัดของผู้ส่ง (สามารถดึงจากระบบ)
+        srcCityName: 'คลองเตย', // อำเภอของผู้ส่ง (สามารถดึงจากระบบ)
+        srcDistrictName: 'คลองเตย', // ตำบลของผู้ส่ง (สามารถดึงจากระบบ)
+        srcPostalCode: '10110', // รหัสไปรษณีย์ของผู้ส่ง (สามารถดึงจากระบบ)
+        srcDetailAddress: '123 ถนนสุขุมวิท', // ที่อยู่โดยละเอียดของผู้ส่ง (สามารถดึงจากระบบ)
+        
+        // ข้อมูลผู้รับ
+        dstName: data.customerName,
+        dstPhone: data.customerPhone,
+        dstProvinceName: data.province,
+        dstCityName: data.district,
+        dstDistrictName: data.subdistrict,
+        dstPostalCode: data.zipcode,
+        
+        // สร้างที่อยู่รวม
+        dstDetailAddress: [
+          data.houseNumber,
+          data.building,
+          data.floor ? `ชั้น ${data.floor}` : '',
+          data.roomNumber ? `ห้อง ${data.roomNumber}` : '',
+          data.village,
+          data.soi,
+          data.road
+        ].filter(Boolean).join(' '),
+        
+        // ข้อมูลพัสดุ
+        articleCategory: 1, // ประเภทสินค้า (1: เสื้อผ้า/สิ่งทอ)
+        expressCategory: 1, // ประเภทการจัดส่ง (1: ปกติ)
+        weight: 1500, // น้ำหนัก (กรัม)
+        width: 20, // ความกว้าง (ซม.)
+        length: 30, // ความยาว (ซม.)
+        height: 10, // ความสูง (ซม.)
+        insured: 0, // ไม่ซื้อประกัน
+        
+        // ข้อมูล COD
+        codEnabled: data.isCOD ? 1 : 0,
+        codAmount: data.isCOD && data.codAmount ? Math.round(data.codAmount * 100) : undefined,
+        
+        // รายละเอียดสินค้า
+        subItemTypes: data.items.map(item => ({
+          itemName: item.name,
+          itemWeightSize: "กลาง",
+          itemColor: "ขาว", // ต้องระบุสีตามที่ Flash Express API ต้องการ
+          itemQuantity: item.quantity
+        }))
+      };
+      
+      console.log('ส่งข้อมูลไปยัง Flash Express API:', flashExpressData);
+      
+      // เรียกใช้ API สร้างการจัดส่ง
+      const response = await apiRequest('POST', '/api/shipping/create', flashExpressData);
+      const result = await response.json();
+      
+      if (result.success && result.trackingNumber) {
+        console.log('สร้างเลขพัสดุสำเร็จ:', result.trackingNumber);
+        
+        // เพิ่มเลขพัสดุเข้าไปในข้อมูลออเดอร์
+        return {
+          orderNumber,
+          trackingNumber: result.trackingNumber,
+          sortCode: result.sortCode
+        };
+      } else {
+        throw new Error(result.error || 'ไม่สามารถสร้างเลขพัสดุได้');
       }
-    });
-    
-    // ในที่นี้ เราจะจำลองการเรียก API โดยการหน่วงเวลา
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('ได้รับการตอบกลับจาก Flash Express API สำหรับ COD: สำเร็จ');
-        resolve(true);
-      }, 1000);
-    });
+    } catch (error: any) {
+      console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API:', error);
+      throw new Error(`ไม่สามารถสร้างเลขพัสดุ: ${error.message}`);
+    }
   };
   
   // คอมโพเนนต์สรุปรายการสั่งซื้อ (แสดงทางด้านขวาของฟอร์ม)
@@ -1809,7 +1900,7 @@ const CreateOrderTabsPage: React.FC = () => {
                           <div className="bg-purple-50/50 p-4 rounded-lg border border-purple-100">
                             <h3 className="font-medium text-purple-900 mb-2">รายการสินค้า</h3>
                             <div className="space-y-2">
-                              {form.getValues('items').map((item, index) => (
+                              {(form.getValues('items') || []).map((item, index) => (
                                 <div key={index} className="flex justify-between py-1 border-b border-gray-100 last:border-0">
                                   <div>
                                     <span className="font-medium">{item.name}</span>
@@ -1830,12 +1921,12 @@ const CreateOrderTabsPage: React.FC = () => {
                               </div>
                               <div className="flex justify-between">
                                 <span>ค่าจัดส่ง:</span>
-                                <span className="font-medium">฿{form.getValues('shippingCost').toLocaleString()}</span>
+                                <span className="font-medium">฿{(form.getValues('shippingCost') || 0).toLocaleString()}</span>
                               </div>
                               {form.getValues('isCOD') && (
                                 <div className="flex justify-between">
                                   <span>เก็บเงินปลายทาง (COD):</span>
-                                  <span className="font-medium text-orange-600">฿{form.getValues('codAmount').toLocaleString()}</span>
+                                  <span className="font-medium text-orange-600">฿{(form.getValues('codAmount') || 0).toLocaleString()}</span>
                                 </div>
                               )}
                             </div>
