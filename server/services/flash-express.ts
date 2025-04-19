@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { generateFlashExpressSignature, generateNonceStr } from './generate-signature';
 
 // ข้อมูลการเชื่อมต่อกับ Flash Express API
-const FLASH_EXPRESS_API_URL = 'https://open-api-tra.flashexpress.com';
+const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com';
 const FLASH_EXPRESS_MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
@@ -111,33 +111,8 @@ export const getFlashExpressShippingOptions = async (
       }
     } catch (apiError: any) {
       console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API:', apiError.message);
-      
-      // กรณีที่ API ไม่ตอบสนองหรือมีปัญหา ใช้ข้อมูลสำรอง
-      console.log('ใช้ข้อมูลสำรองแทน');
-      
-      // ข้อมูลสำรองสำหรับกรณีที่ API ไม่ทำงาน
-      const fallbackOptions: FlashExpressShippingOption[] = [
-        {
-          id: 1,
-          name: 'Flash Express - ส่งด่วน',
-          price: 60,
-          deliveryTime: '1-2 วัน',
-          provider: 'Flash Express',
-          serviceId: 'FLASH-FAST',
-          logo: '/images/flash-express.png'
-        },
-        {
-          id: 2,
-          name: 'Flash Express - ส่งธรรมดา',
-          price: 40,
-          deliveryTime: '2-3 วัน',
-          provider: 'Flash Express',
-          serviceId: 'FLASH-NORMAL',
-          logo: '/images/flash-express.png'
-        }
-      ];
-      
-      return fallbackOptions;
+      // ไม่ใช้ข้อมูลสำรองอีกต่อไป ให้แสดงข้อผิดพลาดเพื่อให้ผู้ใช้แก้ไข
+      throw new Error(`ไม่สามารถเรียกข้อมูลจาก Flash Express API ได้: ${apiError.message}`);
     }
   } catch (error: any) {
     console.error('Error getting Flash Express shipping options:', error);

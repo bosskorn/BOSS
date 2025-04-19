@@ -28,8 +28,8 @@ async function testFlashExpressAPI() {
       length: 30,
       height: 10,
       insured: 0,  // ไม่ซื้อประกัน
-      codEnabled: 1,  // Cash on Delivery
-      codAmount: 50000,  // 500 บาท = 50000 สตางค์
+      codEnabled: 0,  // ไม่ใช้ Cash on Delivery
+      // codAmount: 50000,  // ไม่ต้องระบุยอด COD เมื่อไม่ใช้ COD
       subItemTypes: [
         { 
           itemName: "สินค้าทดสอบ", 
