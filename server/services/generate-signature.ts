@@ -18,55 +18,72 @@ export function generateFlashExpressSignature(
   nonceStr: string
 ): string {
   try {
+    // ขั้นตอนที่ 1: ตั้งค่าและคัดกรองข้อมูล
     // สร้างชุดข้อมูลใหม่ ไม่รวม sign และ subItemTypes
     const paramsCopy: Record<string, any> = {};
     
     // วนลูปผ่านทุกคีย์ในออบเจกต์แบบเดิม
     for (const key in params) {
-      // ข้ามฟิลด์ sign และ subItemTypes
-      if (key === 'sign' || key === 'subItemTypes') continue;
+      // ข้ามฟิลด์ sign เสมอ
+      if (key === 'sign') continue;
+      
+      // สำหรับ subItemTypes จะไม่รวมในการคำนวณลายเซ็น
+      if (key === 'subItemTypes') continue;
       
       const value = params[key];
       
-      // ตรวจสอบค่าว่างตามเอกสาร Flash Express - ทำให้ตรงกับตัวอย่างมากขึ้น
+      // ตรวจสอบค่าว่างตามเอกสาร Flash Express
       if (value === null || value === undefined) continue;
-      if (typeof value === 'string' && /^[ \t\n\f\r\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
       
-      // เพิ่มคีย์-ค่าทีผ่านเงื่อนไขเข้าไปในชุดข้อมูลใหม่
+      // ตรวจสอบสตริงว่างตามที่เอกสารระบุ
+      // \u0009 (tab), \u000A (line feed), \u000B (vertical tab), 
+      // \u000C (form feed), \u000D (carriage return),
+      // \u001C (file separator), \u001D (group separator),
+      // \u001E (record separator), \u001F (unit separator)
+      if (typeof value === 'string' && /^[ \t\n\v\f\r\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
+      
+      // เพิ่มคีย์-ค่าที่ผ่านเงื่อนไขเข้าไปในชุดข้อมูลใหม่
       paramsCopy[key] = value;
     }
     
-    // 1. จัดเรียงคีย์ตามลำดับ ASCII
+    // ขั้นตอนที่ 2: จัดเรียงคีย์ตามลำดับ ASCII (dictionary order)
     const sortedKeys = Object.keys(paramsCopy).sort();
     
-    // 2. สร้างสตริง stringA
+    // ขั้นตอนที่ 3: สร้างสตริง stringA ตามรูปแบบ key1=value1&key2=value2
     const paramsArray: string[] = [];
     
     for (const key of sortedKeys) {
       let value = paramsCopy[key];
       
-      // แปลงค่า Array หรือ Object เป็น JSON string หากจำเป็น
+      // แปลงค่า Array หรือ Object เป็น JSON string
       if (typeof value === 'object' && value !== null) {
         value = JSON.stringify(value);
       }
       
+      // สร้างรูปแบบ key=value และเพิ่มเข้าอาร์เรย์
       paramsArray.push(`${key}=${value}`);
     }
     
+    // รวมพารามิเตอร์เป็นสตริงเดียว คั่นด้วย &
     const stringA = paramsArray.join('&');
     
-    // 3. สร้าง stringSignTemp ตามเอกสาร
+    // ขั้นตอนที่ 4: สร้าง stringSignTemp โดยเพิ่ม &key={apiKey} ต่อท้าย
     const stringSignTemp = `${stringA}&key=${apiKey}`;
     
-    // Debug
-    console.log('ข้อมูลที่ใช้สร้างลายเซ็น Flash Express:', stringSignTemp);
+    // Log ค่าที่ใช้ในการสร้างลายเซ็นเพื่อการดีบัก
+    console.log('===========================================================');
+    console.log('ข้อมูลที่ใช้สร้างลายเซ็น Flash Express:');
+    console.log(stringSignTemp);
     
-    // 4. คำนวณ SHA256 hash และแปลงเป็นตัวพิมพ์ใหญ่
-    const hash = crypto.createHash('sha256');
-    hash.update(stringSignTemp);
-    const signature = hash.digest('hex').toUpperCase();
+    // ขั้นตอนที่ 5: คำนวณด้วย SHA256 และแปลงเป็นตัวพิมพ์ใหญ่
+    const signature = crypto
+      .createHash('sha256')
+      .update(stringSignTemp)
+      .digest('hex')
+      .toUpperCase();
     
     console.log('ลายเซ็น Flash Express ที่สร้าง:', signature);
+    console.log('===========================================================');
     
     return signature;
   } catch (error) {
