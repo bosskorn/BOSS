@@ -70,31 +70,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       try {
-        console.log('Logging in with credentials:', {
-          username: credentials.username,
-          password: '[MASKED]'
+        console.log('Login form submitted:', credentials);
+        
+        // ใช้ fetch API แทนการใช้ axios เพื่อแก้ปัญหา cookie ที่ iPad
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(credentials),
+          credentials: 'include' // สำคัญสำหรับการส่ง/รับ cookies
         });
         
-        // ใช้ axios ที่ตั้งค่าไว้แล้ว
-        const response = await api.post("/api/login", credentials);
-        
-        console.log('Login response:', response.status, response.data);
+        const data = await response.json();
+        console.log('Login response:', response.status, data);
         
         // ตรวจสอบว่าเข้าสู่ระบบสำเร็จหรือไม่
-        if (!response.data.success) {
-          throw new Error(response.data.message || "เข้าสู่ระบบล้มเหลว");
+        if (!data.success) {
+          throw new Error(data.message || "เข้าสู่ระบบล้มเหลว");
         }
         
         // ตรวจสอบว่าได้รับข้อมูลผู้ใช้หรือไม่
-        if (!response.data.user) {
+        if (!data.user) {
           throw new Error("ไม่ได้รับข้อมูลผู้ใช้จากเซิร์ฟเวอร์");
         }
         
-        // สร้าง session ต่อทันทีโดยเรียก API ตรวจสอบผู้ใช้
-        await api.get('/api/user');
+        // แสดงผลดีบั๊ก
+        console.log('Logged in successfully as:', data.user.username);
         
         // ส่งข้อมูลผู้ใช้กลับไป
-        return response.data.user;
+        return data.user;
       } catch (error: any) {
         console.error("Login error:", error.response?.data || error.message);
         
