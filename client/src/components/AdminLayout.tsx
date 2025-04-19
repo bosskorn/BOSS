@@ -13,12 +13,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
-  // ตรวจสอบว่าเป็นผู้ดูแลระบบหรือไม่
-  if (user && user.role !== 'admin') {
-    // ถ้าไม่ใช่ผู้ดูแลระบบ ให้นำทางกลับไปที่หน้า dashboard
-    setLocation('/dashboard');
-    return null;
-  }
+  // ปิดการตรวจสอบผู้ดูแลระบบชั่วคราว เพื่อให้ผู้ใช้ทั่วไปสามารถเข้าถึงหน้าเคลมได้
+  // if (user && user.role !== 'admin') {
+  //  setLocation('/dashboard');
+  //  return null;
+  // }
 
   // Toggle sidebar visibility
   const toggleSidebar = () => {
