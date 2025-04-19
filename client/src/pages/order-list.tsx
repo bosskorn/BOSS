@@ -54,6 +54,7 @@ const OrderList: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [shippingFilter, setShippingFilter] = useState<string>('all');
   const [sortConfig, setSortConfig] = useState<{key: keyof Order, direction: 'asc' | 'desc'}>({
     key: 'date',
     direction: 'desc'
@@ -62,6 +63,8 @@ const OrderList: React.FC = () => {
     start: '',
     end: ''
   });
+  const [availableShippingMethods, setAvailableShippingMethods] = useState<string[]>([]);
+  
 
   // ฟังก์ชันเรียกข้อมูลคำสั่งซื้อจาก API
   const fetchOrders = async () => {
@@ -116,12 +119,39 @@ const OrderList: React.FC = () => {
     }
   };
 
+  // ฟังก์ชันดึงข้อมูลผู้ให้บริการขนส่งที่มี
+  const extractShippingMethods = (orders: Order[]) => {
+    // รวบรวมวิธีการขนส่งทั้งหมดที่มีในออร์เดอร์ และกำจัดค่าซ้ำ
+    const methods = orders
+      .map(order => order.shippingMethod)
+      .filter((method): method is string => !!method);
+      
+    const uniqueMethods = Array.from(new Set(methods));
+    setAvailableShippingMethods(uniqueMethods);
+  };
+
   // เรียกข้อมูลเมื่อโหลดหน้า
   useEffect(() => {
     fetchOrders();
   }, []);
+  
+  // สกัดข้อมูลวิธีการขนส่งเมื่อข้อมูลออร์เดอร์มีการเปลี่ยนแปลง
+  useEffect(() => {
+    if (orders.length > 0) {
+      extractShippingMethods(orders);
+    }
+    
+    // เพิ่ม Flash Express เป็นตัวเลือกเริ่มต้นเสมอ
+    // เพื่อให้สามารถกรองได้ทันที แม้ไม่มีข้อมูลขนส่งในออร์เดอร์
+    setAvailableShippingMethods(prev => {
+      if (prev.includes('Flash Express')) {
+        return prev;
+      }
+      return [...prev, 'Flash Express'];
+    });
+  }, [orders]);
 
-  // กรองข้อมูลเมื่อแท็บเปลี่ยน หรือค้นหา หรือช่วงวันที่เปลี่ยน
+  // กรองข้อมูลเมื่อแท็บเปลี่ยน หรือค้นหา หรือช่วงวันที่เปลี่ยน หรือกรองขนส่ง
   useEffect(() => {
     let result = [...orders];
     
@@ -149,6 +179,11 @@ const OrderList: React.FC = () => {
         const orderDate = new Date(order.date);
         return orderDate >= startDate && orderDate <= endDate;
       });
+    }
+    
+    // กรองตามวิธีการขนส่ง
+    if (shippingFilter !== 'all') {
+      result = result.filter(order => order.shippingMethod === shippingFilter);
     }
     
     // จัดเรียงข้อมูล
@@ -353,6 +388,7 @@ const OrderList: React.FC = () => {
                   setSearchTerm('');
                   setDateRange({start: '', end: ''});
                   setActiveTab('all');
+                  setShippingFilter('all');
                 }}
                 className="w-full"
               >
@@ -360,6 +396,42 @@ const OrderList: React.FC = () => {
               </Button>
             </div>
           </div>
+          
+          {/* กรองตามบริษัทขนส่ง */}
+          {availableShippingMethods.length > 0 && (
+            <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
+              <div className="font-medium text-gray-700 flex items-center">
+                <Truck className="h-4 w-4 mr-2 text-purple-600" />
+                กรองตามบริษัทขนส่ง:
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant={shippingFilter === 'all' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setShippingFilter('all')}
+                  className={shippingFilter === 'all' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                >
+                  ทั้งหมด
+                </Button>
+                {availableShippingMethods.map(method => (
+                  <Button 
+                    key={method}
+                    variant={shippingFilter === method ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setShippingFilter(method)}
+                    className={shippingFilter === method ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                  >
+                    {method === 'Flash Express' ? (
+                      <span className="flex items-center">
+                        <Truck className="h-4 w-4 mr-1 text-purple-500" />
+                        {method}
+                      </span>
+                    ) : method}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ตารางคำสั่งซื้อ */}
           {isLoading ? (
