@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
 import api, { apiRequest } from '@/services/api';
 import Layout from '@/components/Layout';
+import ThaiAddressSelect from '@/components/ThaiAddressSelect';
 import { 
   Card, 
   CardContent, 
