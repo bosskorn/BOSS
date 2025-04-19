@@ -1097,7 +1097,7 @@ const CreateOrderTabsPage: React.FC = () => {
                                   disabled={!field.value || processingAddress}
                                   className="mt-2"
                                 >
-                                  {processingAddress ? 'กำลังวิเคราะห์...' : 'วิเคราะห์ข้อมูลอัตโนมัติ'}
+                                  {processingAddress ? 'กำลังวิเคราะห์...' : 'วิเคราะห์ข้อมูล'}
                                 </Button>
                               </FormDescription>
                               <FormMessage />
@@ -1138,22 +1138,7 @@ const CreateOrderTabsPage: React.FC = () => {
                               )}
                             />
                           </div>
-                          <FormField
-                            control={form.control}
-                            name="customerEmail"
-                            render={({ field }) => (
-                              <FormItem className="mt-4">
-                                <FormLabel>อีเมล (ถ้ามี)</FormLabel>
-                                <FormControl>
-                                  <div className="flex">
-                                    <Mail className="w-4 h-4 mr-2 text-gray-400 self-center" />
-                                    <Input placeholder="example@email.com" {...field} />
-                                  </div>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+
                         </div>
                         
                         <div className="bg-purple-50 p-4 rounded-lg">
