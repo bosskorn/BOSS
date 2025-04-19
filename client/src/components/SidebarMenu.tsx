@@ -84,7 +84,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       label: 'รายการพัสดุ' 
     },
     { 
-      path: '/claims-list', 
+      path: '/user-claims', 
       icon: 'fa-shield-halved', 
       label: 'รายการเคลม' 
     },

@@ -22,6 +22,7 @@ import ShipmentList from "@/pages/shipment-list";
 import Settings from "@/pages/settings";
 import TopUp from "@/pages/top-up";
 import ClaimsList from "@/pages/claims-list";
+import UserClaims from "@/pages/user-claims";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 
@@ -75,6 +76,7 @@ function Router() {
       
       {/* การเคลม - protected */}
       <ProtectedRoute path="/claims-list" component={ClaimsList} />
+      <ProtectedRoute path="/user-claims" component={UserClaims} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
