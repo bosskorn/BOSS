@@ -134,13 +134,8 @@ const CreateOrderTabsPage: React.FC = () => {
   const [loadingZipcodeData, setLoadingZipcodeData] = useState(false);
   const [activeTab, setActiveTab] = useState("customer"); // สถานะสำหรับแสดงขั้นตอนปัจจุบัน
   
-  // สถานะสำหรับเก็บข้อมูลจังหวัด อำเภอ และตำบล
-  const [provinces, setProvinces] = useState<{id: string, name_th: string}[]>([]);
-  const [districts, setDistricts] = useState<{id: string, name_th: string}[]>([]);
-  const [subdistricts, setSubdistricts] = useState<{id: string, name_th: string, zip_code: string}[]>([]);
-  const [loadingProvinces, setLoadingProvinces] = useState(false);
-  const [loadingDistricts, setLoadingDistricts] = useState(false);
-  const [loadingSubdistricts, setLoadingSubdistricts] = useState(false);
+  // ไม่ต้องใช้สถานะสำหรับเก็บข้อมูลจังหวัด อำเภอ และตำบลอีกต่อไป
+  // เนื่องจากเราเปลี่ยนมาใช้การกรอกข้อมูลแทนการเลือก
   
   // คำนวณราคารวมสินค้า (subTotal) สำหรับแสดงผลในหน้า
   const [subTotal, setSubTotal] = useState(0);
@@ -218,9 +213,6 @@ const CreateOrderTabsPage: React.FC = () => {
     };
     
     fetchProducts();
-    
-    // ดึงข้อมูลจังหวัด
-    fetchProvinces();
   }, []);
   
   // คำนวณราคารวมเมื่อรายการสินค้าหรือค่าจัดส่งเปลี่ยนแปลง
@@ -241,27 +233,6 @@ const CreateOrderTabsPage: React.FC = () => {
     
     form.setValue('total', total);
   }, [form.watch('items'), form.watch('shippingCost')]);
-  
-  // ฟังก์ชันดึงข้อมูลจังหวัด
-  const fetchProvinces = async () => {
-    setLoadingProvinces(true);
-    try {
-      const response = await apiRequest('GET', '/api/locations/provinces');
-      const data = await response.json();
-      if (data.success && data.provinces) {
-        setProvinces(data.provinces);
-      }
-    } catch (error) {
-      console.error('Error fetching provinces:', error);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถดึงข้อมูลจังหวัดได้',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoadingProvinces(false);
-    }
-  };
   
   // ฟังก์ชันวิเคราะห์ที่อยู่อัตโนมัติแบบไม่ใช้ API ภายนอก
   const analyzeAddress = async () => {
