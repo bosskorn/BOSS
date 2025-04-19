@@ -379,6 +379,50 @@ const CreateOrderTabsPage: React.FC = () => {
       components.subdistrict = subdistrictMatch[0].trim();
     }
     
+    // ค้นหาอำเภอและตำบลที่อาจไม่มีคำนำหน้า (เช่น ลาดพร้าว)
+    const words = addressText.split(/\s+|,+/).filter(Boolean);
+    const skipWords = ['ซอย', 'ซ.', 'ถนน', 'ถ.', 'หมู่', 'ม.', 'หมู่บ้าน', 'อาคาร', 'คอนโด', 'เพลส', 'แมนชั่น'];
+    
+    // อำเภอและตำบลที่มีชื่อเดียวกัน (เช่น ลาดพร้าว เป็นทั้งเขตและแขวง)
+    const commonNames = ['ลาดพร้าว', 'บางนา', 'บางเขน', 'จตุจักร', 'ดินแดง', 'ห้วยขวาง', 'บางกะปิ', 'คลองเตย', 'พระโขนง'];
+    
+    // ถ้าพบคำที่เป็นชื่ออำเภอและตำบลที่มีชื่อเดียวกัน และยังไม่มีค่าที่กำหนด
+    for (const name of commonNames) {
+      if (addressText.includes(name)) {
+        // นับจำนวนครั้งที่ชื่อนี้ปรากฏในข้อความ
+        const occurrences = words.filter(word => word.trim() === name).length;
+        
+        // ถ้าปรากฏมากกว่า 1 ครั้ง มีแนวโน้มที่จะเป็นทั้งอำเภอและตำบล
+        if (occurrences >= 2) {
+          if (!components.district) components.district = name;
+          if (!components.subdistrict) components.subdistrict = name;
+        } 
+        // ถ้าปรากฏครั้งเดียว ให้พิจารณาว่าเป็นอำเภอ
+        else {
+          if (!components.district) components.district = name;
+        }
+      }
+    }
+    
+    // เพิ่มการวิเคราะห์คำที่อาจเป็นชื่ออำเภอหรือตำบลจากคำที่ไม่มีคำนำหน้า
+    if (!components.district || !components.subdistrict) {
+      for (const word of words) {
+        // ข้ามคำที่เป็นคำนำหน้าหรือคำที่ไม่เกี่ยวข้อง
+        if (skipWords.some(skip => word.includes(skip)) || word.match(/^\d+$/) || word.length < 3) {
+          continue;
+        }
+        
+        // ถ้ายังไม่ได้กำหนดอำเภอ และคำนี้ไม่ใช่จังหวัด
+        if (!components.district && !provinceNames.includes(word) && word !== components.subdistrict) {
+          components.district = word;
+        }
+        // ถ้ายังไม่ได้กำหนดตำบล และคำนี้ไม่ใช่จังหวัดและไม่ใช่อำเภอ
+        else if (!components.subdistrict && !provinceNames.includes(word) && word !== components.district) {
+          components.subdistrict = word;
+        }
+      }
+    }
+    
     return components;
   };
   
