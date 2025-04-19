@@ -348,11 +348,28 @@ const ProductCreate: React.FC = () => {
   };
 
   // ตรวจสอบว่าขั้นตอนที่ 1 สามารถทำต่อได้หรือไม่
-  const validateStep1 = () => {
+  const validateStep1 = async () => {
     const errors: ValidationErrors = {};
 
     if (!product.sku.trim()) {
       errors.sku = 'กรุณาระบุ SKU สินค้า';
+    } else {
+      // ตรวจสอบว่า SKU ซ้ำหรือไม่ (เฉพาะกรณีสร้างสินค้าใหม่)
+      if (!isEditMode) {
+        try {
+          const res = await fetch('/api/products?checkSku=true&sku=' + encodeURIComponent(product.sku.trim()), {
+            method: 'GET',
+            credentials: 'include'
+          });
+          
+          const data = await res.json();
+          if (data.exists) {
+            errors.sku = 'SKU นี้ถูกใช้งานแล้ว กรุณาระบุ SKU อื่น';
+          }
+        } catch (error) {
+          console.error('Error checking SKU:', error);
+        }
+      }
     }
 
     if (!product.name.trim()) {
@@ -386,10 +403,13 @@ const ProductCreate: React.FC = () => {
   };
 
   // ไปยังขั้นตอนถัดไป
-  const goToNextStep = () => {
-    if (activeStep === 1 && validateStep1()) {
-      setStepsCompleted(prev => ({ ...prev, 1: true }));
-      setActiveStep(2);
+  const goToNextStep = async () => {
+    if (activeStep === 1) {
+      const isValid = await validateStep1();
+      if (isValid) {
+        setStepsCompleted(prev => ({ ...prev, 1: true }));
+        setActiveStep(2);
+      }
     } else if (activeStep === 2 && validateStep2()) {
       setStepsCompleted(prev => ({ ...prev, 2: true }));
       setActiveStep(3);

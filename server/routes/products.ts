@@ -8,6 +8,22 @@ const router = Router();
 // API สำหรับดึงข้อมูลสินค้าทั้งหมด
 router.get('/', auth, async (req, res) => {
   try {
+    // ตรวจสอบว่าต้องการตรวจสอบ SKU ที่ซ้ำกันหรือไม่
+    if (req.query.checkSku && req.query.sku) {
+      const sku = req.query.sku as string;
+      const userId = req.user!.id;
+      
+      // ค้นหาสินค้าที่มี SKU ตรงกัน
+      const products = await storage.getProductsByUserId(userId);
+      const existingProduct = products.find(p => p.sku === sku);
+      
+      return res.json({ 
+        success: true, 
+        exists: !!existingProduct,
+        product: existingProduct || null
+      });
+    }
+    
     // ดึงข้อมูลสินค้าของผู้ใช้ที่ล็อกอินเท่านั้น
     const userId = req.user!.id;
     const products = await storage.getProductsByUserId(userId);
@@ -96,19 +112,52 @@ router.post('/', auth, async (req, res) => {
     // ตรวจสอบและแปลงข้อมูลตาม schema
     const productData = insertProductSchema.parse(req.body);
     
+    // ตรวจสอบว่า SKU ซ้ำหรือไม่
+    const userId = req.user!.id;
+    const products = await storage.getProductsByUserId(userId);
+    const existingProduct = products.find(p => p.sku === productData.sku);
+    
+    if (existingProduct) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'รหัสสินค้า (SKU) นี้มีอยู่ในระบบแล้ว กรุณาเลือกรหัสสินค้าอื่น',
+        error: {
+          code: 'DUPLICATE_SKU',
+          detail: `SKU '${productData.sku}' ซ้ำกับสินค้าในระบบ`
+        }
+      });
+    }
+    
     // เพิ่ม userId ให้กับข้อมูลสินค้า
     const productWithUser = {
       ...productData,
-      userId: req.user!.id
+      userId: userId
     };
     
     // บันทึกข้อมูลลงฐานข้อมูล
     const newProduct = await storage.createProduct(productWithUser);
     
     res.status(201).json({ success: true, message: 'สร้างสินค้าสำเร็จ', data: newProduct });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating product:', error);
-    res.status(400).json({ success: false, message: 'เกิดข้อผิดพลาดในการสร้างสินค้า', error: error });
+    
+    // ตรวจสอบว่าเป็นข้อผิดพลาดเกี่ยวกับ duplicate key หรือไม่
+    if (error.code === '23505' && error.constraint === 'products_sku_unique') {
+      return res.status(400).json({
+        success: false,
+        message: 'รหัสสินค้า (SKU) นี้มีอยู่ในระบบแล้ว กรุณาเลือกรหัสสินค้าอื่น',
+        error: {
+          code: 'DUPLICATE_SKU',
+          detail: error.detail || 'SKU ซ้ำกับสินค้าในระบบ'
+        }
+      });
+    }
+    
+    res.status(400).json({ 
+      success: false, 
+      message: 'เกิดข้อผิดพลาดในการสร้างสินค้า', 
+      error: error 
+    });
   }
 });
 
