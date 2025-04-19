@@ -53,29 +53,47 @@ router.post('/', auth, async (req, res) => {
     console.log('Received order data:', JSON.stringify(orderData, null, 2));
     
     // Generate order number if not provided
-    if (!orderData.order_number) {
+    if (!orderData.orderNumber) {
       // สร้างเลขออเดอร์ในรูปแบบ PD + ปีเดือนวัน + เลข 4 หลักสุดท้ายของ timestamp
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
       const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-      orderData.order_number = `PD${year}${month}${day}${random}`;
+      orderData.orderNumber = `PD${year}${month}${day}${random}`;
       
-      console.log(`สร้างเลขออเดอร์อัตโนมัติ: ${orderData.order_number}`);
+      console.log(`สร้างเลขออเดอร์อัตโนมัติ: ${orderData.orderNumber}`);
     }
     
-    // ตรวจสอบและเพิ่มข้อมูลที่จำเป็น
+    // มีการส่งชื่อฟิลด์แบบ order_number แต่ฐานข้อมูลใช้ชื่อแบบ camelCase
+    if (orderData.order_number && !orderData.orderNumber) {
+      orderData.orderNumber = orderData.order_number;
+      delete orderData.order_number;
+    }
+    
+    // ตรวจสอบและเพิ่มข้อมูลที่จำเป็น camelCase สำหรับ Drizzle ORM
     if (!orderData.hasOwnProperty('subtotal')) {
       orderData.subtotal = orderData.total || 0;
     }
     
-    if (!orderData.hasOwnProperty('total_amount')) {
-      orderData.total_amount = orderData.total || 0;
+    if (!orderData.hasOwnProperty('totalAmount')) {
+      orderData.totalAmount = orderData.total || 0;
+      
+      // แปลงค่าจาก snake_case เป็น camelCase ถ้ามี
+      if (orderData.total_amount) {
+        orderData.totalAmount = orderData.total_amount;
+        delete orderData.total_amount;
+      }
     }
     
-    if (!orderData.hasOwnProperty('shipping_fee')) {
-      orderData.shipping_fee = 0;
+    if (!orderData.hasOwnProperty('shippingFee')) {
+      orderData.shippingFee = 0;
+      
+      // แปลงค่าจาก snake_case เป็น camelCase ถ้ามี
+      if (orderData.shipping_fee) {
+        orderData.shippingFee = orderData.shipping_fee;
+        delete orderData.shipping_fee;
+      }
     }
     
     if (!orderData.hasOwnProperty('discount')) {
@@ -83,12 +101,34 @@ router.post('/', auth, async (req, res) => {
     }
     
     // Set user ID from the authenticated user
-    if (req.user && !orderData.user_id) {
+    if (req.user && !orderData.userId) {
       orderData.userId = (req.user as any).id;
+      
+      // แปลงค่าจาก snake_case เป็น camelCase ถ้ามี
+      if (orderData.user_id) {
+        orderData.userId = orderData.user_id;
+        delete orderData.user_id;
+      }
     }
     
     // Check for COD payment method to handle Flash Express integration
     const isCashOnDelivery = orderData.payment_method === 'cash_on_delivery';
+    
+    // แปลงชื่อฟิลด์อื่นๆ จาก snake_case เป็น camelCase
+    if (orderData.payment_method && !orderData.paymentMethod) {
+      orderData.paymentMethod = orderData.payment_method;
+      delete orderData.payment_method;
+    }
+    
+    if (orderData.customer_id && !orderData.customerId) {
+      orderData.customerId = orderData.customer_id;
+      delete orderData.customer_id;
+    }
+    
+    if (orderData.shipping_method_id && !orderData.shippingMethodId) {
+      orderData.shippingMethodId = orderData.shipping_method_id;
+      delete orderData.shipping_method_id;
+    }
     
     console.log('Processed order data ready for storage:', JSON.stringify(orderData, null, 2));
     
