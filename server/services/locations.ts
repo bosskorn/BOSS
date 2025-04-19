@@ -145,12 +145,14 @@ export function getAllProvinces() {
  * ดึงข้อมูลอำเภอตามรหัสจังหวัด
  */
 export function getDistrictsByProvinceId(provinceId: string) {
-  return districts[provinceId] || [];
+  // ใช้ as เพื่อแก้ไข TypeScript error
+  return (districts as Record<string, { id: string; name_th: string; name_en: string; province_id: string; }[]>)[provinceId] || [];
 }
 
 /**
  * ดึงข้อมูลตำบลตามรหัสอำเภอ
  */
 export function getSubdistrictsByDistrictId(districtId: string) {
-  return subdistricts[districtId] || [];
+  // ใช้ as เพื่อแก้ไข TypeScript error
+  return (subdistricts as Record<string, { id: string; name_th: string; name_en: string; district_id: string; zip_code: string; }[]>)[districtId] || [];
 }

@@ -71,24 +71,17 @@ router.get("/zipcode/:zipcode", async (req: Request, res: Response) => {
       return res.status(500).json({ success: false, message: "ไม่พบ API key สำหรับ Longdo Map" });
     }
     
-    // เรียกใช้ Longdo Map API เพื่อดึงข้อมูลจากรหัสไปรษณีย์
-    const response = await axios.get(`https://api.longdo.com/map/services/address?zipcode=${zipcode}&key=${process.env.LONGDO_MAP_API_KEY}`);
+    // เรียกใช้ service ที่ทำการเชื่อมต่อกับ Longdo Map API
+    const { getAddressFromZipcode } = await import('../services/longdo-map');
     
-    if (!response.data || response.data.error) {
-      return res.status(404).json({ success: false, message: "ไม่พบข้อมูลรหัสไปรษณีย์" });
+    // ดึงข้อมูลที่อยู่จากรหัสไปรษณีย์
+    const result = await getAddressFromZipcode(zipcode);
+    
+    if (!result.success) {
+      return res.status(404).json({ success: false, message: result.message || "ไม่พบข้อมูลรหัสไปรษณีย์" });
     }
     
-    const addressData = response.data;
-    
-    // แปลงข้อมูลจาก Longdo Map API เป็นรูปแบบที่เราต้องการ
-    const addressComponents = {
-      province: addressData.province || "",
-      district: addressData.district || "",
-      subdistrict: addressData.subdistrict || "",
-      zipcode: zipcode
-    };
-    
-    res.status(200).json({ success: true, address: addressComponents });
+    res.status(200).json({ success: true, address: result.address });
   } catch (error) {
     console.error("Error fetching address from zipcode:", error);
     res.status(500).json({ success: false, message: "ไม่สามารถดึงข้อมูลที่อยู่จากรหัสไปรษณีย์ได้" });

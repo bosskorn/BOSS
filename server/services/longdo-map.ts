@@ -1,136 +1,109 @@
+/**
+ * Longdo Map Service
+ * บริการสำหรับเรียกใช้ API ของ Longdo Map
+ */
+
 import axios from 'axios';
 
-// API Key จาก environment variable
-const LONGDO_MAP_API_KEY = process.env.LONGDO_MAP_API_KEY;
-
-// URL พื้นฐานของ API
-const EXTRACT_ADDRESS_API_URL = 'https://search.longdo.com/smartsearch/json/extract_address/v2';
-
 /**
- * อินเตอร์เฟซสำหรับผลลัพธ์ของ Longdo Extract Address API
+ * ค้นหาและดึงข้อมูลที่อยู่จากรหัสไปรษณีย์
+ * @param zipcode รหัสไปรษณีย์
+ * @returns ข้อมูลจังหวัด อำเภอ และตำบลที่ตรงกับรหัสไปรษณีย์
  */
-interface LongdoAddressResult {
-  house_number?: string;
-  road?: string;
-  alley?: string;     // ซอย
-  village?: string;   // หมู่บ้าน/อาคาร
-  district?: string;  // อำเภอ/เขต
-  subdistrict?: string; // ตำบล/แขวง
-  province?: string;  // จังหวัด
-  postal_code?: string; // รหัสไปรษณีย์
-  country?: string;
-  building?: string;  // ชื่ออาคาร
-  floor?: string;     // ชั้น
-  room?: string;      // ห้อง
-}
-
-/**
- * อินเตอร์เฟซสำหรับผลลัพธ์ของ API ที่เราต้องการส่งกลับ
- */
-export interface AddressComponents {
-  houseNumber: string;
-  village: string;
-  soi: string;
-  road: string;
-  subdistrict: string;
-  district: string;
-  province: string;
-  zipcode: string;
-}
-
-/**
- * วิเคราะห์ข้อความที่อยู่โดยใช้ Longdo Map Extract Address API
- * 
- * @param fullAddress ข้อความที่อยู่ที่ต้องการวิเคราะห์
- * @returns ข้อมูลที่อยู่ที่แยกส่วนแล้ว
- */
-export async function analyzeLongdoAddress(fullAddress: string): Promise<AddressComponents> {
+export async function getAddressFromZipcode(zipcode: string) {
   try {
-    if (!LONGDO_MAP_API_KEY) {
-      throw new Error('Longdo Map API key not found');
+    if (!process.env.LONGDO_MAP_API_KEY) {
+      throw new Error('LONGDO_MAP_API_KEY ไม่ได้ถูกตั้งค่า');
     }
 
-    // สร้าง URL พร้อมพารามิเตอร์
-    const url = `${EXTRACT_ADDRESS_API_URL}?text=${encodeURIComponent(fullAddress)}&key=${LONGDO_MAP_API_KEY}`;
-    
-    // เรียกใช้ API
-    const response = await axios.get(url);
-    const data = response.data;
-    
-    // ตรวจสอบว่า API ส่งผลลัพธ์ที่ถูกต้องกลับมาหรือไม่
-    if (!data || !data.result) {
-      throw new Error('Invalid response from Longdo Map API');
+    // เรียกใช้ Longdo Map API
+    const response = await axios.get(
+      `https://api.longdo.com/map/services/address?zipcode=${zipcode}&key=${process.env.LONGDO_MAP_API_KEY}`
+    );
+
+    // ตรวจสอบผลลัพธ์
+    if (response.data && !response.data.error) {
+      return {
+        success: true,
+        address: {
+          province: response.data.province || '',
+          district: response.data.district || '',
+          subdistrict: response.data.subdistrict || '',
+          zipcode: zipcode
+        }
+      };
+    } else {
+      return {
+        success: false,
+        message: response.data.error || 'ไม่พบข้อมูลที่อยู่'
+      };
     }
-    
-    // แปลงข้อมูลจาก API ให้ตรงกับรูปแบบที่ต้องการ
-    const addressResult: LongdoAddressResult = data.result;
-    
+  } catch (error) {
+    console.error('Error fetching address from Longdo Map API:', error);
     return {
-      houseNumber: addressResult.house_number || '',
-      village: addressResult.village || addressResult.building || '',
-      soi: addressResult.alley || '',
-      road: addressResult.road || '',
-      subdistrict: addressResult.subdistrict || '',
-      district: addressResult.district || '',
-      province: addressResult.province || '',
-      zipcode: addressResult.postal_code || '',
+      success: false,
+      message: error instanceof Error ? error.message : 'ไม่สามารถเชื่อมต่อกับ Longdo Map API ได้'
     };
-  } catch (error: any) {
-    console.error('Error analyzing address with Longdo Map API:', error);
-    throw new Error(error.message || 'Failed to analyze address');
   }
 }
 
 /**
- * ค้นหาข้อมูลที่อยู่จากรหัสไปรษณีย์
- * 
- * @param zipcode รหัสไปรษณีย์
- * @returns ข้อมูลที่อยู่ที่เกี่ยวข้องกับรหัสไปรษณีย์
+ * วิเคราะห์ที่อยู่จากข้อความยาวและแยกส่วนประกอบ
+ * @param fullAddress ข้อความที่อยู่ยาว
+ * @returns ส่วนประกอบของที่อยู่ที่แยกแล้ว
  */
-export async function getAddressByZipcode(zipcode: string): Promise<{
-  province: string,
-  districts: Array<{
-    district: string,
-    subdistricts: string[]
-  }>
-}> {
-  // ข้อมูลตัวอย่าง (สามารถปรับเปลี่ยนให้เรียกใช้ API จริงในอนาคต)
-  const mockData: Record<string, any> = {
-    '10500': {
-      province: 'กรุงเทพมหานคร',
-      districts: [
-        {
-          district: 'บางรัก',
-          subdistricts: ['สีลม', 'สุริยวงศ์', 'บางรัก', 'มหาพฤฒาราม', 'สี่พระยา']
-        }
-      ]
-    },
-    '10400': {
-      province: 'กรุงเทพมหานคร',
-      districts: [
-        {
-          district: 'พญาไท',
-          subdistricts: ['สามเสนใน']
-        },
-        {
-          district: 'ราชเทวี',
-          subdistricts: ['ทุ่งพญาไท', 'ถนนพญาไท', 'ถนนเพชรบุรี', 'มักกะสัน']
-        }
-      ]
-    },
-    '10330': {
-      province: 'กรุงเทพมหานคร',
-      districts: [
-        {
-          district: 'ปทุมวัน',
-          subdistricts: ['รองเมือง', 'วังใหม่', 'ปทุมวัน', 'ลุมพินี']
-        }
-      ]
+export async function analyzeAddress(fullAddress: string) {
+  try {
+    if (!process.env.LONGDO_MAP_API_KEY) {
+      throw new Error('LONGDO_MAP_API_KEY ไม่ได้ถูกตั้งค่า');
     }
-  };
-  
-  return mockData[zipcode] || {
-    province: '',
-    districts: []
-  };
+
+    // เรียกใช้ Longdo Map API สำหรับวิเคราะห์ที่อยู่
+    const response = await axios.post(
+      `https://api.longdo.com/ExtractAddress/json/search`,
+      { addr: fullAddress },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        params: {
+          key: process.env.LONGDO_MAP_API_KEY
+        }
+      }
+    );
+
+    // ตรวจสอบผลลัพธ์
+    if (response.data && response.data.components) {
+      const components = response.data.components;
+      
+      // แปลงข้อมูลจาก Longdo Map API เป็นรูปแบบที่เราต้องการ
+      return {
+        success: true,
+        address: {
+          houseNumber: components.no || '',
+          village: components.village || '',
+          soi: components.soi || '',
+          road: components.road || '',
+          subdistrict: components.tumbon || '',
+          district: components.amphoe || '',
+          province: components.province || '',
+          zipcode: components.postcode || '',
+          building: components.room || components.building || '',
+          floor: components.floor || '',
+          roomNumber: components.room || ''
+        }
+      };
+    } else {
+      return {
+        success: false,
+        message: 'ไม่สามารถวิเคราะห์ที่อยู่ได้'
+      };
+    }
+  } catch (error) {
+    console.error('Error analyzing address with Longdo Map API:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'ไม่สามารถเชื่อมต่อกับ Longdo Map API ได้'
+    };
+  }
 }

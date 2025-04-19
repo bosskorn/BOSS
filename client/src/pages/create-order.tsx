@@ -126,6 +126,7 @@ const CreateOrderPage: React.FC = () => {
   const [addressFormatted, setAddressFormatted] = useState<AddressComponents>({});
   const [fullAddressOriginal, setFullAddressOriginal] = useState('');
   const [processingAddress, setProcessingAddress] = useState(false);
+  const [loadingZipcodeData, setLoadingZipcodeData] = useState(false);
   
   // สถานะสำหรับเก็บข้อมูลจังหวัด อำเภอ และตำบล
   const [provinces, setProvinces] = useState<{id: string, name_th: string}[]>([]);
@@ -340,6 +341,51 @@ const CreateOrderPage: React.FC = () => {
     
     form.setValue('total', total);
   }, [form.watch('items'), form.watch('shippingCost')]);
+  
+  // เมื่อกรอกรหัสไปรษณีย์ใหม่ ให้ดึงข้อมูลจาก API
+  useEffect(() => {
+    const zipcode = form.watch('zipcode');
+    
+    if (zipcode && zipcode.length === 5) {
+      fetchDataFromZipcode(zipcode);
+    }
+  }, [form.watch('zipcode')]);
+  
+  // ฟังก์ชันดึงข้อมูลจังหวัด อำเภอ และตำบลจากรหัสไปรษณีย์
+  const fetchDataFromZipcode = async (zipcode: string) => {
+    setLoadingZipcodeData(true);
+    
+    try {
+      const response = await apiRequest('GET', `/api/locations/zipcode/${zipcode}`);
+      
+      if (!response.ok) {
+        throw new Error('ไม่สามารถดึงข้อมูลจากรหัสไปรษณีย์ได้');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.address) {
+        // กำหนดค่าจังหวัด อำเภอ และตำบลจากข้อมูลที่ได้
+        form.setValue('province', data.address.province || '');
+        form.setValue('district', data.address.district || '');
+        form.setValue('subdistrict', data.address.subdistrict || '');
+        
+        toast({
+          title: 'ดึงข้อมูลสำเร็จ',
+          description: 'ได้รับข้อมูลจากรหัสไปรษณีย์เรียบร้อยแล้ว',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching address from zipcode:', error);
+      toast({
+        title: 'ไม่สามารถดึงข้อมูลได้',
+        description: 'ไม่พบข้อมูลสำหรับรหัสไปรษณีย์นี้ กรุณากรอกข้อมูลที่อยู่ด้วยตนเอง',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingZipcodeData(false);
+    }
+  };
   
   // ดึงตัวเลือกการจัดส่งเมื่อกรอกข้อมูลที่อยู่ครบถ้วน
   useEffect(() => {
@@ -1015,9 +1061,26 @@ const CreateOrderPage: React.FC = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>รหัสไปรษณีย์</FormLabel>
-                            <FormControl>
-                              <Input placeholder="รหัสไปรษณีย์" {...field} />
-                            </FormControl>
+                            <div className="relative">
+                              <FormControl>
+                                <Input 
+                                  placeholder="รหัสไปรษณีย์" 
+                                  {...field}
+                                  maxLength={5}
+                                  pattern="[0-9]*"
+                                  inputMode="numeric"
+                                  disabled={loadingZipcodeData}
+                                />
+                              </FormControl>
+                              {loadingZipcodeData && (
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
+                                </div>
+                              )}
+                            </div>
+                            <FormDescription className="text-xs">
+                              พิมพ์รหัสไปรษณีย์เพื่อดึงข้อมูลจังหวัด อำเภอ และตำบลอัตโนมัติ
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}

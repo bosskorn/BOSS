@@ -5,7 +5,7 @@ import {
   createFlashExpressShipping,
   getFlashExpressTrackingStatus
 } from '../services/flash-express';
-import { analyzeLongdoAddress } from '../services/longdo-map';
+import { analyzeAddress } from '../services/longdo-map';
 
 const router = express.Router();
 
@@ -142,7 +142,8 @@ router.post('/analyze-address', auth, async (req: Request, res: Response) => {
     }
     
     // วิเคราะห์ที่อยู่โดยใช้ Longdo Map API
-    const addressComponents = await analyzeLongdoAddress(fullAddress);
+    const result = await analyzeAddress(fullAddress);
+    const addressComponents = result.address;
     
     res.json({
       success: true,
