@@ -1232,7 +1232,7 @@ const CreateOrderTabsPage: React.FC = () => {
                               <FormLabel>ข้อมูลลูกค้าและที่อยู่ทั้งหมด</FormLabel>
                               <FormControl>
                                 <Textarea 
-                                  placeholder="วางข้อมูลทั้งหมดที่นี่ เช่น FH-ลาดพร้าว54(0919866556) 372 ถ. ลาดพร้าววังหิน ลาดพร้าว ลาดพร้าว กรุงเทพ 10230" 
+                                  placeholder="วางข้อมูลทั้งหมดที่นี่ เช่น ร้านบางกอก (คุณสมชาย) 0812345678 บ้านเลขที่ 123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110" 
                                   rows={4} 
                                   onPaste={handleFullCustomerDataPaste}
                                   {...field} 
