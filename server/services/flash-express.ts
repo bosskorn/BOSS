@@ -279,17 +279,12 @@ export const createFlashExpressShipping = async (
     } catch (apiError: any) {
       console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API สำหรับการสร้างการจัดส่ง:', apiError.message);
       
-      // กรณีที่ API ไม่ตอบสนองหรือมีปัญหา ใช้การจำลองข้อมูล
-      console.log('ใช้การจำลองข้อมูลแทน');
-    
-      // จำลองการสร้างเลขติดตามพัสดุ
-      const trackingNumber = `FLE${Date.now().toString().substring(5)}`;
-      const sortCode = "16C-05B002-00";
+      // กรณีที่ API ไม่ตอบสนองหรือมีปัญหา แจ้งข้อผิดพลาด
+      console.log('ไม่สามารถสร้างเลขพัสดุได้ กรุณาลองใหม่อีกครั้ง');
   
       return {
-        success: true,
-        trackingNumber,
-        sortCode
+        success: false,
+        error: 'ไม่สามารถสร้างเลขพัสดุจาก Flash Express ได้ กรุณาลองใหม่อีกครั้ง'
       };
     }
   } catch (error: any) {
@@ -335,24 +330,10 @@ export const getFlashExpressTrackingStatus = async (trackingNumber: string): Pro
     } catch (apiError: any) {
       console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API สำหรับตรวจสอบสถานะ:', apiError.message);
       
-      // กรณีที่ API ไม่ตอบสนองหรือมีปัญหา ใช้ข้อมูลสำรอง
-      console.log('ใช้ข้อมูลสำรองสำหรับสถานะการจัดส่งแทน');
+      // กรณีที่ API ไม่ตอบสนองหรือมีปัญหา แจ้งข้อผิดพลาด
+      console.log('ไม่สามารถตรวจสอบสถานะพัสดุได้ กรุณาลองใหม่อีกครั้ง');
       
-      // จำลองข้อมูลสถานะการจัดส่ง
-      const mockStatus = {
-        tracking_number: trackingNumber,
-        status: 'in_transit',
-        estimated_delivery: new Date(Date.now() + 86400000).toISOString(),
-        history: [
-          {
-            timestamp: new Date().toISOString(),
-            status: 'Parcel picked up',
-            location: 'Bangkok Sorting Center'
-          }
-        ]
-      };
-  
-      return mockStatus;
+      throw new Error('ไม่สามารถตรวจสอบสถานะพัสดุจาก Flash Express ได้ กรุณาลองใหม่อีกครั้ง');
     }
   } catch (error: any) {
     console.error('Error getting Flash Express tracking status:', error);

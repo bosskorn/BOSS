@@ -183,17 +183,28 @@ router.post('/', auth, async (req, res) => {
             orderData.total // COD amount
           );
           
-          // Store tracking information if available
-          if (flashExpressResponse && flashExpressResponse.tracking_number) {
+          // Store tracking information if available and successful
+          if (flashExpressResponse && flashExpressResponse.success && flashExpressResponse.trackingNumber) {
             await storage.updateOrder(order.id, {
-              trackingNumber: flashExpressResponse.tracking_number,
-              shippingLabel: flashExpressResponse.label_url
+              trackingNumber: flashExpressResponse.trackingNumber,
+              status: 'processing'
+            });
+          } else {
+            // If Flash Express API failed, delete the order and return error
+            await storage.deleteOrder(order.id);
+            return res.status(400).json({
+              success: false,
+              message: flashExpressResponse.error || 'ไม่สามารถสร้างเลขพัสดุได้ กรุณาลองใหม่อีกครั้ง'
             });
           }
         }
       } catch (shippingError) {
-        // Log shipping error but don't fail order creation
-        console.error('Error creating Flash Express shipping for COD order:', shippingError);
+        // Delete the order if shipping creation fails and return error
+        await storage.deleteOrder(order.id);
+        return res.status(400).json({
+          success: false,
+          message: shippingError.message || 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง กรุณาลองใหม่อีกครั้ง'
+        });
       }
     }
     

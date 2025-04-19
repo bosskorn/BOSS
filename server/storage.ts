@@ -246,6 +246,20 @@ export class DatabaseStorage implements IStorage {
     return updatedOrder;
   }
   
+  async deleteOrder(id: number): Promise<boolean> {
+    try {
+      // First delete all related order items
+      await db.delete(orderItems).where(eq(orderItems.orderId, id));
+      
+      // Then delete the order
+      await db.delete(orders).where(eq(orders.id, id));
+      return true;
+    } catch (error) {
+      console.error(`Error deleting order ${id}:`, error);
+      return false;
+    }
+  }
+  
   // OrderItem operations
   async getOrderItems(orderId: number): Promise<OrderItem[]> {
     return await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
