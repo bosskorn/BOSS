@@ -17,7 +17,7 @@ import LogoDisplay from "@/pages/logo-display";
 import CategoryManagement from "@/pages/category-management";
 import ProductManagement from "@/pages/product-management";
 import AdminDashboard from "@/pages/admin-dashboard";
-import OrderList from "@/pages/order-list";
+import OrderList from "@/pages/order-list-enhanced";
 import OrderDetail from "@/pages/order-detail";
 import ShipmentList from "@/pages/shipment-list";
 import Settings from "@/pages/settings";
