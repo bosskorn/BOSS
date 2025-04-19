@@ -356,13 +356,18 @@ const CreateOrderPage: React.FC = () => {
     setLoadingZipcodeData(true);
     
     try {
+      // ทดสอบเรียกใช้ API โดยตรงเพื่อดีบัก
+      // const testUrl = `/api/locations/zipcode/${zipcode}`;
+      // console.log(`Direct testing URL: ${testUrl}`);
+      // const testResponse = await fetch(testUrl, { credentials: 'include' });
+      // const testData = await testResponse.json();
+      // console.log('Direct API test response:', testData);
+      
+      // เรียกใช้ API ผ่านฟังก์ชัน apiRequest
       const response = await apiRequest('GET', `/api/locations/zipcode/${zipcode}`);
-      
-      if (!response.ok) {
-        throw new Error('ไม่สามารถดึงข้อมูลจากรหัสไปรษณีย์ได้');
-      }
-      
       const data = await response.json();
+      
+      console.log('API response for zipcode:', data);
       
       if (data.success && data.address) {
         // กำหนดค่าจังหวัด อำเภอ และตำบลจากข้อมูลที่ได้
@@ -372,9 +377,16 @@ const CreateOrderPage: React.FC = () => {
         
         toast({
           title: 'ดึงข้อมูลสำเร็จ',
-          description: 'ได้รับข้อมูลจากรหัสไปรษณีย์เรียบร้อยแล้ว',
+          description: data.note 
+            ? `${data.note} - ${data.address.province}` 
+            : 'ได้รับข้อมูลจากรหัสไปรษณีย์เรียบร้อยแล้ว',
         });
+        
+        return; // ออกจากฟังก์ชันหากสำเร็จ
       }
+      
+      // กรณีมีข้อมูลแต่ไม่มี success หรือไม่มี address
+      throw new Error(data.message || 'ไม่สามารถดึงข้อมูลจากรหัสไปรษณีย์ได้');
     } catch (error) {
       console.error('Error fetching address from zipcode:', error);
       toast({
