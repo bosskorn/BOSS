@@ -53,8 +53,8 @@ function Router() {
       <ProtectedRoute path="/product-list" component={ProductListEnhanced} />
       <ProtectedRoute path="/product-list-old" component={ProductList} />
       <ProtectedRoute path="/product-management" component={ProductManagement} />
-      <ProtectedRoute path="/create-order" component={CreateOrder} />
-      <ProtectedRoute path="/create-order-tabs" component={CreateOrderTabs} />
+      <ProtectedRoute path="/create-order" component={CreateOrderTabs} />
+      <ProtectedRoute path="/create-order-old" component={CreateOrder} />
       
       {/* คำสั่งซื้อ - protected */}
       <ProtectedRoute path="/orders-all" component={OrderList} />
