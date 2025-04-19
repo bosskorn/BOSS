@@ -1187,22 +1187,7 @@ const CreateOrderTabsPage: React.FC = () => {
                             />
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <FormField
-                              control={form.control}
-                              name="soi"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>ซอย</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="ซอย (ถ้ามี)" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
 
-                          </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             <FormField
