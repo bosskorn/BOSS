@@ -405,8 +405,11 @@ const OrderList: React.FC = () => {
                       <TableCell className="text-right">{order.total !== undefined ? formatCurrency(order.total) : formatCurrency(parseFloat(order.totalAmount || "0"))}</TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center">
-                          <Package className="h-4 w-4 text-gray-500 mr-1" />
-                          <span>{order.items} รายการ</span>
+                          <Package className="h-4 w-4 text-purple-500 mr-1" />
+                          <div className="font-medium">
+                            <span className="text-purple-700">{order.items || 0}</span>
+                            <span className="text-gray-600"> รายการ</span>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>{formatDate(order.date)}</TableCell>
