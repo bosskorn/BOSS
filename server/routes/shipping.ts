@@ -5,7 +5,6 @@ import {
   createFlashExpressShipping,
   getFlashExpressTrackingStatus
 } from '../services/flash-express';
-import { analyzeAddress } from '../services/longdo-map';
 
 const router = express.Router();
 
