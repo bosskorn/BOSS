@@ -42,6 +42,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { 
   Truck, 
   PackageCheck, 
   User, 
@@ -157,6 +167,18 @@ const CreateOrderTabsPage: React.FC = () => {
     description: string;
     orderNumber?: string;
     trackingNumber?: string;
+  }>({
+    open: false,
+    title: '',
+    description: '',
+  });
+  
+  // State สำหรับจัดการป๊อบอัพแจ้งเตือนข้อผิดพลาด
+  const [alertDialog, setAlertDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    errorDetails?: string;
   }>({
     open: false,
     title: '',
@@ -1219,6 +1241,12 @@ const CreateOrderTabsPage: React.FC = () => {
       ].filter(Boolean).join(' ');
       
       if (!detailAddress || detailAddress.trim() === '') {
+        setAlertDialog({
+          open: true,
+          title: 'ที่อยู่ไม่ครบถ้วน',
+          description: 'กรุณากรอกข้อมูลที่อยู่ให้ครบถ้วน โดยเฉพาะเลขที่บ้านหรือถนน',
+          errorDetails: 'ตรวจสอบข้อมูลที่อยู่ในแท็บข้อมูลลูกค้า'
+        });
         throw new Error('ที่อยู่ไม่ครบถ้วน กรุณากรอกเลขที่บ้านหรือถนน');
       }
       
@@ -1286,48 +1314,89 @@ const CreateOrderTabsPage: React.FC = () => {
         } else {
           // ถ้าไม่มี success หรือไม่มี trackingNumber (แต่ไม่มี error)
           console.error('Flash Express API response ไม่มีข้อมูลที่จำเป็น:', response.data);
-          // สร้างเลขพัสดุชั่วคราว
-          if (!data.isCOD) {
-            // ใช้เลขพัสดุชั่วคราวสำหรับออเดอร์ปกติ (ไม่ใช่ COD)
-            toast({
-              title: 'ไม่สามารถสร้างเลขพัสดุจริงได้',
-              description: 'ใช้เลขพัสดุชั่วคราวแทน คุณสามารถอัพเดทเลขพัสดุในภายหลัง',
-              variant: 'warning'
+          
+          // กรณีเป็น COD จำเป็นต้องมีเลขพัสดุจริง
+          if (data.isCOD) {
+            setAlertDialog({
+              open: true,
+              title: 'ไม่สามารถสร้างเลขพัสดุ COD ได้',
+              description: 'ออเดอร์ที่มีการเก็บเงินปลายทาง (COD) จำเป็นต้องมีเลขพัสดุจริงจาก Flash Express',
+              errorDetails: response.data.message || 'API ไม่ตอบสนองหรือข้อมูลไม่ครบถ้วน โปรดตรวจสอบข้อมูลให้ถูกต้อง'
             });
-            return {
-              orderNumber,
-              trackingNumber: `TMP${Date.now().toString().slice(-10)}`,
-              sortCode: ''
-            };
+            throw new Error(response.data.error || 'ไม่สามารถสร้างเลขพัสดุ COD ได้');
           }
-          throw new Error(response.data.error || 'ไม่สามารถสร้างเลขพัสดุได้');
-        }
-      } catch (apiError: any) {
-        console.error('Flash Express API error', apiError);
-        if (apiError.response) {
-          console.error('API Error response:', apiError.response.data);
-        }
-        
-        // ถ้าไม่ใช่ COD ให้ใช้เลขพัสดุชั่วคราว
-        if (!data.isCOD) {
-          // ใช้เลขพัสดุชั่วคราวสำหรับออเดอร์ปกติ (ไม่ใช่ COD)
-          toast({
+          
+          // สำหรับออเดอร์ทั่วไป (ไม่ใช่ COD) ให้แสดงป๊อปอัพเตือน
+          setAlertDialog({
+            open: true,
             title: 'ไม่สามารถสร้างเลขพัสดุจริงได้',
-            description: 'ใช้เลขพัสดุชั่วคราวแทน คุณสามารถอัพเดทเลขพัสดุในภายหลัง',
-            variant: 'warning'
+            description: 'ระบบจะใช้เลขพัสดุชั่วคราวแทน คุณสามารถอัพเดทเลขพัสดุในภายหลัง',
+            errorDetails: response.data.message || 'Flash Express API ไม่ตอบสนองหรือมีข้อผิดพลาด'
           });
+          
+          // ใช้เลขพัสดุชั่วคราวสำหรับออเดอร์ปกติ (ไม่ใช่ COD)
           return {
             orderNumber,
             trackingNumber: `TMP${Date.now().toString().slice(-10)}`,
             sortCode: ''
           };
         }
+      } catch (apiError: any) {
+        console.error('Flash Express API error', apiError);
         
-        // กรณีเป็น COD จำเป็นต้องมีเลขพัสดุจริง
-        throw apiError;
+        // บันทึกรายละเอียดข้อผิดพลาดจาก API
+        let errorMessage = 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้';
+        let errorDetails = 'โปรดตรวจสอบการเชื่อมต่อเครือข่ายหรือลองใหม่ในภายหลัง';
+        
+        if (apiError.response) {
+          console.error('API Error response:', apiError.response.data);
+          errorMessage = apiError.response.data.message || 'มีข้อผิดพลาดจาก Flash Express API';
+          errorDetails = JSON.stringify({
+            status: apiError.response.status,
+            data: apiError.response.data
+          }, null, 2);
+        }
+        
+        // กรณีเป็น COD จำเป็นต้องมีเลขพัสดุจริง ให้แสดงป๊อปอัพแจ้งเตือนข้อผิดพลาด
+        if (data.isCOD) {
+          setAlertDialog({
+            open: true,
+            title: 'ไม่สามารถสร้างเลขพัสดุ COD ได้',
+            description: errorMessage,
+            errorDetails: errorDetails
+          });
+          throw apiError;
+        }
+        
+        // สำหรับออเดอร์ทั่วไป (ไม่ใช่ COD) ให้แสดงป๊อปอัพเตือน
+        setAlertDialog({
+          open: true,
+          title: 'ไม่สามารถสร้างเลขพัสดุจริงได้',
+          description: 'ระบบจะใช้เลขพัสดุชั่วคราวแทน คุณสามารถอัพเดทเลขพัสดุในภายหลัง',
+          errorDetails: errorMessage
+        });
+        
+        // ใช้เลขพัสดุชั่วคราวสำหรับออเดอร์ปกติ (ไม่ใช่ COD)
+        return {
+          orderNumber,
+          trackingNumber: `TMP${Date.now().toString().slice(-10)}`,
+          sortCode: ''
+        };
       }
     } catch (error: any) {
       console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API:', error);
+      
+      // กรณีไม่ใช่ข้อผิดพลาดจากการเรียก API โดยตรง
+      // แสดงป๊อปอัพแจ้งเตือนข้อผิดพลาดตั้งต้น
+      if (error.message && !alertDialog.open) {
+        setAlertDialog({
+          open: true,
+          title: 'ไม่สามารถสร้างเลขพัสดุได้',
+          description: error.message,
+          errorDetails: 'โปรดตรวจสอบข้อมูลและลองใหม่อีกครั้ง'
+        });
+      }
+      
       throw new Error(`ไม่สามารถสร้างเลขพัสดุ: ${error.message}`);
     }
   };
@@ -2110,6 +2179,34 @@ const CreateOrderTabsPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* AlertDialog สำหรับแสดงข้อผิดพลาด */}
+      <AlertDialog open={alertDialog.open} onOpenChange={(open) => setAlertDialog({ ...alertDialog, open })}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center space-x-2">
+              <div className="bg-red-100 p-2 rounded-full">
+                <AlertCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <AlertDialogTitle className="text-xl">{alertDialog.title}</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-base mt-2">
+              {alertDialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {alertDialog.errorDetails && (
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 my-3 text-sm text-gray-700 max-h-40 overflow-y-auto">
+              <p className="text-xs text-gray-500 mb-1">รายละเอียดข้อผิดพลาด:</p>
+              <p className="whitespace-pre-wrap">{alertDialog.errorDetails}</p>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogAction className="bg-purple-600 hover:bg-purple-700">
+              ตกลง
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };
