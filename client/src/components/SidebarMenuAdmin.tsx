@@ -66,6 +66,14 @@ const SidebarMenuAdmin: React.FC<SidebarMenuAdminProps> = ({ isOpen, onClose, us
       badgeColor: 'bg-orange-500'
     },
     { 
+      path: '/claims-list', 
+      icon: 'fa-file-circle-exclamation', 
+      label: 'รายการเคลมและปัญหา',
+      description: 'จัดการเรื่องร้องเรียน ปัญหาการจัดส่ง และการชดเชย',
+      badge: '6',
+      badgeColor: 'bg-red-500'
+    },
+    { 
       path: '/admin/shipping-providers', 
       icon: 'fa-truck-container', 
       label: 'เครือข่ายขนส่ง',
@@ -157,15 +165,15 @@ const SidebarMenuAdmin: React.FC<SidebarMenuAdminProps> = ({ isOpen, onClose, us
     },
     {
       title: 'การจัดการโลจิสติกส์',
-      items: adminMenuItems.slice(2, 6), // พัสดุ, เครือข่ายขนส่ง, พื้นที่, คลังสินค้า
+      items: adminMenuItems.slice(2, 7), // พัสดุ, เคลม, เครือข่ายขนส่ง, พื้นที่, คลังสินค้า
     },
     {
       title: 'การเงินและบัญชี',
-      items: adminMenuItems.slice(6, 9), // การเงิน, ใบแจ้งหนี้, อัตราค่าบริการ
+      items: adminMenuItems.slice(7, 10), // การเงิน, ใบแจ้งหนี้, อัตราค่าบริการ
     },
     {
       title: 'รายงานและการตลาด',
-      items: adminMenuItems.slice(9, 12), // รายงาน, การตลาด, ประวัติการทำงาน
+      items: adminMenuItems.slice(10, 13), // รายงาน, การตลาด, ประวัติการทำงาน
     },
     {
       title: 'ระบบและการตั้งค่า',
