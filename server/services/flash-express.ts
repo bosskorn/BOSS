@@ -211,7 +211,8 @@ export const createFlashExpressShipping = async (
         codEnabled: orderData.codEnabled,
         codAmount: orderData.codAmount,
         remark: orderData.remark,
-        subItemTypes: orderData.subItemTypes ? JSON.stringify(orderData.subItemTypes) : undefined
+        // Flash Express API ต้องการ subItemTypes ในรูปแบบ JSON string
+        subItemTypesJson: orderData.subItemTypes ? JSON.stringify(orderData.subItemTypes) : undefined
       };
       
       // สร้าง signature
@@ -228,6 +229,14 @@ export const createFlashExpressShipping = async (
       console.log('ส่งข้อมูลไปยัง Flash Express API:', JSON.stringify(requestData, null, 2));
       
       // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
+      // ตาม API specification ต้องแปลงรูปแบบข้อมูลให้เป็น form-urlencoded format
+      const formData = new URLSearchParams();
+      for (const [key, value] of Object.entries(requestData)) {
+        if (value !== undefined) {
+          formData.append(key, value.toString());
+        }
+      }
+      
       const response = await axios({
         method: 'post',
         url: `${FLASH_EXPRESS_API_URL}/open/v3/orders`,
@@ -236,7 +245,7 @@ export const createFlashExpressShipping = async (
           'Accept': 'application/json'
         },
         timeout: API_TIMEOUT, // กำหนด timeout เพื่อไม่ให้รอนานเกินไป
-        data: requestData
+        data: formData
       });
 
       console.log("ได้รับการตอบกลับจาก Flash Express API สำหรับการสร้างการจัดส่ง:", response.data);
