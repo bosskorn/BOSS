@@ -329,14 +329,7 @@ const OrderList: React.FC = () => {
                         )}
                       </div>
                     </TableHead>
-                    <TableHead className="cursor-pointer" onClick={() => handleSort('customerName')}>
-                      <div className="flex items-center">
-                        ชื่อลูกค้า
-                        {sortConfig.key === 'customerName' && (
-                          sortConfig.direction === 'asc' ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
-                        )}
-                      </div>
-                    </TableHead>
+
                     <TableHead className="cursor-pointer text-right" onClick={() => handleSort('total')}>
                       <div className="flex items-center justify-end">
                         ยอดรวม
@@ -386,7 +379,6 @@ const OrderList: React.FC = () => {
                           <span className="ml-2">{order.orderNumber}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{order.customerName}</TableCell>
                       <TableCell className="text-right">{formatCurrency(order.total)}</TableCell>
                       <TableCell className="text-center">{order.items}</TableCell>
                       <TableCell>{formatDate(order.date)}</TableCell>
