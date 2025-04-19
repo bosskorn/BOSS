@@ -18,6 +18,23 @@ export interface AddressComponents {
   storeName?: string;
 }
 
+// รายชื่อเขตในกรุงเทพฯ ที่พบบ่อย (สำหรับใช้ในการตรวจสอบ)
+const BANGKOK_DISTRICTS = [
+  'คลองเตย', 'พระโขนง', 'วัฒนา', 'บางรัก', 'ปทุมวัน', 'สาทร', 'บางคอแหลม', 'ยานนาวา',
+  'ดินแดง', 'ห้วยขวาง', 'จตุจักร', 'ลาดพร้าว', 'บางกะปิ', 'วังทองหลาง', 'บึงกุ่ม', 'สวนหลวง',
+  'ประเวศ', 'คันนายาว', 'ลาดกระบัง', 'มีนบุรี', 'หนองจอก', 'ดอนเมือง', 'จอมทอง', 'ธนบุรี',
+  'ราชเทวี', 'พญาไท', 'ดุสิต', 'บางซื่อ', 'พระนคร', 'ป้อมปราบฯ', 'บางกอกน้อย', 'บางกอกใหญ่',
+  'ภาษีเจริญ', 'ตลิ่งชัน', 'บางพลัด', 'ทวีวัฒนา', 'หนองแขม', 'บางแค', 'ทุ่งครุ', 'บางขุนเทียน',
+  'บางบอน', 'ราษฎร์บูรณะ', 'คลองสาน', 'บางนา', 'บางเขน', 'สายไหม', 'หลักสี่'
+];
+
+// รายชื่อแขวงในกรุงเทพฯ ที่มีชื่อเดียวกับเขต
+const SAME_NAME_SUBDISTRICTS = [
+  'คลองเตย', 'ดินแดง', 'ลาดพร้าว', 'บางนา', 'บางเขน', 'สวนหลวง', 'จตุจักร', 'บางกะปิ', 
+  'คลองสาน', 'บางรัก', 'ปทุมวัน', 'ยานนาวา', 'พญาไท', 'บางซื่อ', 'ดุสิต', 'ราชเทวี',
+  'บางพลัด', 'บางอ้อ', 'วังทองหลาง', 'ห้วยขวาง'
+];
+
 /**
  * ฟังก์ชันวิเคราะห์ข้อมูลทั้งหมดของลูกค้า (ชื่อ, เบอร์โทร, อีเมล และที่อยู่) จากข้อความ
  * @param text ข้อความที่ต้องการวิเคราะห์
@@ -249,6 +266,44 @@ export function parseAddressFromText(text: string): AddressComponents {
   const components: AddressComponents = {};
   console.log("กำลังวิเคราะห์ที่อยู่:", text);
   
+  // ตรวจสอบก่อนว่าเป็นที่อยู่ในกรุงเทพมหานครหรือไม่
+  const isBangkok = /กรุงเทพ|กทม|bangkok|กรุงเทพฯ|กรุงเทพมหานคร/i.test(text);
+  if (isBangkok) {
+    components.province = 'กรุงเทพ';
+    
+    // ค้นหาเขตในกรุงเทพฯ ที่พบบ่อย
+    for (const district of BANGKOK_DISTRICTS) {
+      const districtRegExp = new RegExp(`\\b${district}\\b`, 'i');
+      if (districtRegExp.test(text)) {
+        components.district = district;
+        console.log("พบเขตในกรุงเทพฯ:", district);
+        
+        // ถ้าเป็นเขตที่มีแขวงชื่อเดียวกัน ให้กำหนดแขวงเป็นชื่อเดียวกับเขต
+        if (SAME_NAME_SUBDISTRICTS.includes(district)) {
+          components.subdistrict = district;
+          console.log("กำหนดแขวงเป็นชื่อเดียวกับเขต:", district);
+        }
+        
+        break;
+      }
+    }
+    
+    // ค้นหาชื่อแขวงที่เป็นคนละชื่อกับเขต (กรณีคลองตัน)
+    if (components.district && !components.subdistrict) {
+      // แขวงคลองตันอยู่ในเขตคลองเตย
+      if (components.district === 'คลองเตย' && /คลองตัน/i.test(text)) {
+        components.subdistrict = 'คลองตัน';
+        console.log("พบแขวงคลองตัน สำหรับเขตคลองเตย");
+      }
+      
+      // แขวงพระโขนงเหนือในเขตวัฒนา
+      else if (components.district === 'วัฒนา' && /พระโขนงเหนือ/i.test(text)) {
+        components.subdistrict = 'พระโขนงเหนือ';
+        console.log("พบแขวงพระโขนงเหนือ สำหรับเขตวัฒนา");
+      }
+    }
+  }
+  
   // ล้างข้อมูลชื่อบริษัทออกจากข้อความที่จะวิเคราะห์ 
   // แยกชื่อบริษัท/ชื่อร้านค้าออกไปก่อน
   let cleanedText = text;
@@ -465,17 +520,38 @@ export function parseAddressFromText(text: string): AddressComponents {
   // ค้นหาตำบล/แขวงที่มีคำนำหน้า - ทำก่อนเพื่อให้ดักจับกรณี 'แขวงคลองเตย เขตคลองเตย' ได้ถูกต้อง
   const subdistrictRegex = /(?:ตำบล|ต\.|แขวง)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
   const subdistrictMatch = text.match(subdistrictRegex);
-  if (subdistrictMatch) {
-    components.subdistrict = subdistrictMatch[1];
+  if (subdistrictMatch && subdistrictMatch[1]) {
+    components.subdistrict = subdistrictMatch[1].trim();
     console.log("พบตำบล/แขวง (มีคำนำหน้า):", components.subdistrict);
   }
 
   // ค้นหาอำเภอ/เขตที่มีคำนำหน้า
   const districtRegex = /(?:อำเภอ|อ\.|เขต)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
   const districtMatch = text.match(districtRegex);
-  if (districtMatch) {
-    components.district = districtMatch[1];
+  if (districtMatch && districtMatch[1]) {
+    components.district = districtMatch[1].trim();
     console.log("พบอำเภอ/เขต (มีคำนำหน้า):", components.district);
+  }
+  
+  // ค้นหาตำบล/แขวงและอำเภอ/เขตแบบไม่มีคำนำหน้า เฉพาะในกรุงเทพฯ
+  if (components.province === 'กรุงเทพ') {
+    // ถ้ายังไม่มีเขต ให้ค้นหาจากรายชื่อเขตที่รู้จัก
+    if (!components.district) {
+      for (const district of BANGKOK_DISTRICTS) {
+        const regex = new RegExp(`\\b${district}\\b`, 'i');
+        if (regex.test(text)) {
+          components.district = district;
+          console.log("พบเขตในกรุงเทพฯ (ไม่มีคำนำหน้า):", district);
+          break;
+        }
+      }
+    }
+    
+    // กรณีพิเศษสำหรับคลองตัน (แขวงในเขตคลองเตย)
+    if (components.district === 'คลองเตย' && /คลองตัน/i.test(text) && !components.subdistrict) {
+      components.subdistrict = 'คลองตัน';
+      console.log("กำหนดแขวงคลองตัน สำหรับเขตคลองเตย");
+    }
   }
   
   // กรณีเฉพาะสำหรับ 'คลองเตย' ที่เป็นได้ทั้งแขวงและเขตในกรุงเทพ
