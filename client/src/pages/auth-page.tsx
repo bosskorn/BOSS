@@ -64,10 +64,18 @@ const AuthPage: React.FC = () => {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
   
-  // ถ้ายืนยันตัวตนแล้ว ให้ redirect ไปหน้าหลัก
+  // ถ้ายืนยันตัวตนแล้ว ให้ redirect ไปหน้าที่เหมาะสมตามบทบาทของผู้ใช้
   useEffect(() => {
     if (user) {
-      setLocation('/');
+      // ตรวจสอบบทบาทของผู้ใช้ หากเป็น admin ให้ไปหน้า admin-dashboard
+      if (user.role === 'admin') {
+        console.log('Admin user detected, redirecting to admin dashboard');
+        setLocation('/admin-dashboard');
+      } else {
+        // หากเป็นผู้ใช้ทั่วไป ให้ไปหน้า dashboard ปกติ
+        console.log('Regular user detected, redirecting to dashboard');
+        setLocation('/');
+      }
     }
   }, [user, setLocation]);
   
