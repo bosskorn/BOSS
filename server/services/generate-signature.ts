@@ -18,21 +18,24 @@ export function generateFlashExpressSignature(
   nonceStr: string
 ): string {
   try {
+    // ลบฟิลด์ sign และ subItemTypes ออกก่อน (ถ้ามี) เพราะไม่รวมในการคำนวณลายเซ็น
+    const { sign, subItemTypes, ...dataForSignature } = params;
+    
     // 1. เรียงลำดับคีย์ของพารามิเตอร์ตามลำดับอักษร ASCII
-    const sortedKeys = Object.keys(params).sort();
+    const sortedKeys = Object.keys(dataForSignature).sort();
     
     // 2. สร้างสตริง stringA ในรูปแบบ key1=value1&key2=value2&...
     const stringA = sortedKeys
       .filter(key => {
         // กรองเฉพาะค่าที่ไม่เป็น undefined, null หรือ ค่าว่าง (whitespace)
-        const value = params[key];
+        const value = dataForSignature[key];
         if (value === undefined || value === null) return false;
         if (typeof value === 'string' && value.trim() === '') return false;
         return true;
       })
       .map(key => {
-        // แปลงค่า Array หรือ Object เป็น JSON string
-        let value = params[key];
+        // แปลงค่า Array หรือ Object เป็น JSON string (ไม่ควรมี เพราะ subItemTypes ถูกลบออกไปแล้ว)
+        let value = dataForSignature[key];
         if (typeof value === 'object' && value !== null) {
           value = JSON.stringify(value);
         }

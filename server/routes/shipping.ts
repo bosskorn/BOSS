@@ -112,6 +112,40 @@ router.post('/options', auth, async (req: Request, res: Response) => {
 });
 
 /**
+ * API สำหรับทดสอบการสร้างเลขพัสดุกับ Flash Express API
+ */
+router.post('/test-create-order', auth, async (req: Request, res: Response) => {
+  try {
+    console.log('ได้รับคำขอทดสอบสร้างเลขพัสดุ:', req.body);
+    
+    // ใช้ข้อมูลที่ส่งมาตรงๆ
+    const result = await createFlashExpressShipping(req.body);
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        trackingNumber: result.trackingNumber,
+        sortCode: result.sortCode,
+        message: 'สร้างเลขพัสดุสำเร็จ'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.error || 'ไม่สามารถสร้างเลขพัสดุได้',
+        errorDetails: 'Flash Express API ไม่สามารถสร้างเลขพัสดุได้ กรุณาตรวจสอบข้อมูลให้ถูกต้องและลองใหม่อีกครั้ง'
+      });
+    }
+  } catch (error: any) {
+    console.error('Error testing create order:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to test create order',
+      stack: error.stack
+    });
+  }
+});
+
+/**
  * API สำหรับสร้างการจัดส่งใหม่ตามมาตรฐาน Flash Express V3
  */
 router.post('/create', auth, async (req: Request, res: Response) => {
