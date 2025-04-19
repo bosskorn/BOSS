@@ -5,6 +5,19 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Base styling for all menu texts */
+.admin-navbar .menu-text {
+  color: white !important;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* Make sure the menu link itself is visible */
+.admin-navbar .menu-link {
+  color: white !important;
+  opacity: 0.9;
+}
+
 .admin-navbar .navbar-brand .logo-container {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
@@ -27,8 +40,10 @@
   color: white;
 }
 
+/* ปรับสีลิงก์เมนูให้เป็นสีขาวเห็นได้ชัดเจน */
 .admin-navbar .menu-link {
-  color: rgba(255, 255, 255, 0.85);
+  color: white !important;
+  font-weight: 500;
 }
 
 .admin-navbar .menu-link:hover {
@@ -49,7 +64,8 @@
 }
 
 .admin-navbar .dropdown-menu a {
-  color: rgba(255, 255, 255, 0.85);
+  color: white !important;
+  font-weight: 500;
   transition: all 0.2s ease;
 }
 
