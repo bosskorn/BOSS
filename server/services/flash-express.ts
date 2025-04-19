@@ -91,7 +91,7 @@ export const getFlashExpressShippingOptions = async (
       // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
       const response = await axios({
         method: 'post',
-        url: `${FLASH_EXPRESS_API_URL}/open/v3/orders/fee`,
+        url: `${FLASH_EXPRESS_API_URL}/open/v3/pricing`,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json'
