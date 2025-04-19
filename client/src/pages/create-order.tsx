@@ -381,73 +381,15 @@ const CreateOrderPage: React.FC = () => {
     }
   }, [form.watch('zipcode')]);
   
-  // ฟังก์ชันดึงข้อมูลจังหวัด อำเภอ และตำบลจากรหัสไปรษณีย์
+  // ฟังก์ชันดึงข้อมูลจากรหัสไปรษณีย์ (ไม่ใช้ API ภายนอก)
   const fetchDataFromZipcode = async (zipcode: string) => {
-    setLoadingZipcodeData(true);
+    if (!zipcode || zipcode.length !== 5) return;
     
-    try {
-      // เรียกใช้ API ผ่านฟังก์ชัน apiRequest
-      const response = await apiRequest('GET', `/api/locations/zipcode/${zipcode}`);
-      const data = await response.json();
-      
-      console.log('API response for zipcode:', data);
-      
-      if (data.success && data.address) {
-        const provinceName = data.address.province || '';
-        const districtName = data.address.district || '';
-        const subdistrictName = data.address.subdistrict || '';
-        
-        // กำหนดค่าจังหวัด อำเภอ และตำบลจากข้อมูลที่ได้
-        form.setValue('province', provinceName);
-        form.setValue('district', districtName);
-        form.setValue('subdistrict', subdistrictName);
-        
-        // อัพเดท dropdown โดยการค้นหาจังหวัดใน dropdown
-        const foundProvince = provinces.find(p => p.name_th === provinceName);
-        if (foundProvince) {
-          // ดึงอำเภอของจังหวัดที่เลือก
-          await fetchDistricts(foundProvince.id);
-          
-          // หลังจากได้อำเภอแล้ว ค้นหาอำเภอที่ตรงกับข้อมูลจาก API
-          setTimeout(() => {
-            const foundDistrict = districts.find(d => d.name_th === districtName);
-            if (foundDistrict) {
-              // ดึงตำบลของอำเภอที่เลือก
-              fetchSubdistricts(foundDistrict.id).then(() => {
-                // หลังจากได้ตำบลแล้ว ให้เลือกตำบลที่ตรงกับข้อมูลจาก API โดยอัตโนมัติ
-                setTimeout(() => {
-                  const foundSubdistrict = subdistricts.find(s => s.name_th === subdistrictName);
-                  if (foundSubdistrict) {
-                    // ไม่ต้องเซ็ตค่าอีกรอบ เพราะเซ็ตไว้ด้านบนแล้ว
-                    console.log(`รหัสไปรษณีย์ ${zipcode}: ${provinceName} > ${districtName} > ${subdistrictName}`);
-                  }
-                }, 300);
-              });
-            }
-          }, 300);
-        }
-        
-        toast({
-          title: 'ดึงข้อมูลสำเร็จ',
-          description: data.note 
-            ? `${data.note} - ${provinceName}, ${districtName}, ${subdistrictName}` 
-            : `ได้รับข้อมูลจากรหัสไปรษณีย์ ${zipcode} เรียบร้อยแล้ว`,
-        });
-        
-        return; // ออกจากฟังก์ชันหากสำเร็จ
-      }
-      
-      // กรณีมีข้อมูลแต่ไม่มี success หรือไม่มี address
-      throw new Error(data.message || 'ไม่สามารถดึงข้อมูลจากรหัสไปรษณีย์ได้');
-    } catch (error) {
-      console.error('Error fetching address from zipcode:', error);
-      toast({
-        title: 'ไม่สามารถดึงข้อมูลได้',
-        description: 'ไม่พบข้อมูลสำหรับรหัสไปรษณีย์นี้ กรุณากรอกข้อมูลที่อยู่ด้วยตนเอง',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoadingZipcodeData(false);
+    console.log('รหัสไปรษณีย์ที่กรอก:', zipcode);
+    
+    // ดึงข้อมูลตัวเลือกการจัดส่งตามข้อมูลที่อยู่ปัจจุบัน
+    if (form.watch('province') && form.watch('district') && form.watch('subdistrict')) {
+      fetchShippingOptions();
     }
   };
   
