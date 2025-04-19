@@ -744,6 +744,11 @@ const CreateOrderTabsPage: React.FC = () => {
       form.trigger(['shippingMethod']);
       return;
     }
+
+    // หากเป็นแท็บ address ให้ข้ามไปที่ products แทน
+    if (value === "address") {
+      value = "products";
+    }
     
     setActiveTab(value);
   };
@@ -790,7 +795,7 @@ const CreateOrderTabsPage: React.FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                   
-                  {/* ขั้นตอนที่ 1: ข้อมูลลูกค้า */}
+                  {/* ขั้นตอนที่ 1: ข้อมูลลูกค้าและที่อยู่จัดส่ง */}
                   <TabsContent value="customer">
                     <Card className="border border-purple-100 shadow-lg shadow-purple-100/20 overflow-hidden">
                       <CardHeader className="bg-gradient-to-r from-purple-50 to-white border-b border-purple-100">
@@ -798,39 +803,93 @@ const CreateOrderTabsPage: React.FC = () => {
                           <div className="bg-purple-600 p-2 rounded-lg mr-3 text-white">
                             <User className="w-5 h-5" />
                           </div>
-                          <CardTitle className="text-purple-800">
-                            <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs mr-2">ขั้นตอนที่ 1</span>
-                            ข้อมูลลูกค้า
-                          </CardTitle>
+                          <div>
+                            <CardTitle className="text-purple-800">
+                              <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs mr-2">ขั้นตอนที่ 1</span>
+                              ข้อมูลลูกค้าและที่อยู่จัดส่ง
+                            </CardTitle>
+                            <CardDescription className="text-purple-600/70">
+                              วางข้อมูลลูกค้าและที่อยู่ (Copy & Paste) เพื่อแยกข้อมูลอัตโนมัติ
+                            </CardDescription>
+                          </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="space-y-4 pt-6">
-                        {/* ส่วนวิเคราะห์ข้อมูลลูกค้าอัตโนมัติถูกลบออกตามคำขอ */}
+                      <CardContent className="space-y-6 pt-6">
+                        {/* ส่วนวิเคราะห์ข้อมูลลูกค้าและที่อยู่อัตโนมัติ */}
+                        <FormField
+                          control={form.control}
+                          name="fullAddress"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>ข้อมูลลูกค้าและที่อยู่ทั้งหมด</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="วางข้อมูลทั้งหมดที่นี่ เช่น FH-ลาดพร้าว54(0919866556) 372 ถ. ลาดพร้าววังหิน ลาดพร้าว ลาดพร้าว กรุงเทพ 10230" 
+                                  rows={4} 
+                                  onPaste={handleFullCustomerDataPaste}
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                <Button 
+                                  type="button" 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={analyzeAddress}
+                                  disabled={!field.value || processingAddress}
+                                  className="mt-2"
+                                >
+                                  {processingAddress ? 'กำลังวิเคราะห์...' : 'วิเคราะห์ข้อมูลอัตโนมัติ'}
+                                </Button>
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-purple-50 p-4 rounded-lg mb-4">
+                          <h3 className="text-purple-800 font-semibold mb-3">ข้อมูลลูกค้า</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="customerName"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>ชื่อลูกค้า <span className="text-red-500">*</span></FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="ชื่อ-นามสกุล" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="customerPhone"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>เบอร์โทรศัพท์ <span className="text-red-500">*</span></FormLabel>
+                                  <FormControl>
+                                    <div className="flex">
+                                      <Phone className="w-4 h-4 mr-2 text-gray-400 self-center" />
+                                      <Input placeholder="0812345678" {...field} />
+                                    </div>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                           <FormField
                             control={form.control}
-                            name="customerName"
+                            name="customerEmail"
                             render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>ชื่อลูกค้า <span className="text-red-500">*</span></FormLabel>
-                                <FormControl>
-                                  <Input placeholder="ชื่อ-นามสกุล" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="customerPhone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>เบอร์โทรศัพท์ <span className="text-red-500">*</span></FormLabel>
+                              <FormItem className="mt-4">
+                                <FormLabel>อีเมล (ถ้ามี)</FormLabel>
                                 <FormControl>
                                   <div className="flex">
-                                    <Phone className="w-4 h-4 mr-2 text-gray-400 self-center" />
-                                    <Input placeholder="0812345678" {...field} />
+                                    <Mail className="w-4 h-4 mr-2 text-gray-400 self-center" />
+                                    <Input placeholder="example@email.com" {...field} />
                                   </div>
                                 </FormControl>
                                 <FormMessage />
@@ -838,27 +897,208 @@ const CreateOrderTabsPage: React.FC = () => {
                             )}
                           />
                         </div>
-                        <FormField
-                          control={form.control}
-                          name="customerEmail"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>อีเมล (ถ้ามี)</FormLabel>
-                              <FormControl>
-                                <div className="flex">
-                                  <Mail className="w-4 h-4 mr-2 text-gray-400 self-center" />
-                                  <Input placeholder="example@email.com" {...field} />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        
+                        <div className="bg-purple-50 p-4 rounded-lg">
+                          <h3 className="text-purple-800 font-semibold mb-3">ที่อยู่จัดส่ง</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="houseNumber"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>บ้านเลขที่ <span className="text-red-500">*</span></FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="เลขที่" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="village"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>หมู่บ้าน/คอนโด</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="ชื่อหมู่บ้านหรือคอนโด (ถ้ามี)" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <FormField
+                              control={form.control}
+                              name="soi"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>ซอย</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="ซอย (ถ้ามี)" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="road"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>ถนน</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="ถนน (ถ้ามี)" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <FormField
+                              control={form.control}
+                              name="province"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>จังหวัด <span className="text-red-500">*</span></FormLabel>
+                                  <Select
+                                    onValueChange={(value) => {
+                                      field.onChange(value);
+                                      // ดึงข้อมูลอำเภอเมื่อเลือกจังหวัด
+                                      fetchDistricts(value);
+                                    }}
+                                    value={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="เลือกจังหวัด" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {loadingProvinces ? (
+                                        <div className="flex items-center justify-center py-2">
+                                          กำลังโหลด...
+                                        </div>
+                                      ) : (
+                                        provinces.map((province) => (
+                                          <SelectItem key={province.id} value={province.name_th}>
+                                            {province.name_th}
+                                          </SelectItem>
+                                        ))
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="district"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>อำเภอ/เขต <span className="text-red-500">*</span></FormLabel>
+                                  <Select
+                                    onValueChange={(value) => {
+                                      field.onChange(value);
+                                      // ดึงข้อมูลตำบลเมื่อเลือกอำเภอ
+                                      fetchSubdistricts(value);
+                                    }}
+                                    value={field.value}
+                                    disabled={districts.length === 0}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="เลือกอำเภอ/เขต" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {loadingDistricts ? (
+                                        <div className="flex items-center justify-center py-2">
+                                          กำลังโหลด...
+                                        </div>
+                                      ) : (
+                                        districts.map((district) => (
+                                          <SelectItem key={district.id} value={district.name_th}>
+                                            {district.name_th}
+                                          </SelectItem>
+                                        ))
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <FormField
+                              control={form.control}
+                              name="subdistrict"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>ตำบล/แขวง <span className="text-red-500">*</span></FormLabel>
+                                  <Select
+                                    onValueChange={(value) => {
+                                      field.onChange(value);
+                                      // ตั้งค่ารหัสไปรษณีย์อัตโนมัติเมื่อเลือกตำบล
+                                      const selected = subdistricts.find(sd => sd.name_th === value);
+                                      if (selected) {
+                                        form.setValue('zipcode', selected.zip_code);
+                                      }
+                                    }}
+                                    value={field.value}
+                                    disabled={subdistricts.length === 0}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="เลือกตำบล/แขวง" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {loadingSubdistricts ? (
+                                        <div className="flex items-center justify-center py-2">
+                                          กำลังโหลด...
+                                        </div>
+                                      ) : (
+                                        subdistricts.map((subdistrict) => (
+                                          <SelectItem key={subdistrict.id} value={subdistrict.name_th}>
+                                            {subdistrict.name_th}
+                                          </SelectItem>
+                                        ))
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="zipcode"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>รหัสไปรษณีย์ <span className="text-red-500">*</span></FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="10xxx" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
+                        
                         <div className="pt-4 flex justify-end">
                           <Button 
                             type="button"
                             className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
-                            onClick={() => handleTabChange('address')}
+                            onClick={() => handleTabChange('products')}
                           >
                             ถัดไป <ChevronRight className="ml-2 h-4 w-4" />
                           </Button>
