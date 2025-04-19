@@ -373,7 +373,7 @@ const ClaimsList = () => {
     form.reset({
       resolution: claim.resolution || "",
       status: claim.status,
-      refundAmount: claim.amount.toString(),
+      refundAmount: claim.amount ? claim.amount.toString() : "",
       notes: "",
     });
     
