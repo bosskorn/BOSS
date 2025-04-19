@@ -57,7 +57,8 @@ const AdminRegisterPage: React.FC = () => {
       });
       
       // ใช้ api service แทน axios
-      const response = await api.post('/register/admin', adminData);
+      // เปลี่ยน endpoint เป็น /api/register/admin เพื่อให้ตรงกับการกำหนดค่าใน server/routes.ts
+      const response = await api.post('/api/register/admin', adminData);
       
       console.log('Admin Register response:', response);
       
