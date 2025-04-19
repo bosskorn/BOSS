@@ -266,6 +266,24 @@ const OrderList: React.FC = () => {
       </div>
     );
   };
+  
+  // ฟังก์ชันฟอร์แมตวิธีการชำระเงิน
+  const formatPaymentMethod = (method: string | null | undefined) => {
+    if (!method) return <span className="text-gray-400">ไม่ระบุ</span>;
+    
+    switch (method) {
+      case 'bank_transfer':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">โอนเงิน</Badge>;
+      case 'credit_card':
+        return <Badge variant="outline" className="bg-indigo-50 text-indigo-600 border-indigo-200">บัตรเครดิต</Badge>;
+      case 'cash_on_delivery':
+        return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">เก็บเงินปลายทาง</Badge>;
+      case 'prompt_pay':
+        return <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200">พร้อมเพย์</Badge>;
+      default:
+        return <Badge variant="outline">{method}</Badge>;
+    }
+  };
 
   return (
     <Layout>
