@@ -50,6 +50,8 @@ router.post('/', auth, async (req, res) => {
   try {
     const orderData = req.body;
     
+    console.log('Received order data:', JSON.stringify(orderData, null, 2));
+    
     // Generate order number if not provided
     if (!orderData.order_number) {
       // สร้างเลขออเดอร์ในรูปแบบ PD + ปีเดือนวัน + เลข 4 หลักสุดท้ายของ timestamp
@@ -63,8 +65,32 @@ router.post('/', auth, async (req, res) => {
       console.log(`สร้างเลขออเดอร์อัตโนมัติ: ${orderData.order_number}`);
     }
     
+    // ตรวจสอบและเพิ่มข้อมูลที่จำเป็น
+    if (!orderData.hasOwnProperty('subtotal')) {
+      orderData.subtotal = orderData.total || 0;
+    }
+    
+    if (!orderData.hasOwnProperty('total_amount')) {
+      orderData.total_amount = orderData.total || 0;
+    }
+    
+    if (!orderData.hasOwnProperty('shipping_fee')) {
+      orderData.shipping_fee = 0;
+    }
+    
+    if (!orderData.hasOwnProperty('discount')) {
+      orderData.discount = 0;
+    }
+    
+    // Set user ID from the authenticated user
+    if (req.user && !orderData.user_id) {
+      orderData.userId = (req.user as any).id;
+    }
+    
     // Check for COD payment method to handle Flash Express integration
     const isCashOnDelivery = orderData.payment_method === 'cash_on_delivery';
+    
+    console.log('Processed order data ready for storage:', JSON.stringify(orderData, null, 2));
     
     // Store order in database
     const order = await storage.createOrder(orderData);
