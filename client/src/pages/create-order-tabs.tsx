@@ -969,6 +969,30 @@ const CreateOrderTabsPage: React.FC = () => {
                                     onValueChange={(value) => {
                                       field.onChange(value);
                                       // ดึงข้อมูลอำเภอเมื่อเลือกจังหวัด
+                                      const fetchDistricts = async (provinceName: string) => {
+                                        setLoadingDistricts(true);
+                                        try {
+                                          const response = await apiRequest('GET', `/api/locations/districts?province=${provinceName}`);
+                                          const data = await response.json();
+                                          if (data.success && data.districts) {
+                                            setDistricts(data.districts);
+                                            // ล้างค่าอำเภอและตำบลที่เลือกไว้ เมื่อมีการเปลี่ยนจังหวัด
+                                            form.setValue('district', '');
+                                            form.setValue('subdistrict', '');
+                                            form.setValue('zipcode', '');
+                                            setSubdistricts([]);
+                                          }
+                                        } catch (error) {
+                                          console.error('Error fetching districts:', error);
+                                          toast({
+                                            title: 'เกิดข้อผิดพลาด',
+                                            description: 'ไม่สามารถดึงข้อมูลอำเภอได้',
+                                            variant: 'destructive',
+                                          });
+                                        } finally {
+                                          setLoadingDistricts(false);
+                                        }
+                                      };
                                       fetchDistricts(value);
                                     }}
                                     value={field.value}
@@ -1006,6 +1030,28 @@ const CreateOrderTabsPage: React.FC = () => {
                                     onValueChange={(value) => {
                                       field.onChange(value);
                                       // ดึงข้อมูลตำบลเมื่อเลือกอำเภอ
+                                      const fetchSubdistricts = async (districtName: string) => {
+                                        setLoadingSubdistricts(true);
+                                        try {
+                                          const response = await apiRequest('GET', `/api/locations/subdistricts?district=${districtName}`);
+                                          const data = await response.json();
+                                          if (data.success && data.subdistricts) {
+                                            setSubdistricts(data.subdistricts);
+                                            // ล้างค่าตำบลและรหัสไปรษณีย์ที่เลือกไว้ เมื่อมีการเปลี่ยนอำเภอ
+                                            form.setValue('subdistrict', '');
+                                            form.setValue('zipcode', '');
+                                          }
+                                        } catch (error) {
+                                          console.error('Error fetching subdistricts:', error);
+                                          toast({
+                                            title: 'เกิดข้อผิดพลาด',
+                                            description: 'ไม่สามารถดึงข้อมูลตำบลได้',
+                                            variant: 'destructive',
+                                          });
+                                        } finally {
+                                          setLoadingSubdistricts(false);
+                                        }
+                                      };
                                       fetchSubdistricts(value);
                                     }}
                                     value={field.value}
