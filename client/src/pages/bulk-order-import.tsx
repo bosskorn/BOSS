@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -559,7 +559,7 @@ const BulkOrderImportPage: React.FC = () => {
   );
 
   return (
-    <Layout>
+    <AdminLayout>
       <div className="container mx-auto py-8 px-4 font-kanit bg-gradient-to-br from-white to-purple-50 rounded-xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-700 to-indigo-600 bg-clip-text text-transparent flex items-center">
@@ -612,7 +612,7 @@ const BulkOrderImportPage: React.FC = () => {
         {step === 'processing' && renderProcessingStep()}
         {step === 'complete' && renderCompleteStep()}
       </div>
-    </Layout>
+    </AdminLayout>
   );
 };
 
