@@ -191,7 +191,7 @@ const AuthPage: React.FC = () => {
             </div>
           </div>
           
-          {/* ไฮไลต์การเชื่อมต่อกับ Flash Express */}
+          {/* ไฮไลต์การเชื่อมต่อกับขนส่งชั้นนำ */}
           <div className="relative mt-4">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-700 rounded-xl blur-md opacity-60"></div>
             <div className="relative bg-white bg-opacity-15 backdrop-blur-md p-4 rounded-xl border border-white border-opacity-20">
@@ -201,10 +201,10 @@ const AuthPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-white font-bold">Flash Express API</h3>
+                <h3 className="text-white font-bold">การเชื่อมต่อระบบขนส่ง</h3>
               </div>
               <p className="text-purple-100 text-sm">
-                ระบบเชื่อมต่อกับ Flash Express API อย่างสมบูรณ์ ให้คุณจัดการการขนส่งได้อย่างมีประสิทธิภาพสูงสุด
+                เชื่อมต่อกับขนส่งชั้นนำในประเทศไทย ให้คุณจัดการการขนส่งได้อย่างมีประสิทธิภาพสูงสุด
               </p>
             </div>
           </div>
