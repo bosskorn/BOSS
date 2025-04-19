@@ -29,7 +29,7 @@ router.post('/options', auth, async (req: Request, res: Response) => {
     }
     */
     
-    // ประกาศข้อมูลตัวเลือกการจัดส่งเริ่มต้น
+    // ประกาศข้อมูลตัวเลือกการจัดส่งเริ่มต้น - เฉพาะบริการของ Flash Express
     const defaultOptions = [
       {
         id: 1,
@@ -38,7 +38,7 @@ router.post('/options', auth, async (req: Request, res: Response) => {
         deliveryTime: '1-2 วัน',
         provider: 'Flash Express',
         serviceId: 'FLASH-FAST',
-        logo: '/images/flash-express.png'
+        logo: '/assets/flash-express.png'
       },
       {
         id: 2,
@@ -47,25 +47,7 @@ router.post('/options', auth, async (req: Request, res: Response) => {
         deliveryTime: '2-3 วัน',
         provider: 'Flash Express',
         serviceId: 'FLASH-NORMAL',
-        logo: '/images/flash-express.png'
-      },
-      {
-        id: 3,
-        name: 'ไปรษณีย์ไทย - EMS',
-        price: 50,
-        deliveryTime: '1-3 วัน',
-        provider: 'Thailand Post',
-        serviceId: 'TP-EMS',
-        logo: '/images/thailand-post.png'
-      },
-      {
-        id: 4,
-        name: 'ไปรษณีย์ไทย - ลงทะเบียน',
-        price: 30,
-        deliveryTime: '3-5 วัน',
-        provider: 'Thailand Post',
-        serviceId: 'TP-REG',
-        logo: '/images/thailand-post.png'
+        logo: '/assets/flash-express.png'
       }
     ];
     
