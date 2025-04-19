@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { generateFlashExpressSignature, generateNonceStr } from './generate-signature';
 
 // ข้อมูลการเชื่อมต่อกับ Flash Express API
-const FLASH_EXPRESS_API_URL = 'https://api-sandbox.flashexpress.com/open-api/v3';
+const FLASH_EXPRESS_API_URL = 'https://open-api-tra.flashexpress.com';
 const FLASH_EXPRESS_MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
