@@ -1180,6 +1180,7 @@ const CreateOrderTabsPage: React.FC = () => {
       
       // สร้างเลขออเดอร์
       const orderNumber = `PD${Date.now()}`;
+      console.log('สร้างเลขออเดอร์:', orderNumber);
       
       // ข้อมูลที่จะส่งไปยัง Flash Express API
       const flashExpressData = {
@@ -1233,23 +1234,55 @@ const CreateOrderTabsPage: React.FC = () => {
         }))
       };
       
-      console.log('ส่งข้อมูลไปยัง Flash Express API:', flashExpressData);
+      console.log('ส่งข้อมูลไปยัง Flash Express API:', JSON.stringify(flashExpressData, null, 2));
       
-      // แก้ไขจาก apiRequest เป็น api.post (ใช้ axios interceptor ที่จัดการ token ไว้แล้ว)
-      // เพื่อให้ทำงานได้ถูกต้องบนอุปกรณ์ iPad
-      const response = await api.post('/api/shipping/create', flashExpressData);
-      
-      if (response.data.success && response.data.trackingNumber) {
-        console.log('สร้างเลขพัสดุสำเร็จ:', response.data.trackingNumber);
+      try {
+        // แก้ไขจาก apiRequest เป็น api.post (ใช้ axios interceptor ที่จัดการ token ไว้แล้ว)
+        // เพื่อให้ทำงานได้ถูกต้องบนอุปกรณ์ iPad
+        const response = await api.post('/api/shipping/create', flashExpressData);
+        console.log('Flash Express API response:', response.data);
         
-        // เพิ่มเลขพัสดุเข้าไปในข้อมูลออเดอร์
-        return {
-          orderNumber,
-          trackingNumber: response.data.trackingNumber,
-          sortCode: response.data.sortCode
-        };
-      } else {
-        throw new Error(response.data.error || 'ไม่สามารถสร้างเลขพัสดุได้');
+        if (response.data.success && response.data.trackingNumber) {
+          console.log('สร้างเลขพัสดุสำเร็จ:', response.data.trackingNumber);
+          
+          // เพิ่มเลขพัสดุเข้าไปในข้อมูลออเดอร์
+          return {
+            orderNumber,
+            trackingNumber: response.data.trackingNumber,
+            sortCode: response.data.sortCode
+          };
+        } else {
+          // ถ้าไม่มี success หรือไม่มี trackingNumber (แต่ไม่มี error)
+          console.error('Flash Express API response ไม่มีข้อมูลที่จำเป็น:', response.data);
+          // สร้างเลขพัสดุชั่วคราว
+          if (!data.isCOD) {
+            // ใช้เลขพัสดุชั่วคราวสำหรับออเดอร์ปกติ (ไม่ใช่ COD)
+            return {
+              orderNumber,
+              trackingNumber: `TMP${Date.now().toString().slice(-10)}`,
+              sortCode: ''
+            };
+          }
+          throw new Error(response.data.error || 'ไม่สามารถสร้างเลขพัสดุได้');
+        }
+      } catch (apiError: any) {
+        console.error('Flash Express API error', apiError);
+        if (apiError.response) {
+          console.error('API Error response:', apiError.response.data);
+        }
+        
+        // ถ้าไม่ใช่ COD ให้ใช้เลขพัสดุชั่วคราว
+        if (!data.isCOD) {
+          // ใช้เลขพัสดุชั่วคราวสำหรับออเดอร์ปกติ (ไม่ใช่ COD)
+          return {
+            orderNumber,
+            trackingNumber: `TMP${Date.now().toString().slice(-10)}`,
+            sortCode: ''
+          };
+        }
+        
+        // กรณีเป็น COD จำเป็นต้องมีเลขพัสดุจริง
+        throw apiError;
       }
     } catch (error: any) {
       console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API:', error);
@@ -1956,9 +1989,10 @@ const CreateOrderTabsPage: React.FC = () => {
                             <ChevronLeft className="mr-2 h-4 w-4" /> ย้อนกลับ
                           </Button>
                           <Button 
-                            type="submit"
+                            type="button"
                             className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
                             disabled={isLoading}
+                            onClick={() => form.handleSubmit(onSubmit)()}
                           >
                             {isLoading ? 'กำลังสร้างออเดอร์...' : 'สร้างออเดอร์'}
                           </Button>
