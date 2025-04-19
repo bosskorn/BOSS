@@ -262,10 +262,12 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             }} 
             className="menu-link"
           >
-            <i className="fas fa-user-circle"></i>
-            <span className="menu-text">
-              {user ? 'บัญชีของฉัน' : 'บัญชี'}
-            </span>
+            <div className="flex items-center">
+              <i className="fas fa-user-circle text-purple-600 mr-1"></i>
+              <span className="menu-text">
+                {user ? 'บัญชีของฉัน' : 'บัญชี'}
+              </span>
+            </div>
           </button>
         </li>
       </ul>
