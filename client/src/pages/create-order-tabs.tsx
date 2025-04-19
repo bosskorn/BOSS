@@ -77,6 +77,7 @@ interface AddressComponents {
 // สคีมาสำหรับฟอร์มสร้างออเดอร์
 const createOrderSchema = z.object({
   // ข้อมูลลูกค้า
+  fullCustomerData: z.string().optional().or(z.literal('')),
   customerName: z.string().min(1, { message: 'กรุณากรอกชื่อลูกค้า' }),
   customerPhone: z.string().min(1, { message: 'กรุณากรอกเบอร์โทรลูกค้า' }),
   customerEmail: z.string().email({ message: 'รูปแบบอีเมลไม่ถูกต้อง' }).optional().or(z.literal('')),
@@ -149,6 +150,7 @@ const CreateOrderTabsPage: React.FC = () => {
   const form = useForm<CreateOrderFormValues>({
     resolver: zodResolver(createOrderSchema),
     defaultValues: {
+      fullCustomerData: '',
       customerName: '',
       customerPhone: '',
       customerEmail: '',
@@ -415,6 +417,8 @@ const CreateOrderTabsPage: React.FC = () => {
   const handleFullCustomerDataPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const pastedText = e.clipboardData.getData('text');
     
+    if (!pastedText) return; // ไม่ทำอะไรถ้าไม่มีข้อมูลที่วาง
+    
     // ทำการวิเคราะห์ข้อมูลที่วางทันที
     setTimeout(() => {
       const fullAddress = form.getValues('fullAddress');
@@ -426,7 +430,9 @@ const CreateOrderTabsPage: React.FC = () => {
   };
   
   // ฟังก์ชันวิเคราะห์ข้อมูลลูกค้า (ชื่อ, เบอร์โทร, อีเมล) จากข้อความ
-  const analyzeCustomerData = (text: string) => {
+  const analyzeCustomerData = (text: string | undefined) => {
+    if (!text) return; // ตรวจสอบว่ามีข้อความที่วางหรือไม่
+    
     // แยกข้อความตามบรรทัด
     const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
     
@@ -460,8 +466,10 @@ const CreateOrderTabsPage: React.FC = () => {
       }
     }
     
-    // วิเคราะห์ที่อยู่อัตโนมัติ
-    analyzeAddress();
+      // วิเคราะห์ที่อยู่อัตโนมัติหากมีข้อมูลที่อยู่
+    if (form.getValues('fullAddress')) {
+      analyzeAddress();
+    }
   };
   
   // ฟังก์ชันดึงตัวเลือกการจัดส่ง (จำลอง)
@@ -776,6 +784,44 @@ const CreateOrderTabsPage: React.FC = () => {
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4 pt-6">
+                        {/* เพิ่มส่วนวิเคราะห์ข้อมูลลูกค้าอัตโนมัติ */}
+                        <FormField
+                          control={form.control}
+                          name="fullCustomerData"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>วางข้อมูลลูกค้าทั้งหมด (ระบบจะวิเคราะห์อัตโนมัติ)</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="วางข้อความที่มีชื่อลูกค้า เบอร์โทรศัพท์ อีเมล์ และอื่นๆ ที่นี่..."
+                                  rows={3}
+                                  onPaste={(e) => {
+                                    const pastedText = e.clipboardData.getData('text');
+                                    field.onChange(pastedText);
+                                    if (pastedText) {
+                                      setTimeout(() => analyzeCustomerData(pastedText), 100);
+                                    }
+                                  }}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => field.value && analyzeCustomerData(field.value)}
+                                  disabled={!field.value}
+                                  className="mt-2"
+                                >
+                                  วิเคราะห์ข้อมูลลูกค้าอัตโนมัติ
+                                </Button>
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <FormField
                             control={form.control}
