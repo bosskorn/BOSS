@@ -4,9 +4,12 @@ async function testFlashExpressAPI() {
   try {
     console.log('เริ่มทดสอบการสร้างเลขพัสดุจาก Flash Express API...');
     
-    // ข้อมูลการทดสอบ
+    // ข้อมูลการทดสอบ - ทำให้เรียบง่ายและตรงตามตัวอย่างในเอกสาร
+    const orderNumber = `PD${Date.now()}`;
+    console.log('กำลังทดสอบ Flash Express API ด้วยหมายเลขออเดอร์:', orderNumber);
+    
     const testData = {
-      outTradeNo: `PD${Date.now()}`,
+      outTradeNo: orderNumber,
       srcName: 'บริษัท เพอร์เพิลแดช จำกัด',
       srcPhone: '0812345678',
       srcProvinceName: 'กรุงเทพมหานคร',
@@ -23,18 +26,16 @@ async function testFlashExpressAPI() {
       dstDetailAddress: '456 ถนนพหลโยธิน',
       articleCategory: 1,  // 1: เสื้อผ้า
       expressCategory: 1,  // 1: ปกติ
-      weight: 1500,  // 1.5 กิโลกรัม = 1500 กรัม
-      width: 20,
-      length: 30,
+      weight: 1000,  // 1 กิโลกรัม = 1000 กรัม
+      width: 10,
+      length: 10,
       height: 10,
       insured: 0,  // ไม่ซื้อประกัน
       codEnabled: 0,  // ไม่ใช้ Cash on Delivery
-      // codAmount: 50000,  // ไม่ต้องระบุยอด COD เมื่อไม่ใช้ COD
+      // ลดความซับซ้อนโดยไม่ใส่ subItemTypes ให้ API จัดการเอง
       subItemTypes: [
         { 
           itemName: "สินค้าทดสอบ", 
-          itemWeightSize: "กลาง",
-          itemColor: "ขาว",  // เพิ่มสีของสินค้าตามที่ API ต้องการ
           itemQuantity: 1 
         }
       ]

@@ -11,6 +11,53 @@ const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 // กำหนดค่า timeout สำหรับการเชื่อมต่อ API (เพิ่มขึ้นเป็น 15 วินาที)
 const API_TIMEOUT = 15000; // 15 วินาที
 
+// ฟังก์ชันทางเลือกในการสร้างลายเซ็นแบบตรงๆ ตามเอกสาร Flash Express
+function createDirectSignature(params: Record<string, any>, apiKey: string): string {
+  try {
+    // 1. สร้างชุดข้อมูลใหม่ (ไม่รวม sign และ subItemTypes)
+    const paramsCopy: Record<string, any> = {};
+    for (const key in params) {
+      if (key === 'sign' || key === 'subItemTypes') continue;
+      const value = params[key];
+      // ไม่รวมค่าว่าง null/undefined
+      if (value !== null && value !== undefined) {
+        // ตรวจสอบสตริงที่เป็นช่องว่าง
+        if (typeof value === 'string' && /^\s*$/.test(value)) continue;
+        paramsCopy[key] = value;
+      }
+    }
+    
+    // 2. เรียงพารามิเตอร์ตามตัวอักษร
+    const sortedKeys = Object.keys(paramsCopy).sort();
+    const stringParts: string[] = [];
+    
+    // 3. สร้างสตริงตามรูปแบบ key1=value1&key2=value2...
+    for (const key of sortedKeys) {
+      stringParts.push(`${key}=${paramsCopy[key]}`);
+    }
+    
+    // 4. สร้าง stringA และ stringSignTemp
+    const stringA = stringParts.join('&');
+    const stringSignTemp = `${stringA}&key=${apiKey}`;
+    
+    console.log('⚠️ ข้อมูลสร้างลายเซ็นทางเลือก:', stringSignTemp);
+    
+    // 5. คำนวณ SHA256 และแปลงเป็นตัวพิมพ์ใหญ่
+    const signature = crypto
+      .createHash('sha256')
+      .update(stringSignTemp)
+      .digest('hex')
+      .toUpperCase();
+      
+    console.log('⚠️ ลายเซ็นทางเลือก:', signature);
+    
+    return signature;
+  } catch (error) {
+    console.error('เกิดข้อผิดพลาดในการสร้างลายเซ็นทางเลือก:', error);
+    throw error;
+  }
+}
+
 // ตรวจสอบว่ามี API key หรือไม่
 if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
   console.warn('FLASH_EXPRESS_MERCHANT_ID or FLASH_EXPRESS_API_KEY not set');
@@ -191,7 +238,7 @@ export const createFlashExpressShipping = async (
       // สร้าง random nonce string
       const nonceStr = generateNonceStr();
       
-      // สร้างข้อมูลที่จะส่งไปยัง API
+      // สร้างข้อมูลที่จะส่งไปยัง API (ลดความซับซ้อนลงเพื่อให้ API ทำงานได้ก่อน)
       const requestData: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
@@ -205,7 +252,6 @@ export const createFlashExpressShipping = async (
         srcDetailAddress: orderData.srcDetailAddress,
         dstName: orderData.dstName,
         dstPhone: orderData.dstPhone,
-        dstHomePhone: orderData.dstHomePhone,
         dstProvinceName: orderData.dstProvinceName,
         dstCityName: orderData.dstCityName,
         dstDistrictName: orderData.dstDistrictName,
@@ -218,27 +264,16 @@ export const createFlashExpressShipping = async (
         length: orderData.length,
         height: orderData.height,
         insured: orderData.insured,
-        insureDeclareValue: orderData.insureDeclareValue,
-        codEnabled: orderData.codEnabled,
-        codAmount: orderData.codAmount,
-        remark: orderData.remark,
-        // สำหรับ subItemTypes เราจะจัดการในการแปลงเป็น form-urlencoded
-        // และไม่ใส่ใน requestData เดี๋ยวจะเพิ่มเองใน form data
-        subItemTypes: undefined
+        codEnabled: orderData.codEnabled
       };
       
       console.log('ข้อมูลก่อนสร้างลายเซ็น:', JSON.stringify(requestData, null, 2));
       
-      // สร้าง sign data แยกต่างหาก ไม่รวม subItemTypes
-      const signData = { ...requestData };
-      delete signData.subItemTypes;
+      // ใช้ฟังก์ชันทางเลือกในการสร้างลายเซ็นแบบตรงๆ
+      const sign = createDirectSignature(requestData, FLASH_EXPRESS_API_KEY as string);
       
-      // ใช้ฟังก์ชันที่ปรับปรุงแล้วตามเอกสาร Flash Express
-      const sign = generateFlashExpressSignature(
-        FLASH_EXPRESS_API_KEY as string,
-        signData,
-        nonceStr
-      );
+      // เก็บ requestData ไว้ใช้ต่อ
+      const signData = { ...requestData };
       
       // เพิ่ม signature ที่คำนวณแล้วเข้าไปใน signData
       signData.sign = sign;

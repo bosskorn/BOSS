@@ -18,55 +18,53 @@ export function generateFlashExpressSignature(
   nonceStr: string
 ): string {
   try {
-    // ตามเอกสาร Flash Express: ก่อนการสร้างลายเซ็น ต้องลบ sign ออกก่อน
-    // และไม่รวม subItemTypes ในการคำนวณ
-    const paramsCopy = { ...params };
-    delete paramsCopy.sign;
-    delete paramsCopy.subItemTypes;
+    // สร้างชุดข้อมูลใหม่ ไม่รวม sign และ subItemTypes
+    const paramsCopy: Record<string, any> = {};
     
-    // 1. เรียงลำดับคีย์ของพารามิเตอร์ตามลำดับอักษร ASCII (dictionary order)
-    const sortedKeys = Object.keys(paramsCopy).sort();
-    
-    // สร้าง object ใหม่ที่เรียงลำดับตามตัวอักษร
-    const sortedParams: Record<string, any> = {};
-    for (const key of sortedKeys) {
-      const value = paramsCopy[key];
-      // ตรวจสอบว่าค่าไม่ใช่ค่าว่าง (null, undefined หรือสตริงว่าง)
-      if (value !== null && value !== undefined) {
-        if (typeof value === 'string') {
-          // เช็คว่าเป็นค่าว่างหรือไม่ (ประกอบด้วยอักขระเว้นวรรคทั้งหมด)
-          if (!/^\s*$/.test(value)) {
-            sortedParams[key] = value;
-          }
-        } else {
-          sortedParams[key] = value;
-        }
-      }
+    // วนลูปผ่านทุกคีย์ในออบเจกต์แบบเดิม
+    for (const key in params) {
+      // ข้ามฟิลด์ sign และ subItemTypes
+      if (key === 'sign' || key === 'subItemTypes') continue;
+      
+      const value = params[key];
+      
+      // ตรวจสอบค่าว่างตามเอกสาร Flash Express
+      if (value === null || value === undefined) continue;
+      if (typeof value === 'string' && /^\s*$/.test(value)) continue;
+      
+      // เพิ่มคีย์-ค่าทีผ่านเงื่อนไขเข้าไปในชุดข้อมูลใหม่
+      paramsCopy[key] = value;
     }
     
-    // 2. สร้างสตริง stringA ในรูปแบบ key1=value1&key2=value2&...
-    let stringA = '';
-    for (const key of Object.keys(sortedParams)) {
-      if (stringA !== '') {
-        stringA += '&';
-      }
-      let value = sortedParams[key];
+    // 1. จัดเรียงคีย์ตามลำดับ ASCII
+    const sortedKeys = Object.keys(paramsCopy).sort();
+    
+    // 2. สร้างสตริง stringA
+    const paramsArray: string[] = [];
+    
+    for (const key of sortedKeys) {
+      let value = paramsCopy[key];
       
-      // แปลงค่า Array หรือ Object เป็น JSON string
+      // แปลงค่า Array หรือ Object เป็น JSON string หากจำเป็น
       if (typeof value === 'object' && value !== null) {
         value = JSON.stringify(value);
       }
       
-      stringA += `${key}=${value}`;
+      paramsArray.push(`${key}=${value}`);
     }
     
-    // 3. นำ stringA มาต่อกับ key ตามรูปแบบ (stringSignTemp)
+    const stringA = paramsArray.join('&');
+    
+    // 3. สร้าง stringSignTemp ตามเอกสาร
     const stringSignTemp = `${stringA}&key=${apiKey}`;
     
+    // Debug
     console.log('ข้อมูลที่ใช้สร้างลายเซ็น Flash Express:', stringSignTemp);
     
     // 4. คำนวณ SHA256 hash และแปลงเป็นตัวพิมพ์ใหญ่
-    const signature = crypto.createHash('sha256').update(stringSignTemp).digest('hex').toUpperCase();
+    const hash = crypto.createHash('sha256');
+    hash.update(stringSignTemp);
+    const signature = hash.digest('hex').toUpperCase();
     
     console.log('ลายเซ็น Flash Express ที่สร้าง:', signature);
     
