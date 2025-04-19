@@ -358,6 +358,14 @@ const OrderList: React.FC = () => {
                         )}
                       </div>
                     </TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => handleSort('trackingNumber')}>
+                      <div className="flex items-center">
+                        เลขพัสดุ
+                        {sortConfig.key === 'trackingNumber' && (
+                          sortConfig.direction === 'asc' ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead className="cursor-pointer" onClick={() => handleSort('status')}>
                       <div className="flex items-center">
                         สถานะ
@@ -382,6 +390,16 @@ const OrderList: React.FC = () => {
                       <TableCell className="text-right">{formatCurrency(order.total)}</TableCell>
                       <TableCell className="text-center">{order.items}</TableCell>
                       <TableCell>{formatDate(order.date)}</TableCell>
+                      <TableCell>
+                        {order.trackingNumber ? (
+                          <div className="flex items-center">
+                            <Truck className="h-4 w-4 text-purple-500 mr-1" />
+                            <span className="font-medium text-purple-700">{order.trackingNumber}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">ไม่มีเลขพัสดุ</span>
+                        )}
+                      </TableCell>
                       <TableCell>{getStatusBadge(order.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
