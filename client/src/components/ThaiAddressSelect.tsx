@@ -82,7 +82,7 @@ const ThaiAddressSelect: React.FC<ThaiAddressProps> = ({
         
         // ถ้ามีค่าเริ่มต้น ให้เลือกจังหวัดที่ตรงกัน
         if (initialValues.province) {
-          const province = data.provinces.find(p => p.name_th === initialValues.province);
+          const province = data.provinces.find((p: Province) => p.name_th === initialValues.province);
           if (province) {
             setSelectedProvince(province.id);
             fetchDistricts(province.id);
@@ -123,7 +123,7 @@ const ThaiAddressSelect: React.FC<ThaiAddressProps> = ({
         
         // ถ้ามีค่าเริ่มต้น ให้เลือกอำเภอที่ตรงกัน
         if (initialValues.district) {
-          const district = data.districts.find(d => d.name_th === initialValues.district);
+          const district = data.districts.find((d: District) => d.name_th === initialValues.district);
           if (district) {
             setSelectedDistrict(district.id);
             fetchSubdistricts(district.id);
@@ -163,7 +163,7 @@ const ThaiAddressSelect: React.FC<ThaiAddressProps> = ({
         
         // ถ้ามีค่าเริ่มต้น ให้เลือกตำบลที่ตรงกัน
         if (initialValues.subdistrict) {
-          const subdistrict = data.subdistricts.find(s => s.name_th === initialValues.subdistrict);
+          const subdistrict = data.subdistricts.find((s: Subdistrict) => s.name_th === initialValues.subdistrict);
           if (subdistrict) {
             setSelectedSubdistrict(subdistrict.id);
             setZipcode(subdistrict.zip_code);

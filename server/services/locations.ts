@@ -84,7 +84,7 @@ export const provinces = [
   { id: "77", name_th: "บึงกาฬ", name_en: "Bueng Kan" }
 ];
 
-// ฐานข้อมูลอำเภอ (ตัวอย่างเพียงบางส่วน)
+// ฐานข้อมูลอำเภอ
 export const districts = {
   "01": [ // กรุงเทพมหานคร
     { id: "01001", name_th: "พระนคร", name_en: "Phra Nakhon", province_id: "01" },
@@ -96,12 +96,39 @@ export const districts = {
     { id: "01007", name_th: "ปทุมวัน", name_en: "Pathum Wan", province_id: "01" },
     { id: "01008", name_th: "ป้อมปราบศัตรูพ่าย", name_en: "Pom Prap Sattru Phai", province_id: "01" },
     { id: "01009", name_th: "พระโขนง", name_en: "Phra Khanong", province_id: "01" },
-    { id: "01010", name_th: "มีนบุรี", name_en: "Min Buri", province_id: "01" }
+    { id: "01010", name_th: "มีนบุรี", name_en: "Min Buri", province_id: "01" },
+    { id: "01011", name_th: "ลาดกระบัง", name_en: "Lat Krabang", province_id: "01" },
+    { id: "01012", name_th: "ยานนาวา", name_en: "Yan Nawa", province_id: "01" },
+    { id: "01013", name_th: "สัมพันธวงศ์", name_en: "Samphanthawong", province_id: "01" },
+    { id: "01014", name_th: "พญาไท", name_en: "Phaya Thai", province_id: "01" },
+    { id: "01015", name_th: "ธนบุรี", name_en: "Thon Buri", province_id: "01" },
+    { id: "01016", name_th: "บางกอกใหญ่", name_en: "Bangkok Yai", province_id: "01" },
+    { id: "01017", name_th: "ห้วยขวาง", name_en: "Huai Khwang", province_id: "01" },
+    { id: "01018", name_th: "คลองสาน", name_en: "Khlong San", province_id: "01" },
+    { id: "01019", name_th: "ตลิ่งชัน", name_en: "Taling Chan", province_id: "01" },
+    { id: "01020", name_th: "บางกอกน้อย", name_en: "Bangkok Noi", province_id: "01" },
+    { id: "01021", name_th: "บางขุนเทียน", name_en: "Bang Khun Thian", province_id: "01" },
+    { id: "01022", name_th: "ภาษีเจริญ", name_en: "Phasi Charoen", province_id: "01" },
+    { id: "01023", name_th: "หนองแขม", name_en: "Nong Khaem", province_id: "01" },
+    { id: "01024", name_th: "ราษฎร์บูรณะ", name_en: "Rat Burana", province_id: "01" },
+    { id: "01025", name_th: "บางพลัด", name_en: "Bang Phlat", province_id: "01" },
+    { id: "01026", name_th: "ดินแดง", name_en: "Din Daeng", province_id: "01" },
+    { id: "01027", name_th: "บึงกุ่ม", name_en: "Bueng Kum", province_id: "01" },
+    { id: "01028", name_th: "สาทร", name_en: "Sathon", province_id: "01" },
+    { id: "01029", name_th: "บางซื่อ", name_en: "Bang Sue", province_id: "01" },
+    { id: "01030", name_th: "จตุจักร", name_en: "Chatuchak", province_id: "01" },
+    { id: "01031", name_th: "บางคอแหลม", name_en: "Bang Kho Laem", province_id: "01" },
+    { id: "01032", name_th: "ประเวศ", name_en: "Prawet", province_id: "01" },
+    { id: "01033", name_th: "คลองเตย", name_en: "Khlong Toei", province_id: "01" },
+    { id: "01034", name_th: "สวนหลวง", name_en: "Suan Luang", province_id: "01" }
   ],
   "02": [ // สมุทรปราการ
     { id: "02001", name_th: "เมืองสมุทรปราการ", name_en: "Mueang Samut Prakan", province_id: "02" },
     { id: "02002", name_th: "บางบ่อ", name_en: "Bang Bo", province_id: "02" },
-    { id: "02003", name_th: "บางพลี", name_en: "Bang Phli", province_id: "02" }
+    { id: "02003", name_th: "บางพลี", name_en: "Bang Phli", province_id: "02" },
+    { id: "02004", name_th: "พระประแดง", name_en: "Phra Pradaeng", province_id: "02" },
+    { id: "02005", name_th: "พระสมุทรเจดีย์", name_en: "Phra Samut Chedi", province_id: "02" },
+    { id: "02006", name_th: "บางเสาธง", name_en: "Bang Sao Thong", province_id: "02" }
   ],
   "03": [ // นนทบุรี
     { id: "03001", name_th: "เมืองนนทบุรี", name_en: "Mueang Nonthaburi", province_id: "03" },
@@ -110,8 +137,62 @@ export const districts = {
     { id: "03004", name_th: "บางบัวทอง", name_en: "Bang Bua Thong", province_id: "03" },
     { id: "03005", name_th: "ไทรน้อย", name_en: "Sai Noi", province_id: "03" },
     { id: "03006", name_th: "ปากเกร็ด", name_en: "Pak Kret", province_id: "03" }
+  ],
+  "53": [ // พิจิตร (จังหวัดรหัส 53)
+    { id: "53001", name_th: "เมืองพิจิตร", name_en: "Mueang Phichit", province_id: "53" },
+    { id: "53002", name_th: "วังทรายพูน", name_en: "Wang Sai Phun", province_id: "53" },
+    { id: "53003", name_th: "โพธิ์ประทับช้าง", name_en: "Pho Prathap Chang", province_id: "53" },
+    { id: "53004", name_th: "ตะพานหิน", name_en: "Taphan Hin", province_id: "53" },
+    { id: "53005", name_th: "บางมูลนาก", name_en: "Bang Mun Nak", province_id: "53" },
+    { id: "53006", name_th: "โพทะเล", name_en: "Pho Thale", province_id: "53" },
+    { id: "53007", name_th: "สามง่าม", name_en: "Sam Ngam", province_id: "53" },
+    { id: "53008", name_th: "ทับคล้อ", name_en: "Tap Khlo", province_id: "53" },
+    { id: "53009", name_th: "สากเหล็ก", name_en: "Sak Lek", province_id: "53" },
+    { id: "53010", name_th: "บึงนาราง", name_en: "Bueng Na Rang", province_id: "53" },
+    { id: "53011", name_th: "ดงเจริญ", name_en: "Dong Charoen", province_id: "53" },
+    { id: "53012", name_th: "วชิรบารมี", name_en: "Wachirabarami", province_id: "53" }
+  ],
+  "66": [ // ภูเก็ต (จังหวัดรหัส 66)
+    { id: "66001", name_th: "เมืองภูเก็ต", name_en: "Mueang Phuket", province_id: "66" },
+    { id: "66002", name_th: "กะทู้", name_en: "Kathu", province_id: "66" },
+    { id: "66003", name_th: "ถลาง", name_en: "Thalang", province_id: "66" }
+  ],
+  "75": [ // ยะลา (จังหวัดรหัส 75)
+    { id: "75001", name_th: "เมืองยะลา", name_en: "Mueang Yala", province_id: "75" },
+    { id: "75002", name_th: "เบตง", name_en: "Betong", province_id: "75" },
+    { id: "75003", name_th: "บันนังสตา", name_en: "Bannang Sata", province_id: "75" },
+    { id: "75004", name_th: "ธารโต", name_en: "Than To", province_id: "75" },
+    { id: "75005", name_th: "ยะหา", name_en: "Yaha", province_id: "75" },
+    { id: "75006", name_th: "รามัน", name_en: "Raman", province_id: "75" },
+    { id: "75007", name_th: "กาบัง", name_en: "Kabang", province_id: "75" },
+    { id: "75008", name_th: "กรงปินัง", name_en: "Krong Pinang", province_id: "75" }
+  ],
+  // เพิ่มจังหวัดอื่นๆ ตามความต้องการ
+  "38": [ // เชียงใหม่ (จังหวัดรหัส 38)
+    { id: "38001", name_th: "เมืองเชียงใหม่", name_en: "Mueang Chiang Mai", province_id: "38" },
+    { id: "38002", name_th: "จอมทอง", name_en: "Chom Thong", province_id: "38" },
+    { id: "38003", name_th: "แม่แจ่ม", name_en: "Mae Chaem", province_id: "38" },
+    { id: "38004", name_th: "เชียงดาว", name_en: "Chiang Dao", province_id: "38" },
+    { id: "38005", name_th: "ดอยสะเก็ด", name_en: "Doi Saket", province_id: "38" }
+  ],
+  "70": [ // สงขลา (จังหวัดรหัส 70)
+    { id: "70001", name_th: "เมืองสงขลา", name_en: "Mueang Songkhla", province_id: "70" },
+    { id: "70002", name_th: "สทิงพระ", name_en: "Sathing Phra", province_id: "70" },
+    { id: "70003", name_th: "จะนะ", name_en: "Chana", province_id: "70" },
+    { id: "70004", name_th: "นาทวี", name_en: "Na Thawi", province_id: "70" },
+    { id: "70005", name_th: "เทพา", name_en: "Thepha", province_id: "70" },
+    { id: "70006", name_th: "สะบ้าย้อย", name_en: "Saba Yoi", province_id: "70" },
+    { id: "70007", name_th: "ระโนด", name_en: "Ranot", province_id: "70" },
+    { id: "70008", name_th: "กระแสสินธุ์", name_en: "Krasae Sin", province_id: "70" },
+    { id: "70009", name_th: "รัตภูมิ", name_en: "Rattaphum", province_id: "70" },
+    { id: "70010", name_th: "สะเดา", name_en: "Sadao", province_id: "70" },
+    { id: "70011", name_th: "หาดใหญ่", name_en: "Hat Yai", province_id: "70" },
+    { id: "70012", name_th: "นาหม่อม", name_en: "Na Mom", province_id: "70" },
+    { id: "70013", name_th: "ควนเนียง", name_en: "Khuan Niang", province_id: "70" },
+    { id: "70014", name_th: "บางกล่ำ", name_en: "Bang Klam", province_id: "70" },
+    { id: "70015", name_th: "สิงหนคร", name_en: "Singhanakhon", province_id: "70" },
+    { id: "70016", name_th: "คลองหอยโข่ง", name_en: "Khlong Hoi Khong", province_id: "70" }
   ]
-  // สามารถเพิ่มอำเภอของจังหวัดอื่น ๆ ได้ตามต้องการ
 };
 
 // ฐานข้อมูลตำบล (ตัวอย่างเพียงบางส่วน)
