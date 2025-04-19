@@ -5,6 +5,7 @@ import {
   createFlashExpressShipping,
   getFlashExpressTrackingStatus
 } from '../services/flash-express';
+import { analyzeLongdoAddress } from '../services/longdo-map';
 
 const router = express.Router();
 
@@ -126,8 +127,9 @@ router.get('/track/:trackingNumber', async (req: Request, res: Response) => {
 });
 
 /**
- * API สำหรับวิเคราะห์ที่อยู่ (จำลองการทำงานเพื่อการทดสอบ)
+ * API สำหรับวิเคราะห์ที่อยู่โดยใช้ Longdo Map API
  */
+
 router.post('/analyze-address', auth, async (req: Request, res: Response) => {
   try {
     const { fullAddress } = req.body;
@@ -139,70 +141,8 @@ router.post('/analyze-address', auth, async (req: Request, res: Response) => {
       });
     }
     
-    // จำลองการวิเคราะห์ที่อยู่
-    // ตรวจสอบรหัสไปรษณีย์
-    const zipcodeRegex = /\d{5}/g;
-    const zipcodeMatch = fullAddress.match(zipcodeRegex);
-    const zipcode = zipcodeMatch ? zipcodeMatch[0] : '';
-    
-    // ตรวจสอบจังหวัด
-    const provinces = ['กรุงเทพ', 'กรุงเทพฯ', 'เชียงใหม่', 'เชียงราย', 'นนทบุรี', 'ปทุมธานี'];
-    let province = '';
-    
-    for (const p of provinces) {
-      if (fullAddress.includes(p)) {
-        province = p;
-        break;
-      }
-    }
-    
-    // ตรวจสอบอำเภอ/เขต
-    const districts = ['บางรัก', 'ปทุมวัน', 'จตุจักร', 'ดินแดง', 'ลาดพร้าว', 'เมือง'];
-    let district = '';
-    
-    for (const d of districts) {
-      if (fullAddress.includes(d)) {
-        district = d;
-        break;
-      }
-    }
-    
-    // ตรวจสอบตำบล/แขวง
-    const subdistricts = ['สีลม', 'คลองตัน', 'ลาดยาว', 'พญาไท', 'ทุ่งพญาไท'];
-    let subdistrict = '';
-    
-    for (const s of subdistricts) {
-      if (fullAddress.includes(s)) {
-        subdistrict = s;
-        break;
-      }
-    }
-    
-    // ตรวจสอบเลขที่บ้าน
-    const houseNoRegex = /(\d+\/\d+|\d+)/;
-    const houseNoMatch = fullAddress.match(houseNoRegex);
-    const houseNumber = houseNoMatch ? houseNoMatch[0] : '';
-    
-    // ตรวจสอบซอย
-    const soiRegex = /ซอย\s*([^\s,]+)/i;
-    const soiMatch = fullAddress.match(soiRegex);
-    const soi = soiMatch ? soiMatch[1] : '';
-    
-    // ตรวจสอบถนน
-    const roadRegex = /ถนน\s*([^\s,]+)/i;
-    const roadMatch = fullAddress.match(roadRegex);
-    const road = roadMatch ? roadMatch[1] : '';
-    
-    // สร้างข้อมูลที่อยู่ที่แยกส่วนแล้ว
-    const addressComponents = {
-      houseNumber,
-      soi,
-      road,
-      subdistrict,
-      district,
-      province,
-      zipcode,
-    };
+    // วิเคราะห์ที่อยู่โดยใช้ Longdo Map API
+    const addressComponents = await analyzeLongdoAddress(fullAddress);
     
     res.json({
       success: true,
