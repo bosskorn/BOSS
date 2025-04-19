@@ -11,49 +11,69 @@ const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 // กำหนดค่า timeout สำหรับการเชื่อมต่อ API (เพิ่มขึ้นเป็น 15 วินาที)
 const API_TIMEOUT = 15000; // 15 วินาที
 
-// ฟังก์ชันทางเลือกในการสร้างลายเซ็นแบบตรงๆ ตามเอกสาร Flash Express
+// ฟังก์ชันสร้างลายเซ็นตามเอกสาร Flash Express
 function createDirectSignature(params: Record<string, any>, apiKey: string): string {
   try {
-    // 1. สร้างชุดข้อมูลใหม่ (ไม่รวม sign และ subItemTypes)
+    // ขั้นตอนแรก: ตั้งค่าข้อมูลทั้งหมดที่ส่งหรือรับเป็นชุด M
+    // สร้างชุดข้อมูลใหม่ (ไม่รวม sign และ subItemTypes)
     const paramsCopy: Record<string, any> = {};
+    
+    // จัดเรียงพารามิเตอร์โดยนำค่าพารามิเตอร์ที่ไม่เป็นค่าว่างไว้ในชุด M
     for (const key in params) {
+      // ข้ามฟิลด์ sign และ subItemTypes
       if (key === 'sign' || key === 'subItemTypes') continue;
+      
       const value = params[key];
-      // ไม่รวมค่าว่าง null/undefined
-      if (value !== null && value !== undefined) {
-        // ตรวจสอบสตริงที่เป็นช่องว่าง ตามเอกสาร
-        if (typeof value === 'string' && /^[ \t\n\f\r\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
-        paramsCopy[key] = value;
-      }
+      
+      // ตรวจสอบค่าว่าง
+      if (value === null || value === undefined) continue;
+      
+      // ตรวจสอบสตริงว่างตามที่เอกสารระบุ (A-Z ≠ a-z - case sensitive)
+      if (typeof value === 'string' && /^[ \t\n\f\r\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
+      
+      // เพิ่มค่าที่ผ่านเข้าไปในชุดข้อมูลใหม่
+      paramsCopy[key] = value;
     }
     
-    // 2. เรียงพารามิเตอร์ตามตัวอักษร
+    // เรียงชื่อพารามิเตอร์ตาม ASCII code โดยเรียงจากเล็กไปใหญ่ (dictionary order)
     const sortedKeys = Object.keys(paramsCopy).sort();
     const stringParts: string[] = [];
     
-    // 3. สร้างสตริงตามรูปแบบ key1=value1&key2=value2...
+    // สร้างสตริงตามรูปแบบ key1=value1&key2=value2...
     for (const key of sortedKeys) {
-      stringParts.push(`${key}=${paramsCopy[key]}`);
+      let value = paramsCopy[key];
+      
+      // แปลงค่า Array หรือ Object เป็น JSON string
+      if (typeof value === 'object' && value !== null) {
+        value = JSON.stringify(value);
+      }
+      
+      stringParts.push(`${key}=${value}`);
     }
     
-    // 4. สร้าง stringA และ stringSignTemp
+    // สร้าง stringA ด้วยการรวมพารามิเตอร์เป็นสตริงเดียว คั่นด้วย &
     const stringA = stringParts.join('&');
+    
+    // นำ stringA มาต่อด้วย secret_key และเก็บไว้ที่ stringSignTemp
     const stringSignTemp = `${stringA}&key=${apiKey}`;
     
-    console.log('⚠️ ข้อมูลสร้างลายเซ็นทางเลือก:', stringSignTemp);
+    console.log('===========================================================');
+    console.log('ข้อมูลที่ใช้สร้างลายเซ็น Flash Express:');
+    console.log(stringSignTemp);
     
-    // 5. คำนวณ SHA256 และแปลงเป็นตัวพิมพ์ใหญ่
+    // เข้ารหัสด้วย SHA256 และทำเป็นตัวพิมพ์ใหญ่ทั้งหมด
     const signature = crypto
       .createHash('sha256')
       .update(stringSignTemp)
       .digest('hex')
       .toUpperCase();
       
-    console.log('⚠️ ลายเซ็นทางเลือก:', signature);
+    console.log('ลายเซ็น Flash Express ที่สร้าง:', signature);
+    console.log('===========================================================');
     
     return signature;
   } catch (error) {
-    console.error('เกิดข้อผิดพลาดในการสร้างลายเซ็นทางเลือก:', error);
+    console.error('เกิดข้อผิดพลาดในการสร้างลายเซ็น:', error);
     throw error;
   }
 }
@@ -284,19 +304,24 @@ export const createFlashExpressShipping = async (
       // ตาม API specification ต้องแปลงรูปแบบข้อมูลให้เป็น form-urlencoded format
       const formData = new URLSearchParams();
       
-      // เพิ่มข้อมูลทั่วไปจาก signData (รวม sign แล้ว)
+      // สำคัญ: คำนวณลายเซ็นก่อนเรียกใช้ urlencode ตามเอกสาร Flash Express
+      // การแปลงข้อมูลให้เป็น form-urlencoded จะทำโดย URLSearchParams
+      // ต้องเตรียมข้อมูลให้ถูกต้องก่อนทำ URL encoding
+      
       for (const [key, value] of Object.entries(signData)) {
         if (value !== undefined) {
+          // URLSearchParams จะทำการ encode ให้อัตโนมัติ
           formData.append(key, value.toString());
         }
       }
       
-      // จัดการกับ subItemTypes แยกต่างหากหลังจากสร้าง sign
+      // จัดการกับ subItemTypes แยกต่างหากหลังจากสร้าง sign ตามเอกสาร
       if (orderData.subItemTypes && orderData.subItemTypes.length > 0) {
         // เพิ่ม subItemTypes หลังจากคำนวณ sign แล้ว
+        // แปลงเป็น JSON string ก่อนแล้วให้ URLSearchParams ทำการ encode
         formData.append('subItemTypes', JSON.stringify(orderData.subItemTypes));
-      } else {
-        // เพิ่มค่าเริ่มต้นถ้าไม่มีข้อมูล
+      } else if (orderData.codEnabled === 1) {
+        // จำเป็นต้องมี subItemTypes หากเป็น COD ตามเอกสาร
         const defaultItem = [{
           itemName: 'สินค้า',
           itemWeightSize: '1Kg',
