@@ -34,6 +34,7 @@ async function testFlashExpressAPI() {
         { 
           itemName: "สินค้าทดสอบ", 
           itemWeightSize: "กลาง",
+          itemColor: "ขาว",  // เพิ่มสีของสินค้าตามที่ API ต้องการ
           itemQuantity: 1 
         }
       ]
