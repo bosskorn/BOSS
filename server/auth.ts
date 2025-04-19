@@ -48,10 +48,10 @@ export function setupAuth(app: Express) {
       createTableIfMissing: true 
     }),
     cookie: {
-      secure: isProduction, // ใช้ค่าตามสภาพแวดล้อม
+      secure: false, // ปรับเป็น false เพื่อให้ทำงานบน HTTP
       httpOnly: true, // ป้องกันการเข้าถึง cookie ด้วย JavaScript
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
-      sameSite: 'lax', // ตั้งค่าเป็น lax สำหรับการทำงานทั่วไป
+      sameSite: 'none', // ปรับเป็น 'none' เพื่อให้ทำงานบนทุกอุปกรณ์ (โดยเฉพาะ iPad)
       path: '/'
     }
   };
