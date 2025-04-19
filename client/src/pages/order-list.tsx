@@ -50,12 +50,16 @@ const OrderList: React.FC = () => {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
+      // ดึง token จาก localStorage
+      const token = localStorage.getItem('auth_token');
+      
       const response = await fetch('/api/orders', {
         method: 'GET',
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
+          'Cache-Control': 'no-cache',
+          'Authorization': token ? `Bearer ${token}` : '', // เพิ่ม Authorization header ถ้ามี token
         }
       });
       

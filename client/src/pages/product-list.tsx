@@ -88,8 +88,14 @@ const ProductListPage: React.FC = () => {
       try {
         setIsLoading(true);
         
+        // ดึง token จาก localStorage
+        const token = localStorage.getItem('auth_token');
+        
         const response = await axios.get('/api/products', {
-          withCredentials: true
+          withCredentials: true,
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : '' // เพิ่ม token เพื่อการยืนยันตัวตน
+          }
         });
         
         if (response.data && response.data.success && Array.isArray(response.data.products)) {
