@@ -64,7 +64,7 @@ const replyClaimSchema = z.object({
   status: z.nativeEnum(ClaimStatus, {
     required_error: "กรุณาเลือกสถานะ",
   }),
-  refundAmount: z.string().optional().transform(val => (val ? parseFloat(val) : undefined)),
+  refundAmount: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -306,7 +306,7 @@ const ClaimsList = () => {
     defaultValues: {
       resolution: "",
       status: selectedClaim?.status || ClaimStatus.PROCESSING,
-      refundAmount: selectedClaim?.amount.toString() || "",
+      refundAmount: selectedClaim ? selectedClaim.amount.toString() : "",
       notes: "",
     },
   });
