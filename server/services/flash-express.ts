@@ -221,9 +221,9 @@ export const createFlashExpressShipping = async (
         codEnabled: orderData.codEnabled,
         codAmount: orderData.codAmount,
         remark: orderData.remark,
-        // Flash Express API ต้องการ subItemTypes ในรูปแบบฟิลด์แยก
-        subItemTypesJson: orderData.subItemTypes && orderData.subItemTypes.length > 0 ? 
-          JSON.stringify(orderData.subItemTypes) : undefined
+        // สำหรับ subItemTypes เราจะจัดการในการแปลงเป็น form-urlencoded
+        // และไม่ใส่ใน requestData เดี๋ยวจะเพิ่มเองใน form data
+        subItemTypes: undefined
       };
       
       // สร้าง signature
@@ -242,11 +242,34 @@ export const createFlashExpressShipping = async (
       // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
       // ตาม API specification ต้องแปลงรูปแบบข้อมูลให้เป็น form-urlencoded format
       const formData = new URLSearchParams();
+      
+      // เพิ่มข้อมูลทั่วไปจาก requestData
       for (const [key, value] of Object.entries(requestData)) {
         if (value !== undefined) {
           formData.append(key, value.toString());
         }
       }
+      
+      // จัดการกับ subItemTypes แยกต่างหาก
+      if (orderData.subItemTypes && orderData.subItemTypes.length > 0) {
+        // เพิ่ม subItemTypes ตามที่ Flash Express API ต้องการ
+        // โดยใช้ JSON.stringify ในรูปแบบที่ถูกต้อง
+        // เพิ่ม field ชื่อ subItemTypes ไม่ใช่ subItemTypesJson
+        formData.append('subItemTypes', JSON.stringify(orderData.subItemTypes));
+      } else {
+        // เพิ่มค่าเริ่มต้นถ้าไม่มีข้อมูล
+        const defaultItem = [{
+          itemName: 'สินค้า',
+          itemWeightSize: '1Kg',
+          itemColor: '-',
+          itemQuantity: 1
+        }];
+        formData.append('subItemTypes', JSON.stringify(defaultItem));
+      }
+      
+      // ลอง logging ค่า formData ที่จะส่งไปยัง API
+      console.log('Form data ที่ส่งไปยัง API:');
+      console.log(formData.toString());
       
       const response = await axios({
         method: 'post',
@@ -262,13 +285,14 @@ export const createFlashExpressShipping = async (
       console.log("ได้รับการตอบกลับจาก Flash Express API สำหรับการสร้างการจัดส่ง:", response.data);
   
       // ตรวจสอบผลลัพธ์
-      if (response.data && response.data.code === 1 && response.data.message === 'success') {
+      if (response.data && response.data.code === 1) {
         return {
           success: true,
           trackingNumber: response.data.data.pno,
           sortCode: response.data.data.sortCode
         };
       } else {
+        console.log('การตอบกลับไม่สำเร็จจาก Flash Express API:', response.data);
         throw new Error(response.data?.message || 'API ไม่ตอบสนองตามที่คาดหวัง');
       }
     } catch (apiError: any) {
