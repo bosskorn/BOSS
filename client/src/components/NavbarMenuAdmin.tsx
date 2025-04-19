@@ -12,8 +12,13 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // ใช้ข้อมูลผู้ใช้จาก Auth Context
-  const { user } = useAuth();
+  // ใช้ข้อมูลผู้ใช้และฟังก์ชันออกจากระบบจาก Auth Context
+  const { user, logoutMutation } = useAuth();
+  
+  // ฟังก์ชันสำหรับการออกจากระบบ
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
   
   // Reference to navbar element for click outside detection
   const navbarRef = useRef<HTMLElement>(null);
@@ -375,11 +380,19 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
           </Link>
         </li>
         
-        {/* Account */}
-        <li className="menu-item account-item">
+        {/* Account Dropdown */}
+        <li 
+          className="menu-item dropdown account-item"
+          onMouseEnter={() => openDropdown('account-admin')}
+          onMouseLeave={() => closeDropdown('account-admin')}
+        >
           <button 
             onClick={(e) => {
-              onToggleSidebar();
+              e.preventDefault();
+              activeDropdown === 'account-admin' 
+                ? closeDropdown('account-admin') 
+                : openDropdown('account-admin');
+              
               if (mobileMenuOpen) {
                 toggleMobileMenu(); // ปิดเมนูมือถือเมื่อกดปุ่มบัญชี
               }
@@ -391,7 +404,33 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
               {user ? (user.fullname || user.username) : 'ผู้ดูแลระบบ'}
               <span className="admin-badge">ADMIN</span>
             </span>
+            <i className="fas fa-chevron-down dropdown-arrow"></i>
           </button>
+          
+          <ul className={`dropdown-menu account-dropdown ${activeDropdown === 'account-admin' ? 'show' : ''}`}>
+            <li>
+              <button
+                onClick={() => {
+                  onToggleSidebar();
+                  closeAllDropdowns();
+                }}
+                className="dropdown-item"
+              >
+                <i className="fas fa-id-card"></i> ข้อมูลส่วนตัว
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  closeAllDropdowns();
+                }}
+                className="dropdown-item text-danger"
+              >
+                <i className="fas fa-sign-out-alt"></i> ออกจากระบบ
+              </button>
+            </li>
+          </ul>
         </li>
       </ul>
       

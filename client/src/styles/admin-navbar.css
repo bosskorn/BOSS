@@ -123,23 +123,44 @@
 }
 
 .admin-navbar .dropdown-menu a,
-.admin-navbar .dropdown-menu li a {
+.admin-navbar .dropdown-menu li a,
+.admin-navbar .dropdown-menu button,
+.admin-navbar .dropdown-menu li button {
   color: white !important;
   font-weight: 500;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
+  text-align: left;
+  width: 100%;
+  padding: 10px 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .admin-navbar .dropdown-menu a i,
-.admin-navbar .dropdown-menu li a i {
+.admin-navbar .dropdown-menu li a i,
+.admin-navbar .dropdown-menu button i,
+.admin-navbar .dropdown-menu li button i {
   color: white !important;
   margin-right: 10px;
 }
 
-.admin-navbar .dropdown-menu a:hover {
+.admin-navbar .dropdown-menu .text-danger {
+  color: #ff6b6b !important;
+}
+
+.admin-navbar .dropdown-menu a:hover,
+.admin-navbar .dropdown-menu button:hover {
   background-color: rgba(255, 255, 255, 0.1);
   color: white;
+}
+
+.admin-navbar .account-dropdown {
+  min-width: 180px;
+  right: 0;
+  left: auto;
 }
 
 .admin-navbar .dropdown-arrow {
