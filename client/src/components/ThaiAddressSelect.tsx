@@ -263,7 +263,7 @@ const ThaiAddressSelect: React.FC<ThaiAddressProps> = ({
   // จัดการเมื่อเลือกจังหวัด
   const handleProvinceChange = (provinceId: string) => {
     setSelectedProvince(provinceId);
-    const province = provinces.find(p => p.id === provinceId);
+    const province = provinces.find((p: Province) => p.id === provinceId);
     if (province) {
       updateAddressInfo({
         province: province.name_th,
@@ -278,9 +278,9 @@ const ThaiAddressSelect: React.FC<ThaiAddressProps> = ({
   // จัดการเมื่อเลือกอำเภอ
   const handleDistrictChange = (districtId: string) => {
     setSelectedDistrict(districtId);
-    const district = districts.find(d => d.id === districtId);
+    const district = districts.find((d: District) => d.id === districtId);
     if (district) {
-      const currentProvince = provinces.find(p => p.id === selectedProvince);
+      const currentProvince = provinces.find((p: Province) => p.id === selectedProvince);
       updateAddressInfo({
         province: currentProvince ? currentProvince.name_th : "",
         district: district.name_th,
@@ -294,10 +294,10 @@ const ThaiAddressSelect: React.FC<ThaiAddressProps> = ({
   // จัดการเมื่อเลือกตำบล
   const handleSubdistrictChange = (subdistrictId: string) => {
     setSelectedSubdistrict(subdistrictId);
-    const subdistrict = subdistricts.find(s => s.id === subdistrictId);
+    const subdistrict = subdistricts.find((s: Subdistrict) => s.id === subdistrictId);
     if (subdistrict) {
-      const currentProvince = provinces.find(p => p.id === selectedProvince);
-      const currentDistrict = districts.find(d => d.id === selectedDistrict);
+      const currentProvince = provinces.find((p: Province) => p.id === selectedProvince);
+      const currentDistrict = districts.find((d: District) => d.id === selectedDistrict);
       
       setZipcode(subdistrict.zip_code);
       
