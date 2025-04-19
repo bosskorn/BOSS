@@ -7,7 +7,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
 import api, { apiRequest } from '@/services/api';
 import Layout from '@/components/Layout';
-import ThaiAddressSelect from '@/components/ThaiAddressSelect';
 import { 
   Card, 
   CardContent, 
@@ -37,6 +36,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -999,34 +999,77 @@ const CreateOrderPage: React.FC = () => {
                     </div>
                     
                     <div className="space-y-4">
-                      <div>
-                        <div className="mb-2">
-                          <Label className="font-medium">ที่อยู่จัดส่ง</Label>
-                        </div>
-                        <ThaiAddressSelect
-                          initialValues={{
-                            province: form.getValues('province'),
-                            district: form.getValues('district'),
-                            subdistrict: form.getValues('subdistrict'),
-                            zipcode: form.getValues('zipcode')
-                          }}
-                          onAddressChange={(address) => {
-                            form.setValue('province', address.province);
-                            form.setValue('district', address.district);
-                            form.setValue('subdistrict', address.subdistrict);
-                            form.setValue('zipcode', address.zipcode);
-                                 
-                                 // ดึงข้อมูลขนส่งเมื่อกรอกที่อยู่ครบ
-                                 if (address.province && address.district && 
-                                    address.subdistrict && address.zipcode) {
-                                   fetchShippingOptions();
-                                 }
-                               }}
-                             />
-                             <div className="text-xs text-gray-500 mt-1">
-                               พิมพ์รหัสไปรษณีย์เพื่อดึงข้อมูลจังหวัด อำเภอ และตำบลอัตโนมัติ
-                             </div>
-                       </div>
+                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="province"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>จังหวัด</FormLabel>
+                              <FormControl>
+                                <Input placeholder="จังหวัด" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="district"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>อำเภอ/เขต</FormLabel>
+                              <FormControl>
+                                <Input placeholder="อำเภอ/เขต" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="subdistrict"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>ตำบล/แขวง</FormLabel>
+                              <FormControl>
+                                <Input placeholder="ตำบล/แขวง" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="zipcode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>รหัสไปรษณีย์</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="รหัสไปรษณีย์" 
+                                  maxLength={5}
+                                  {...field} 
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    // เมื่อกรอกรหัสไปรษณีย์ครบ 5 หลัก ให้ fetch ข้อมูลที่อยู่
+                                    if (e.target.value.length === 5) {
+                                      fetchDataFromZipcode(e.target.value);
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
                     </div>
                   </CardContent>
                 </Card>
