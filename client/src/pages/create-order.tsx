@@ -626,23 +626,26 @@ const CreateOrderPage: React.FC = () => {
   
   return (
     <Layout>
-      <div className="container mx-auto py-8 px-4 font-kanit">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">สร้างออเดอร์ใหม่</h1>
-          <p className="text-gray-600">กรอกข้อมูลออเดอร์ใหม่เพื่อเริ่มกระบวนการจัดส่ง</p>
+      <div className="container mx-auto py-8 px-4 font-kanit bg-gradient-to-br from-white to-purple-50 rounded-xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-700 to-indigo-600 bg-clip-text text-transparent">สร้างออเดอร์ใหม่</h1>
+          <p className="text-gray-600 text-lg mt-2">สร้างออเดอร์และจัดส่งสินค้าถึงลูกค้าของคุณอย่างรวดเร็ว</p>
+          <div className="w-20 h-1 bg-gradient-to-r from-purple-600 to-indigo-500 mt-4 rounded-full"></div>
         </div>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-8">
                 {/* ข้อมูลลูกค้า */}
-                <Card>
-                  <CardHeader>
+                <Card className="border border-purple-100 shadow-lg shadow-purple-100/20 overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-purple-50 to-white border-b border-purple-100">
                     <div className="flex items-center">
-                      <User className="w-5 h-5 mr-2 text-purple-600" />
-                      <CardTitle>ข้อมูลลูกค้า</CardTitle>
+                      <div className="bg-purple-600 p-2 rounded-lg mr-3 text-white">
+                        <User className="w-5 h-5" />
+                      </div>
+                      <CardTitle className="text-purple-800">ข้อมูลลูกค้า</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -697,15 +700,19 @@ const CreateOrderPage: React.FC = () => {
                 </Card>
                 
                 {/* ข้อมูลที่อยู่ */}
-                <Card>
-                  <CardHeader>
+                <Card className="border border-purple-100 shadow-lg shadow-purple-100/20 overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-purple-50 to-white border-b border-purple-100">
                     <div className="flex items-center">
-                      <MapPin className="w-5 h-5 mr-2 text-purple-600" />
-                      <CardTitle>ที่อยู่จัดส่ง</CardTitle>
+                      <div className="bg-purple-600 p-2 rounded-lg mr-3 text-white">
+                        <MapPin className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-purple-800">ที่อยู่จัดส่ง</CardTitle>
+                        <CardDescription className="text-purple-600/70">
+                          วางข้อมูลลูกค้าทั้งหมด (Copy & Paste) เพื่อแยกข้อมูลอัตโนมัติ
+                        </CardDescription>
+                      </div>
                     </div>
-                    <CardDescription>
-                      วางข้อมูลลูกค้าทั้งหมด (Copy & Paste) เพื่อแยกข้อมูลอัตโนมัติ
-                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormField
@@ -852,16 +859,18 @@ const CreateOrderPage: React.FC = () => {
                 </Card>
                 
                 {/* สินค้า */}
-                <Card>
-                  <CardHeader>
+                <Card className="border border-purple-100 shadow-lg shadow-purple-100/20 overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-purple-50 to-white border-b border-purple-100">
                     <div className="flex items-center">
-                      <Package className="w-5 h-5 mr-2 text-purple-600" />
-                      <CardTitle>รายการสินค้า</CardTitle>
+                      <div className="bg-purple-600 p-2 rounded-lg mr-3 text-white">
+                        <Package className="w-5 h-5" />
+                      </div>
+                      <CardTitle className="text-purple-800">รายการสินค้า</CardTitle>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-6">
                     {form.watch('items').map((item, index) => (
-                      <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                      <div key={index} className="bg-gradient-to-r from-purple-50 to-white p-6 rounded-lg border border-purple-100 shadow-sm">
                         <div className="flex justify-between items-center mb-2">
                           <h4 className="font-medium">สินค้ารายการที่ {index + 1}</h4>
                           <Button
@@ -969,11 +978,13 @@ const CreateOrderPage: React.FC = () => {
                 </Card>
                 
                 {/* การจัดส่ง */}
-                <Card>
-                  <CardHeader>
+                <Card className="border border-purple-100 shadow-lg shadow-purple-100/20 overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-purple-50 to-white border-b border-purple-100">
                     <div className="flex items-center">
-                      <Truck className="w-5 h-5 mr-2 text-purple-600" />
-                      <CardTitle>การจัดส่ง</CardTitle>
+                      <div className="bg-purple-600 p-2 rounded-lg mr-3 text-white">
+                        <Truck className="w-5 h-5" />
+                      </div>
+                      <CardTitle className="text-purple-800">การจัดส่ง</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -1081,16 +1092,19 @@ const CreateOrderPage: React.FC = () => {
               <div className="space-y-6">
                 {renderOrderSummary()}
                 
-                <Card>
+                <Card className="border border-purple-100 shadow-lg shadow-purple-100/20 overflow-hidden">
                   <CardContent className="pt-6">
                     <Button 
                       type="submit" 
-                      className="w-full bg-purple-600 hover:bg-purple-700"
+                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-200 transition-all duration-300 transform hover:scale-[1.02] font-medium text-lg py-6"
                       disabled={isLoading}
                     >
-                      <PackageCheck className="w-4 h-4 mr-2" />
+                      <PackageCheck className="w-5 h-5 mr-2" />
                       {isLoading ? 'กำลังดำเนินการ...' : 'ยืนยันการสร้างออเดอร์'}
                     </Button>
+                    <p className="text-center text-gray-500 text-sm mt-4">
+                      คลิกที่ปุ่มด้านบนเพื่อส่งคำสั่งซื้อและเริ่มกระบวนการจัดส่ง
+                    </p>
                   </CardContent>
                 </Card>
               </div>
