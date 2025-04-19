@@ -254,7 +254,7 @@ export const createFlashExpressShipping = async (
       
       console.log('String to sign (raw):', stringToSign);
       
-      const newSign = crypto.createHash('sha256')
+      const newSign = require('crypto').createHash('sha256')
         .update(stringToSign)
         .digest('hex')
         .toUpperCase();

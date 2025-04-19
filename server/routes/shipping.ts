@@ -5,6 +5,8 @@ import {
   createFlashExpressShipping,
   getFlashExpressTrackingStatus
 } from '../services/flash-express';
+import axios from 'axios';
+import crypto from 'crypto';
 
 const router = express.Router();
 
@@ -140,9 +142,120 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
       width: Number(req.body.width) || 20,
       length: Number(req.body.length) || 30,
       height: Number(req.body.height) || 10,
+      // เพิ่มฟิลด์ที่อาจจำเป็นสำหรับ Flash Express V3
+      dstHomePhone: req.body.dstPhone?.replace(/[-\s]/g, ''),
+      srcDistrictName: req.body.srcDistrictName || "",
+      dstDistrictName: req.body.dstDistrictName || "",
+      insured: 0,
+      remark: req.body.remark || "",
     };
     
-    // ทดสอบ API
+    // เพิ่ม subItemTypes ที่จำเป็น
+    if (!orderData.subItemTypes) {
+      orderData.subItemTypes = [{
+        itemName: 'สินค้า',
+        itemWeightSize: '1Kg',
+        itemColor: '-',
+        itemQuantity: 1
+      }];
+    }
+    
+    // ทดสอบวิธีอื่นในการเรียก API โดยตรง
+    try {
+      // สร้าง nonce string
+      const nonceStr = Math.floor(Date.now() * Math.random()).toString();
+      
+      // ข้อมูลสำหรับส่ง API
+      const apiData = {
+        mchId: flashExpressMerchantId,
+        nonceStr: nonceStr,
+        outTradeNo: orderData.outTradeNo,
+        srcName: orderData.srcName,
+        srcPhone: orderData.srcPhone,
+        srcProvinceName: orderData.srcProvinceName,
+        srcCityName: orderData.srcCityName,
+        srcPostalCode: orderData.srcPostalCode,
+        srcDetailAddress: orderData.srcDetailAddress,
+        dstName: orderData.dstName,
+        dstPhone: orderData.dstPhone,
+        dstProvinceName: orderData.dstProvinceName,
+        dstCityName: orderData.dstCityName,
+        dstPostalCode: orderData.dstPostalCode,
+        dstDetailAddress: orderData.dstDetailAddress,
+        articleCategory: orderData.articleCategory,
+        expressCategory: orderData.expressCategory,
+        weight: orderData.weight,
+        codEnabled: orderData.codEnabled,
+        codAmount: orderData.codAmount
+      };
+      
+      // เรียงลำดับข้อมูลและสร้าง signature
+      const sortedKeys = Object.keys(apiData).sort();
+      const stringToSign = sortedKeys
+        .map(key => `${key}=${apiData[key]}`)
+        .join('&') + `&key=${flashExpressApiKey}`;
+      
+      console.log('Flash Express raw string to sign:', stringToSign);
+      
+      const sign = require('crypto').createHash('sha256')
+        .update(stringToSign)
+        .digest('hex')
+        .toUpperCase();
+      
+      console.log('Flash Express calculated signature:', sign);
+      
+      // เพิ่มลายเซ็นเข้าไปในข้อมูล
+      apiData.sign = sign;
+      
+      // เข้ารหัสข้อมูลเป็น form-urlencoded
+      const formData = new URLSearchParams();
+      for (const [key, value] of Object.entries(apiData)) {
+        formData.append(key, value.toString());
+      }
+      
+      // เพิ่ม subItemTypes หลังจากลงลายเซ็นแล้ว
+      formData.append('subItemTypes', JSON.stringify(orderData.subItemTypes));
+      
+      console.log('Flash Express API request form data:', formData.toString());
+      
+      const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com';
+      const response = await axios({
+        method: 'post',
+        url: `${FLASH_EXPRESS_API_URL}/open/v3/orders`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        data: formData,
+        timeout: 15000
+      });
+      
+      console.log('Flash Express direct API response:', response.data);
+      
+      if (response.data.code === 1) {
+        res.json({
+          success: true,
+          trackingNumber: response.data.data.pno,
+          sortCode: response.data.data.sortCode,
+          message: 'สร้างเลขพัสดุสำเร็จ'
+        });
+        return;
+      } else {
+        res.status(400).json({
+          success: false,
+          message: `Flash Express API error: ${response.data.message || 'Unknown error'}`,
+          errorDetails: JSON.stringify(response.data)
+        });
+        return;
+      }
+    } catch (directError: any) {
+      console.error('Error in direct Flash Express API call:', directError);
+      
+      // ถ้าเกิดข้อผิดพลาดในการเรียก API โดยตรง ให้ลองใช้ฟังก์ชัน helper อีกครั้ง
+      console.log('Falling back to helper function...');
+    }
+    
+    // ใช้ฟังก์ชัน helper (วิธีเดิม)
     console.log('ข้อมูลที่ส่งไปยัง Flash Express API (หลังปรับปรุง):', orderData);
     const result = await createFlashExpressShipping(orderData);
     
@@ -157,7 +270,8 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
       res.status(400).json({
         success: false,
         message: result.error || 'ไม่สามารถสร้างเลขพัสดุจาก Flash Express ได้ กรุณาลองใหม่อีกครั้ง',
-        errorDetails: 'Flash Express API ไม่สามารถสร้างเลขพัสดุได้ กรุณาตรวจสอบข้อมูลให้ถูกต้องและลองใหม่อีกครั้ง'
+        errorDetails: 'Flash Express API ไม่สามารถสร้างเลขพัสดุได้ กรุณาตรวจสอบข้อมูลให้ถูกต้องและลองใหม่อีกครั้ง',
+        technicalDetails: JSON.stringify(result)
       });
     }
   } catch (error: any) {
