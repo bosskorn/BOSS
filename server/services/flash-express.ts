@@ -20,26 +20,27 @@ function createDirectSignature(params: Record<string, any>, apiKey: string): str
     
     // จัดเรียงพารามิเตอร์โดยนำค่าพารามิเตอร์ที่ไม่เป็นค่าว่างไว้ในชุด M
     for (const key in params) {
-      // ข้ามฟิลด์ sign และ subItemTypes
+      // ข้ามฟิลด์ sign และ subItemTypes ตามเอกสาร
       if (key === 'sign' || key === 'subItemTypes') continue;
       
       const value = params[key];
       
-      // ตรวจสอบค่าว่าง
+      // ตรวจสอบค่า null และ undefined
       if (value === null || value === undefined) continue;
       
-      // ตรวจสอบสตริงว่างตามที่เอกสารระบุ (A-Z ≠ a-z - case sensitive)
-      if (typeof value === 'string' && /^[ \t\n\f\r\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
+      // ตรวจสอบสตริงว่างตามที่เอกสารระบุ
+      // ค่าว่างหมายถึงสตริงที่ประกอบด้วยอักขระเว้นวรรคทั้งหมด
+      if (typeof value === 'string' && /^[ \t\n\f\r\u000b\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
       
       // เพิ่มค่าที่ผ่านเข้าไปในชุดข้อมูลใหม่
       paramsCopy[key] = value;
     }
     
-    // เรียงชื่อพารามิเตอร์ตาม ASCII code โดยเรียงจากเล็กไปใหญ่ (dictionary order)
+    // เรียงชื่อพารามิเตอร์ตาม ASCII code โดยเรียงจากเล็กไปใหญ่ (dictionary order) ตามเอกสาร
     const sortedKeys = Object.keys(paramsCopy).sort();
     const stringParts: string[] = [];
     
-    // สร้างสตริงตามรูปแบบ key1=value1&key2=value2...
+    // สร้างสตริงตามรูปแบบ key1=value1&key2=value2... ตามเอกสาร
     for (const key of sortedKeys) {
       let value = paramsCopy[key];
       
@@ -48,6 +49,8 @@ function createDirectSignature(params: Record<string, any>, apiKey: string): str
         value = JSON.stringify(value);
       }
       
+      // ใช้ค่าแบบดั้งเดิมโดยไม่มีการ URL encoding ตามเอกสาร
+      // "คำนวณลายเซ็นก่อนเรียกใช้ฟังก์ชั่น urlencode()"
       stringParts.push(`${key}=${value}`);
     }
     
