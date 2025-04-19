@@ -56,6 +56,7 @@ const AdminRegisterPage: React.FC = () => {
         password: '******'
       });
       
+      // ใช้ api service แทน axios
       const response = await api.post('/register/admin', adminData);
       
       console.log('Admin Register response:', response);
