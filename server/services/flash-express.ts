@@ -6,6 +6,9 @@ const FLASH_EXPRESS_API_URL = 'https://api-sandbox.flashexpress.com/open-api/v2'
 const FLASH_EXPRESS_MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
+// กำหนดค่า timeout สำหรับการเชื่อมต่อ API ให้สั้นลง
+const API_TIMEOUT = 5000; // 5 วินาที
+
 // ตรวจสอบว่ามี API key หรือไม่
 if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
   console.warn('FLASH_EXPRESS_MERCHANT_ID or FLASH_EXPRESS_API_KEY not set');
@@ -53,7 +56,7 @@ export const getFlashExpressShippingOptions = async (
     console.log(`ข้อมูลที่ส่ง: จาก ${fromAddress.province} ถึง ${toAddress.province}, น้ำหนัก ${packageInfo.weight} กก.`);
     
     try {
-      // เรียกใช้ API จริงของ Flash Express
+      // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
       const response = await axios({
         method: 'post',
         url: `${FLASH_EXPRESS_API_URL}/shipping/calculate-fee`,
@@ -62,6 +65,7 @@ export const getFlashExpressShippingOptions = async (
           'X-Flash-Merchant-Id': FLASH_EXPRESS_MERCHANT_ID,
           'X-Flash-Api-Key': FLASH_EXPRESS_API_KEY,
         },
+        timeout: API_TIMEOUT, // กำหนด timeout เพื่อไม่ให้รอนานเกินไป
         data: {
           from: {
             province: fromAddress.province,
@@ -186,7 +190,7 @@ export const createFlashExpressShipping = async (
     console.log(`ผู้รับ: ${receiverInfo.name}, ${receiverInfo.phone}, ${receiverInfo.province}`);
     
     try {
-      // เรียกใช้ API จริงของ Flash Express
+      // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
       const response = await axios({
         method: 'post',
         url: `${FLASH_EXPRESS_API_URL}/shipment/create`,
@@ -195,6 +199,7 @@ export const createFlashExpressShipping = async (
           'X-Flash-Merchant-Id': FLASH_EXPRESS_MERCHANT_ID,
           'X-Flash-Api-Key': FLASH_EXPRESS_API_KEY,
         },
+        timeout: API_TIMEOUT, // กำหนด timeout เพื่อไม่ให้รอนานเกินไป
         data: {
           shipment: {
             ref_no: orderId,
@@ -279,14 +284,15 @@ export const getFlashExpressTrackingStatus = async (trackingNumber: string): Pro
     console.log(`ตรวจสอบสถานะการจัดส่งจาก Flash Express สำหรับหมายเลขพัสดุ: ${trackingNumber}`);
     
     try {
-      // เรียกใช้ API จริงของ Flash Express
+      // เรียกใช้ API จริงของ Flash Express พร้อมกำหนดค่า timeout
       const response = await axios({
         method: 'get',
         url: `${FLASH_EXPRESS_API_URL}/shipment/tracking/${trackingNumber}`,
         headers: {
           'X-Flash-Merchant-Id': FLASH_EXPRESS_MERCHANT_ID,
           'X-Flash-Api-Key': FLASH_EXPRESS_API_KEY,
-        }
+        },
+        timeout: API_TIMEOUT, // กำหนด timeout เพื่อไม่ให้รอนานเกินไป
       });
 
       console.log("ได้รับข้อมูลสถานะการจัดส่งจาก Flash Express API:", response.data);
