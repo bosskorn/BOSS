@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
 
 interface MenuItem {
   path: string;
@@ -22,6 +23,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [location] = useLocation();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  const { logoutMutation } = useAuth();
   
   // เปิด/ปิดเมนูย่อย
   const toggleSubmenu = (path: string) => {
@@ -250,6 +252,22 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
               </li>
             ))}
           </ul>
+        </div>
+
+        {/* ปุ่มออกจากระบบ */}
+        <div className="py-4 px-4">
+          <button 
+            onClick={() => {
+              if (logoutMutation) {
+                logoutMutation.mutate();
+              }
+              onClose();
+            }}
+            className="w-full flex items-center px-4 py-2 text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100"
+          >
+            <i className="fa-solid fa-sign-out-alt w-5 mr-3 text-red-600"></i>
+            <span>ออกจากระบบ</span>
+          </button>
         </div>
 
         {/* ส่วนล่าง */}
