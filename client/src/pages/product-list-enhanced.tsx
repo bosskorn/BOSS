@@ -97,9 +97,10 @@ const ProductListPage: React.FC = () => {
       const response = await fetch('/api/products');
       const data = await response.json();
       
-      if (data && data.success && Array.isArray(data.data)) {
+      if (data && data.success && (Array.isArray(data.data) || Array.isArray(data.products))) {
         // แปลงข้อมูลจาก API ให้อยู่ในรูปแบบที่ใช้งานได้
-        const formattedProducts = data.data.map((item: any) => ({
+        const productsArray = data.data || data.products || [];
+        const formattedProducts = productsArray.map((item: any) => ({
           id: item.id,
           sku: item.sku || '-',
           name: item.name || 'ไม่มีชื่อ',
