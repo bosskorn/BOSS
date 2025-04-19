@@ -369,31 +369,83 @@ export function parseAddressFromText(text: string): AddressComponents {
     console.log("พบถนน:", components.road);
   }
   
+  // ค้นหาชื่ออาคารและชั้นให้แม่นยำขึ้น
+  // 1. รูปแบบที่มีคำว่า "อาคาร" นำหน้า
+  const buildingRegex = /(?:อาคาร|ตึก)\s*([^\s,]+(?:\s+[^\s,]+){0,3}?)(?=\s+(?:ชั้น|เลขที่|ถนน|ซอย|แขวง|ตำบล|อำเภอ|เขต|จังหวัด|$))/i;
+  const buildingMatch = cleanedText.match(buildingRegex);
+  
+  // 2. รูปแบบที่มีคำว่า Tower, Complex, Plaza, หรือ คำที่บ่งชี้อาคาร
+  const buildingTypeRegex = /([^\s,]+(?:\s+[^\s,]+){0,3}?)\s+(tower|complex|plaza|building|place|court|mansion|village|residence|condo)/i;
+  const buildingTypeMatch = cleanedText.match(buildingTypeRegex);
+  
+  // 3. รูปแบบชื่ออาคารที่ตามด้วยคำว่า "ชั้น"
+  const buildingWithFloorRegex = /([^\s,]+(?:\s+[^\s,]+){0,3}?)\s+ชั้น\s+(\d+|[^\s,]+)/i;
+  const buildingWithFloorMatch = cleanedText.match(buildingWithFloorRegex);
+  
+  if (buildingMatch) {
+    components.building = buildingMatch[1].trim();
+    console.log("พบชื่ออาคาร (มีคำนำหน้า):", components.building);
+  } else if (buildingTypeMatch) {
+    components.building = buildingTypeMatch[0].trim();
+    console.log("พบชื่ออาคาร (มีคำต่อท้าย):", components.building);
+  } else if (buildingWithFloorMatch) {
+    components.building = buildingWithFloorMatch[1].trim();
+    components.floor = buildingWithFloorMatch[2].trim();
+    console.log("พบชื่ออาคารและชั้น:", components.building, "ชั้น", components.floor);
+  }
+  
+  // 4. ค้นหาชั้นโดยตรง
+  if (!components.floor) {
+    const floorRegex = /ชั้น\s+(\d+|[^\s,]+)/i;
+    const floorMatch = cleanedText.match(floorRegex);
+    if (floorMatch) {
+      components.floor = floorMatch[1];
+      console.log("พบข้อมูลชั้น:", components.floor);
+    }
+  }
+  
   // สร้างข้อมูลรวมสำหรับบ้านเลขที่และถนน (ใช้แสดงในฟอร์ม) เพื่อให้มีรูปแบบตามที่ต้องการ
   let fullAddressLine = '';
   
+  // เริ่มต้นด้วยเลขที่บ้าน
   if (components.houseNumber) {
     fullAddressLine += components.houseNumber;
   }
   
+  // เพิ่มชื่ออาคาร
   if (components.building) {
     if (fullAddressLine) fullAddressLine += ' ';
-    fullAddressLine += 'อาคาร' + components.building;
+    // ตรวจสอบว่ามีคำว่า "อาคาร" นำหน้าอยู่แล้วหรือไม่
+    if (!/^อาคาร|^ตึก/i.test(components.building)) {
+      fullAddressLine += 'อาคาร';
+    }
+    fullAddressLine += ' ' + components.building;
   }
   
+  // เพิ่มข้อมูลชั้น
   if (components.floor) {
     if (fullAddressLine) fullAddressLine += ' ';
     fullAddressLine += 'ชั้น ' + components.floor;
   }
   
+  // เพิ่มข้อมูลถนน
   if (components.road) {
     if (fullAddressLine) fullAddressLine += ' ';
-    fullAddressLine += 'ถนน' + components.road;
+    // ตรวจสอบว่ามีคำว่า "ถนน" นำหน้าอยู่แล้วหรือไม่
+    if (!/^ถนน|^ถ\./i.test(components.road)) {
+      fullAddressLine += 'ถนน';
+    }
+    fullAddressLine += ' ' + components.road;
   }
   
+  // เพิ่มข้อมูลซอย
   if (components.soi) {
     if (fullAddressLine) fullAddressLine += ' ';
-    fullAddressLine += 'ซอย' + components.soi;
+    // ตรวจสอบว่ามีคำว่า "ซอย" นำหน้าอยู่แล้วหรือไม่
+    if (!/^ซอย|^ซ\./i.test(components.soi)) {
+      fullAddressLine += 'ซอย';
+    }
+    fullAddressLine += ' ' + components.soi;
   }
   
   // ถ้ามีข้อมูลที่สร้างขึ้นใหม่ ให้ใช้ข้อมูลนี้แทนค่า houseNumber
@@ -410,6 +462,14 @@ export function parseAddressFromText(text: string): AddressComponents {
     console.log("พบจังหวัด:", components.province);
   }
   
+  // ค้นหาตำบล/แขวงที่มีคำนำหน้า - ทำก่อนเพื่อให้ดักจับกรณี 'แขวงคลองเตย เขตคลองเตย' ได้ถูกต้อง
+  const subdistrictRegex = /(?:ตำบล|ต\.|แขวง)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+  const subdistrictMatch = text.match(subdistrictRegex);
+  if (subdistrictMatch) {
+    components.subdistrict = subdistrictMatch[1];
+    console.log("พบตำบล/แขวง (มีคำนำหน้า):", components.subdistrict);
+  }
+
   // ค้นหาอำเภอ/เขตที่มีคำนำหน้า
   const districtRegex = /(?:อำเภอ|อ\.|เขต)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
   const districtMatch = text.match(districtRegex);
@@ -418,12 +478,43 @@ export function parseAddressFromText(text: string): AddressComponents {
     console.log("พบอำเภอ/เขต (มีคำนำหน้า):", components.district);
   }
   
-  // ค้นหาตำบล/แขวงที่มีคำนำหน้า
-  const subdistrictRegex = /(?:ตำบล|ต\.|แขวง)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
-  const subdistrictMatch = text.match(subdistrictRegex);
-  if (subdistrictMatch) {
-    components.subdistrict = subdistrictMatch[1];
-    console.log("พบตำบล/แขวง (มีคำนำหน้า):", components.subdistrict);
+  // กรณีเฉพาะสำหรับ 'คลองเตย' ที่เป็นได้ทั้งแขวงและเขตในกรุงเทพ
+  // และกรณีอื่นๆ ที่มีชื่อแขวงและเขตซ้ำกัน
+  if (components.subdistrict && components.district && components.subdistrict === components.district) {
+    console.log("พบว่าแขวงและเขตมีชื่อเดียวกัน:", components.subdistrict);
+    // ตรวจสอบว่ามีคำซ้ำกันอยู่ในข้อความหรือไม่
+    const regex = new RegExp(`\\b${components.district}\\b`, 'gi');
+    const matches = text.match(regex);
+    
+    // ถ้าพบคำซ้ำกันมากกว่า 1 ครั้ง เช่น "แขวงคลองเตย เขตคลองเตย"
+    if (matches && matches.length >= 2) {
+      console.log(`พบคำว่า "${components.district}" ซ้ำกัน ${matches.length} ครั้ง`);
+      // ยืนยันว่าเป็นทั้งแขวงและเขต
+    } else {
+      // ถ้าพบแค่ครั้งเดียว อาจจะเป็นเพียงเขตหรือแขวงเท่านั้น
+      // ลองตรวจสอบจากรูปแบบของข้อความ
+      if (text.match(/แขวง\s*[^\s,]+.*เขต/i)) {
+        // ถ้าพบรูปแบบ "แขวง... เขต..." แสดงว่ามีทั้งแขวงและเขต
+      } else {
+        // ถ้าไม่พบรูปแบบชัดเจน ให้ค้นหาจากคำที่ปรากฏในข้อความ
+        // แขวงที่พบบ่อยในกรุงเทพฯ
+        const commonSubdistricts = [
+          'ทุ่งมหาเมฆ', 'บางมด', 'ทุ่งครุ', 'คลองจั่น', 'นวลจันทร์', 'สวนหลวง', 'ทับช้าง',
+          'รามอินทรา', 'สะพานสูง', 'บางกะปิ', 'ดินแดง', 'ราชเทวี', 'สาทร', 'บางรัก',
+          'สุรวงศ์', 'สีลม', 'ลุมพินี', 'คลองตัน', 'พระโขนง', 'คลองเตยเหนือ', 'คลองเตยใต้',
+          'หัวหมาก', 'คันนายาว', 'แสนแสบ', 'มีนบุรี', 'หนองจอก', 'ลาดกระบัง', 'ทุ่งสองห้อง',
+          'ลาดพร้าว', 'จตุจักร', 'ลาดยาว', 'แก้ไข', 'บางเขน', 'อนุสาวรีย์', 'ดอนเมือง'
+        ];
+        
+        for (const subdistrict of commonSubdistricts) {
+          if (text.includes(subdistrict) && subdistrict !== components.district) {
+            components.subdistrict = subdistrict;
+            console.log("กำหนดแขวงใหม่จากรายชื่อที่พบบ่อย:", subdistrict);
+            break;
+          }
+        }
+      }
+    }
   }
   
   // สำหรับกรุงเทพฯ มักมีการตั้งชื่อเขตซ้ำกัน
