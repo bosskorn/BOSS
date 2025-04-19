@@ -48,7 +48,7 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
   // Toggle mobile menu
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
-    const menu = document.querySelector('.navbar-menu');
+    const menu = document.querySelector('.admin-navbar-menu');
     if (menu) {
       menu.classList.toggle('show');
     }
@@ -96,7 +96,7 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
   };
 
   return (
-    <nav className="purpledash-navbar admin-navbar" ref={navbarRef}>
+    <nav className="admin-navbar" ref={navbarRef}>
       {/* Logo Section */}
       <div className="navbar-brand">
         <Link href="/admin-dashboard" className="logo-link">
@@ -112,8 +112,8 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
         </Link>
       </div>
       
-      {/* Main Menu */}
-      <ul className={`navbar-menu ${mobileMenuOpen ? 'show' : ''}`}>
+      {/* Main Menu - Added display: flex to make it visible */}
+      <ul className={`admin-navbar-menu ${mobileMenuOpen ? 'show' : ''}`} style={{ display: 'flex', listStyle: 'none', margin: 0, padding: 0 }}>
         {/* Dashboard */}
         <li className="menu-item">
           <Link 
