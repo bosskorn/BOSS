@@ -296,47 +296,113 @@ const CreateOrderTabsPage: React.FC = () => {
     }
   };
   
-  // ฟังก์ชันช่วยแยกประเภทข้อมูลที่อยู่จากข้อความ
+  // ฟังก์ชันช่วยแยกประเภทข้อมูลที่อยู่จากข้อความ - ปรับปรุงใหม่เพื่อประสิทธิภาพที่ดีขึ้น
   const parseAddressFromText = (text: string): AddressComponents => {
     const components: AddressComponents = {};
     
-    // แยกตามบรรทัด
+    // ทำความสะอาดข้อความก่อนวิเคราะห์
     const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
     const addressText = lines.join(' ');
     
-    // ดึงรหัสไปรษณีย์ (เป็นตัวเลข 5 หลักที่มักจะอยู่ท้ายที่อยู่)
+    console.log("กำลังวิเคราะห์ที่อยู่:", addressText);
+    
+    // ดึงรหัสไปรษณีย์ (เป็นตัวเลข 5 หลัก)
     const zipRegex = /\b(\d{5})\b/;
     const zipMatch = addressText.match(zipRegex);
     if (zipMatch) {
       components.zipcode = zipMatch[1];
+      console.log("พบรหัสไปรษณีย์:", components.zipcode);
     }
     
-    // ดึงเลขที่บ้าน/อาคาร (ตัวเลข/ตัวเลข หรือตัวเลขอย่างเดียว ที่อยู่ต้นประโยค)
-    const houseNumberRegex = /(?:^|\s)([0-9\/\-]+)(?:\s|$)/;
-    const houseNumberMatch = addressText.match(houseNumberRegex);
-    if (houseNumberMatch) {
-      components.houseNumber = houseNumberMatch[1];
+    // ดึงเลขที่บ้าน (มีหลายรูปแบบ)
+    // 1. รูปแบบที่มีคำนำหน้า "เลขที่" หรือ "บ้านเลขที่"
+    const houseNumberWithPrefixRegex = /(เลขที่|บ้านเลขที่|บ้าน|เลข)\s*([0-9\/]+)/i;
+    const houseNumberWithPrefixMatch = addressText.match(houseNumberWithPrefixRegex);
+    
+    // 2. รูปแบบที่เป็นเลขที่บ้านแบบง่าย (ตัวเลข หรือ ตัวเลข/ตัวเลข ที่ขึ้นต้นประโยค)
+    const simpleHouseNumberRegex = /^([0-9\/]+)(?:\s|,)/;
+    
+    // 3. รูปแบบเลขที่บ้านทั่วไป (ตัวเลขที่ตามด้วยช่องว่างหรือเครื่องหมายจุลภาค)
+    const generalHouseNumberRegex = /\b(\d+\/\d+|\d+)\b/;
+    
+    if (houseNumberWithPrefixMatch) {
+      components.houseNumber = houseNumberWithPrefixMatch[2].trim();
+      console.log("พบเลขที่บ้าน (จากคำนำหน้า):", components.houseNumber);
+    } else {
+      const simpleMatch = lines[0]?.match(simpleHouseNumberRegex);
+      if (simpleMatch) {
+        components.houseNumber = simpleMatch[1].trim();
+        console.log("พบเลขที่บ้าน (แบบง่าย):", components.houseNumber);
+      } else {
+        const generalMatch = addressText.match(generalHouseNumberRegex);
+        if (generalMatch && !components.zipcode?.includes(generalMatch[1])) {
+          components.houseNumber = generalMatch[1].trim();
+          console.log("พบเลขที่บ้าน (ทั่วไป):", components.houseNumber);
+        }
+      }
     }
     
-    // ดึงชื่อหมู่บ้าน/อาคาร หรือ หมู่ที่
-    const villageRegex = /(?:หมู่บ้าน|หมู่|ม\.|อาคาร|คอนโด)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
-    const villageMatch = addressText.match(villageRegex);
-    if (villageMatch) {
-      components.village = villageMatch[0].trim();
+    // ดึงชื่อหมู่บ้าน/อาคาร ที่มีคำนำหน้า
+    const villageWithPrefixRegex = /(หมู่บ้าน|หมู่|ม\.|อาคาร|คอนโด)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    const villageWithPrefixMatch = addressText.match(villageWithPrefixRegex);
+    
+    // ดึงชื่ออาคาร/หมู่บ้านที่ตามด้วยคำว่า "เพลส" หรือคำอื่นๆ ที่บ่งบอกว่าเป็นอาคาร
+    const buildingNameRegex = /(\S+)\s+(เพลส|แมนชั่น|คอนโด|อพาร์ทเม้นท์|อพาร์ตเมนต์|อพาร์ตเมนท์|แฟลต|ทาวเวอร์|วิลล่า|วิลเลจ|การ์เด้น)/i;
+    const buildingNameMatch = addressText.match(buildingNameRegex);
+    
+    if (villageWithPrefixMatch) {
+      components.village = villageWithPrefixMatch[0].trim();
+      console.log("พบหมู่บ้าน/อาคาร (จากคำนำหน้า):", components.village);
+    } else if (buildingNameMatch) {
+      components.village = buildingNameMatch[0].trim();
+      console.log("พบชื่ออาคาร/หมู่บ้าน (จากคำลงท้าย):", components.village);
     }
     
-    // ดึงข้อมูลซอย
-    const soiRegex = /(?:ซอย|ซ\.)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
-    const soiMatch = addressText.match(soiRegex);
-    if (soiMatch) {
-      components.soi = soiMatch[0].trim();
+    // ดึงข้อมูลซอย (หลายรูปแบบ)
+    // 1. ซอยที่มีคำนำหน้า "ซอย" หรือ "ซ."
+    const soiWithPrefixRegex = /(ซอย|ซ\.)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    const soiWithPrefixMatch = addressText.match(soiWithPrefixRegex);
+    
+    // 2. ซอยที่เป็นตัวเลขและอยู่หลังชื่อถนน (เช่น โชคชัย 4 ซอย 59)
+    const numericSoiRegex = /\b(ซอย\s*\d+|ซ\.\s*\d+)\b/i;
+    const numericSoiMatch = addressText.match(numericSoiRegex);
+    
+    if (soiWithPrefixMatch) {
+      components.soi = soiWithPrefixMatch[0].trim();
+      console.log("พบซอย (จากคำนำหน้า):", components.soi);
+    } else if (numericSoiMatch) {
+      components.soi = numericSoiMatch[0].trim();
+      console.log("พบซอย (เลข):", components.soi);
     }
     
-    // ดึงข้อมูลถนน
-    const roadRegex = /(?:ถนน|ถ\.)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
-    const roadMatch = addressText.match(roadRegex);
-    if (roadMatch) {
-      components.road = roadMatch[0].trim();
+    // ดึงข้อมูลถนน (หลายรูปแบบ)
+    // 1. ถนนที่มีคำนำหน้า "ถนน" หรือ "ถ."
+    const roadWithPrefixRegex = /(ถนน|ถ\.)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    const roadWithPrefixMatch = addressText.match(roadWithPrefixRegex);
+    
+    // 2. ชื่อถนนที่พบบ่อยและไม่มีคำนำหน้า
+    const commonRoadNames = [
+      'ลาดพร้าว', 'รัชดาภิเษก', 'รัชดา', 'สุขุมวิท', 'เพชรบุรี', 'พหลโยธิน', 'รามคำแหง',
+      'เจริญกรุง', 'สีลม', 'สาทร', 'เพชรเกษม', 'บางนา-ตราด', 'นวมินทร์', 'พระราม', 'โชคชัย',
+      'ประชาอุทิศ', 'ประชาชื่น', 'วิภาวดี', 'วิภาวดีรังสิต', 'งามวงศ์วาน', 'ติวานนท์', 'กรุงธนบุรี',
+      'จรัญสนิทวงศ์', 'เอกชัย', 'กาญจนาภิเษก', 'ศรีนครินทร์', 'อ่อนนุช', 'ลาซาล', 'บางนา'
+    ];
+    
+    if (roadWithPrefixMatch) {
+      components.road = roadWithPrefixMatch[0].trim();
+      console.log("พบถนน (จากคำนำหน้า):", components.road);
+    } else {
+      // ตรวจสอบชื่อถนนที่พบบ่อยและอาจไม่มีคำนำหน้า
+      for (const roadName of commonRoadNames) {
+        const roadPattern = new RegExp(`\\b${roadName}\\s*(\\d+)?\\b`, 'i');
+        const specificRoadMatch = addressText.match(roadPattern);
+        
+        if (specificRoadMatch && !components.road) {
+          components.road = specificRoadMatch[0].trim();
+          console.log("พบถนน (ชื่อเฉพาะ):", components.road);
+          break;
+        }
+      }
     }
     
     // รายชื่อจังหวัดเพื่อค้นหาในข้อความ
@@ -356,70 +422,133 @@ const CreateOrderTabsPage: React.FC = () => {
       "อุทัยธานี", "อุบลราชธานี"
     ];
     
-    // ค้นหาจังหวัด
+    // ค้นหาจังหวัด (ในรูปแบบที่ไม่มีคำนำหน้า)
     for (const name of provinceNames) {
       if (addressText.includes(name)) {
         components.province = name;
+        console.log("พบจังหวัด:", components.province);
         break;
       }
     }
     
-    // ค้นหาอำเภอ/เขต ตำบล/แขวง
-    const districtRegex = /(?:อำเภอ|อ\.|เขต)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
-    const subdistrictRegex = /(?:ตำบล|ต\.|แขวง)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    // ค้นหาอำเภอ/เขต และ ตำบล/แขวง ที่มีคำนำหน้า
+    const districtWithPrefixRegex = /(อำเภอ|อ\.|เขต)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
+    const subdistrictWithPrefixRegex = /(ตำบล|ต\.|แขวง)\s*([^\s,]+(?:\s+[^\s,]+)*)/i;
     
-    const districtMatch = addressText.match(districtRegex);
-    const subdistrictMatch = addressText.match(subdistrictRegex);
+    const districtWithPrefixMatch = addressText.match(districtWithPrefixRegex);
+    const subdistrictWithPrefixMatch = addressText.match(subdistrictWithPrefixRegex);
     
-    if (districtMatch) {
-      components.district = districtMatch[0].trim();
+    if (districtWithPrefixMatch) {
+      // ดึงเฉพาะชื่ออำเภอ/เขต ไม่รวมคำนำหน้า
+      components.district = districtWithPrefixMatch[2].trim();
+      console.log("พบอำเภอ/เขต (มีคำนำหน้า):", components.district);
     }
     
-    if (subdistrictMatch) {
-      components.subdistrict = subdistrictMatch[0].trim();
+    if (subdistrictWithPrefixMatch) {
+      // ดึงเฉพาะชื่อตำบล/แขวง ไม่รวมคำนำหน้า
+      components.subdistrict = subdistrictWithPrefixMatch[2].trim();
+      console.log("พบตำบล/แขวง (มีคำนำหน้า):", components.subdistrict);
     }
     
-    // ค้นหาอำเภอและตำบลที่อาจไม่มีคำนำหน้า (เช่น ลาดพร้าว)
+    // ค้นหาอำเภอและตำบลที่อาจไม่มีคำนำหน้า
     const words = addressText.split(/\s+|,+/).filter(Boolean);
+    
+    // คำที่ควรข้ามในการวิเคราะห์
     const skipWords = ['ซอย', 'ซ.', 'ถนน', 'ถ.', 'หมู่', 'ม.', 'หมู่บ้าน', 'อาคาร', 'คอนโด', 'เพลส', 'แมนชั่น'];
     
-    // อำเภอและตำบลที่มีชื่อเดียวกัน (เช่น ลาดพร้าว เป็นทั้งเขตและแขวง)
-    const commonNames = ['ลาดพร้าว', 'บางนา', 'บางเขน', 'จตุจักร', 'ดินแดง', 'ห้วยขวาง', 'บางกะปิ', 'คลองเตย', 'พระโขนง'];
+    // รายชื่ออำเภอและตำบลที่มีชื่อเดียวกัน (มักพบในกรุงเทพฯ)
+    const commonDistrictNames = [
+      'ลาดพร้าว', 'บางนา', 'บางเขน', 'จตุจักร', 'ดินแดง', 'ห้วยขวาง', 'บางกะปิ', 'คลองเตย', 
+      'พระโขนง', 'ดอนเมือง', 'หลักสี่', 'สายไหม', 'บางซื่อ', 'จอมทอง', 'ราษฎร์บูรณะ', 
+      'คลองสาน', 'บางกอกน้อย', 'บางกอกใหญ่', 'ดุสิต', 'พญาไท', 'ราชเทวี', 'ปทุมวัน', 
+      'ยานนาวา', 'สาทร', 'บางคอแหลม', 'บางพลัด', 'ภาษีเจริญ', 'หนองแขม', 'ทุ่งครุ', 
+      'บางขุนเทียน', 'บางบอน', 'พระนคร', 'ป้อมปราบ', 'สัมพันธวงศ์', 'คลองสามวา',
+      'หนองจอก', 'ลาดกระบัง', 'มีนบุรี', 'บึงกุ่ม', 'ประเวศ', 'สวนหลวง', 'คันนายาว', 
+      'สะพานสูง', 'วังทองหลาง'
+    ];
     
-    // ถ้าพบคำที่เป็นชื่ออำเภอและตำบลที่มีชื่อเดียวกัน และยังไม่มีค่าที่กำหนด
-    for (const name of commonNames) {
-      if (addressText.includes(name)) {
-        // นับจำนวนครั้งที่ชื่อนี้ปรากฏในข้อความ
-        const occurrences = words.filter(word => word.trim() === name).length;
-        
-        // ถ้าปรากฏมากกว่า 1 ครั้ง มีแนวโน้มที่จะเป็นทั้งอำเภอและตำบล
-        if (occurrences >= 2) {
-          if (!components.district) components.district = name;
-          if (!components.subdistrict) components.subdistrict = name;
-        } 
-        // ถ้าปรากฏครั้งเดียว ให้พิจารณาว่าเป็นอำเภอ
-        else {
-          if (!components.district) components.district = name;
+    // ถ้ายังไม่พบอำเภอ/เขต หรือ ตำบล/แขวง ให้ค้นหาจากชื่อที่พบบ่อย
+    if (!components.district || !components.subdistrict) {
+      for (const districtName of commonDistrictNames) {
+        const districtRegex = new RegExp(`\\b${districtName}\\b`, 'i');
+        if (districtRegex.test(addressText)) {
+          // นับจำนวนครั้งที่ชื่อนี้ปรากฏในข้อความ
+          // นับเฉพาะคำที่ตรงกันแบบเต็มคำ
+          const occurrences = words.filter(word => {
+            return word.toLowerCase() === districtName.toLowerCase();
+          }).length;
+          
+          console.log(`พบคำว่า "${districtName}" จำนวน ${occurrences} ครั้ง`);
+          
+          // ถ้าพบมากกว่า 1 ครั้ง อาจเป็นทั้งเขตและแขวง
+          if (occurrences >= 2) {
+            if (!components.district) {
+              components.district = districtName;
+              console.log("กำหนดเป็นเขต/อำเภอ:", districtName);
+            }
+            if (!components.subdistrict) {
+              components.subdistrict = districtName;
+              console.log("กำหนดเป็นแขวง/ตำบล:", districtName);
+            }
+          } 
+          // ถ้าพบครั้งเดียว
+          else {
+            // ถ้ายังไม่มีเขต/อำเภอ ให้กำหนดเป็นเขต/อำเภอก่อน
+            if (!components.district) {
+              components.district = districtName;
+              console.log("กำหนดเป็นเขต/อำเภอ (พบครั้งเดียว):", districtName);
+            }
+            // ถ้ามีเขต/อำเภอแล้ว แต่ยังไม่มีแขวง/ตำบล ให้กำหนดเป็นแขวง/ตำบล
+            else if (!components.subdistrict && components.district !== districtName) {
+              components.subdistrict = districtName;
+              console.log("กำหนดเป็นแขวง/ตำบล (พบครั้งเดียว):", districtName);
+            }
+          }
         }
       }
     }
     
-    // เพิ่มการวิเคราะห์คำที่อาจเป็นชื่ออำเภอหรือตำบลจากคำที่ไม่มีคำนำหน้า
+    // หากยังไม่พบแขวง/ตำบล หรือ เขต/อำเภอ ให้วิเคราะห์จากคำทั่วไปที่เหลือ
     if (!components.district || !components.subdistrict) {
-      for (const word of words) {
-        // ข้ามคำที่เป็นคำนำหน้าหรือคำที่ไม่เกี่ยวข้อง
-        if (skipWords.some(skip => word.includes(skip)) || word.match(/^\d+$/) || word.length < 3) {
-          continue;
+      // กรองคำที่ไม่เกี่ยวข้องออก
+      const relevantWords = words.filter(word => {
+        // ข้ามคำที่เป็นคำนำหน้า ตัวเลข หรือคำที่สั้นเกินไป
+        if (skipWords.some(skip => word.toLowerCase().includes(skip.toLowerCase())) || 
+            /^\d+$/.test(word) || 
+            word.length < 3) {
+          return false;
         }
         
-        // ถ้ายังไม่ได้กำหนดอำเภอ และคำนี้ไม่ใช่จังหวัด
-        if (!components.district && !provinceNames.includes(word) && word !== components.subdistrict) {
-          components.district = word;
+        // ข้ามคำที่เป็นส่วนประกอบที่พบแล้ว
+        if (components.province === word || 
+            components.district === word || 
+            components.subdistrict === word || 
+            (components.road && components.road.includes(word)) || 
+            (components.soi && components.soi.includes(word)) || 
+            (components.village && components.village.includes(word))) {
+          return false;
         }
-        // ถ้ายังไม่ได้กำหนดตำบล และคำนี้ไม่ใช่จังหวัดและไม่ใช่อำเภอ
-        else if (!components.subdistrict && !provinceNames.includes(word) && word !== components.district) {
-          components.subdistrict = word;
+        
+        // ข้ามคำที่เป็นชื่อจังหวัด
+        if (provinceNames.some(province => province.toLowerCase() === word.toLowerCase())) {
+          return false;
         }
+        
+        return true;
+      });
+      
+      console.log("คำที่เหลือสำหรับวิเคราะห์:", relevantWords);
+      
+      // ถ้ามีคำที่เหลือ และยังไม่พบเขต/อำเภอ
+      if (relevantWords.length > 0 && !components.district) {
+        components.district = relevantWords[0];
+        console.log("กำหนดเขต/อำเภอจากคำที่เหลือ:", components.district);
+      }
+      
+      // ถ้ามีคำที่เหลือมากกว่า 1 คำ และยังไม่พบแขวง/ตำบล
+      if (relevantWords.length > 1 && !components.subdistrict) {
+        components.subdistrict = relevantWords[1];
+        console.log("กำหนดแขวง/ตำบลจากคำที่เหลือ:", components.subdistrict);
       }
     }
     
@@ -436,67 +565,99 @@ const CreateOrderTabsPage: React.FC = () => {
     setTimeout(() => {
       const fullAddress = form.getValues('fullAddress');
       if (fullAddress && fullAddress === pastedText) {
-        // ถ้ามีการเปลี่ยนแปลงข้อมูลในช่องที่อยู่เต็ม ให้วิเคราะห์ข้อมูลลูกค้า
-        analyzeCustomerData(pastedText);
+        // วิเคราะห์ข้อมูลลูกค้าและที่อยู่พร้อมกันทั้งหมด
+        analyzeAllCustomerData(pastedText);
       }
     }, 100);
   };
   
-  // ฟังก์ชันวิเคราะห์ข้อมูลลูกค้า (ชื่อ, เบอร์โทร, อีเมล) จากข้อความ
-  const analyzeCustomerData = (text: string | undefined) => {
+  // ฟังก์ชันวิเคราะห์ข้อมูลทั้งหมดของลูกค้า (ชื่อ, เบอร์โทร, อีเมล และที่อยู่) จากข้อความ
+  const analyzeAllCustomerData = (text: string | undefined) => {
     if (!text) return; // ตรวจสอบว่ามีข้อความที่วางหรือไม่
     
-    // แยกข้อความตามบรรทัด
-    const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
-    const fullText = lines.join(' ');
+    // กำหนดข้อมูลที่ต้องการค้นหาและประมวลผล
+    form.setValue('fullAddress', text); // ตั้งค่าข้อความเต็มไว้ก่อน
     
-    // ค้นหาชื่อลูกค้า (มักจะอยู่ต้นประโยค หรือก่อนเบอร์โทร)
-    if (!form.getValues('customerName')) {
-      // ถ้าเป็นในรูปแบบที่มีชื่อตามด้วยวงเล็บที่มีเบอร์โทร เช่น "FH-ลาดพร้าว54(0919866556)"
-      const nameWithPhonePattern = /^([^(]+)\((\d+)\)/;
-      const nameWithPhoneMatch = fullText.match(nameWithPhonePattern);
-      
-      if (nameWithPhoneMatch) {
-        form.setValue('customerName', nameWithPhoneMatch[1].trim());
-        
-        // ถ้าพบเบอร์โทรในวงเล็บและเบอร์โทรยังไม่ได้ถูกตั้งค่า
-        if (!form.getValues('customerPhone') && nameWithPhoneMatch[2]) {
-          form.setValue('customerPhone', nameWithPhoneMatch[2].replace(/[\s-]/g, ''));
-        }
-      }
-      // ถ้าไม่อยู่ในรูปแบบข้างต้น ให้ใช้วิธีดึงจากบรรทัดแรก
-      else if (lines.length > 0) {
-        const nameMatch = lines[0].match(/^[ก-๙a-zA-Z0-9\s.,-]+/);
-        if (nameMatch) {
-          form.setValue('customerName', nameMatch[0].trim());
-        }
+    // แยกข้อความตามบรรทัด
+    let lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+    
+    // จัดการกับกรณีที่ข้อมูลถูกวางในบรรทัดเดียวกัน คั่นด้วยเครื่องหมายจุลภาค
+    if (lines.length <= 1) {
+      // แยกข้อความด้วยเครื่องหมายจุลภาคหรือช่องว่าง (เพิ่มเติม)
+      const parts = text.split(/[,|]/).map(part => part.trim()).filter(Boolean);
+      if (parts.length > 1) {
+        lines = parts;
       }
     }
     
-    // ค้นหาเบอร์โทรศัพท์ (ถ้ายังไม่ได้ถูกตั้งค่าจากขั้นตอนก่อนหน้า)
-    if (!form.getValues('customerPhone')) {
-      // รองรับหลายรูปแบบเบอร์โทร
-      const phoneRegex = /(?:โทร|เบอร์|tel|phone|:|\+66|0)[:\s]*(\d[\d\s-]{8,})/i;
-      const simplePhoneRegex = /\b(\d{9,10})\b/; // เบอร์โทรที่เป็นตัวเลข 9-10 หลัก
+    console.log('ข้อความที่วิเคราะห์:', lines);
+    
+    // ค้นหาชื่อลูกค้า (มักเป็นบรรทัดแรก)
+    if (lines.length >= 1 && !form.getValues('customerName')) {
+      // ถ้าบรรทัดแรกไม่ใช่เบอร์โทรศัพท์ (ไม่ใช่ตัวเลขทั้งบรรทัด)
+      if (!/^\d+$/.test(lines[0])) {
+        form.setValue('customerName', lines[0].trim());
+      }
+    }
+    
+    // ค้นหาเบอร์โทรศัพท์
+    let phoneFound = false;
+    
+    // 1. ค้นหาเบอร์โทรในบรรทัดที่ 2 (กรณีที่เป็นตัวเลข 9-10 หลักเท่านั้น)
+    if (lines.length >= 2 && !phoneFound) {
+      const secondLine = lines[1].trim().replace(/[\s-]/g, '');
+      if (/^\d{9,10}$/.test(secondLine)) {
+        form.setValue('customerPhone', secondLine);
+        phoneFound = true;
+      }
+    }
+    
+    // 2. หากไม่พบในบรรทัดที่สอง ค้นหาเบอร์โทรในทุกบรรทัด ในรูปแบบต่างๆ
+    if (!phoneFound) {
+      // รูปแบบที่มีคำนำหน้า (โทร, เบอร์, tel:, etc.)
+      const phoneWithPrefixRegex = /(?:โทร|เบอร์|tel|phone|:|\+66|0)[:\s]*(\d[\d\s-]{8,})/i;
       
-      // ค้นหาในรูปแบบมาตรฐาน (มีคำนำหน้า)
+      // รูปแบบเบอร์โทร 9-10 หลักที่ไม่มีคำนำหน้า
+      const simplePhoneRegex = /\b(\d{9,10})\b/;
+      
+      // ค้นหาในทุกบรรทัด กรณีที่เบอร์โทรมีคำนำหน้า
       for (const line of lines) {
-        const phoneMatch = line.match(phoneRegex);
+        const phoneMatch = line.match(phoneWithPrefixRegex);
         if (phoneMatch) {
-          // ลบอักขระพิเศษออกจากเบอร์โทร
           const cleanPhone = phoneMatch[1].replace(/[\s-]/g, '');
           form.setValue('customerPhone', cleanPhone);
+          phoneFound = true;
           break;
         }
       }
       
-      // ถ้ายังไม่พบ ให้ค้นหาแบบง่าย (เป็นเลข 9-10 หลัก)
-      if (!form.getValues('customerPhone')) {
+      // ถ้ายังไม่พบ ค้นหาเบอร์โทรแบบง่ายในทุกบรรทัด
+      if (!phoneFound) {
         for (const line of lines) {
           const simplePhoneMatch = line.match(simplePhoneRegex);
           if (simplePhoneMatch) {
-            form.setValue('customerPhone', simplePhoneMatch[1]);
-            break;
+            // ตรวจสอบว่าเป็นเบอร์โทรที่ถูกต้อง (ไม่ใช่รหัสไปรษณีย์หรือตัวเลขอื่นๆ)
+            const potentialPhone = simplePhoneMatch[1];
+            
+            // เบอร์โทรของไทยมักขึ้นต้นด้วย 0
+            if (potentialPhone.startsWith('0')) {
+              form.setValue('customerPhone', potentialPhone);
+              phoneFound = true;
+              break;
+            }
+          }
+        }
+      }
+      
+      // ถ้ายังไม่พบ ให้ตรวจสอบบรรทัดแรกว่าเป็นตัวเลขเพียงอย่างเดียวหรือไม่
+      if (!phoneFound && lines.length > 0) {
+        const firstLine = lines[0].trim().replace(/[\s-]/g, '');
+        if (/^\d{9,10}$/.test(firstLine)) {
+          form.setValue('customerPhone', firstLine);
+          
+          // ถ้าบรรทัดแรกเป็นเบอร์โทร ให้ใช้บรรทัดที่สองเป็นชื่อแทน (ถ้ามี)
+          if (lines.length >= 2 && !form.getValues('customerName')) {
+            form.setValue('customerName', lines[1].trim());
           }
         }
       }
@@ -504,18 +665,26 @@ const CreateOrderTabsPage: React.FC = () => {
     
     // ค้นหาอีเมล
     const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
+    let emailFound = false;
+    
     for (const line of lines) {
       const emailMatch = line.match(emailRegex);
       if (emailMatch) {
         form.setValue('customerEmail', emailMatch[0]);
+        emailFound = true;
         break;
       }
     }
     
-      // วิเคราะห์ที่อยู่อัตโนมัติหากมีข้อมูลที่อยู่
-    if (form.getValues('fullAddress')) {
-      analyzeAddress();
-    }
+    // วิเคราะห์ที่อยู่แยกเป็นส่วนๆ
+    analyzeAddress();
+  };
+  
+  // ฟังก์ชันวิเคราะห์ข้อมูลลูกค้า (ชื่อ, เบอร์โทร, อีเมล) จากข้อความ
+  // เก็บไว้เป็น alias เพื่อความเข้ากันได้กับโค้ดเดิม
+  const analyzeCustomerData = (text: string | undefined) => {
+    // เรียกใช้ฟังก์ชันใหม่แทน
+    analyzeAllCustomerData(text);
   };
   
   // ฟังก์ชันดึงตัวเลือกการจัดส่ง (จำลอง)
