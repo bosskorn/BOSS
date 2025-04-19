@@ -118,7 +118,6 @@ const OrderList: React.FC = () => {
       const searchTermLower = searchTerm.toLowerCase();
       result = result.filter(order => 
         order.orderNumber.toLowerCase().includes(searchTermLower) ||
-        order.customerName.toLowerCase().includes(searchTermLower) ||
         (order.trackingNumber && order.trackingNumber.toLowerCase().includes(searchTermLower))
       );
     }
@@ -216,16 +215,36 @@ const OrderList: React.FC = () => {
     }).format(amount);
   };
 
-  // ฟังก์ชันฟอร์แมตวันที่เป็นรูปแบบวันที่ไทย
+  // ฟังก์ชันฟอร์แมตวันที่เป็นรูปแบบวันที่ไทยที่อ่านง่าย
   const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    
+    const date = new Date(dateString);
+    
+    // เช็คว่าเป็นวันที่ถูกต้องหรือไม่
+    if (isNaN(date.getTime())) return "-";
+    
     const options: Intl.DateTimeFormatOptions = { 
       year: 'numeric', 
-      month: 'short', 
+      month: 'long', 
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     };
-    return new Date(dateString).toLocaleDateString('th-TH', options);
+    
+    // แปลงเป็นรูปแบบไทย
+    const thaiDate = date.toLocaleDateString('th-TH', options);
+    
+    // แยกวันที่และเวลา
+    const [datePart, timePart] = thaiDate.split(' ');
+    
+    // สร้างรูปแบบที่อ่านง่ายขึ้น
+    return (
+      <div className="text-sm">
+        <div className="font-medium">{datePart}</div>
+        <div className="text-gray-500 text-xs">{timePart} น.</div>
+      </div>
+    );
   };
 
   return (
@@ -265,7 +284,7 @@ const OrderList: React.FC = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <Input
                 type="text"
-                placeholder="ค้นหาตามเลขคำสั่งซื้อ, ชื่อลูกค้า, เลขพัสดุ"
+                placeholder="ค้นหาตามเลขคำสั่งซื้อหรือเลขพัสดุ"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
