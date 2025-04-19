@@ -433,24 +433,57 @@ const CreateOrderTabsPage: React.FC = () => {
     
     // แยกข้อความตามบรรทัด
     const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+    const fullText = lines.join(' ');
     
-    // ค้นหาชื่อลูกค้า (มักจะอยู่บรรทัดแรก)
-    if (lines.length > 0 && !form.getValues('customerName')) {
-      const nameMatch = lines[0].match(/^[ก-๙a-zA-Z\s.]+/);
-      if (nameMatch) {
-        form.setValue('customerName', nameMatch[0].trim());
+    // ค้นหาชื่อลูกค้า (มักจะอยู่ต้นประโยค หรือก่อนเบอร์โทร)
+    if (!form.getValues('customerName')) {
+      // ถ้าเป็นในรูปแบบที่มีชื่อตามด้วยวงเล็บที่มีเบอร์โทร เช่น "FH-ลาดพร้าว54(0919866556)"
+      const nameWithPhonePattern = /^([^(]+)\((\d+)\)/;
+      const nameWithPhoneMatch = fullText.match(nameWithPhonePattern);
+      
+      if (nameWithPhoneMatch) {
+        form.setValue('customerName', nameWithPhoneMatch[1].trim());
+        
+        // ถ้าพบเบอร์โทรในวงเล็บและเบอร์โทรยังไม่ได้ถูกตั้งค่า
+        if (!form.getValues('customerPhone') && nameWithPhoneMatch[2]) {
+          form.setValue('customerPhone', nameWithPhoneMatch[2].replace(/[\s-]/g, ''));
+        }
+      }
+      // ถ้าไม่อยู่ในรูปแบบข้างต้น ให้ใช้วิธีดึงจากบรรทัดแรก
+      else if (lines.length > 0) {
+        const nameMatch = lines[0].match(/^[ก-๙a-zA-Z0-9\s.,-]+/);
+        if (nameMatch) {
+          form.setValue('customerName', nameMatch[0].trim());
+        }
       }
     }
     
-    // ค้นหาเบอร์โทรศัพท์
-    const phoneRegex = /(?:โทร|เบอร์|tel|phone|:|\+66|0)[:\s]*(\d[\d\s-]{8,})/i;
-    for (const line of lines) {
-      const phoneMatch = line.match(phoneRegex);
-      if (phoneMatch) {
-        // ลบอักขระพิเศษออกจากเบอร์โทร
-        const cleanPhone = phoneMatch[1].replace(/[\s-]/g, '');
-        form.setValue('customerPhone', cleanPhone);
-        break;
+    // ค้นหาเบอร์โทรศัพท์ (ถ้ายังไม่ได้ถูกตั้งค่าจากขั้นตอนก่อนหน้า)
+    if (!form.getValues('customerPhone')) {
+      // รองรับหลายรูปแบบเบอร์โทร
+      const phoneRegex = /(?:โทร|เบอร์|tel|phone|:|\+66|0)[:\s]*(\d[\d\s-]{8,})/i;
+      const simplePhoneRegex = /\b(\d{9,10})\b/; // เบอร์โทรที่เป็นตัวเลข 9-10 หลัก
+      
+      // ค้นหาในรูปแบบมาตรฐาน (มีคำนำหน้า)
+      for (const line of lines) {
+        const phoneMatch = line.match(phoneRegex);
+        if (phoneMatch) {
+          // ลบอักขระพิเศษออกจากเบอร์โทร
+          const cleanPhone = phoneMatch[1].replace(/[\s-]/g, '');
+          form.setValue('customerPhone', cleanPhone);
+          break;
+        }
+      }
+      
+      // ถ้ายังไม่พบ ให้ค้นหาแบบง่าย (เป็นเลข 9-10 หลัก)
+      if (!form.getValues('customerPhone')) {
+        for (const line of lines) {
+          const simplePhoneMatch = line.match(simplePhoneRegex);
+          if (simplePhoneMatch) {
+            form.setValue('customerPhone', simplePhoneMatch[1]);
+            break;
+          }
+        }
       }
     }
     
@@ -696,13 +729,9 @@ const CreateOrderTabsPage: React.FC = () => {
   // ควบคุมการเปลี่ยนแท็บและตรวจสอบความถูกต้องของข้อมูล
   const handleTabChange = (value: string) => {
     // ตรวจสอบว่าสามารถไปยังแท็บถัดไปได้หรือไม่
-    if (value === "address" && (!form.getValues('customerName') || !form.getValues('customerPhone'))) {
-      form.trigger(['customerName', 'customerPhone']);
-      return;
-    }
-    
-    if (value === "products" && (!form.getValues('province') || !form.getValues('district') || !form.getValues('subdistrict') || !form.getValues('zipcode'))) {
-      form.trigger(['province', 'district', 'subdistrict', 'zipcode']);
+    if (value === "products" && (!form.getValues('customerName') || !form.getValues('customerPhone') || 
+        !form.getValues('province') || !form.getValues('district') || !form.getValues('subdistrict') || !form.getValues('zipcode'))) {
+      form.trigger(['customerName', 'customerPhone', 'province', 'district', 'subdistrict', 'zipcode']);
       return;
     }
     
@@ -729,34 +758,28 @@ const CreateOrderTabsPage: React.FC = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="customer" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <div className="flex flex-col items-center">
                 <div className="w-6 h-6 rounded-full flex items-center justify-center mb-1 bg-purple-100 text-purple-700 text-xs">1</div>
-                <span className="text-xs sm:text-sm">ข้อมูลลูกค้า</span>
-              </div>
-            </TabsTrigger>
-            <TabsTrigger value="address" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-              <div className="flex flex-col items-center">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center mb-1 bg-purple-100 text-purple-700 text-xs">2</div>
-                <span className="text-xs sm:text-sm">ที่อยู่จัดส่ง</span>
+                <span className="text-xs sm:text-sm">ข้อมูลลูกค้า/ที่อยู่</span>
               </div>
             </TabsTrigger>
             <TabsTrigger value="products" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <div className="flex flex-col items-center">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center mb-1 bg-purple-100 text-purple-700 text-xs">3</div>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mb-1 bg-purple-100 text-purple-700 text-xs">2</div>
                 <span className="text-xs sm:text-sm">สินค้า</span>
               </div>
             </TabsTrigger>
             <TabsTrigger value="shipping" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <div className="flex flex-col items-center">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center mb-1 bg-purple-100 text-purple-700 text-xs">4</div>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mb-1 bg-purple-100 text-purple-700 text-xs">3</div>
                 <span className="text-xs sm:text-sm">การจัดส่ง</span>
               </div>
             </TabsTrigger>
             <TabsTrigger value="confirm" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <div className="flex flex-col items-center">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center mb-1 bg-purple-100 text-purple-700 text-xs">5</div>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center mb-1 bg-purple-100 text-purple-700 text-xs">4</div>
                 <span className="text-xs sm:text-sm">ตรวจสอบ</span>
               </div>
             </TabsTrigger>
