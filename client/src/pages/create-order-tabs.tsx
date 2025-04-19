@@ -40,6 +40,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Truck, 
   PackageCheck, 
@@ -56,7 +57,8 @@ import {
   CheckCheck,
   ChevronLeft,
   ChevronRight,
-  ShoppingBag
+  ShoppingBag,
+  CheckCircle2
 } from 'lucide-react';
 
 // Schema สำหรับแยกที่อยู่
@@ -147,6 +149,19 @@ const CreateOrderTabsPage: React.FC = () => {
   
   // คำนวณราคารวมสินค้า (subTotal) สำหรับแสดงผลในหน้า
   const [subTotal, setSubTotal] = useState(0);
+  
+  // State สำหรับจัดการป๊อบอัพแจ้งเตือนหลังจากสร้างออเดอร์สำเร็จ
+  const [dialog, setDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    orderNumber?: string;
+    trackingNumber?: string;
+  }>({
+    open: false,
+    title: '',
+    description: '',
+  });
   
   // 1. การจัดการฟอร์มด้วย react-hook-form
   const form = useForm<CreateOrderFormValues>({
@@ -1142,16 +1157,17 @@ const CreateOrderTabsPage: React.FC = () => {
       const response = await api.post('/api/orders', orderData);
       
       if (response.data.success) {
-        toast({
+        // ใช้ Dialog แทน toast สำหรับแสดงผลแบบป๊อบอัพและมีตัวเลือกการนำทาง
+        setDialog({
+          open: true,
           title: 'สร้างออเดอร์สำเร็จ',
           description: `สร้างออเดอร์หมายเลข ${response.data.order.id || orderData.orderNumber} และเลขพัสดุ ${orderData.trackingNumber} เรียบร้อยแล้ว`,
+          orderNumber: response.data.order.id || orderData.orderNumber,
+          trackingNumber: orderData.trackingNumber
         });
         
         // เคลียร์ฟอร์ม
         form.reset();
-        
-        // กระโดดไปหน้ารายการออเดอร์ทั้งหมด (แทนที่จะไปหน้าดูออเดอร์เดียว)
-        setLocation('/orders');
       } else {
         throw new Error(response.data.message || 'เกิดข้อผิดพลาดในการสร้างออเดอร์');
       }
