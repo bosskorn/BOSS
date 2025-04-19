@@ -1198,6 +1198,30 @@ const CreateOrderTabsPage: React.FC = () => {
       const orderNumber = `PD${Date.now()}`;
       console.log('สร้างเลขออเดอร์:', orderNumber);
       
+      // แก้ไขข้อมูลจังหวัดให้ถูกต้องตามรูปแบบที่ Flash Express ต้องการ
+      let provinceName = data.province;
+      if (provinceName === 'กรุงเทพ' || provinceName === 'กทม' || provinceName === 'กรุงเทพฯ') {
+        provinceName = 'กรุงเทพมหานคร';
+      }
+      
+      // ตรวจสอบและแก้ไขข้อมูลเบอร์โทรศัพท์ให้ถูกต้อง
+      const customerPhone = data.customerPhone.replace(/[- ]/g, ''); // ลบเครื่องหมายขีดและช่องว่าง
+      
+      // สร้างที่อยู่รวม - ตรวจสอบว่ามีข้อมูลครบถ้วน
+      const detailAddress = [
+        data.houseNumber,
+        data.building,
+        data.floor ? `ชั้น ${data.floor}` : '',
+        data.roomNumber ? `ห้อง ${data.roomNumber}` : '',
+        data.village,
+        data.soi,
+        data.road
+      ].filter(Boolean).join(' ');
+      
+      if (!detailAddress || detailAddress.trim() === '') {
+        throw new Error('ที่อยู่ไม่ครบถ้วน กรุณากรอกเลขที่บ้านหรือถนน');
+      }
+      
       // ข้อมูลที่จะส่งไปยัง Flash Express API
       const flashExpressData = {
         outTradeNo: orderNumber,
@@ -1211,22 +1235,14 @@ const CreateOrderTabsPage: React.FC = () => {
         
         // ข้อมูลผู้รับ
         dstName: data.customerName,
-        dstPhone: data.customerPhone,
-        dstProvinceName: data.province,
+        dstPhone: customerPhone,
+        dstProvinceName: provinceName,
         dstCityName: data.district,
         dstDistrictName: data.subdistrict,
         dstPostalCode: data.zipcode,
         
         // สร้างที่อยู่รวม
-        dstDetailAddress: [
-          data.houseNumber,
-          data.building,
-          data.floor ? `ชั้น ${data.floor}` : '',
-          data.roomNumber ? `ห้อง ${data.roomNumber}` : '',
-          data.village,
-          data.soi,
-          data.road
-        ].filter(Boolean).join(' '),
+        dstDetailAddress: detailAddress,
         
         // ข้อมูลพัสดุ
         articleCategory: 1, // ประเภทสินค้า (1: เสื้อผ้า/สิ่งทอ)
@@ -1273,6 +1289,11 @@ const CreateOrderTabsPage: React.FC = () => {
           // สร้างเลขพัสดุชั่วคราว
           if (!data.isCOD) {
             // ใช้เลขพัสดุชั่วคราวสำหรับออเดอร์ปกติ (ไม่ใช่ COD)
+            toast({
+              title: 'ไม่สามารถสร้างเลขพัสดุจริงได้',
+              description: 'ใช้เลขพัสดุชั่วคราวแทน คุณสามารถอัพเดทเลขพัสดุในภายหลัง',
+              variant: 'warning'
+            });
             return {
               orderNumber,
               trackingNumber: `TMP${Date.now().toString().slice(-10)}`,
@@ -1290,6 +1311,11 @@ const CreateOrderTabsPage: React.FC = () => {
         // ถ้าไม่ใช่ COD ให้ใช้เลขพัสดุชั่วคราว
         if (!data.isCOD) {
           // ใช้เลขพัสดุชั่วคราวสำหรับออเดอร์ปกติ (ไม่ใช่ COD)
+          toast({
+            title: 'ไม่สามารถสร้างเลขพัสดุจริงได้',
+            description: 'ใช้เลขพัสดุชั่วคราวแทน คุณสามารถอัพเดทเลขพัสดุในภายหลัง',
+            variant: 'warning'
+          });
           return {
             orderNumber,
             trackingNumber: `TMP${Date.now().toString().slice(-10)}`,
