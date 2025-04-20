@@ -77,200 +77,120 @@ const FlashExpressLabel: React.FC = () => {
             background-color: #f5f5f5;
             box-sizing: border-box;
           }
-          .page {
+          .label-container {
             width: 100mm;
             height: 150mm;
+            border: 1px dashed #000;
             background-color: white;
             margin: 10px auto;
-            padding: 0;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
             position: relative;
-            overflow: hidden;
             box-sizing: border-box;
-            border: 1px solid #ddd;
-            display: grid;
-            grid-template-rows: auto auto auto auto auto auto;
-            font-size: 9px;
+            page-break-after: always;
           }
           .header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 1mm 3mm;
-            border-bottom: 1px solid #ddd;
-            background-color: #fff;
-          }
-          .tiktok-logo {
-            font-weight: bold;
+            border-bottom: 1px solid #000;
+            padding: 5px;
             font-size: 10px;
-            display: flex;
-            align-items: center;
           }
-          .tiktok-logo:before {
-            content: "♪";
-            font-size: 12px;
-            margin-right: 2px;
-          }
-          .flash-logo {
+          .barcode-section {
             text-align: center;
-            font-weight: bold;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-          }
-          .flash-logo:after {
-            content: "";
-            display: inline-block;
-            width: 5mm;
-            height: 5mm;
-            background-color: #FFCC00;
-            margin-left: 2px;
-            clip-path: polygon(0 0, 100% 50%, 0 100%);
-          }
-          .service-type {
-            font-size: 10px;
-            text-transform: uppercase;
-            font-weight: bold;
-          }
-          .tracking-number-box {
-            position: relative;
-            width: 100%;
-            text-align: center;
-            margin-top: 1mm;
-            padding: 0 3mm;
-            box-sizing: border-box;
-          }
-          .barcode-container {
-            width: 100%;
-            height: 15mm;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 1mm;
+            padding: 5px 0;
+            border-bottom: 1px solid #000;
           }
           .barcode {
+            height: 40px;
             width: 90%;
-            height: 14mm;
+            margin: 0 auto;
           }
-          .tracking-number-text {
+          .barcode-number {
             font-size: 10px;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 0;
+            margin-top: 2px;
           }
-          .info-row {
+          .info-section {
             display: flex;
-            border-bottom: 1px solid #eee;
-            margin: 0;
+            border-bottom: 1px solid #000;
           }
-          .warehouse-box {
-            flex: 1;
-            padding: 1mm 2mm;
-            border-right: 1px solid #eee;
+          .order-id {
+            font-size: 14px;
             font-weight: bold;
-            font-size: 9px;
+            padding: 5px;
+            width: 60%;
+            text-align: center;
+            border-right: 1px solid #000;
           }
-          .sorting-box {
+          .shipping-type {
             width: 40%;
-            padding: 1mm 2mm;
-            font-weight: bold;
-            text-align: right;
-            font-size: 9px;
+            padding: 5px;
+            font-size: 10px;
+            text-align: center;
           }
-          .customer-code {
-            display: block;
-            text-align: right;
-            font-size: 8px;
-          }
-          .district-text {
-            display: block;
-            text-align: right;
-            font-size: 8px;
-          }
-          .shipper-info {
-            padding: 1mm 2mm;
-            border: 1px solid #000;
-            font-size: 9px;
-            line-height: 1.2;
-            max-width: 48%;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-          }
-          .recipient-info {
-            padding: 1mm 2mm;
-            border: 1px solid #000;
-            font-size: 9px;
-            line-height: 1.2;
-            max-width: 48%;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-          }
-          .address-line {
-            display: block;
+          .address-section {
+            border-bottom: 1px solid #000;
+            padding: 5px;
+            font-size: 10px;
           }
           .qr-section {
-            position: absolute;
-            right: 3mm;
-            top: 70mm;
-            width: 30mm;
-            height: 30mm;
+            display: flex;
+            border-bottom: 1px solid #000;
+          }
+          .sender-info {
+            width: 60%;
+            padding: 5px;
+            font-size: 10px;
+            border-right: 1px solid #000;
           }
           .qr-code {
-            width: 100%;
-            height: 100%;
+            width: 40%;
+            padding: 5px;
+            text-align: center;
           }
-          .cod-row {
+          .qr-image {
+            width: 80%;
+            height: auto;
+          }
+          .cod-section {
             display: flex;
-            border: 1px solid #000;
+            border-bottom: 1px solid #000;
           }
-          .cod-box {
-            flex: 2;
+          .cod-label {
+            width: 40%;
             background-color: #000;
             color: #fff;
-            padding: 1mm 2mm;
+            font-size: 16px;
             font-weight: bold;
-            text-transform: uppercase;
-            font-size: 12px;
-          }
-          .cod-text {
-            font-size: 10px;
-            padding-top: 0.5mm;
-          }
-          .weight-box {
-            flex: 1;
-            padding: 1mm 2mm;
+            text-align: center;
+            padding: 5px;
             display: flex;
-            flex-direction: column;
-            font-size: 10px;
-          }
-          .signature-label {
-            margin-bottom: 1mm;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid #000;
           }
           .weight-info {
-            font-size: 9px;
-          }
-          .order-row {
-            display: flex;
-            border-bottom: 1px dashed #eee;
-          }
-          .order-id-box {
-            flex: 1;
-            padding: 1mm 2mm;
-            font-size: 8px;
-          }
-          .date-box {
-            flex: 1;
-            padding: 1mm 2mm;
-            font-size: 8px;
-          }
-          .pickup-badge {
-            position: absolute;
-            bottom: 8mm;
-            right: 3mm;
-            padding: 0.5mm 2mm;
+            width: 60%;
             font-size: 10px;
-            text-transform: uppercase;
+            padding: 5px;
+          }
+          .footer {
+            display: flex;
+            border-bottom: 1px solid #000;
+          }
+          .order-details {
+            width: 70%;
+            font-size: 9px;
+            padding: 5px;
+            border-right: 1px solid #000;
+          }
+          .pickup-label {
+            width: 30%;
+            text-align: center;
+            font-size: 12px;
             font-weight: bold;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
           .tracking-side {
             position: absolute;
