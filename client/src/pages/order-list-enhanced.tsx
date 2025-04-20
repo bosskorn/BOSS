@@ -284,12 +284,12 @@ const OrderList: React.FC = () => {
     setAvailableShippingMethods(prev => {
       // เพิ่มรายชื่อขนส่งที่จำลองทั้งหมด
       const mockCouriers = [
-        'เสี่ยวไป๋ เอ็กเพรส',
+        'Xiaobai Express',
         'SpeedLine',
         'ThaiStar Delivery',
         'J&T Express', 
         'Kerry Express',
-        'ไปรษณีย์ไทย',
+        'Thailand Post',
         'DHL Express',
         'Ninja Van'
       ];
