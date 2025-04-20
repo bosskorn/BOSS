@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import AdminLayout from '@/components/AdminLayout';
+import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -260,7 +260,7 @@ const BulkOrderImportPage: React.FC = () => {
     <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-purple-800">
+          <CardTitle className="text-blue-800">
             นำเข้าออเดอร์ด้วยไฟล์ Excel
           </CardTitle>
           <CardDescription>
@@ -268,7 +268,7 @@ const BulkOrderImportPage: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-colors">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
             <input
               type="file"
               id="file-upload"
@@ -280,7 +280,7 @@ const BulkOrderImportPage: React.FC = () => {
               htmlFor="file-upload"
               className="cursor-pointer flex flex-col items-center justify-center"
             >
-              <Upload className="h-12 w-12 text-purple-500 mb-4" />
+              <Upload className="h-12 w-12 text-blue-500 mb-4" />
               <p className="text-gray-600 mb-1">
                 คลิกหรือลากไฟล์มาที่นี่เพื่ออัพโหลด
               </p>
@@ -291,9 +291,9 @@ const BulkOrderImportPage: React.FC = () => {
           </div>
 
           {file && (
-            <Alert className="bg-purple-50 border-purple-200">
-              <FileText className="h-5 w-5 text-purple-600" />
-              <AlertTitle className="text-purple-800">ไฟล์ที่เลือก</AlertTitle>
+            <Alert className="bg-blue-50 border-blue-200">
+              <FileText className="h-5 w-5 text-blue-600" />
+              <AlertTitle className="text-blue-800">ไฟล์ที่เลือก</AlertTitle>
               <AlertDescription>
                 <div className="flex justify-between items-center">
                   <span>{file.name} ({Math.round(file.size / 1024)} KB)</span>
@@ -310,8 +310,8 @@ const BulkOrderImportPage: React.FC = () => {
             </Alert>
           )}
 
-          <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
-            <h3 className="text-purple-800 font-medium mb-2 flex items-center">
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+            <h3 className="text-blue-800 font-medium mb-2 flex items-center">
               <AlertCircle className="h-5 w-5 mr-2" />
               คำแนะนำการใช้งาน
             </h3>
@@ -324,7 +324,7 @@ const BulkOrderImportPage: React.FC = () => {
             <Button
               variant="link"
               onClick={downloadTemplate}
-              className="text-purple-600 hover:text-purple-800 p-0 h-auto mt-2"
+              className="text-blue-600 hover:text-blue-800 p-0 h-auto mt-2"
             >
               ดาวน์โหลดไฟล์ตัวอย่าง (.xlsx)
             </Button>
@@ -334,7 +334,7 @@ const BulkOrderImportPage: React.FC = () => {
           <Button
             disabled={!file}
             onClick={parseExcelFile}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             ตรวจสอบข้อมูล
           </Button>
@@ -559,8 +559,8 @@ const BulkOrderImportPage: React.FC = () => {
   );
 
   return (
-    <AdminLayout>
-      <div className="container mx-auto py-8 px-4 font-kanit bg-gradient-to-br from-white to-purple-50 rounded-xl">
+    <Layout>
+      <div className="container mx-auto py-8 px-4 font-kanit bg-gradient-to-br from-white to-blue-50 rounded-xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-700 to-indigo-600 bg-clip-text text-transparent flex items-center">
             <Package className="mr-2 h-8 w-8 text-purple-600" />
@@ -612,7 +612,7 @@ const BulkOrderImportPage: React.FC = () => {
         {step === 'processing' && renderProcessingStep()}
         {step === 'complete' && renderCompleteStep()}
       </div>
-    </AdminLayout>
+    </Layout>
   );
 };
 
