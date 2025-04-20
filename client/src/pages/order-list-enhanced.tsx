@@ -18,7 +18,8 @@ import {
   RefreshCw,
   X,
   Check,
-  Square
+  Square,
+  Trash
 } from 'lucide-react';
 
 // ฟังก์ชันสร้างบาร์โค้ด Code128 สำหรับเลขพัสดุ
@@ -1620,11 +1621,26 @@ const OrderList: React.FC = () => {
                             </Button>
                           )}
                           {order.status === 'pending' && (
-                            <Button variant="outline" size="sm" className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100" asChild>
-                              <Link href={`/update-order/${order.id}`}>
-                                แก้ไข
-                              </Link>
-                            </Button>
+                            <>
+                              <Button variant="outline" size="sm" className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100" asChild>
+                                <Link href={`/update-order/${order.id}`}>
+                                  แก้ไข
+                                </Link>
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                                onClick={() => {
+                                  if (window.confirm(`คุณต้องการลบออเดอร์ ${order.orderNumber} ใช่หรือไม่?`)) {
+                                    handleDeleteOrder(order.id);
+                                  }
+                                }}
+                              >
+                                <Trash className="h-3 w-3 mr-1" />
+                                ลบ
+                              </Button>
+                            </>
                           )}
                         </div>
                       </TableCell>
