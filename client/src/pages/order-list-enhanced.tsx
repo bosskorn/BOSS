@@ -287,7 +287,7 @@ const OrderList: React.FC = () => {
     // เพื่อให้สามารถกรองได้ทันที แม้ไม่มีข้อมูลขนส่งในออร์เดอร์
     setAvailableShippingMethods(prev => {
       // เพิ่มรายชื่อขนส่งมาตรฐานทั้งหมด
-      const mockCouriers = [
+      const standardCouriers = [
         'Xiaobai Express',
         'SpeedLine',
         'ThaiStar Delivery',
@@ -301,7 +301,7 @@ const OrderList: React.FC = () => {
       
       // สร้างรายการใหม่ที่รวมขนส่งทั้งหมด
       let newCouriers = [...prev];
-      mockCouriers.forEach(courier => {
+      standardCouriers.forEach(courier => {
         if (!newCouriers.includes(courier)) {
           newCouriers.push(courier);
         }
