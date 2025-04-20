@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import Layout from '@/components/Layout';
 import JsBarcode from 'jsbarcode';
+import BulkTrackingCreate from '@/components/bulk-tracking-create';
 import {
   Loader2,
   Search,
@@ -1702,7 +1703,19 @@ const OrderList: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">รายการคำสั่งซื้อทั้งหมด</h1>
             <p className="text-gray-500">จัดการและติดตามคำสั่งซื้อทั้งหมดของคุณได้ที่นี่</p>
           </div>
-          <div className="mt-4 md:mt-0">
+          <div className="mt-4 md:mt-0 flex space-x-2">
+            <BulkTrackingCreate 
+              orders={orders} 
+              shippingMethods={dbShippingMethods.map(m => ({
+                id: m.id, 
+                name: m.name, 
+                code: m.provider, 
+                price: String(m.price), 
+                provider: m.provider,
+                isActive: m.isActive
+              }))}
+              onSuccess={fetchOrders}
+            />
             <Button asChild className="bg-purple-600 hover:bg-purple-700">
               <Link href="/create-order">
                 <Package className="mr-2 h-4 w-4" />
