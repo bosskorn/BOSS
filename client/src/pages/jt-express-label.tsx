@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 /**
  * หน้าสำหรับพิมพ์ลาเบล J&T Express
@@ -24,6 +25,29 @@ const JTExpressLabel: React.FC = () => {
   const [senderDistrict, setSenderDistrict] = useState('ลุมพินี');
   const [senderProvince, setSenderProvince] = useState('กรุงเทพมหานคร');
   const [senderZipcode, setSenderZipcode] = useState('10330');
+  const [sortingCode, setSortingCode] = useState('BKK-01A');
+  
+  // พื้นที่สำหรับการคัดแยกพัสดุ J&T Express
+  const sortingAreas = [
+    { code: 'BKK-01A', name: 'กรุงเทพฯ เขตเหนือ' },
+    { code: 'BKK-01B', name: 'กรุงเทพฯ เขตใต้' },
+    { code: 'BKK-01C', name: 'กรุงเทพฯ เขตตะวันออก' },
+    { code: 'BKK-01D', name: 'กรุงเทพฯ เขตตะวันตก' },
+    { code: 'BKK-01E', name: 'กรุงเทพฯ เขตกลาง' },
+    { code: 'CTI-02A', name: 'ปริมณฑล นนทบุรี' },
+    { code: 'CTI-02B', name: 'ปริมณฑล ปทุมธานี' },
+    { code: 'CTI-02C', name: 'ปริมณฑล สมุทรปราการ' },
+    { code: 'NRT-03A', name: 'ภาคเหนือ เชียงใหม่' },
+    { code: 'NRT-03B', name: 'ภาคเหนือ เชียงราย' },
+    { code: 'EST-04A', name: 'ภาคตะวันออก ชลบุรี' },
+    { code: 'EST-04B', name: 'ภาคตะวันออก ระยอง' },
+    { code: 'NEA-05A', name: 'ภาคอีสาน นครราชสีมา' },
+    { code: 'NEA-05B', name: 'ภาคอีสาน ขอนแก่น' },
+    { code: 'NEA-05C', name: 'ภาคอีสาน อุบลราชธานี' },
+    { code: 'STH-06A', name: 'ภาคใต้ สุราษฎร์ธานี' },
+    { code: 'STH-06B', name: 'ภาคใต้ สงขลา' },
+    { code: 'STH-06C', name: 'ภาคใต้ ภูเก็ต' },
+  ];
   
   // ฟังก์ชันสำหรับพิมพ์ลาเบล
   const printLabel = () => {
@@ -42,6 +66,7 @@ const JTExpressLabel: React.FC = () => {
         <meta charset="UTF-8">
         <title>ใบลาเบลพัสดุ J&T Express - ${trackingNumber}</title>
         <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
         <style>
           @page {
             size: 100mm 150mm;
@@ -217,8 +242,19 @@ const JTExpressLabel: React.FC = () => {
             <div class="barcode-container">
               <svg id="barcode"></svg>
             </div>
-            
+
+            <div class="sorting-code-container">
+              <div style="font-size: 14px; text-align: center; font-weight: bold; background-color: #eee; padding: 3mm; margin: 2mm 0; border-radius: 2px;">
+                รหัสพื้นที่คัดแยก: <span style="color: #e61e25;">${sortingCode}</span>
+              </div>
+            </div>
+
             <div class="grid-2">
+              <div class="qr-code-container">
+                <div id="qrcode"></div>
+              </div>
+              
+              <div>
               <div class="section">
                 <div class="section-title">ผู้รับ / RECIPIENT</div>
                 <div class="recipient-box">
@@ -254,15 +290,29 @@ const JTExpressLabel: React.FC = () => {
         <script>
           window.onload = function() {
             try {
+              // สร้างบาร์โค้ดด้วยขนาดใหญ่ขึ้น
               JsBarcode("#barcode", "${trackingNumber}", {
                 format: "CODE128",
-                width: 1.5,
-                height: 35,
-                displayValue: false,
+                width: 3,
+                height: 60,
+                displayValue: true,
+                fontSize: 14,
                 margin: 0
               });
               
-              console.log("Generated barcode successfully");
+              // สร้าง QR code
+              QRCode.toCanvas(document.getElementById('qrcode'), "${trackingNumber}", {
+                width: 100,
+                margin: 1,
+                color: {
+                  dark: '#000000',
+                  light: '#FFFFFF'
+                }
+              }, function(error) {
+                if (error) console.error('Error generating QR Code:', error);
+              });
+              
+              console.log("Generated barcode and QR code successfully");
               
               // หลังจากสร้างบาร์โค้ดเสร็จ 500ms ให้พิมพ์อัตโนมัติ
               setTimeout(function() {
@@ -301,6 +351,25 @@ const JTExpressLabel: React.FC = () => {
                       onChange={(e) => setTrackingNumber(e.target.value)}
                       placeholder="ระบุเลขพัสดุ"
                     />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="sortingCode">รหัสพื้นที่คัดแยกพัสดุ</Label>
+                    <Select
+                      value={sortingCode}
+                      onValueChange={setSortingCode}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="เลือกพื้นที่คัดแยก" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortingAreas.map((area) => (
+                          <SelectItem key={area.code} value={area.code}>
+                            {area.code} - {area.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div>
