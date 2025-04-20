@@ -342,23 +342,41 @@ const OrderList: React.FC = () => {
     if (shippingFilter !== 'all') {
       console.log('กำลังกรองตามวิธีการขนส่ง:', shippingFilter);
       
-      // กรองตามค่า shippingMethod และรองรับการเปลี่ยนชื่อขนส่ง
+      // เพิ่มการตรวจสอบข้อมูลของออเดอร์ตัวอย่าง
+      if (result.length > 0) {
+        console.log('ตัวอย่างข้อมูลออร์เดอร์:', JSON.stringify(result[0], null, 2));
+      }
+      
+      // กรองตามค่า shippingMethodId, shippingMethod และข้อมูลที่เกี่ยวข้อง
       result = result.filter(order => {
         // แสดงข้อมูลการเปรียบเทียบในกรณี debug
-        console.log(`ตรวจสอบออเดอร์ ${order.id} - shippingMethod: "${order.shippingMethod}", shippingFilter: "${shippingFilter}"`);
+        console.log(`ตรวจสอบออเดอร์ ${order.id}:`, {
+          shippingMethod: order.shippingMethod,
+          shippingMethodId: order.shippingMethodId,
+          trackingNumber: order.trackingNumber,
+          shippingFilter
+        });
         
-        // ตรวจสอบว่า shippingMethod ตรงกับตัวกรอง
-        if (order.shippingMethod === shippingFilter) {
+        // ดึงข้อมูลวิธีการขนส่งจากออบเจ็กต์ ShippingMethod (ถ้ามี)
+        const shippingMethodName = order.shippingMethodName || order.shippingMethod;
+        
+        // ตรวจสอบว่า shippingMethod หรือ shippingMethodName ตรงกับตัวกรอง
+        if (shippingMethodName === shippingFilter) {
+          console.log(`Matched exact shipping method: ${order.id}`);
           return true;
         }
         
         // รองรับการเปลี่ยนชื่อจากภาษาไทยเป็นภาษาอังกฤษ
-        if (shippingFilter === 'Xiaobai Express' && order.shippingMethod === 'เสี่ยวไป๋ เอ็กเพรส') {
+        if (shippingFilter === 'Xiaobai Express' && 
+            (shippingMethodName === 'เสี่ยวไป๋ เอ็กเพรส' || 
+             shippingMethodName === 'Xiaobai Express')) {
           console.log(`Matched Xiaobai Express: ${order.id}`);
           return true;
         }
         
-        if (shippingFilter === 'Thailand Post' && order.shippingMethod === 'ไปรษณีย์ไทย') {
+        if (shippingFilter === 'Thailand Post' && 
+            (shippingMethodName === 'ไปรษณีย์ไทย' || 
+             shippingMethodName === 'Thailand Post')) {
           console.log(`Matched Thailand Post: ${order.id}`);
           return true;
         }
