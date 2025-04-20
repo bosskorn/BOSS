@@ -1000,6 +1000,14 @@ const OrderList: React.FC = () => {
               padding: 1mm;
               font-family: monospace;
             }
+            .barcode-small {
+              text-align: center;
+              margin: 2mm 0;
+              background-color: #f9f9f9;
+              padding: 2mm 0;
+              border-radius: 3px;
+              border: 1px solid #ddd;
+            }
             .footer { 
               text-align: center; 
               font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; 
@@ -1076,8 +1084,10 @@ const OrderList: React.FC = () => {
             <div class="label-container">
               <div class="logo">PURPLEDASH</div>
               
+              ${labelSize === '100x100mm' ? `
+              <!-- สำหรับขนาด 100x100mm -->
               <div class="tracking box">
-                <div style="font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; color: #666;">เลขพัสดุ</div>
+                <div style="font-size: 12px; color: #666;">เลขพัสดุ</div>
                 <div class="tracking-num">${order.trackingNumber}</div>
               </div>
               
@@ -1105,10 +1115,54 @@ const OrderList: React.FC = () => {
               <div class="barcode box">
                 ${order.trackingNumber}
               </div>
+              ` : `
+              <!-- สำหรับขนาด 100x75mm - แบบใหม่แบ่งเป็น 2 คอลัมน์ -->
+              <div class="tracking box" style="margin-bottom: 2mm;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-size: 9px; color: #666;">เลขพัสดุ</div>
+                    <div class="tracking-num" style="font-size: 13px; letter-spacing: 0.5px;">${order.trackingNumber}</div>
+                  </div>
+                  <div class="cod-badge" style="${order.paymentMethod === 'cash_on_delivery' ? '' : 'display: none;'}">
+                    COD
+                  </div>
+                </div>
+              </div>
               
-              <div class="footer">
+              <div style="display: flex; margin-top: 2mm;">
+                <div style="flex: 1; padding-right: 2mm;">
+                  <div class="title" style="font-size: 9px; background-color: #f7f7f7; padding: 1px 3px; border-radius: 2px;">ผู้ส่ง</div>
+                  <div class="box address" style="font-size: 8px; height: 23mm;">
+                    <strong>PURPLEDASH</strong><br />
+                    เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
+                    ถนนพระราม 4 แขวงลุมพินี<br />
+                    เขตปทุมวัน กรุงเทพฯ 10330<br />
+                    โทร: 02-123-4567
+                  </div>
+                </div>
+                
+                <div style="flex: 1; border-left: 1px solid #ddd; padding-left: 2mm;">
+                  <div class="title" style="font-size: 9px; background-color: #f7f7f7; padding: 1px 3px; border-radius: 2px;">ผู้รับ</div>
+                  <div class="box address" style="font-size: 8px; height: 23mm;">
+                    <strong>${order.recipientName || 'ไม่ระบุ'}</strong><br />
+                    ${order.recipientAddress || ''} ${order.recipientSubdistrict || ''}<br />
+                    ${order.recipientDistrict || ''} ${order.recipientProvince || ''}<br /> 
+                    ${order.recipientZipCode || ''}<br />
+                    โทร: ${order.recipientPhone || 'ไม่ระบุ'}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="barcode-small">
+                <div style="font-size: 9px; color: #666; margin-bottom: 3px;">บาร์โค้ด</div>
+                ${generateBarcode(order.trackingNumber || '')}
+                <div style="font-size: 9px; margin-top: 3px;">${order.trackingNumber}</div>
+              </div>
+              `}
+              
+              <div class="footer" style="${labelSize === '100x75mm' ? 'background-color: #fff6f6; padding: 1mm; border-radius: 2px;' : ''}">
                 ${order.paymentMethod === 'cash_on_delivery' 
-                  ? `<span>เก็บเงินปลายทาง: ${formatCurrency(order.total || parseFloat(order.totalAmount || '0'))}</span><span class="cod-badge">COD</span>` 
+                  ? `<span>เก็บเงินปลายทาง: ${formatCurrency(order.total || parseFloat(order.totalAmount || '0'))}</span>${labelSize === '100x100mm' ? '<span class="cod-badge">COD</span>' : ''}` 
                   : 'จ่ายเงินแล้ว'}
               </div>
             </div>
