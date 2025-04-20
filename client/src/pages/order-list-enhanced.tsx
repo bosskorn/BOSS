@@ -363,8 +363,8 @@ const OrderList: React.FC = () => {
     }
   };
 
-  // ฟังก์ชันพิมพ์ใบลาเบล
-  const handlePrintLabel = async (order: Order) => {
+  // ฟังก์ชันพิมพ์ใบลาเบล (เวอร์ชั่นเก่า - ไม่ใช้แล้ว)
+  const handlePrintLabelOld = async (order: Order) => {
     if (!order.trackingNumber) {
       toast({
         title: 'ไม่สามารถพิมพ์ใบลาเบล',
@@ -550,6 +550,12 @@ const OrderList: React.FC = () => {
   };
   
   // ฟังก์ชันพิมพ์ใบลาเบลสำหรับรายการที่เลือก
+  // สำหรับฟังก์ชันพิมพ์ใบลาเบลแบบปกติ (เพื่อความเข้ากันได้)
+  const handlePrintLabel = (order: Order) => {
+    handlePrintLabelWithSizeDialog(order);
+  };
+
+  // ฟังก์ชันพิมพ์แบบเลือกหลายรายการ
   const printSelectedLabels = async () => {
     if (selectedOrders.length === 0) {
       toast({
