@@ -339,18 +339,19 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* ตารางคำสั่งซื้อล่าสุด */}
+          {/* ตารางคำสั่งซื้อที่รอดำเนินการ */}
           <div className="mt-8 bg-white p-6 rounded-lg shadow">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-gray-800">
-                คำสั่งซื้อล่าสุด
+                คำสั่งซื้อที่รอดำเนินการ
               </h2>
               <Link href="/orders-all" className="text-sm font-medium text-blue-600 hover:text-blue-800">
                 ดูทั้งหมด
               </Link>
             </div>
             
-            {summaryData.latestOrders.length > 0 ? (
+            {/* กรองเฉพาะคำสั่งซื้อที่มีสถานะ pending */}
+            {summaryData.latestOrders.filter(order => order.status === 'pending').length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -368,46 +369,53 @@ const Dashboard: React.FC = () => {
                         วันที่
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        สถานะ
+                        การจัดการ
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {summaryData.latestOrders.map((order, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {order.id}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {order.customer}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {formatCurrency(order.total)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {formatDateTime(order.date)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                            {getStatusText(order.status)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {summaryData.latestOrders
+                      .filter(order => order.status === 'pending')
+                      .map((order, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Link href={`/order/${order.id.replace('PD', '')}`} className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                              {order.id}
+                            </Link>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {order.customer}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {formatCurrency(order.total)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {formatDateTime(order.date)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Link 
+                              href={`/order/${order.id.replace('PD', '')}`} 
+                              className="text-blue-600 hover:text-blue-800 mr-4"
+                            >
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                ดูรายละเอียด
+                              </span>
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-500">ไม่มีคำสั่งซื้อล่าสุด</p>
+                <p className="text-gray-500">ไม่มีคำสั่งซื้อที่รอดำเนินการ</p>
               </div>
             )}
           </div>
