@@ -242,6 +242,26 @@ router.post('/', auth, async (req, res) => {
     // Store order in database
     const order = await storage.createOrder(orderData);
     
+    // บันทึกข้อมูลรายการสินค้า (order items) ถ้ามี
+    if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
+      console.log(`เพิ่มรายการสินค้าจำนวน ${orderData.items.length} รายการ`);
+      
+      for (const item of orderData.items) {
+        try {
+          await storage.createOrderItem({
+            orderId: order.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+          });
+        } catch (error) {
+          console.error(`เกิดข้อผิดพลาดในการบันทึกรายการสินค้า:`, error);
+        }
+      }
+    } else {
+      console.log('ไม่มีรายการสินค้าที่จะบันทึก');
+    }
+    
     // ตรวจสอบการสร้างเลขพัสดุอัตโนมัติ
     const generateTrackingNumber = orderData.generateTrackingNumber === true && orderData.shippingMethod;
     
