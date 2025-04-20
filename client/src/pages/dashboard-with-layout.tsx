@@ -43,6 +43,17 @@ const Dashboard: React.FC = () => {
     }
   }, [user]);
   
+  // โหลดข้อมูลแดชบอร์ดใหม่ทุก 30 วินาที (ตรวจสอบข้อมูลล่าสุด)
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 30000); // 30 วินาที
+    
+    return () => clearInterval(interval);
+  }, [user]);
+  
   // ฟังก์ชันเรียกข้อมูลแดชบอร์ดจาก API
   const fetchDashboardData = async () => {
     if (!user) return; // ไม่ดึงข้อมูลถ้าไม่มีการล็อกอิน
@@ -69,11 +80,31 @@ const Dashboard: React.FC = () => {
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถโหลดข้อมูลแดชบอร์ดได้',
-        variant: 'destructive',
-      });
+      
+      // ตรวจสอบว่าเป็น error ที่เกิดจากการไม่ได้ลงทะเบียน route หรือไม่
+      if ((error as any)?.response?.status === 404) {
+        console.error('Dashboard API endpoint not found. Check if the route is registered properly.');
+        
+        // ในกรณีที่ API endpoint ไม่พบ และเป็นการโหลดครั้งแรก แสดงข้อมูลจำลองที่เรียบง่าย
+        if (isLoading) {
+          setSummaryData({
+            todayTotal: 0,
+            monthTotal: 0,
+            last7Days: Array(7).fill(0).map((_, i) => ({
+              date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              total: 0
+            })),
+            latestOrders: []
+          });
+        }
+      } else {
+        // แสดง toast เฉพาะกรณีที่ไม่ใช่ error 404
+        toast({
+          title: 'เกิดข้อผิดพลาด',
+          description: 'ไม่สามารถโหลดข้อมูลแดชบอร์ดได้ โปรดลองใหม่อีกครั้ง',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
