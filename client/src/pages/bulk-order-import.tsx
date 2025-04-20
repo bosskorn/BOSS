@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,17 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText, AlertCircle, CheckCircle2, X, Package } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle2, X, Package, Truck } from 'lucide-react';
 import api from '@/services/api';
 import * as XLSX from 'xlsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+interface ShippingMethod {
+  id: number;
+  name: string;
+  code: string;
+  price: number;
+}
 
 interface OrderPreview {
   customerName: string;
@@ -36,6 +44,8 @@ const BulkOrderImportPage: React.FC = () => {
   const [orders, setOrders] = useState<OrderPreview[]>([]);
   const [step, setStep] = useState<'upload' | 'preview' | 'processing' | 'complete'>('upload');
   const [progress, setProgress] = useState(0);
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>('');
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
   const [results, setResults] = useState<{
     success: number;
     failed: number;
@@ -47,6 +57,25 @@ const BulkOrderImportPage: React.FC = () => {
     trackingNumbers: [],
     failedOrders: []
   });
+  
+  // โหลดข้อมูลวิธีการจัดส่ง
+  useEffect(() => {
+    const fetchShippingMethods = async () => {
+      try {
+        const response = await api.get('/api/shipping-methods');
+        if (response.data.success) {
+          setShippingMethods(response.data.shippingMethods);
+          if (response.data.shippingMethods.length > 0) {
+            setSelectedShippingMethod(response.data.shippingMethods[0].name);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching shipping methods:', error);
+      }
+    };
+    
+    fetchShippingMethods();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
