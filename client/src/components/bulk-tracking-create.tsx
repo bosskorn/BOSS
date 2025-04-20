@@ -353,8 +353,8 @@ const BulkTrackingCreate: React.FC<BulkTrackingCreateProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {/* บริษัทขนส่งจำลอง */}
-                    <SelectItem key="xiaobai" value="เสี่ยวไป๋ เอ็กเพรส">
-                      เสี่ยวไป๋ เอ็กเพรส - ฿45.00
+                    <SelectItem key="xiaobai" value="Xiaobai Express">
+                      Xiaobai Express - ฿45.00
                     </SelectItem>
                     <SelectItem key="speedline" value="SpeedLine">
                       SpeedLine - ฿60.00
@@ -368,8 +368,8 @@ const BulkTrackingCreate: React.FC<BulkTrackingCreateProps> = ({
                     <SelectItem key="kerry" value="Kerry Express">
                       Kerry Express - ฿50.00
                     </SelectItem>
-                    <SelectItem key="thaipost" value="ไปรษณีย์ไทย">
-                      ไปรษณีย์ไทย - ฿35.00
+                    <SelectItem key="thaipost" value="Thailand Post">
+                      Thailand Post - ฿35.00
                     </SelectItem>
                     <SelectItem key="dhl" value="DHL Express">
                       DHL Express - ฿90.00

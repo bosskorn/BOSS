@@ -340,8 +340,24 @@ const OrderList: React.FC = () => {
     
     // กรองตามวิธีการขนส่ง
     if (shippingFilter !== 'all') {
-      // กรณีปกติ กรองตามค่า shippingMethod
-      result = result.filter(order => order.shippingMethod === shippingFilter);
+      // กรองตามค่า shippingMethod และรองรับการเปลี่ยนชื่อขนส่ง
+      result = result.filter(order => {
+        // ตรวจสอบว่า shippingMethod ตรงกับตัวกรอง
+        if (order.shippingMethod === shippingFilter) {
+          return true;
+        }
+        
+        // รองรับการเปลี่ยนชื่อจากภาษาไทยเป็นภาษาอังกฤษ
+        if (shippingFilter === 'Xiaobai Express' && order.shippingMethod === 'เสี่ยวไป๋ เอ็กเพรส') {
+          return true;
+        }
+        
+        if (shippingFilter === 'Thailand Post' && order.shippingMethod === 'ไปรษณีย์ไทย') {
+          return true;
+        }
+        
+        return false;
+      });
       
       // ไม่แสดงข้อมูลจำลองเมื่อไม่มีรายการคำสั่งซื้อ
       // ข้อความ "ยังไม่มีรายการคำสั่งซื้อ" จะถูกแสดงโดยอัตโนมัติเมื่อไม่มีข้อมูล
