@@ -496,7 +496,7 @@ const OrderDetail: React.FC = () => {
                     <span className="text-gray-500">วิธีการจัดส่ง:</span>
                     <span className="font-medium flex items-center">
                       <Truck className="h-4 w-4 mr-1 text-gray-400" />
-                      {order.shipping.method}
+                      {order.shipping.carrier || "ไม่ระบุ"}
                     </span>
                   </div>
                   {order.shipping.trackingNumber && (
@@ -508,7 +508,7 @@ const OrderDetail: React.FC = () => {
                             href={order.shipping.trackingUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-purple-600 hover:underline flex items-center"
+                            className="text-blue-600 hover:underline flex items-center"
                           >
                             {order.shipping.trackingNumber}
                             <ExternalLink className="h-3 w-3 ml-1" />
@@ -539,7 +539,7 @@ const OrderDetail: React.FC = () => {
                     <div>
                       <div className="font-medium">{order.customer.name}</div>
                       {order.customer.email && (
-                        <a href={`mailto:${order.customer.email}`} className="text-sm text-purple-600 hover:underline">
+                        <a href={`mailto:${order.customer.email}`} className="text-sm text-blue-600 hover:underline">
                           {order.customer.email}
                         </a>
                       )}
