@@ -22,17 +22,7 @@ interface SidebarMenuProps {
 const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [location] = useLocation();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { logoutMutation } = useAuth();
-  
-  // เปิด/ปิดเมนูย่อย
-  const toggleSubmenu = (path: string) => {
-    setExpandedMenus(prev => 
-      prev.includes(path) 
-        ? prev.filter(p => p !== path) 
-        : [...prev, path]
-    );
-  };
 
   // ตรวจจับการคลิกภายนอก sidebar เพื่อปิด
   useEffect(() => {
@@ -104,36 +94,29 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       label: 'จัดการหมวดหมู่' 
     },
     { 
-      path: '#', 
+      path: '/reports/overview', 
       icon: 'fa-chart-line', 
-      label: 'รายงาน',
-      submenu: [
-        { 
-          path: '/reports/overview', 
-          icon: 'fa-tachometer-alt', 
-          label: 'ภาพรวมรายงาน' 
-        },
-        { 
-          path: '/reports/by-courier', 
-          icon: 'fa-shipping-fast', 
-          label: 'รายงานตามขนส่ง' 
-        },
-        { 
-          path: '/reports/by-area', 
-          icon: 'fa-map-marked-alt', 
-          label: 'รายงานตามพื้นที่' 
-        },
-        { 
-          path: '/reports/cod', 
-          icon: 'fa-dollar-sign', 
-          label: 'รายงาน COD' 
-        },
-        { 
-          path: '/reports/returns', 
-          icon: 'fa-undo', 
-          label: 'รายงานพัสดุตีกลับ' 
-        },
-      ]
+      label: 'ภาพรวมรายงาน' 
+    },
+    { 
+      path: '/reports/by-courier', 
+      icon: 'fa-shipping-fast', 
+      label: 'รายงานตามขนส่ง' 
+    },
+    { 
+      path: '/reports/by-area', 
+      icon: 'fa-map-marked-alt', 
+      label: 'รายงานตามพื้นที่' 
+    },
+    { 
+      path: '/reports/cod', 
+      icon: 'fa-dollar-sign', 
+      label: 'รายงาน COD' 
+    },
+    { 
+      path: '/reports/returns', 
+      icon: 'fa-undo', 
+      label: 'รายงานพัสดุตีกลับ' 
     },
     { 
       path: '/settings', 
@@ -200,55 +183,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
           <ul className="space-y-1">
             {menuItems.map((item) => (
               <li key={item.path}>
-                {item.submenu ? (
-                  <div>
-                    {/* หัวข้อเมนูที่มีเมนูย่อย */}
-                    <button
-                      className={`w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-blue-50 text-gray-700`}
-                      onClick={() => toggleSubmenu(item.path)}
-                    >
-                      <div className="flex items-center">
-                        <i className={`fa-solid ${item.icon} w-5 mr-3 text-gray-500`}></i>
-                        <span>{item.label}</span>
-                      </div>
-                      <i className={`fa-solid ${expandedMenus.includes(item.path) ? 'fa-chevron-down' : 'fa-chevron-right'} text-gray-400 text-xs`}></i>
-                    </button>
-
-                    {/* เมนูย่อย */}
-                    {expandedMenus.includes(item.path) && (
-                      <ul className="mt-1 border-r border-blue-200">
-                        {item.submenu.map((subItem) => {
-                          const isActive = location === subItem.path;
-                          return (
-                            <li key={subItem.path}>
-                              <Link
-                                href={subItem.path}
-                                className={`flex items-center pl-10 pr-4 py-2 text-sm ${
-                                  isActive ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-500' : 'text-gray-600 hover:bg-blue-50'
-                                }`}
-                                onClick={onClose}
-                              >
-                                <i className={`fa-solid ${subItem.icon} w-5 mr-3 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}></i>
-                                <span className="text-sm">{subItem.label}</span>
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
-                ) : (
-                  <Link 
-                    href={item.path}
-                    className={`flex items-center px-4 py-2 text-sm hover:bg-blue-50 ${
-                      location === item.path ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                    }`}
-                    onClick={onClose}
-                  >
-                    <i className={`fa-solid ${item.icon} w-5 mr-3 ${location === item.path ? 'text-blue-600' : 'text-gray-500'}`}></i>
-                    <span>{item.label}</span>
-                  </Link>
-                )}
+                <Link 
+                  href={item.path}
+                  className={`flex items-center px-4 py-2 text-sm hover:bg-blue-50 ${
+                    location === item.path ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                  }`}
+                  onClick={onClose}
+                >
+                  <i className={`fa-solid ${item.icon} w-5 mr-3 ${location === item.path ? 'text-blue-600' : 'text-gray-500'}`}></i>
+                  <span>{item.label}</span>
+                </Link>
               </li>
             ))}
           </ul>
