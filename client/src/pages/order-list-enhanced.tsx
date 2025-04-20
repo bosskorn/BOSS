@@ -223,11 +223,27 @@ const OrderList: React.FC = () => {
     // เพิ่มขนส่งจำลองเป็นตัวเลือกเริ่มต้นเสมอ (แทน Flash Express)
     // เพื่อให้สามารถกรองได้ทันที แม้ไม่มีข้อมูลขนส่งในออร์เดอร์
     setAvailableShippingMethods(prev => {
-      const mockCourierName = 'เสี่ยวไป๋ เอ็กเพรส';
-      if (prev.includes(mockCourierName)) {
-        return prev;
-      }
-      return [...prev, mockCourierName];
+      // เพิ่มรายชื่อขนส่งที่จำลองทั้งหมด
+      const mockCouriers = [
+        'เสี่ยวไป๋ เอ็กเพรส',
+        'SpeedLine',
+        'ThaiStar Delivery',
+        'J&T Express', 
+        'Kerry Express',
+        'ไปรษณีย์ไทย',
+        'DHL Express',
+        'Ninja Van'
+      ];
+      
+      // สร้างรายการใหม่ที่รวมขนส่งทั้งหมด
+      let newCouriers = [...prev];
+      mockCouriers.forEach(courier => {
+        if (!newCouriers.includes(courier)) {
+          newCouriers.push(courier);
+        }
+      });
+      
+      return newCouriers;
     });
   }, [orders]);
 
@@ -312,7 +328,7 @@ const OrderList: React.FC = () => {
       case 'processing':
         return <Package className="h-4 w-4 text-blue-500" />;
       case 'shipped':
-        return <Truck className="h-4 w-4 text-purple-500" />;
+        return <Truck className="h-4 w-4 text-blue-500" />;
       case 'delivered':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'cancelled':
@@ -330,7 +346,7 @@ const OrderList: React.FC = () => {
       case 'processing':
         return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">กำลังจัดการ</Badge>;
       case 'shipped':
-        return <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200">จัดส่งแล้ว</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">จัดส่งแล้ว</Badge>;
       case 'delivered':
         return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">จัดส่งสำเร็จ</Badge>;
       case 'cancelled':
@@ -1368,7 +1384,7 @@ const OrderList: React.FC = () => {
           {availableShippingMethods.length > 0 && (
             <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
               <div className="font-medium text-gray-700 flex items-center">
-                <Truck className="h-4 w-4 mr-2 text-purple-600" />
+                <Truck className="h-4 w-4 mr-2 text-blue-600" />
                 กรองตามบริษัทขนส่ง:
               </div>
               <div className="flex flex-wrap gap-2">
@@ -1376,7 +1392,7 @@ const OrderList: React.FC = () => {
                   variant={shippingFilter === 'all' ? 'default' : 'outline'} 
                   size="sm"
                   onClick={() => setShippingFilter('all')}
-                  className={shippingFilter === 'all' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                  className={shippingFilter === 'all' ? 'bg-blue-600 hover:bg-blue-700' : ''}
                 >
                   ทั้งหมด
                 </Button>
@@ -1386,11 +1402,21 @@ const OrderList: React.FC = () => {
                     variant={shippingFilter === method ? 'default' : 'outline'} 
                     size="sm"
                     onClick={() => setShippingFilter(method)}
-                    className={shippingFilter === method ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                    className={shippingFilter === method ? 'bg-blue-600 hover:bg-blue-700' : ''}
                   >
-                    {method === 'Flash Express' ? (
+                    {[
+                      'เสี่ยวไป๋ เอ็กเพรส', 
+                      'SpeedLine', 
+                      'ThaiStar Delivery', 
+                      'J&T Express', 
+                      'Kerry Express', 
+                      'ไปรษณีย์ไทย', 
+                      'DHL Express', 
+                      'Ninja Van',
+                      'Flash Express'
+                    ].includes(method) ? (
                       <span className="flex items-center">
-                        <Truck className="h-4 w-4 mr-1 text-purple-500" />
+                        <Truck className="h-4 w-4 mr-1 text-blue-500" />
                         {method}
                       </span>
                     ) : method}
