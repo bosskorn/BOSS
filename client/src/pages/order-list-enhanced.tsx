@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import Layout from '@/components/Layout';
+import JsBarcode from 'jsbarcode';
 import {
   Loader2,
   Search,
@@ -20,25 +21,42 @@ import {
   Square
 } from 'lucide-react';
 
-// ฟังก์ชันสร้างบาร์โค้ดอย่างง่าย
+// ฟังก์ชันสร้างบาร์โค้ด Code128 สำหรับเลขพัสดุ
 function generateBarcode(trackingNumber: string): string {
-  // แปลงตัวเลขและตัวอักษรเป็นเลขฐานสอง
-  let barcodeHtml = '';
-  const cleanNumber = trackingNumber.replace(/\s+/g, '');
-  
-  // สร้างเส้นบาร์โค้ดแบบสุ่มเพื่อให้ดูเหมือนบาร์โค้ดจริง
-  const numBars = 40; // จำนวนเส้นในบาร์โค้ด
-  
-  for (let i = 0; i < numBars; i++) {
-    // สุ่มความหนาของเส้น (1-3px)
-    const thickness = Math.floor(Math.random() * 3) + 1;
-    // สุ่มความสูงของเส้น (10-40px)
-    const height = Math.floor(Math.random() * 20) + 20;
+  if (!trackingNumber) return '';
+
+  // สร้าง SVG สำหรับเป็น barcode
+  const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svgElement.setAttribute('style', 'display:none');  // ซ่อน SVG เพื่อไม่ให้แสดงผลก่อน
+  document.body.appendChild(svgElement);
+
+  try {
+    // ใช้ JsBarcode เพื่อสร้าง barcode แบบ Code128
+    JsBarcode(svgElement, trackingNumber, {
+      format: "CODE128",
+      lineColor: "#000",
+      width: 2,
+      height: 30,
+      displayValue: false
+    });
+
+    // ดึง SVG String จาก element
+    const svgString = new XMLSerializer().serializeToString(svgElement);
     
-    barcodeHtml += `<div class="barcode-line" style="width: ${thickness}px; height: ${height}px;"></div>`;
+    // แปลง SVG เป็น base64 เพื่อสามารถใช้ใน img tag
+    const svgBase64 = btoa(svgString);
+    
+    // นำ SVG ออกจาก DOM
+    document.body.removeChild(svgElement);
+    
+    // สร้าง HTML สำหรับ barcode
+    return `<img src="data:image/svg+xml;base64,${svgBase64}" alt="Barcode" style="width:100%; max-width:180px; height:35px;" />`;
+  } catch (error) {
+    console.error('Error generating barcode:', error);
+    document.body.removeChild(svgElement);
+    // ถ้าเกิดข้อผิดพลาดให้แสดงเลขพัสดุแทน
+    return `<div style="font-family: monospace; letter-spacing: 4px; font-size: 16px; text-align: center;">${trackingNumber}</div>`;
   }
-  
-  return `<div style="text-align: center; display: flex; justify-content: center; margin: 3px 0;">${barcodeHtml}</div>`;
 }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1157,9 +1175,10 @@ const OrderList: React.FC = () => {
               <div class="barcode-small">
                 <div style="font-size: 9px; color: #666; margin-bottom: 3px;">บาร์โค้ด</div>
                 <div style="text-align: center;">
-                  <p style="font-family: monospace; letter-spacing: 4px; font-size: 16px; color: #333; margin: 5px 0;">
-                    ${order.trackingNumber}
-                  </p>
+                  ${generateBarcode(order.trackingNumber || '')}
+                </div>
+                <div style="text-align: center; font-size: 9px; margin-top: 3px;">
+                  ${order.trackingNumber}
                 </div>
               </div>
               `}
