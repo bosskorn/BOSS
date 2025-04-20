@@ -555,8 +555,11 @@ const OrderList: React.FC = () => {
     handlePrintLabelWithSizeDialog(order);
   };
 
-  // ฟังก์ชันพิมพ์แบบเลือกหลายรายการ
-  const printSelectedLabels = async () => {
+  // ฟังก์ชันพิมพ์แบบเลือกหลายรายการตามขนาดที่เลือก
+  const printSelectedLabelsWithSize = async () => {
+    // ใช้ขนาดที่เลือกจาก dialog แล้ว
+    setIsPrintingLabel(true);
+    
     if (selectedOrders.length === 0) {
       toast({
         title: 'ไม่มีรายการที่เลือก',
@@ -624,7 +627,7 @@ const OrderList: React.FC = () => {
             
             <div class="tracking box">
               <div>เลขพัสดุ</div>
-              <div style="font-size: 20px; font-weight: bold;">${order.trackingNumber}</div>
+              <div style="font-size: ${labelSize === '100x100mm' ? '18px' : '14px'}; font-weight: bold;">${order.trackingNumber}</div>
             </div>
             
             <div class="section">
@@ -703,7 +706,17 @@ const OrderList: React.FC = () => {
   };
   
   // ฟังก์ชันสำหรับพิมพ์ใบลาเบลตามขนาดที่เลือก
+  // ฟังก์ชันพิมพ์ใบลาเบลตามขนาดที่เลือก (อาจจะเป็นกรณีเลือกรายการเดียว หรือหลายรายการ)
   const printLabelWithSelectedSize = async () => {
+    setPrintDialogOpen(false);
+    
+    // กรณีพิมพ์หลายรายการ
+    if (selectedOrders.length > 0) {
+      printSelectedLabelsWithSize();
+      return;
+    }
+    
+    // กรณีพิมพ์รายการเดียว
     if (!orderToPrint) return;
     
     const order = orderToPrint;
@@ -936,7 +949,18 @@ const OrderList: React.FC = () => {
                 </Button>
                 
                 <Button 
-                  onClick={printSelectedLabels}
+                  onClick={() => {
+                    // ถ้ามีออเดอร์ที่ถูกเลือก ให้เปิด Dialog เลือกขนาด
+                    if (selectedOrders.length > 0) {
+                      // เลือกออเดอร์แรกเพื่อบันทึกเป็นค่าอ้างอิง (ใช้สำหรับตั้งค่าการพิมพ์เท่านั้น)
+                      const firstSelectedOrder = orders.find(order => selectedOrders.includes(order.id));
+                      if (firstSelectedOrder) {
+                        // บันทึกออเดอร์และเปิด Dialog
+                        setOrderToPrint(firstSelectedOrder);
+                        setPrintDialogOpen(true);
+                      }
+                    }
+                  }}
                   disabled={selectedOrders.length === 0 || isPrintingLabel}
                   className="bg-purple-600 hover:bg-purple-700"
                 >
