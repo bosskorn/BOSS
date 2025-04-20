@@ -1203,6 +1203,135 @@ const CreateOrderTabsPage: React.FC = () => {
     }
   };
   
+  // สร้างเลขพัสดุจากบริการขนส่งจำลอง
+  const createMockShippingService = async (data: CreateOrderFormValues) => {
+    try {
+      console.log('กำลังเรียกใช้บริการขนส่งจำลองเพื่อสร้างเลขพัสดุ...');
+      
+      // สร้างเลขออเดอร์
+      const orderNumber = `BD${Date.now()}`;
+      console.log('สร้างเลขออเดอร์:', orderNumber);
+      
+      // แก้ไขข้อมูลจังหวัดให้ถูกต้อง
+      let provinceName = data.province;
+      if (provinceName === 'กรุงเทพ' || provinceName === 'กทม' || provinceName === 'กรุงเทพฯ') {
+        provinceName = 'กรุงเทพมหานคร';
+      }
+      
+      // ตรวจสอบและแก้ไขข้อมูลเบอร์โทรศัพท์ให้ถูกต้อง
+      const customerPhone = data.customerPhone.replace(/[- ]/g, ''); // ลบเครื่องหมายขีดและช่องว่าง
+      
+      // สร้างที่อยู่รวม - ตรวจสอบว่ามีข้อมูลครบถ้วน
+      const detailAddress = [
+        data.houseNumber,
+        data.building,
+        data.floor ? `ชั้น ${data.floor}` : '',
+        data.roomNumber ? `ห้อง ${data.roomNumber}` : '',
+        data.village,
+        data.soi,
+        data.road
+      ].filter(Boolean).join(' ');
+      
+      if (!detailAddress || detailAddress.trim() === '') {
+        setAlertDialog({
+          open: true,
+          title: 'ที่อยู่ไม่ครบถ้วน',
+          description: 'กรุณากรอกข้อมูลที่อยู่ให้ครบถ้วน โดยเฉพาะเลขที่บ้านหรือถนน',
+          errorDetails: 'ตรวจสอบข้อมูลที่อยู่ในแท็บข้อมูลลูกค้า'
+        });
+        throw new Error('ที่อยู่ไม่ครบถ้วน กรุณากรอกเลขที่บ้านหรือถนน');
+      }
+      
+      // ข้อมูลผู้ส่ง
+      const sender = {
+        name: senderInfo?.name || 'บริษัท บลูแดช จำกัด',
+        phone: senderInfo?.phone || '0812345678',
+        address: {
+          province: senderInfo?.province || 'กรุงเทพมหานคร',
+          district: senderInfo?.district || 'คลองเตย',
+          subdistrict: senderInfo?.subdistrict || 'คลองเตย',
+          zipcode: senderInfo?.zipcode || '10110',
+          addressLine1: senderInfo?.address || '123 ถนนสุขุมวิท'
+        }
+      };
+      
+      // ข้อมูลผู้รับ
+      const recipient = {
+        name: data.customerName,
+        phone: customerPhone,
+        address: {
+          province: provinceName,
+          district: data.district,
+          subdistrict: data.subdistrict,
+          zipcode: data.zipcode,
+          addressLine1: detailAddress
+        }
+      };
+      
+      // คำนวณน้ำหนักและมูลค่าสินค้า
+      const totalValue = data.items.reduce((sum, item) => {
+        return sum + (item.price * item.quantity);
+      }, 0);
+      
+      // ข้อมูลรายละเอียดการจัดส่ง
+      const shipmentDetails = {
+        weight: 1, // น้ำหนักเริ่มต้น 1 กิโลกรัม
+        dimensions: {
+          width: 20,
+          height: 10,
+          length: 30
+        },
+        value: totalValue,
+        isCOD: data.isCOD,
+        codAmount: data.isCOD ? data.codAmount : undefined
+      };
+      
+      // ดึง serviceId จากชื่อบริการที่เลือก
+      const selectedShipping = shippingOptions.find(option => option.name === data.shippingMethod);
+      const shippingCode = selectedShipping?.serviceId || 'bluexpress_normal';
+      
+      console.log('ข้อมูลการจัดส่ง:', {
+        sender,
+        recipient,
+        details: shipmentDetails,
+        shippingCode
+      });
+      
+      try {
+        // เรียกใช้บริการขนส่งจำลอง
+        const result = await createMockShipment(sender, recipient, shipmentDetails, shippingCode);
+        console.log('ผลการสร้างเลขพัสดุ:', result);
+        
+        if (result && result.trackingNumber) {
+          console.log('สร้างเลขพัสดุสำเร็จ:', result.trackingNumber);
+          
+          // ส่งข้อมูลกลับไปยังฟังก์ชัน onSubmit
+          return {
+            orderNumber,
+            trackingNumber: result.trackingNumber,
+            sortCode: '00' // ในบริการจำลองไม่มี sortCode จึงใช้ค่าเริ่มต้น
+          };
+        } else {
+          throw new Error('ไม่ได้รับเลขพัสดุจากบริการขนส่ง');
+        }
+      } catch (apiError: any) {
+        console.error('เกิดข้อผิดพลาดในการสร้างเลขพัสดุ:', apiError);
+        
+        setAlertDialog({
+          open: true,
+          title: 'เกิดข้อผิดพลาด',
+          description: 'ไม่สามารถสร้างเลขพัสดุจากบริการขนส่งจำลองได้',
+          errorDetails: apiError.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'
+        });
+        
+        throw new Error(`ไม่สามารถสร้างเลขพัสดุได้: ${apiError.message}`);
+      }
+    } catch (error: any) {
+      console.error('Error creating mock shipping:', error);
+      throw error;
+    }
+  };
+  
   // ฟังก์ชันการเลือกวิธีการจัดส่ง
   const handleShippingSelect = (shippingId: string | number) => {
     const selectedShipping = shippingOptions.find(s => s.id === shippingId);
@@ -1231,11 +1360,11 @@ const CreateOrderTabsPage: React.FC = () => {
       // สร้างข้อมูลสำหรับส่งไปยังเซิร์ฟเวอร์
       const orderData = { ...data };
       
-      // เรียกใช้ Flash Express API เพื่อสร้างเลขพัสดุ
+      // เรียกใช้บริการขนส่งจำลองเพื่อสร้างเลขพัสดุ
       let shippingInfo;
       try {
-        shippingInfo = await createFlashExpressShipping(data);
-        console.log('ได้รับข้อมูลการจัดส่งจาก Flash Express:', shippingInfo);
+        shippingInfo = await createMockShippingService(data);
+        console.log('ได้รับข้อมูลการจัดส่งจากบริการขนส่งจำลอง:', shippingInfo);
         
         // เพิ่มข้อมูลเลขพัสดุและรหัสการเรียงลำดับเข้าไปในออเดอร์
         orderData.orderNumber = shippingInfo.orderNumber;
@@ -1273,7 +1402,7 @@ const CreateOrderTabsPage: React.FC = () => {
         });
         
         // ยกเลิกการสร้างออเดอร์เมื่อไม่สามารถรับเลขพัสดุได้
-        throw new Error('ไม่สามารถสร้างเลขพัสดุจาก Flash Express ได้');
+        throw new Error('ไม่สามารถสร้างเลขพัสดุจากบริการขนส่งได้');
       }
     } catch (error: any) {
       console.error('Error creating order:', error);
