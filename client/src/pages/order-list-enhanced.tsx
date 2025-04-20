@@ -344,54 +344,69 @@ const OrderList: React.FC = () => {
       
       // เพิ่มการตรวจสอบข้อมูลของออเดอร์ตัวอย่าง
       if (result.length > 0) {
-        console.log('ตัวอย่างข้อมูลออร์เดอร์:', JSON.stringify(result[0], null, 2));
+        console.log('ข้อมูลออเดอร์ตัวอย่างก่อนการกรอง:', {
+          id: result[0].id,
+          orderNumber: result[0].orderNumber,
+          trackingNumber: result[0].trackingNumber,
+          shippingMethod: result[0].shippingMethod
+        });
       }
       
-      // กรองตามค่า shippingMethodId, shippingMethod และข้อมูลที่เกี่ยวข้อง
+      // กรองตามเลขพัสดุเป็นหลัก เนื่องจากข้อมูล shippingMethod อาจจะไม่มี
       result = result.filter(order => {
-        // แสดงข้อมูลการเปรียบเทียบในกรณี debug
-        console.log(`ตรวจสอบออเดอร์ ${order.id}:`, {
-          shippingMethod: order.shippingMethod,
-          shippingMethodId: order.shippingMethodId,
-          trackingNumber: order.trackingNumber,
-          shippingFilter
-        });
-        
-        // ดึงข้อมูลวิธีการขนส่งจากออบเจ็กต์ ShippingMethod (ถ้ามี)
-        const shippingMethodName = order.shippingMethodName || order.shippingMethod;
-        
-        // ตรวจสอบว่า shippingMethod หรือ shippingMethodName ตรงกับตัวกรอง
-        if (shippingMethodName === shippingFilter) {
-          console.log(`Matched exact shipping method: ${order.id}`);
-          return true;
+        // ตรวจสอบ trackingNumber เป็นหลัก
+        if (order.trackingNumber) {
+          // แสดงข้อมูลเลขพัสดุและรหัสขนส่ง
+          console.log(`Order #${order.id} - ${order.orderNumber}: พัสดุ ${order.trackingNumber}`);
+
+          // ใช้ 3 ตัวอักษรแรกของเลขพัสดุในการจำแนกขนส่ง
+          const trackingPrefix = order.trackingNumber.substring(0, 3);
+
+          // กำหนดการจับคู่ระหว่างชื่อขนส่งกับรหัสนำหน้า
+          const carrierMapping: Record<string, string[]> = {
+            'Xiaobai Express': ['XBE'],
+            'Thailand Post': ['THP', 'THA'],
+            'SpeedLine': ['SPL'],
+            'ThaiStar Delivery': ['TSD', 'TST'],
+            'J&T Express': ['JNT', 'JTE'],
+            'Kerry Express': ['KRY', 'KRE'],
+            'DHL Express': ['DHL'],
+            'Ninja Van': ['NJV', 'NJA'],
+            'Flash Express': ['FLX', 'FLE']
+          };
+
+          // ตรวจสอบว่าเลขพัสดุตรงกับขนส่งที่กรองหรือไม่
+          if (carrierMapping[shippingFilter] && 
+              carrierMapping[shippingFilter].includes(trackingPrefix)) {
+            console.log(`✓ Order #${order.id} ตรงกับการกรอง ${shippingFilter} (prefix=${trackingPrefix})`);
+            return true;
+          }
         }
+        
+        // ตรวจสอบชื่อวิธีการจัดส่ง (เป็นตัวเลือกสำรอง)
+        const shippingMethodName = order.shippingMethod || '';
         
         // รองรับการเปลี่ยนชื่อจากภาษาไทยเป็นภาษาอังกฤษ
         if (shippingFilter === 'Xiaobai Express' && 
-            (shippingMethodName === 'เสี่ยวไป๋ เอ็กเพรส' || 
-             shippingMethodName === 'Xiaobai Express')) {
-          console.log(`Matched Xiaobai Express: ${order.id}`);
+            shippingMethodName.includes('เสี่ยวไป๋') || 
+            shippingMethodName.includes('Xiaobai')) {
+          console.log(`✓ Order #${order.id} ตรงกับการกรอง Xiaobai Express จากชื่อ ${shippingMethodName}`);
           return true;
         }
         
         if (shippingFilter === 'Thailand Post' && 
-            (shippingMethodName === 'ไปรษณีย์ไทย' || 
-             shippingMethodName === 'Thailand Post')) {
-          console.log(`Matched Thailand Post: ${order.id}`);
+            shippingMethodName.includes('ไปรษณีย์') || 
+            shippingMethodName.includes('Thailand Post')) {
+          console.log(`✓ Order #${order.id} ตรงกับการกรอง Thailand Post จากชื่อ ${shippingMethodName}`);
           return true;
         }
         
-        // เพิ่มกรณีเมื่อมีการตรวจสอบสตริงใน trackingNumber
-        if (shippingFilter === 'Xiaobai Express' && order.trackingNumber && order.trackingNumber.startsWith('XBE')) {
-          console.log(`Matched Xiaobai Express by tracking number: ${order.id} - ${order.trackingNumber}`);
+        if (shippingMethodName.includes(shippingFilter)) {
+          console.log(`✓ Order #${order.id} ตรงกับการกรอง ${shippingFilter} จากชื่อ ${shippingMethodName}`);
           return true;
         }
         
-        if (shippingFilter === 'Thailand Post' && order.trackingNumber && order.trackingNumber.startsWith('THP')) {
-          console.log(`Matched Thailand Post by tracking number: ${order.id} - ${order.trackingNumber}`);
-          return true;
-        }
-        
+        // ไม่ตรงกับเงื่อนไขใดๆ
         return false;
       });
       
