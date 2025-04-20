@@ -711,6 +711,17 @@ const OrderList: React.FC = () => {
     try {
       const token = localStorage.getItem('auth_token');
       
+      // ตรวจสอบและแปลงชื่อขนส่งภาษาอังกฤษให้ตรงกับที่ backend ใช้
+      let shippingMethodForServer = selectedShippingMethod;
+      
+      // แปลงชื่อขนส่งภาษาอังกฤษเป็นภาษาไทยสำหรับการส่งไปยัง backend
+      // เนื่องจาก backend ยังใช้ชื่อภาษาไทยอยู่ (เช่น "เสี่ยวไป๋ เอ็กเพรส")
+      if (selectedShippingMethod === "Xiaobai Express") {
+        shippingMethodForServer = "เสี่ยวไป๋ เอ็กเพรส";
+      } else if (selectedShippingMethod === "Thailand Post") {
+        shippingMethodForServer = "ไปรษณีย์ไทย";
+      }
+      
       // เรียก API เพื่อสร้างเลขพัสดุ
       const response = await fetch(`/api/orders/${orderToCreateTracking}/tracking`, {
         method: 'POST',
@@ -720,7 +731,7 @@ const OrderList: React.FC = () => {
         },
         credentials: 'include',
         body: JSON.stringify({
-          shippingMethod: selectedShippingMethod
+          shippingMethod: shippingMethodForServer
         })
       });
       
@@ -800,7 +811,9 @@ const OrderList: React.FC = () => {
             },
             credentials: 'include',
             body: JSON.stringify({
-              shippingMethod: selectedShippingMethod
+              shippingMethod: selectedShippingMethod === "Xiaobai Express" ? "เสี่ยวไป๋ เอ็กเพรส" : 
+                              selectedShippingMethod === "Thailand Post" ? "ไปรษณีย์ไทย" : 
+                              selectedShippingMethod
             })
           });
           
