@@ -394,16 +394,18 @@ const FlashExpressLabel: React.FC = () => {
           
           <!-- ข้อมูลผู้ส่ง -->
           <div class="shipper-info">
-            <div>จาก ${senderName}</div>
-            <div>${senderPhone}</div>
-            <div>${senderAddress}</div>
+            <div><strong>จาก:</strong> ${senderName}</div>
+            <div><strong>โทร:</strong> ${senderPhone}</div>
+            <span class="address-line"><strong>ที่อยู่:</strong> ${senderAddress.split(',')[0]}</span>
+            ${senderAddress.split(',').slice(1).map(part => `<span class="address-line">${part.trim()}</span>`).join('')}
           </div>
           
           <!-- ข้อมูลผู้รับ -->
           <div class="recipient-info">
-            <div>ถึง ${recipientName}</div>
-            <div>${recipientPhone}</div>
-            <div>${recipientAddress}</div>
+            <div><strong>ถึง:</strong> ${recipientName}</div>
+            <div><strong>โทร:</strong> ${recipientPhone}</div>
+            <span class="address-line"><strong>ที่อยู่:</strong> ${recipientAddress.split(',')[0]}</span>
+            ${recipientAddress.split(',').slice(1).map(part => `<span class="address-line">${part.trim()}</span>`).join('')}
           </div>
           
           <!-- QR Code -->
