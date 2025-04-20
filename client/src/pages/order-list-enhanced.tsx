@@ -342,73 +342,91 @@ const OrderList: React.FC = () => {
     if (shippingFilter !== 'all') {
       console.log('กำลังกรองตามวิธีการขนส่ง:', shippingFilter);
       
-      // เพิ่มการตรวจสอบข้อมูลของออเดอร์ตัวอย่าง
-      if (result.length > 0) {
-        console.log('ข้อมูลออเดอร์ตัวอย่างก่อนการกรอง:', {
-          id: result[0].id,
-          orderNumber: result[0].orderNumber,
-          trackingNumber: result[0].trackingNumber,
-          shippingMethod: result[0].shippingMethod
-        });
-      }
+      // กำหนดการจับคู่ระหว่างชื่อขนส่งกับรหัสนำหน้า และคำค้นหาอื่นๆ
+      const carrierMappings: Record<string, {prefixes: string[], keywords: string[]}> = {
+        'Xiaobai Express': {
+          prefixes: ['XBE', 'เสี'], 
+          keywords: ['เสี่ยวไป๋', 'Xiaobai']
+        },
+        'Thailand Post': {
+          prefixes: ['THP', 'THA'], 
+          keywords: ['ไปรษณีย์', 'Thailand Post']
+        },
+        'SpeedLine': {
+          prefixes: ['SPL'], 
+          keywords: ['SpeedLine', 'สปีดไลน์']
+        },
+        'ThaiStar Delivery': {
+          prefixes: ['TSD', 'TST'], 
+          keywords: ['ThaiStar', 'ไทยสตาร์']
+        },
+        'J&T Express': {
+          prefixes: ['JNT', 'JTE'], 
+          keywords: ['J&T', 'เจแอนด์ที']
+        },
+        'Kerry Express': {
+          prefixes: ['KRY', 'KRE'], 
+          keywords: ['Kerry', 'เคอรี่']
+        },
+        'DHL Express': {
+          prefixes: ['DHL'], 
+          keywords: ['DHL', 'ดีเอชแอล']
+        },
+        'Ninja Van': {
+          prefixes: ['NJV', 'NJA'], 
+          keywords: ['Ninja', 'นินจา']
+        },
+        'Flash Express': {
+          prefixes: ['FLX', 'FLE'], 
+          keywords: ['Flash', 'แฟลช']
+        }
+      };
       
-      // กรองตามเลขพัสดุเป็นหลัก เนื่องจากข้อมูล shippingMethod อาจจะไม่มี
+      // แสดงข้อมูลจำนวนออเดอร์ก่อนกรอง
+      console.log(`จำนวนออเดอร์ทั้งหมด: ${result.length} รายการ`);
+      
+      // กรองตามเลขพัสดุและชื่อขนส่ง
       result = result.filter(order => {
-        // ตรวจสอบ trackingNumber เป็นหลัก
+        // ตรวจสอบเลขพัสดุ
         if (order.trackingNumber) {
-          // แสดงข้อมูลเลขพัสดุและรหัสขนส่ง
-          console.log(`Order #${order.id} - ${order.orderNumber}: พัสดุ ${order.trackingNumber}`);
-
-          // ใช้ 3 ตัวอักษรแรกของเลขพัสดุในการจำแนกขนส่ง
-          const trackingPrefix = order.trackingNumber.substring(0, 3);
-
-          // กำหนดการจับคู่ระหว่างชื่อขนส่งกับรหัสนำหน้า
-          const carrierMapping: Record<string, string[]> = {
-            'Xiaobai Express': ['XBE'],
-            'Thailand Post': ['THP', 'THA'],
-            'SpeedLine': ['SPL'],
-            'ThaiStar Delivery': ['TSD', 'TST'],
-            'J&T Express': ['JNT', 'JTE'],
-            'Kerry Express': ['KRY', 'KRE'],
-            'DHL Express': ['DHL'],
-            'Ninja Van': ['NJV', 'NJA'],
-            'Flash Express': ['FLX', 'FLE']
-          };
-
-          // ตรวจสอบว่าเลขพัสดุตรงกับขนส่งที่กรองหรือไม่
-          if (carrierMapping[shippingFilter] && 
-              carrierMapping[shippingFilter].includes(trackingPrefix)) {
-            console.log(`✓ Order #${order.id} ตรงกับการกรอง ${shippingFilter} (prefix=${trackingPrefix})`);
-            return true;
+          const trackingNo = order.trackingNumber;
+          // ตรวจสอบว่าเลขพัสดุขึ้นต้นด้วยรหัสของขนส่งที่กำลังกรองหรือไม่
+          if (carrierMappings[shippingFilter]) {
+            for (const prefix of carrierMappings[shippingFilter].prefixes) {
+              if (trackingNo.startsWith(prefix)) {
+                console.log(`✓ Matched Order #${order.id}: ${trackingNo} by prefix ${prefix}`);
+                return true;
+              }
+            }
           }
         }
         
-        // ตรวจสอบชื่อวิธีการจัดส่ง (เป็นตัวเลือกสำรอง)
+        // ตรวจสอบชื่อวิธีการจัดส่ง (กรณีไม่มีเลขพัสดุหรือเลขพัสดุไม่ตรงกับรูปแบบ)
         const shippingMethodName = order.shippingMethod || '';
         
-        // รองรับการเปลี่ยนชื่อจากภาษาไทยเป็นภาษาอังกฤษ
-        if (shippingFilter === 'Xiaobai Express' && 
-            shippingMethodName.includes('เสี่ยวไป๋') || 
-            shippingMethodName.includes('Xiaobai')) {
-          console.log(`✓ Order #${order.id} ตรงกับการกรอง Xiaobai Express จากชื่อ ${shippingMethodName}`);
-          return true;
+        // ตรวจสอบคำสำคัญทีละคำ
+        if (carrierMappings[shippingFilter]) {
+          for (const keyword of carrierMappings[shippingFilter].keywords) {
+            if (shippingMethodName.includes(keyword)) {
+              console.log(`✓ Matched Order #${order.id}: ${shippingMethodName} by keyword ${keyword}`);
+              return true;
+            }
+          }
         }
         
-        if (shippingFilter === 'Thailand Post' && 
-            shippingMethodName.includes('ไปรษณีย์') || 
-            shippingMethodName.includes('Thailand Post')) {
-          console.log(`✓ Order #${order.id} ตรงกับการกรอง Thailand Post จากชื่อ ${shippingMethodName}`);
-          return true;
-        }
-        
-        if (shippingMethodName.includes(shippingFilter)) {
-          console.log(`✓ Order #${order.id} ตรงกับการกรอง ${shippingFilter} จากชื่อ ${shippingMethodName}`);
+        // ตรวจสอบชื่อขนส่งแบบตรงๆ
+        if (shippingMethodName === shippingFilter) {
+          console.log(`✓ Matched Order #${order.id}: ${shippingMethodName} exact match`);
           return true;
         }
         
         // ไม่ตรงกับเงื่อนไขใดๆ
         return false;
       });
+      
+      // แสดงข้อมูลจำนวนออเดอร์หลังกรอง
+      console.log(`จำนวนออเดอร์ของ ${shippingFilter} หลังกรอง: ${result.length} รายการ`);
+      
       
       // ไม่แสดงข้อมูลจำลองเมื่อไม่มีรายการคำสั่งซื้อ
       // ข้อความ "ยังไม่มีรายการคำสั่งซื้อ" จะถูกแสดงโดยอัตโนมัติเมื่อไม่มีข้อมูล
@@ -1036,7 +1054,7 @@ const OrderList: React.FC = () => {
         toast({
           title: 'ลบออเดอร์สำเร็จบางส่วน',
           description: `ลบสำเร็จ ${successCount} รายการ, ล้มเหลว ${failCount} รายการ`,
-          variant: 'warning',
+          variant: 'destructive',
         });
       } else {
         toast({
