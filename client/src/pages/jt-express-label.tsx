@@ -190,27 +190,35 @@ const JTExpressLabel: React.FC = () => {
             line-height: 1.3;
             padding: 0 1mm;
           }
-          .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2mm;
+          .sender-recipient-row {
+            margin: 3mm 0;
           }
-          .left-column, .right-column {
+          .address-container {
             display: flex;
-            flex-direction: column;
-          }
-          .recipient-box, .sender-box {
             border: 1px solid #ddd;
             border-radius: 2px;
-            padding: 4mm;
-            min-height: 25mm;
-            background-color: #fafafa;
+            background-color: #fff;
+            min-height: 30mm;
+            padding: 2mm 0;
+          }
+          .sender-side, .recipient-side {
+            flex: 1;
+            padding: 2mm 3mm;
             line-height: 1.4;
           }
-          .recipient-box {
-            border-width: 2px;
-            border-color: #e61e25;
-            background-color: #fff;
+          .center-divider {
+            width: 1px;
+            background-color: #ddd;
+            margin: 1mm 0;
+          }
+          .sender-label, .recipient-label {
+            font-weight: bold;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 2mm;
+          }
+          .recipient-side {
+            border-left: 2px solid #e61e25;
           }
           .name {
             font-weight: bold;
@@ -307,34 +315,29 @@ const JTExpressLabel: React.FC = () => {
               </div>
             </div>
 
-            <div class="grid-2">
-              <div class="left-column">
-                <div class="qr-code-container">
-                  <div id="qrcode"></div>
+            <div class="qr-code-container">
+              <div id="qrcode"></div>
+            </div>
+            
+            <div class="sender-recipient-row">
+              <div class="section-title">ผู้ส่ง-ผู้รับ / SENDER-RECIPIENT</div>
+              <div class="address-container">
+                <div class="sender-side">
+                  <div class="sender-label">จาก / From:</div>
+                  <div class="name">${senderName}</div>
+                  <div class="contact">โทร: ${senderPhone}</div>
+                  <div class="address-line">${senderAddress}</div>
+                  <div class="address-line">${senderDistrict} ${senderProvince}</div>
+                  <div class="zipcode">${senderZipcode}</div>
                 </div>
-                
-                <div class="section">
-                  <div class="section-title">ผู้ส่ง / SENDER</div>
-                  <div class="sender-box">
-                    <div class="name">${senderName}</div>
-                    <div class="contact">โทร: ${senderPhone}</div>
-                    <div class="address-line">${senderAddress}</div>
-                    <div class="address-line">${senderDistrict} ${senderProvince}</div>
-                    <div class="zipcode">${senderZipcode}</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="right-column">
-                <div class="section">
-                  <div class="section-title">ผู้รับ / RECIPIENT</div>
-                  <div class="recipient-box">
-                    <div class="name">${recipientName}</div>
-                    <div class="contact">โทร: ${recipientPhone}</div>
-                    <div class="address-line">${recipientAddress}</div>
-                    <div class="address-line">${recipientDistrict} ${recipientProvince}</div>
-                    <div class="zipcode">${recipientZipcode}</div>
-                  </div>
+                <div class="center-divider"></div>
+                <div class="recipient-side">
+                  <div class="recipient-label">ถึง / To:</div>
+                  <div class="name">${recipientName}</div>
+                  <div class="contact">โทร: ${recipientPhone}</div>
+                  <div class="address-line">${recipientAddress}</div>
+                  <div class="address-line">${recipientDistrict} ${recipientProvince}</div>
+                  <div class="zipcode">${recipientZipcode}</div>
                 </div>
               </div>
             </div>
