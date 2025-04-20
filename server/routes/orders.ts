@@ -76,6 +76,14 @@ router.get('/:id', auth, async (req, res) => {
     
     // เพิ่มข้อมูลสินค้าให้กับรายการสินค้า
     const orderItemsWithProductDetails = await Promise.all(orderItems.map(async (item) => {
+      // แปลงข้อมูลตัวเลขให้เป็นตัวเลขจริงๆ
+      const quantity = parseInt(item.quantity as any, 10) || 1;
+      const price = parseFloat(item.price as any) || 0;
+      const discount = parseFloat(item.discount as any || '0') || 0;
+      
+      // คำนวณยอดรวมของสินค้าแต่ละรายการ
+      const total = (quantity * price) - discount;
+      
       // ถ้ามี productId ให้ดึงข้อมูลสินค้า
       if (item.productId) {
         try {
@@ -85,7 +93,11 @@ router.get('/:id', auth, async (req, res) => {
               ...item,
               productName: product.name,
               sku: product.sku,
-              imageUrl: product.imageUrl
+              imageUrl: product.imageUrl,
+              quantity: quantity,
+              price: price,
+              discount: discount,
+              total: total
             };
           }
         } catch (err) {
@@ -97,7 +109,11 @@ router.get('/:id', auth, async (req, res) => {
       return {
         ...item,
         productName: item.productName || 'ไม่ระบุสินค้า',
-        sku: item.sku || ''
+        sku: item.sku || '',
+        quantity: quantity,
+        price: price,
+        discount: discount,
+        total: total
       };
     }));
     
