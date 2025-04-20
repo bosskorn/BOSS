@@ -353,7 +353,7 @@ const OrderList: React.FC = () => {
           keywords: ['ไปรษณีย์', 'Thailand Post']
         },
         'SpeedLine': {
-          prefixes: ['SPL', 'PD'], 
+          prefixes: ['SPL', 'PD', 'SPE'], 
           keywords: ['SpeedLine', 'สปีดไลน์']
         },
         'ThaiStar Delivery': {
@@ -411,6 +411,24 @@ const OrderList: React.FC = () => {
                 return true;
               }
             }
+          }
+        }
+        
+        // ตรวจสอบเลขพัสดุด้วยการหาคำว่า "SPE" และ "THA" ในทุกส่วนของเลขพัสดุ (ไม่ใช่แค่นำหน้า)
+        if (order.trackingNumber) {
+          const trackingNo = order.trackingNumber;
+          
+          // กรณี SpeedLine
+          if (shippingFilter === 'SpeedLine' && 
+              (trackingNo.includes('SPE') || (order.orderNumber && order.orderNumber.startsWith('PD')))) {
+            console.log(`✓ Matched Order #${order.id}: ${trackingNo || order.orderNumber} substring match for SpeedLine`);
+            return true;
+          }
+          
+          // กรณี Thailand Post
+          if (shippingFilter === 'Thailand Post' && trackingNo.includes('THA')) {
+            console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Thailand Post`);
+            return true;
           }
         }
         
