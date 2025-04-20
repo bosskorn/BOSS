@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import JsBarcode from 'jsbarcode';
 
 /**
  * หน้าสำหรับพิมพ์ลาเบล Flash Express
@@ -29,6 +30,22 @@ const FlashExpressLabel: React.FC = () => {
   const [shippingDate, setShippingDate] = useState('21/04/2025 23:59');
   const [cashless, setCashless] = useState(true);
   const [pickupPackage, setPickupPackage] = useState(true);
+  
+  // Reference สำหรับใช้ในการสร้างบาร์โค้ด
+  const barcodeRef = useRef(null);
+  
+  // สร้างบาร์โค้ดเมื่อ trackingNumber เปลี่ยนแปลง
+  useEffect(() => {
+    if (barcodeRef.current) {
+      JsBarcode(barcodeRef.current, trackingNumber, {
+        format: "CODE128",
+        width: 2,
+        height: 70,
+        displayValue: false,
+        margin: 0
+      });
+    }
+  }, [trackingNumber]);
   
   // ฟังก์ชันสำหรับพิมพ์ลาเบล
   const printLabel = () => {
@@ -170,14 +187,23 @@ const FlashExpressLabel: React.FC = () => {
           .shipper-info {
             padding: 2mm 3mm;
             border-bottom: 1px solid #eee;
-            font-size: 12px;
+            font-size: 11px;
             line-height: 1.2;
+            max-width: 48%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
           }
           .recipient-info {
             padding: 2mm 3mm;
             border-bottom: 1px solid #eee;
-            font-size: 12px;
+            font-size: 11px;
             line-height: 1.2;
+            max-width: 48%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
+          .address-line {
+            display: block;
           }
           .qr-section {
             position: absolute;
@@ -344,16 +370,7 @@ const FlashExpressLabel: React.FC = () => {
             <div class="service-type">${serviceType}</div>
           </div>
           
-          <!-- เลขติดตามด้านข้าง -->
-          <div class="tracking-side tracking-left-1">${trackingNumber}</div>
-          <div class="tracking-side tracking-left-2">${trackingNumber}</div>
-          <div class="tracking-side tracking-left-3">${trackingNumber}</div>
-          <div class="tracking-side tracking-left-4">${trackingNumber}</div>
-          
-          <div class="tracking-side tracking-right-1">${trackingNumber}</div>
-          <div class="tracking-side tracking-right-2">${trackingNumber}</div>
-          <div class="tracking-side tracking-right-3">${trackingNumber}</div>
-          <div class="tracking-side tracking-right-4">${trackingNumber}</div>
+          <!-- ลบเลขติดตามด้านข้างตามที่ร้องขอ -->
           
           <!-- บาร์โค้ดและเลขติดตาม -->
           <div class="tracking-number-box">
