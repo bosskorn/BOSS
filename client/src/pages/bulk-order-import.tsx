@@ -64,8 +64,8 @@ const BulkOrderImportPage: React.FC = () => {
       try {
         const response = await api.get('/api/shipping-methods');
         if (response.data.success) {
-          // เพิ่มขนส่งจำลองทั้งหมดที่ใช้ในระบบ
-          const mockCouriers = [
+          // เพิ่มขนส่งมาตรฐานทั้งหมดที่ใช้ในระบบ
+          const standardCouriers = [
             'Xiaobai Express',
             'SpeedLine',
             'ThaiStar Delivery',
@@ -73,14 +73,15 @@ const BulkOrderImportPage: React.FC = () => {
             'Kerry Express',
             'Thailand Post',
             'DHL Express',
-            'Ninja Van'
+            'Ninja Van',
+            'Flash Express'
           ];
           
-          // รวมข้อมูลขนส่งจำลองกับข้อมูลจริงจาก API
+          // รวมข้อมูลขนส่งมาตรฐานกับข้อมูลจริงจาก API
           const allMethods = [...response.data.shippingMethods];
           
-          // สร้าง mock shipping method objects
-          mockCouriers.forEach(courier => {
+          // สร้าง standard shipping method objects
+          standardCouriers.forEach(courier => {
             // ตรวจสอบว่ามีชื่อขนส่งนี้ในข้อมูลจริงแล้วหรือไม่
             const exists = allMethods.some(method => method.name === courier);
             if (!exists) {
