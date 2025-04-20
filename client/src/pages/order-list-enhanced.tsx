@@ -1157,49 +1157,10 @@ const OrderList: React.FC = () => {
               <div class="barcode-small">
                 <div style="font-size: 9px; color: #666; margin-bottom: 3px;">บาร์โค้ด</div>
                 <div style="text-align: center;">
-                  <svg width="180" height="40" style="display: inline-block;">
-                    <rect x="10" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="13" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="17" y="5" width="3" height="30" fill="black"></rect>
-                    <rect x="22" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="25" y="5" width="3" height="30" fill="black"></rect>
-                    <rect x="30" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="35" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="39" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="43" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="47" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="51" y="5" width="3" height="30" fill="black"></rect>
-                    <rect x="56" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="60" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="64" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="67" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="72" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="76" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="80" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="84" y="5" width="3" height="30" fill="black"></rect>
-                    <rect x="89" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="92" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="96" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="99" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="104" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="108" y="5" width="3" height="30" fill="black"></rect>
-                    <rect x="113" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="116" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="120" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="124" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="128" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="132" y="5" width="3" height="30" fill="black"></rect>
-                    <rect x="137" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="140" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="144" y="5" width="3" height="30" fill="black"></rect>
-                    <rect x="149" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="152" y="5" width="2" height="30" fill="black"></rect>
-                    <rect x="156" y="5" width="1" height="30" fill="black"></rect>
-                    <rect x="160" y="5" width="3" height="30" fill="black"></rect>
-                    <rect x="165" y="5" width="1" height="30" fill="black"></rect>
-                  </svg>
+                  <p style="font-family: monospace; letter-spacing: 4px; font-size: 16px; color: #333; margin: 5px 0;">
+                    ${order.trackingNumber}
+                  </p>
                 </div>
-                <div style="font-size: 9px; margin-top: 3px;">${order.trackingNumber}</div>
               </div>
               `}
               
