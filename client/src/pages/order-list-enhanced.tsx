@@ -623,13 +623,13 @@ const OrderList: React.FC = () => {
               width: 100%; 
               height: 100%; 
               box-sizing: border-box;
-              padding: ${labelSize === '100x100mm' ? '8mm' : '6mm'};
+              padding: ${labelSize === '100x100mm' ? '8mm' : '5mm'};
               position: relative;
             }
             .logo { 
               text-align: center; 
-              margin-bottom: ${labelSize === '100x100mm' ? '5mm' : '3mm'}; 
-              font-size: ${labelSize === '100x100mm' ? '22px' : '18px'}; 
+              margin-bottom: ${labelSize === '100x100mm' ? '5mm' : '2mm'}; 
+              font-size: ${labelSize === '100x100mm' ? '22px' : '16px'}; 
               font-weight: bold; 
               color: #8A2BE2; 
             }
@@ -642,37 +642,64 @@ const OrderList: React.FC = () => {
               border-radius: 3px; 
               background-color: #faf6ff;
             }
+            .flex-container {
+              display: flex;
+              ${labelSize === '100x75mm' ? 'margin-top: 2mm;' : ''}
+            }
+            .flex-column {
+              flex: 1;
+              ${labelSize === '100x75mm' ? 'padding-right: 2mm;' : ''}
+            }
             .section { 
-              margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '2mm'}; 
+              margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '1.5mm'}; 
             }
             .title { 
               font-weight: bold; 
-              margin-bottom: 1mm; 
-              font-size: ${labelSize === '100x100mm' ? '13px' : '11px'}; 
+              margin-bottom: ${labelSize === '100x100mm' ? '1mm' : '0.5mm'}; 
+              font-size: ${labelSize === '100x100mm' ? '13px' : '9px'}; 
               color: #555; 
+              ${labelSize === '100x75mm' ? 'background-color: #f7f7f7; padding: 1px 3px; border-radius: 2px;' : ''}
             }
             .address { 
-              font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; 
-              line-height: 1.3; 
+              font-size: ${labelSize === '100x100mm' ? '12px' : '9px'}; 
+              line-height: ${labelSize === '100x100mm' ? '1.3' : '1.2'}; 
+            }
+            .compact-address {
+              /* สำหรับการแสดงแบบย่อในกรณีลาเบลขนาดเล็ก */
+              display: ${labelSize === '100x75mm' ? 'block' : 'none'};
+            }
+            .normal-address {
+              /* สำหรับการแสดงแบบปกติในกรณีลาเบลขนาดใหญ่ */
+              display: ${labelSize === '100x100mm' ? 'block' : 'none'};
+            }
+            .recipient-box {
+              ${labelSize === '100x75mm' ? 'border-left: 1px solid #ddd; padding-left: 2mm;' : ''}
+            }
+            .tracking-number {
+              ${labelSize === '100x75mm' ? 'font-size: 14px !important; font-weight: bold; letter-spacing: 1px;' : ''}
+              display: ${labelSize === '100x75mm' ? 'inline-block' : 'block'};
+              text-align: ${labelSize === '100x75mm' ? 'left' : 'center'};
             }
             .barcode { 
               text-align: center; 
-              margin: ${labelSize === '100x100mm' ? '3mm 0' : '2mm 0'}; 
+              margin: ${labelSize === '100x100mm' ? '3mm 0' : '1.5mm 0'}; 
               font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; 
               letter-spacing: 2px;
               background-color: #f9f9f9;
-              padding: 1mm;
+              padding: ${labelSize === '100x100mm' ? '1mm' : '0.5mm'};
               font-family: monospace;
+              ${labelSize === '100x75mm' ? 'display: none;' : ''}
             }
             .footer { 
               text-align: center; 
-              font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; 
-              margin-top: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'};
+              font-size: ${labelSize === '100x100mm' ? '12px' : '9px'}; 
+              margin-top: ${labelSize === '100x100mm' ? '2mm' : '0'};
               color: #666;
               position: ${labelSize === '100x100mm' ? 'relative' : 'absolute'};
-              bottom: ${labelSize === '100x100mm' ? 'auto' : '5mm'};
+              bottom: ${labelSize === '100x100mm' ? 'auto' : '2mm'};
               left: 0;
               right: 0;
+              ${labelSize === '100x75mm' ? 'background-color: #fff6f6; padding: 1mm; border-radius: 2px;' : ''}
             }
             .box { 
               border: 1px solid #ddd; 
