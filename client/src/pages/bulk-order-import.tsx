@@ -235,6 +235,8 @@ const BulkOrderImportPage: React.FC = () => {
           isCOD: order.isCOD,
           codAmount: order.codAmount || 0,
           note: '',
+          // เพิ่มการส่งค่าเพื่อสร้างเลขพัสดุอัตโนมัติถ้าเลือกบริษัทขนส่ง
+          generateTrackingNumber: selectedShippingMethod !== 'no_carrier',
           total: order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) + 40 // คำนวณราคารวมเบื้องต้น
         };
 
@@ -242,7 +244,13 @@ const BulkOrderImportPage: React.FC = () => {
         const response = await api.post('/api/orders', orderData);
         
         if (response.data.success) {
-          successOrders.push(response.data.order.trackingNumber);
+          // เก็บเลขพัสดุถ้ามี
+          if (response.data.order.trackingNumber) {
+            successOrders.push(response.data.order.trackingNumber);
+          } else {
+            // ถ้าไม่มีเลขพัสดุ แต่ออเดอร์สร้างสำเร็จ
+            successOrders.push(`ออเดอร์ #${response.data.order.orderNumber}`);
+          }
         } else {
           failedOrders.push({ 
             index: i, 

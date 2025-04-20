@@ -227,6 +227,64 @@ router.post('/', auth, async (req, res) => {
     // Store order in database
     const order = await storage.createOrder(orderData);
     
+    // ตรวจสอบการสร้างเลขพัสดุอัตโนมัติ
+    const generateTrackingNumber = orderData.generateTrackingNumber === true && orderData.shippingMethod;
+    
+    // ถ้ามีการเลือกบริษัทขนส่งและต้องการสร้างเลขพัสดุอัตโนมัติ
+    if (generateTrackingNumber && order.id) {
+      try {
+        console.log(`สร้างเลขพัสดุอัตโนมัติสำหรับออเดอร์ ${order.id} กับ ${orderData.shippingMethod}`);
+        
+        // สร้างเลขพัสดุโดยใช้รหัสบริษัทขนส่ง
+        const shippingCompany = orderData.shippingMethod;
+        let companyCode = '';
+        
+        // กำหนดรหัสตามบริษัทขนส่ง
+        if (shippingCompany.includes('Xiaobai') || shippingCompany.includes('เสี่ยวไป๋')) {
+          companyCode = 'XBE';
+        } else if (shippingCompany.includes('SpeedLine') || shippingCompany.includes('สปีด')) {
+          companyCode = 'SPE';
+        } else if (shippingCompany.includes('ThaiStar') || shippingCompany.includes('ไทยสตาร์')) {
+          companyCode = 'TST';
+        } else if (shippingCompany.includes('J&T') || shippingCompany.includes('เจแอนด์ที')) {
+          companyCode = 'JNT';
+        } else if (shippingCompany.includes('Kerry') || shippingCompany.includes('เคอรี่')) {
+          companyCode = 'KRY';
+        } else if (shippingCompany.includes('Thailand Post') || shippingCompany.includes('ไปรษณีย์')) {
+          companyCode = 'THP';
+        } else if (shippingCompany.includes('DHL')) {
+          companyCode = 'DHL';
+        } else if (shippingCompany.includes('Ninja')) {
+          companyCode = 'NJV';
+        } else if (shippingCompany.includes('Flash')) {
+          companyCode = 'FLE';
+        } else {
+          // ถ้าไม่รู้จักบริษัทขนส่งให้ใช้ตัวอักษร 3 ตัวแรก
+          companyCode = shippingCompany.substring(0, 3).toUpperCase();
+        }
+        
+        // สร้างเลขพัสดุในรูปแบบ รหัสบริษัท + เลข 7 หลัก + อักษรสุ่ม 2 ตัว
+        const randomDigits = Math.floor(1000000 + Math.random() * 9000000);
+        const randomLetters = String.fromCharCode(65 + Math.floor(Math.random() * 26)) + 
+                              String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        const trackingNumber = `${companyCode}${randomDigits}${randomLetters}`;
+        
+        // อัพเดทออเดอร์ด้วยเลขพัสดุ
+        await storage.updateOrder(order.id, {
+          trackingNumber,
+          status: 'processing'
+        });
+        
+        console.log(`สร้างเลขพัสดุสำเร็จ: ${trackingNumber}`);
+        
+        // อัพเดทข้อมูลออเดอร์ใน order object เพื่อส่งกลับ
+        order.trackingNumber = trackingNumber;
+        order.status = 'processing';
+      } catch (error) {
+        console.error(`เกิดข้อผิดพลาดในการสร้างเลขพัสดุอัตโนมัติ:`, error);
+      }
+    }
+    
     // If this is a COD order, create shipping label with Flash Express
     if (isCashOnDelivery && orderData.shipping_service_id && order.id) {
       try {
