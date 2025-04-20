@@ -170,14 +170,44 @@ router.post('/', auth, async (req, res) => {
     
     console.log('Processed order data ready for storage:', JSON.stringify(orderData, null, 2));
     
+    // สร้างข้อมูลลูกค้าก่อนถ้ามีการส่งชื่อและเบอร์โทรมา แต่ไม่มี customerId
+    if (!orderData.customerId && orderData.customerName) {
+      try {
+        console.log('ไม่มี customerId แต่มีชื่อลูกค้า, กำลังสร้างข้อมูลลูกค้าใหม่');
+        
+        // สร้างข้อมูลลูกค้าใหม่จากข้อมูลในออเดอร์
+        const customerData = {
+          userId: orderData.userId,
+          name: orderData.customerName || 'ไม่ระบุชื่อ',
+          phone: orderData.customerPhone || '',
+          address: orderData.houseNumber || '',
+          subdistrict: orderData.subdistrict || '',
+          district: orderData.district || '',
+          province: orderData.province || '',
+          zipcode: orderData.zipcode || '',
+          email: '',
+          notes: `ลูกค้าจากออเดอร์ ${orderData.orderNumber}`
+        };
+        
+        const newCustomer = await storage.createCustomer(customerData);
+        console.log('สร้างข้อมูลลูกค้าใหม่สำเร็จ:', newCustomer);
+        
+        // เชื่อมโยงลูกค้ากับออเดอร์
+        orderData.customerId = newCustomer.id;
+      } catch (error) {
+        console.error('เกิดข้อผิดพลาดในการสร้างข้อมูลลูกค้าใหม่:', error);
+        // ไม่ต้อง throw error แค่ไม่เชื่อมโยงลูกค้า
+      }
+    }
+    
     // Store order in database
     const order = await storage.createOrder(orderData);
     
     // If this is a COD order, create shipping label with Flash Express
     if (isCashOnDelivery && orderData.shipping_service_id && order.id) {
       try {
-        // Get customer information
-        const customer = await storage.getCustomer(orderData.customer_id);
+        // Get customer information - ใช้ customerId ที่ถูกต้อง
+        const customer = await storage.getCustomer(orderData.customerId);
         
         if (customer) {
           // Get user information (merchant/sender) from session
