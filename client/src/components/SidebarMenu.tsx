@@ -69,26 +69,19 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       label: 'แดชบอร์ด', 
     },
     { 
-      path: '#', 
+      path: '/orders-all', 
       icon: 'fa-clipboard-list', 
-      label: 'คำสั่งซื้อ',
-      submenu: [
-        { 
-          path: '/orders-all', 
-          icon: 'fa-clipboard-list', 
-          label: 'คำสั่งซื้อทั้งหมด' 
-        },
-        { 
-          path: '/create-order', 
-          icon: 'fa-plus-circle', 
-          label: 'สร้างออเดอร์' 
-        },
-        { 
-          path: '/bulk-order-import', 
-          icon: 'fa-file-import', 
-          label: 'นำเข้าออเดอร์จาก Excel' 
-        },
-      ]
+      label: 'คำสั่งซื้อทั้งหมด' 
+    },
+    { 
+      path: '/create-order', 
+      icon: 'fa-plus-circle', 
+      label: 'สร้างออเดอร์' 
+    },
+    { 
+      path: '/bulk-order-import', 
+      icon: 'fa-file-import', 
+      label: 'นำเข้าออเดอร์จาก Excel' 
     },
     { 
       path: '/parcel-list', 

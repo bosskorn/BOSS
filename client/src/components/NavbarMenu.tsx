@@ -26,6 +26,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
   const [isCreateOrder] = useRoute('/create-order');
   const [isParcelList] = useRoute('/parcel-list');
   const [isClaimsList] = useRoute('/claims-list');
+  const [isBulkOrderImport] = useRoute('/bulk-order-import');
   
   // Open dropdown on hover or click
   const openDropdown = (name: string) => {
@@ -128,7 +129,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
         >
           <a 
             href="#" 
-            className={`menu-link dropdown-toggle ${(isOrdersList || isCreateOrder || isParcelList || isClaimsList) ? 'active' : ''}`}
+            className={`menu-link dropdown-toggle ${(isOrdersList || isCreateOrder || isParcelList || isClaimsList || isBulkOrderImport) ? 'active' : ''}`}
             onClick={(e) => {e.preventDefault(); activeDropdown === 'orders' ? closeDropdown('orders') : openDropdown('orders');}}
             aria-expanded={activeDropdown === 'orders'}
           >
@@ -164,6 +165,15 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             <li>
               <Link href="/claims-list" className={isClaimsList ? 'active' : ''}>
                 <i className="fas fa-shield-alt"></i> รายการเคลมพัสดุ
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/bulk-order-import" 
+                className={isBulkOrderImport ? 'active' : ''}
+                onClick={handleMenuLinkClick}
+              >
+                <i className="fas fa-file-import"></i> นำเข้าออเดอร์ด้วยไฟล์ Excel
               </Link>
             </li>
           </ul>
@@ -263,7 +273,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             className="menu-link"
           >
             <div className="flex items-center">
-              <i className="fas fa-user-circle text-purple-600 mr-1"></i>
+              <i className="fas fa-user-circle text-blue-600 mr-1"></i>
               <span className="menu-text">
                 {user ? 'บัญชีของฉัน' : 'บัญชี'}
               </span>
