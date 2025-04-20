@@ -277,7 +277,9 @@ export const createMockShipment = (
       // สร้างเลขพัสดุแบบจำลอง
       const providerCode = shippingCode.split('_')[0].substring(0, 3).toUpperCase();
       const randomPart = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
-      const trackingNumber = `${providerCode}${randomPart}TH`;
+      const randomLetters = String.fromCharCode(65 + Math.floor(Math.random() * 26)) +
+                           String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      const trackingNumber = `${providerCode}${randomPart}${randomLetters}`;
       
       // คำนวณราคา
       const distance = calculateMockDistance(
