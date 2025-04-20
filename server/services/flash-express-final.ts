@@ -382,9 +382,9 @@ export const getFlashExpressShippingOptions = async (
       console.log('Payload ที่ส่งไป (ก่อน encode):', JSON.stringify(payload, null, 2));
       console.log('Encoded payload ที่ส่งไป:', encodedPayload);
 
-      // 7. ใช้ endpoint ที่ถูกต้องตามเอกสาร
+      // 7. ใช้ endpoint ที่ถูกต้องตามเอกสาร Flash Express
       const possibleEndpoints = [
-        '/open/v3/orders/price'
+        '/open/v3/pricing'
       ];
 
       let response = null;
