@@ -107,7 +107,7 @@ const BulkOrderImportPage: React.FC = () => {
       // กำหนดรูปแบบข้อมูลสำหรับแสดงตัวอย่าง
       const parsedOrders: OrderPreview[] = jsonData.map((row: any) => {
         // สร้างโครงสร้างข้อมูลจากการนำเข้า Excel
-        // ตัวอย่างการแปลง (ต้องปรับให้ตรงกับรูปแบบของไฟล์ Excel ที่ใช้)
+        // ไม่ใช้ข้อมูลวิธีจัดส่งจากไฟล์แล้ว จะให้เลือกทีหลัง
         return {
           customerName: row['ชื่อลูกค้า'] || '',
           customerPhone: row['เบอร์โทรศัพท์'] || '',
@@ -124,7 +124,7 @@ const BulkOrderImportPage: React.FC = () => {
               price: parseFloat(row['ราคา'] || '0')
             }
           ],
-          shippingMethod: row['วิธีจัดส่ง'] || 'Flash Express - ส่งด่วน',
+          shippingMethod: '', // ไม่ใช้ข้อมูลจากไฟล์ Excel จะใช้วิธีเลือกแทน
           isCOD: row['เก็บเงินปลายทาง']?.toString().toLowerCase() === 'true' || row['เก็บเงินปลายทาง'] === 'yes' || row['เก็บเงินปลายทาง'] === 'y' || false,
           codAmount: row['จำนวนเงิน COD'] ? parseFloat(row['จำนวนเงิน COD']) : undefined
         };
@@ -147,6 +147,15 @@ const BulkOrderImportPage: React.FC = () => {
       toast({
         title: 'ไม่พบข้อมูลออเดอร์',
         description: 'ไม่มีข้อมูลออเดอร์ที่จะนำเข้า',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!selectedShippingMethod) {
+      toast({
+        title: 'กรุณาเลือกบริษัทขนส่ง',
+        description: 'โปรดเลือกบริษัทขนส่งก่อนสร้างออเดอร์',
         variant: 'destructive',
       });
       return;
@@ -184,7 +193,7 @@ const BulkOrderImportPage: React.FC = () => {
             quantity: item.quantity,
             price: item.price
           })),
-          shippingMethod: order.shippingMethod,
+          shippingMethod: selectedShippingMethod, // ใช้การจัดส่งที่เลือกจาก UI แทนที่จะใช้จากไฟล์ Excel
           shippingCost: 40, // ค่าจัดส่งเริ่มต้น สามารถปรับได้ตามความต้องการ
           isCOD: order.isCOD,
           codAmount: order.codAmount || 0,
@@ -242,7 +251,7 @@ const BulkOrderImportPage: React.FC = () => {
   };
 
   const downloadTemplate = () => {
-    // สร้างไฟล์ Excel ตัวอย่าง
+    // สร้างไฟล์ Excel ตัวอย่าง - ตัดส่วน "วิธีจัดส่ง" ออกไป
     const template = [
       {
         'ชื่อลูกค้า': 'นายตัวอย่าง นามสกุล',
@@ -255,7 +264,6 @@ const BulkOrderImportPage: React.FC = () => {
         'รหัสสินค้า': 'PD001',
         'จำนวน': 1,
         'ราคา': 299,
-        'วิธีจัดส่ง': 'Flash Express - ส่งด่วน',
         'เก็บเงินปลายทาง': 'yes',
         'จำนวนเงิน COD': 299
       }
@@ -347,6 +355,7 @@ const BulkOrderImportPage: React.FC = () => {
               <li>ไฟล์ต้องมีคอลัมน์ตามรูปแบบที่กำหนด (ชื่อลูกค้า, เบอร์โทรศัพท์, ที่อยู่, ฯลฯ)</li>
               <li>ไม่จำเป็นต้องกรอกข้อมูลในทุกคอลัมน์ แต่ข้อมูลสำคัญต้องมี เช่น ชื่อลูกค้า, เบอร์โทร, ที่อยู่</li>
               <li>คอลัมน์ "เก็บเงินปลายทาง" ให้ใส่ true/yes/y สำหรับ COD</li>
+              <li><b>ไม่ต้องระบุบริษัทขนส่ง</b> - คุณจะสามารถเลือกบริษัทขนส่งหลังจากอัพโหลดไฟล์แล้ว</li>
               <li>สำหรับสินค้าหลายรายการ ให้สร้างแถวใหม่โดยใช้ข้อมูลลูกค้าเดิม</li>
             </ul>
             <Button
@@ -391,6 +400,33 @@ const BulkOrderImportPage: React.FC = () => {
               ออเดอร์ทั้งหมด {orders.length} รายการจะถูกสร้างขึ้น คุณไม่สามารถยกเลิกได้หลังจากสร้างเสร็จแล้ว
             </AlertDescription>
           </Alert>
+          
+          <div className="p-4 border rounded-lg">
+            <div className="mb-4">
+              <h3 className="font-medium mb-2 flex items-center">
+                <Truck className="h-5 w-5 text-blue-600 mr-2" />
+                เลือกบริษัทขนส่ง
+              </h3>
+              <Select
+                value={selectedShippingMethod}
+                onValueChange={setSelectedShippingMethod}
+              >
+                <SelectTrigger className="w-full md:w-80">
+                  <SelectValue placeholder="เลือกบริษัทขนส่ง" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shippingMethods.map((method) => (
+                    <SelectItem key={method.id} value={method.name}>
+                      {method.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-gray-500 mt-1">
+                บริษัทขนส่งที่เลือกจะถูกใช้กับทุกออเดอร์ในการนำเข้าครั้งนี้
+              </p>
+            </div>
+          </div>
 
           <div className="rounded-lg border overflow-hidden">
             <Table>
