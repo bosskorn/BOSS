@@ -353,7 +353,7 @@ const OrderList: React.FC = () => {
           keywords: ['ไปรษณีย์', 'Thailand Post']
         },
         'SpeedLine': {
-          prefixes: ['SPL'], 
+          prefixes: ['SPL', 'PD'], 
           keywords: ['SpeedLine', 'สปีดไลน์']
         },
         'ThaiStar Delivery': {
