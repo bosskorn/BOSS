@@ -92,10 +92,12 @@ router.get('/summary', async (req: Request, res: Response) => {
     .orderBy(desc(orders.createdAt))
     .limit(5);
     
-    // สร้างรายการคำสั่งซื้อพร้อมชื่อลูกค้า
+    // สร้างรายการคำสั่งซื้อที่แสดงข้อมูลในแดชบอร์ด
     const latestOrders = [];
     for (const order of ordersResult) {
-      let customerName = "ไม่ระบุชื่อลูกค้า";
+      // กรณีที่ไม่มีผู้รับ ใช้ "ลูกค้า BD" หรือ "ลูกค้า PD" ตามคำนำหน้า Order Number
+      let orderPrefix = order.orderNumber ? order.orderNumber.substring(0, 2) : "BD";
+      let customerName = `ลูกค้า ${orderPrefix}`;
       
       // ถ้ามี customerId ให้ค้นหาข้อมูลลูกค้า
       if (order.customerId) {
