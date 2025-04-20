@@ -25,6 +25,7 @@ import Settings from "@/pages/settings";
 import TopUp from "@/pages/top-up";
 import ClaimsList from "@/pages/claims-list";
 import UserClaims from "@/pages/user-claims";
+import PrintLabelTest from "@/print-label-test";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/logo" component={LogoDisplay} />
       <Route path="/admin-register" component={AdminRegisterPage} />
+      <Route path="/print-label-test" component={PrintLabelTest} />
       
       {/* Protected routes - require authentication */}
       <ProtectedRoute path="/" component={Dashboard} />
