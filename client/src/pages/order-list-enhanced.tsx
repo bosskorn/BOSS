@@ -26,18 +26,19 @@ function generateBarcode(trackingNumber: string): string {
   let barcodeHtml = '';
   const cleanNumber = trackingNumber.replace(/\s+/g, '');
   
-  for (let i = 0; i < cleanNumber.length; i++) {
-    const char = cleanNumber.charAt(i);
-    const charCode = char.charCodeAt(0);
-    // สร้างเส้นบาร์โค้ดตามรหัส ASCII
-    for (let j = 0; j < 5; j++) {
-      const thickness = ((charCode >> j) & 1) === 1 ? 2 : 1;
-      barcodeHtml += `<div class="barcode-line" style="width: ${thickness}px; height: ${thickness * 8}px;"></div>`;
-    }
-    barcodeHtml += '<div style="display: inline-block; width: 3px;"></div>';
+  // สร้างเส้นบาร์โค้ดแบบสุ่มเพื่อให้ดูเหมือนบาร์โค้ดจริง
+  const numBars = 40; // จำนวนเส้นในบาร์โค้ด
+  
+  for (let i = 0; i < numBars; i++) {
+    // สุ่มความหนาของเส้น (1-3px)
+    const thickness = Math.floor(Math.random() * 3) + 1;
+    // สุ่มความสูงของเส้น (10-40px)
+    const height = Math.floor(Math.random() * 20) + 20;
+    
+    barcodeHtml += `<div class="barcode-line" style="width: ${thickness}px; height: ${height}px;"></div>`;
   }
   
-  return `<div style="text-align: center;">${barcodeHtml}</div>`;
+  return `<div style="text-align: center; display: flex; justify-content: center; margin: 3px 0;">${barcodeHtml}</div>`;
 }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
