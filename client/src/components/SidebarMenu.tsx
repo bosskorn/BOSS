@@ -46,17 +46,37 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
 
   // ไม่ใช้รายการเมนูแล้ว เนื่องจากย้ายไปแสดงในแถบด้านบน
 
+  // สร้าง portal container ใหม่หากไม่มี
+  useEffect(() => {
+    let portalContainer = document.getElementById('sidebar-portal');
+    if (!portalContainer) {
+      portalContainer = document.createElement('div');
+      portalContainer.id = 'sidebar-portal';
+      portalContainer.style.position = 'relative';
+      portalContainer.style.zIndex = '9999';
+      document.body.appendChild(portalContainer);
+    }
+    
+    return () => {
+      // ทำความสะอาดเมื่อ unmount
+      if (portalContainer && !isOpen) {
+        document.body.removeChild(portalContainer);
+      }
+    };
+  }, []);
+
   return (
     <>
       {/* Overlay เมื่อเปิด Sidebar (จะคลิกปิดได้) */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[990] transition-opacity" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[9800] transition-opacity" />
       )}
 
       {/* Sidebar เมนู */}
       <div
         ref={sidebarRef}
-        className={`fixed top-0 right-0 h-full w-64 bg-white shadow-xl z-[999] transform transition-transform duration-300 ease-in-out overflow-y-auto ${
+        style={{zIndex: 9999, position: 'fixed'}}
+        className={`fixed top-0 right-0 h-full w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out overflow-y-auto ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
