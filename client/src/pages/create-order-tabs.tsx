@@ -1874,6 +1874,45 @@ const CreateOrderTabsPage: React.FC = () => {
                             การจัดส่ง
                           </CardTitle>
                         </div>
+                        
+                        {/* เพิ่มปุ่มใช้ข้อมูลผู้ส่งจากโปรไฟล์ */}
+                        <div className="mt-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              // ใช้ข้อมูลผู้ส่งจากโปรไฟล์
+                              if ((window as any).senderInfoFromProfile) {
+                                const senderInfo = (window as any).senderInfoFromProfile;
+                                
+                                // ตั้งค่าข้อมูลสำหรับการจัดส่ง
+                                form.setValue('srcName', senderInfo.name || '');
+                                form.setValue('srcPhone', senderInfo.phone || '');
+                                form.setValue('srcEmail', senderInfo.email || '');
+                                form.setValue('srcProvince', senderInfo.province || '');
+                                form.setValue('srcDistrict', senderInfo.district || '');
+                                form.setValue('srcSubdistrict', senderInfo.subdistrict || '');
+                                form.setValue('srcZipcode', senderInfo.zipcode || '');
+                                form.setValue('srcAddress', senderInfo.address || '');
+                                
+                                toast({
+                                  title: 'ใช้ข้อมูลผู้ส่งจากโปรไฟล์',
+                                  description: 'กำหนดข้อมูลผู้ส่งจากโปรไฟล์ของคุณสำเร็จ',
+                                });
+                              } else {
+                                toast({
+                                  title: 'ไม่พบข้อมูลผู้ส่ง',
+                                  description: 'กรุณากำหนดข้อมูลผู้ส่งในหน้าตั้งค่าโปรไฟล์',
+                                  variant: 'destructive',
+                                });
+                              }
+                            }}
+                            className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                          >
+                            <UserCircle className="mr-2 h-4 w-4" />
+                            ใช้ข้อมูลผู้ส่งจากโปรไฟล์
+                          </Button>
+                        </div>
                       </CardHeader>
                       <CardContent className="space-y-4 pt-6">
                         <div className="space-y-4">
