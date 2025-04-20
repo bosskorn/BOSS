@@ -143,30 +143,57 @@ export const createFlashExpressShipping = async (
       const senderPhone = orderData.srcPhone.replace(/[\s-]/g, '');
       const recipientPhone = orderData.dstPhone.replace(/[\s-]/g, '');
       
-      // 2. เตรียมข้อมูลคำขอ (แปลงเป็น string ทั้งหมด)
+      // 2. เตรียมข้อมูลคำขอตามเอกสาร Flash Express
       const requestParams: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
-        timestamp: timestamp,
         outTradeNo: orderData.outTradeNo,
+        expressCategory: orderData.expressCategory,
         srcName: orderData.srcName,
-        srcPhone: senderPhone,
+        srcPhone: senderPhone.replace(/[-\s]/g, ''),
         srcProvinceName: orderData.srcProvinceName,
         srcCityName: orderData.srcCityName,
         srcPostalCode: orderData.srcPostalCode,
         srcDetailAddress: orderData.srcDetailAddress,
         dstName: orderData.dstName,
-        dstPhone: recipientPhone,
+        dstPhone: recipientPhone.replace(/[-\s]/g, ''),
         dstProvinceName: orderData.dstProvinceName,
         dstCityName: orderData.dstCityName,
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
-        articleCategory: String(orderData.articleCategory), // แปลงเป็น string
-        expressCategory: String(orderData.expressCategory), // แปลงเป็น string
-        weight: String(orderData.weight), // แปลงเป็น string
-        insured: String(orderData.insured), // แปลงเป็น string
-        codEnabled: String(orderData.codEnabled) // แปลงเป็น string
+        articleCategory: orderData.articleCategory,
+        weight: orderData.weight,
+        insured: orderData.insured || 0,
+        codEnabled: orderData.codEnabled || 0
       };
+
+      // เพิ่มข้อมูลเพิ่มเติมถ้ามี
+      if (orderData.srcDistrictName) requestParams.srcDistrictName = orderData.srcDistrictName;
+      if (orderData.dstDistrictName) requestParams.dstDistrictName = orderData.dstDistrictName;
+      if (orderData.dstHomePhone) requestParams.dstHomePhone = orderData.dstHomePhone.replace(/[-\s]/g, '');
+      if (orderData.width) requestParams.width = orderData.width;
+      if (orderData.height) requestParams.height = orderData.height;
+      if (orderData.length) requestParams.length = orderData.length;
+      if (orderData.remark) requestParams.remark = orderData.remark;
+      
+      // เพิ่มข้อมูล COD ถ้ามี
+      if (orderData.codEnabled === 1 && orderData.codAmount) {
+        requestParams.codAmount = orderData.codAmount;
+        // สร้าง subItemTypes อัตโนมัติถ้าไม่มี
+        if (!orderData.subItemTypes || orderData.subItemTypes.length === 0) {
+          orderData.subItemTypes = [{
+            itemName: `สินค้าออเดอร์ #${orderData.outTradeNo}`,
+            itemWeightSize: `${orderData.weight/1000}Kg`,
+            itemColor: '-',
+            itemQuantity: 1
+          }];
+        }
+      }
+
+      // เพิ่มข้อมูลประกันถ้ามี
+      if (orderData.insured === 1 && orderData.insureDeclareValue) {
+        requestParams.insureDeclareValue = orderData.insureDeclareValue;
+      }
       
       // เพิ่มข้อมูลเพิ่มเติมเฉพาะที่มี
       if (orderData.srcDistrictName) requestParams.srcDistrictName = orderData.srcDistrictName;
