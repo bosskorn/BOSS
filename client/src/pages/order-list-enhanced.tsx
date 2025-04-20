@@ -652,7 +652,6 @@ const OrderList: React.FC = () => {
     handlePrintLabelWithSizeDialog(order);
   };
 
-  // ฟังก์ชันพิมพ์แบบเลือกหลายรายการตามขนาดที่เลือก
   // ฟังก์ชันสำหรับลบออเดอร์
   const handleDeleteOrder = async (orderId: number) => {
     try {
@@ -696,6 +695,7 @@ const OrderList: React.FC = () => {
     }
   };
 
+  // ฟังก์ชันพิมพ์แบบเลือกหลายรายการตามขนาดที่เลือก
   const printSelectedLabelsWithSize = async () => {
     // ใช้ขนาดที่เลือกจาก dialog แล้ว
     setIsPrintingLabel(true);
