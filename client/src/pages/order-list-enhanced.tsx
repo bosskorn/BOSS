@@ -303,6 +303,7 @@ const OrderList: React.FC = () => {
           demoOrder.shippingMethod = shippingFilter;
           demoOrder.trackingNumber = `DEMO${Math.floor(Math.random() * 10000000)}TH`;
           demoOrder.status = 'processing';
+          demoOrder.date = new Date().toISOString(); // ใส่วันที่ปัจจุบัน
           
           // แสดงผลแบบสาธิต
           return [demoOrder];
@@ -1644,7 +1645,7 @@ const OrderList: React.FC = () => {
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
             <div 
-              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x100mm' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
               onClick={() => setLabelSize('100x100mm')}
             >
               <div className="flex justify-between items-center">
@@ -1653,13 +1654,13 @@ const OrderList: React.FC = () => {
                   <p className="text-sm text-gray-500">ขนาดมาตรฐาน เหมาะสำหรับพัสดุทั่วไป</p>
                 </div>
                 <div className="w-16 h-16 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                  <div className="w-10 h-10 bg-purple-100 rounded"></div>
+                  <div className="w-10 h-10 bg-blue-100 rounded"></div>
                 </div>
               </div>
             </div>
             
             <div 
-              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x75mm' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x75mm' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
               onClick={() => setLabelSize('100x75mm')}
             >
               <div className="flex justify-between items-center">
@@ -1668,7 +1669,7 @@ const OrderList: React.FC = () => {
                   <p className="text-sm text-gray-500">ขนาดเล็กกว่า ประหยัดกระดาษ</p>
                 </div>
                 <div className="w-16 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                  <div className="w-10 h-7 bg-purple-100 rounded"></div>
+                  <div className="w-10 h-7 bg-blue-100 rounded"></div>
                 </div>
               </div>
             </div>
@@ -1682,7 +1683,7 @@ const OrderList: React.FC = () => {
             </Button>
             <Button 
               onClick={printLabelWithSelectedSize}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               <Printer className="h-4 w-4 mr-2" />
               พิมพ์ใบลาเบล
