@@ -66,12 +66,12 @@ const BulkOrderImportPage: React.FC = () => {
         if (response.data.success) {
           // เพิ่มขนส่งจำลองทั้งหมดที่ใช้ในระบบ
           const mockCouriers = [
-            'เสี่ยวไป๋ เอ็กเพรส',
+            'Xiaobai Express',
             'SpeedLine',
             'ThaiStar Delivery',
             'J&T Express', 
             'Kerry Express',
-            'ไปรษณีย์ไทย',
+            'Thailand Post',
             'DHL Express',
             'Ninja Van'
           ];

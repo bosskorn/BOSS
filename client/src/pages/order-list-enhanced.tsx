@@ -1887,7 +1887,7 @@ const OrderList: React.FC = () => {
                     className={shippingFilter === method ? 'bg-blue-600 hover:bg-blue-700' : ''}
                   >
                     {[
-                      'เสี่ยวไป๋ เอ็กเพรส', 
+                      'Xiaobai Express', 
                       'SpeedLine', 
                       'ThaiStar Delivery', 
                       'J&T Express', 
@@ -2194,14 +2194,14 @@ const OrderList: React.FC = () => {
             )}
             
             {/* ตัวเลือกขนส่ง - ตัดคำให้กระชับขึ้น */}
-            {/* เสี่ยวไป๋ เอ็กเพรส */}
+            {/* Xiaobai Express */}
             <div 
-              className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-              onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส')}
+              className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Xiaobai Express' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              onClick={() => setSelectedShippingMethod('Xiaobai Express')}
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="font-medium">เสี่ยวไป๋ เอ็กเพรส</h3>
+                  <h3 className="font-medium">Xiaobai Express</h3>
                   <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน • ฿45.00</p>
                 </div>
                 <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
@@ -2274,14 +2274,14 @@ const OrderList: React.FC = () => {
               </div>
             </div>
             
-            {/* ไปรษณีย์ไทย */}
+            {/* Thailand Post */}
             <div 
-              className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'ไปรษณีย์ไทย' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-              onClick={() => setSelectedShippingMethod('ไปรษณีย์ไทย')}
+              className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Thailand Post' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              onClick={() => setSelectedShippingMethod('Thailand Post')}
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="font-medium">ไปรษณีย์ไทย</h3>
+                  <h3 className="font-medium">Thailand Post</h3>
                   <p className="text-sm text-gray-500">จัดส่งภายใน 2-3 วัน • ฿35.00</p>
                 </div>
                 <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
