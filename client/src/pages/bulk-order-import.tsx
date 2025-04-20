@@ -507,52 +507,63 @@ const BulkOrderImportPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-blue-50">
-                  <TableHead>ลำดับ</TableHead>
-                  <TableHead>ชื่อลูกค้า</TableHead>
-                  <TableHead>เบอร์โทรศัพท์</TableHead>
-                  <TableHead>ที่อยู่</TableHead>
-                  <TableHead>สินค้า</TableHead>
-                  <TableHead>COD</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.slice(0, 10).map((order, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{order.customerName}</TableCell>
-                    <TableCell>{order.customerPhone}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {order.address}, {order.subdistrict}, {order.district}, {order.province} {order.zipcode}
-                    </TableCell>
-                    <TableCell>
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="text-sm">
-                          รหัส: {item.productSku} x{item.quantity} (฿{item.price})
-                        </div>
-                      ))}
-                    </TableCell>
-                    <TableCell>
-                      {order.isCOD ? (
-                        <span className="text-orange-600">
-                          COD ฿{order.codAmount || 0}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500">ไม่มี</span>
-                      )}
-                    </TableCell>
+          <div className="rounded-lg border">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-blue-50">
+                    <TableHead className="w-12">ลำดับ</TableHead>
+                    <TableHead className="w-40">ชื่อลูกค้า</TableHead>
+                    <TableHead className="w-32">เบอร์โทรศัพท์</TableHead>
+                    <TableHead className="w-56">ที่อยู่</TableHead>
+                    <TableHead className="w-36">สินค้า</TableHead>
+                    <TableHead className="w-24">COD</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {orders.slice(0, 6).map((order, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell className="max-w-[160px] truncate" title={order.customerName}>
+                        {order.customerName}
+                      </TableCell>
+                      <TableCell>{order.customerPhone}</TableCell>
+                      <TableCell className="max-w-[220px] truncate" title={`${order.address}, ${order.subdistrict}, ${order.district}, ${order.province} ${order.zipcode}`}>
+                        {order.address}, {order.subdistrict}, {order.district}, {order.province} {order.zipcode}
+                      </TableCell>
+                      <TableCell>
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="text-sm truncate" title={`รหัส: ${item.productSku} x${item.quantity} (฿${item.price})`}>
+                            {item.productSku} x{item.quantity} (฿{item.price})
+                          </div>
+                        ))}
+                      </TableCell>
+                      <TableCell>
+                        {order.isCOD ? (
+                          <Badge className="bg-orange-500">
+                            ฿{order.codAmount || 0}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-gray-500">ไม่มี</Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {orders.length > 6 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-gray-500">
+                        ... และอีก {orders.length - 6} รายการ
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
           
-          {orders.length > 10 && (
+          {orders.length > 6 && (
             <p className="text-gray-500 text-center text-sm">
-              แสดง 10 รายการแรกจากทั้งหมด {orders.length} รายการ
+              แสดง 6 รายการแรกจากทั้งหมด {orders.length} รายการ
             </p>
           )}
         </CardContent>
@@ -643,22 +654,31 @@ const BulkOrderImportPage: React.FC = () => {
             <div>
               <h3 className="text-lg font-medium text-blue-800 mb-2">เลขพัสดุที่สร้างเสร็จแล้ว</h3>
               <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-blue-50">
-                      <TableHead className="w-[80px]">ลำดับ</TableHead>
-                      <TableHead>เลขพัสดุ</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {results.trackingNumbers.map((trackingNumber, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell className="font-medium">{trackingNumber}</TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-blue-50">
+                        <TableHead className="w-16">ลำดับ</TableHead>
+                        <TableHead>เลขพัสดุ</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {results.trackingNumbers.slice(0, 5).map((trackingNumber, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell className="font-medium">{trackingNumber}</TableCell>
+                        </TableRow>
+                      ))}
+                      {results.trackingNumbers.length > 5 && (
+                        <TableRow>
+                          <TableCell colSpan={2} className="text-center text-gray-500">
+                            ... และอีก {results.trackingNumbers.length - 5} รายการ
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           )}
