@@ -736,6 +736,122 @@ const OrderList: React.FC = () => {
       });
     }
   };
+  
+  // ฟังก์ชันสร้างเลขพัสดุสำหรับหลายออเดอร์พร้อมกัน
+  const createMultipleTrackingNumbers = async () => {
+    if (!selectedOrders || selectedOrders.length === 0) {
+      toast({
+        title: 'ไม่มีรายการที่เลือก',
+        description: 'กรุณาเลือกรายการที่ต้องการสร้างเลขพัสดุ',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!selectedShippingMethod) {
+      toast({
+        title: 'กรุณาเลือกบริษัทขนส่ง',
+        description: 'คุณต้องเลือกบริษัทขนส่งก่อนสร้างเลขพัสดุ',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // ยืนยันการสร้างเลขพัสดุ
+    if (!window.confirm(`คุณต้องการสร้างเลขพัสดุสำหรับ ${selectedOrders.length} รายการโดยใช้บริษัทขนส่ง ${selectedShippingMethod} ใช่หรือไม่?`)) {
+      return;
+    }
+    
+    // แสดงการโหลด
+    setIsLoading(true);
+    
+    try {
+      const token = localStorage.getItem('auth_token');
+      let successCount = 0;
+      let failCount = 0;
+      const results = [];
+      
+      // ดำเนินการทีละรายการ
+      for (const orderId of selectedOrders) {
+        try {
+          // เรียก API เพื่อสร้างเลขพัสดุ
+          const response = await fetch(`/api/orders/${orderId}/tracking`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': token ? `Bearer ${token}` : '',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              shippingMethod: selectedShippingMethod
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok && data.success) {
+            successCount++;
+            results.push({ 
+              orderId, 
+              success: true, 
+              trackingNumber: data.trackingNumber
+            });
+          } else {
+            failCount++;
+            results.push({ 
+              orderId, 
+              success: false, 
+              error: data.message || 'ไม่สามารถสร้างเลขพัสดุได้'
+            });
+          }
+        } catch (error) {
+          failCount++;
+          results.push({ 
+            orderId, 
+            success: false, 
+            error: error instanceof Error ? error.message : 'เกิดข้อผิดพลาดระหว่างการสร้างเลขพัสดุ'
+          });
+        }
+      }
+      
+      // แสดงผลลัพธ์
+      if (failCount === 0) {
+        toast({
+          title: 'สร้างเลขพัสดุสำเร็จทั้งหมด',
+          description: `สร้างเลขพัสดุสำเร็จ ${successCount} รายการ`,
+        });
+      } else if (successCount > 0) {
+        toast({
+          title: 'สร้างเลขพัสดุสำเร็จบางส่วน',
+          description: `สำเร็จ ${successCount} รายการ, ล้มเหลว ${failCount} รายการ`,
+          variant: 'default',
+        });
+      } else {
+        toast({
+          title: 'สร้างเลขพัสดุไม่สำเร็จ',
+          description: 'ไม่สามารถสร้างเลขพัสดุสำหรับรายการที่เลือกได้',
+          variant: 'destructive',
+        });
+      }
+      
+      // อัพเดทข้อมูลออเดอร์
+      fetchOrders();
+      
+      // ยกเลิกการเลือกทั้งหมด
+      setSelectedOrders([]);
+      setMultipleTrackingDialogOpen(false);
+      
+    } catch (error) {
+      console.error('Error creating multiple tracking numbers:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error instanceof Error ? error.message : 'ไม่สามารถสร้างเลขพัสดุหลายรายการได้',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // ฟังก์ชันสำหรับลบออเดอร์
   const handleDeleteOrder = async (orderId: number) => {
