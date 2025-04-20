@@ -1376,17 +1376,17 @@ const CreateOrderTabsPage: React.FC = () => {
         const response = await api.post('/api/orders', orderData);
         
         if (response.data.success) {
-          // ใช้ Dialog แทน toast สำหรับแสดงผลแบบป๊อบอัพและมีตัวเลือกการนำทาง
-          setDialog({
-            open: true,
+          // แสดง toast แจ้งเตือนว่าสร้างออเดอร์สำเร็จ
+          toast({
             title: 'สร้างออเดอร์สำเร็จ',
-            description: `สร้างออเดอร์หมายเลข ${response.data.order.id || orderData.orderNumber} และเลขพัสดุ ${orderData.trackingNumber} เรียบร้อยแล้ว`,
-            orderNumber: response.data.order.id || orderData.orderNumber,
-            trackingNumber: orderData.trackingNumber
+            description: `ออเดอร์หมายเลข ${response.data.order.id || orderData.orderNumber} และเลขพัสดุ ${orderData.trackingNumber} ถูกสร้างเรียบร้อยแล้ว`,
           });
           
           // เคลียร์ฟอร์ม
           form.reset();
+          
+          // นำทางไปยังหน้ารายการคำสั่งซื้อทั้งหมดทันที
+          setLocation('/orders');
         } else {
           throw new Error(response.data.message || 'เกิดข้อผิดพลาดในการสร้างออเดอร์');
         }
