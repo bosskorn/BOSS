@@ -1,5 +1,6 @@
 /**
  * สคริปต์ทดสอบการเชื่อมต่อ Flash Express API โดยใช้ Headers พิเศษ
+ * ใช้ URL ใหม่: https://open-api-tra.flashexpress.com
  */
 import { createFlashExpressShippingWithHeaders } from './services/flash-express-headers';
 

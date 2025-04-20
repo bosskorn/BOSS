@@ -1,11 +1,11 @@
 /**
- * บริการเชื่อมต่อกับ Flash Express API - แก้ไขโดยใช้ Headers พิเศษ
+ * บริการเชื่อมต่อกับ Flash Express API - ใช้ headers พิเศษ
  */
 import axios from 'axios';
 import crypto from 'crypto';
 
 // ข้อมูลการเชื่อมต่อกับ Flash Express API
-const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com';
+const FLASH_EXPRESS_API_URL = 'https://open-api-tra.flashexpress.com';
 const FLASH_EXPRESS_MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
@@ -14,9 +14,9 @@ const API_TIMEOUT = 15000; // 15 วินาที
 
 // ฟังก์ชันสร้าง nonceStr
 function generateNonceStr(length = 16): string {
-  const timestamp = Date.now();
+  const timestamp = Date.now().toString();
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let result = timestamp.toString();
+  let result = timestamp;
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
@@ -130,7 +130,7 @@ export const createFlashExpressShippingWithHeaders = async (
     console.log(`ผู้รับ: ${orderData.dstName}, ${orderData.dstPhone}, ${orderData.dstProvinceName}`);
     
     try {
-      // สร้างข้อมูลคำขอ
+      // 1. สร้างข้อมูลพื้นฐาน
       const timestamp = String(Math.floor(Date.now() / 1000));
       const nonceStr = generateNonceStr();
       
@@ -138,7 +138,7 @@ export const createFlashExpressShippingWithHeaders = async (
       const senderPhone = orderData.srcPhone.replace(/[\s-]/g, '');
       const recipientPhone = orderData.dstPhone.replace(/[\s-]/g, '');
       
-      // เตรียมข้อมูลคำขอ
+      // 2. ข้อมูลคำขอพื้นฐาน (แปลงเป็น string ทั้งหมด)
       const requestData: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
@@ -156,14 +156,14 @@ export const createFlashExpressShippingWithHeaders = async (
         dstCityName: orderData.dstCityName,
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
-        articleCategory: String(orderData.articleCategory),
-        expressCategory: String(orderData.expressCategory),
-        weight: String(orderData.weight),
-        insured: String(orderData.insured),
-        codEnabled: String(orderData.codEnabled)
+        articleCategory: String(orderData.articleCategory), // แปลงเป็น string
+        expressCategory: String(orderData.expressCategory), // แปลงเป็น string
+        weight: String(orderData.weight), // แปลงเป็น string
+        insured: String(orderData.insured), // แปลงเป็น string
+        codEnabled: String(orderData.codEnabled) // แปลงเป็น string
       };
       
-      // เพิ่มข้อมูลเพิ่มเติมเฉพาะที่มี
+      // 3. เพิ่มข้อมูลเพิ่มเติมเฉพาะที่มี
       if (orderData.srcDistrictName) requestData.srcDistrictName = orderData.srcDistrictName;
       if (orderData.dstDistrictName) requestData.dstDistrictName = orderData.dstDistrictName;
       if (orderData.dstHomePhone) requestData.dstHomePhone = orderData.dstHomePhone.replace(/[\s-]/g, '');
@@ -172,20 +172,20 @@ export const createFlashExpressShippingWithHeaders = async (
       if (orderData.length) requestData.length = String(orderData.length);
       if (orderData.remark) requestData.remark = orderData.remark;
       
-      // เพิ่มข้อมูล COD ถ้ามี
+      // 4. เพิ่มข้อมูล COD ถ้ามี
       if (orderData.codEnabled === 1 && orderData.codAmount) {
         requestData.codAmount = String(orderData.codAmount);
       }
       
-      // เพิ่มข้อมูลประกันถ้ามี
+      // 5. เพิ่มข้อมูลประกันถ้ามี
       if (orderData.insured === 1 && orderData.insureDeclareValue) {
         requestData.insureDeclareValue = String(orderData.insureDeclareValue);
       }
       
-      // สร้างลายเซ็น
+      // 7. สร้างลายเซ็น
       const signature = generateFlashSignature(requestData, FLASH_EXPRESS_API_KEY as string);
       
-      // แปลงข้อมูลเป็น form-urlencoded
+      // 8. แปลงข้อมูลเป็น form-urlencoded
       const formData = new URLSearchParams();
       for (const [key, value] of Object.entries(requestData)) {
         if (value !== undefined) {
@@ -193,10 +193,10 @@ export const createFlashExpressShippingWithHeaders = async (
         }
       }
       
-      // เพิ่มลายเซ็นในข้อมูล
+      // 9. เพิ่มลายเซ็นในข้อมูล
       formData.append('sign', signature);
       
-      // จัดการกับ subItemTypes แยกต่างหาก
+      // 10. จัดการกับ subItemTypes แยกต่างหาก (สำคัญ!)
       if (orderData.subItemTypes && orderData.subItemTypes.length > 0) {
         const subItemTypesJSON = JSON.stringify(orderData.subItemTypes);
         formData.append('subItemTypes', subItemTypesJSON);
@@ -213,7 +213,7 @@ export const createFlashExpressShippingWithHeaders = async (
         console.log('subItemTypes ค่าเริ่มต้นที่ส่งไป (สำหรับ COD):', JSON.stringify(defaultItem));
       }
       
-      // ตั้งค่า Headers ที่ถูกต้อง (สำคัญ!)
+      // 11. ตั้งค่า Headers ที่ถูกต้อง (สำคัญ!)
       const headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'X-Flash-Signature': signature,
@@ -225,7 +225,7 @@ export const createFlashExpressShippingWithHeaders = async (
       console.log('Headers ที่ใช้:', JSON.stringify(headers, null, 2));
       console.log('FormData ที่ส่งไป:', formData.toString());
       
-      // เรียกใช้ API
+      // 12. เรียกใช้ API
       const response = await axios({
         method: 'post',
         url: `${FLASH_EXPRESS_API_URL}/open/v3/orders`,
@@ -234,9 +234,9 @@ export const createFlashExpressShippingWithHeaders = async (
         data: formData
       });
       
-      console.log("ได้รับการตอบกลับจาก Flash Express API:", JSON.stringify(response.data, null, 2));
+      console.log('ได้รับการตอบกลับจาก Flash Express API:', JSON.stringify(response.data, null, 2));
   
-      // ตรวจสอบผลลัพธ์
+      // 13. ตรวจสอบผลลัพธ์
       if (response.data && response.data.code === 1) {
         return {
           success: true,
@@ -245,7 +245,7 @@ export const createFlashExpressShippingWithHeaders = async (
         };
       } else {
         console.log('การตอบกลับไม่สำเร็จจาก Flash Express API:', response.data);
-        throw new Error(response.data?.message || 'API ไม่ตอบสนองตามที่คาดหวัง');
+        throw new Error(response.data?.message || 'ไม่มีข้อมูล');
       }
     } catch (apiError: any) {
       console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API:', apiError);
