@@ -42,14 +42,15 @@ const TikTokFlashLabel: React.FC = () => {
       }
     }
     
-    // สร้าง QR Code (ใช้ library qrcode.js จาก CDN)
-    if (qrCodeRef.current && window.QRCode) {
-      qrCodeRef.current.innerHTML = '';
-      new window.QRCode(qrCodeRef.current, {
-        text: `https://track.flashexpress.com/tracking?billcode=${trackingNumber}`,
-        width: 100,
-        height: 100
-      });
+    // สร้าง QR Code โดยใช้ Google Chart API แทน window.QRCode ที่มีปัญหา
+    if (qrCodeRef.current) {
+      qrCodeRef.current.innerHTML = `
+        <img 
+          src="https://chart.googleapis.com/chart?cht=qr&chl=https://track.flashexpress.com/tracking?billcode=${trackingNumber}&chs=100x100&choe=UTF-8" 
+          alt="QR Code" 
+          style="width: 100px; height: 100px;"
+        />
+      `;
     }
   }, [trackingNumber]);
 
@@ -367,12 +368,13 @@ const TikTokFlashLabel: React.FC = () => {
               displayValue: false
             });
             
-            // Generate QR code
-            new QRCode(document.getElementById("qrcode-container"), {
-              text: "https://track.flashexpress.com/tracking?billcode=${trackingNumber}",
-              width: 100,
-              height: 100
-            });
+            // Generate QR code using Google Chart API instead of QRCode library
+            const qrCodeContainer = document.getElementById("qrcode-container");
+            if (qrCodeContainer) {
+              qrCodeContainer.innerHTML = '<img src="https://chart.googleapis.com/chart?cht=qr&chl=https://track.flashexpress.com/tracking?billcode=' + 
+                trackingNumber + 
+                '&chs=100x100&choe=UTF-8" alt="QR Code" style="width: 100px; height: 100px;" />';
+            }
             
             // Print automatically after 1 second
             setTimeout(function() {
