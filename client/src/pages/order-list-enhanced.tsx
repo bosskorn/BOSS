@@ -566,10 +566,9 @@ const OrderList: React.FC = () => {
         description: 'กรุณาเลือกรายการที่ต้องการพิมพ์ใบลาเบล',
         variant: 'destructive',
       });
+      setIsPrintingLabel(false);
       return;
     }
-    
-    setIsPrintingLabel(true);
     
     try {
       // สร้างหน้าต่างใหม่สำหรับพิมพ์
@@ -588,6 +587,10 @@ const OrderList: React.FC = () => {
         throw new Error('ไม่มีรายการที่เลือกที่มีเลขพัสดุสำหรับพิมพ์');
       }
       
+      // กำหนดขนาดใบลาเบลตามที่เลือก
+      const labelWidthPx = labelSize === '100x100mm' ? '378px' : '378px';
+      const labelHeightPx = labelSize === '100x100mm' ? '378px' : '284px';
+      
       // สร้าง HTML เริ่มต้น
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -595,21 +598,132 @@ const OrderList: React.FC = () => {
         <head>
           <title>พิมพ์ใบลาเบล - รายการที่เลือก</title>
           <style>
-            body { font-family: 'Kanit', sans-serif; margin: 0; padding: 0; }
-            .label-container { width: 100mm; height: 150mm; border: 1px solid #ccc; padding: 5mm; margin: 10px auto; page-break-after: always; }
-            .logo { text-align: center; margin-bottom: 5mm; font-size: 24px; font-weight: bold; color: #8A2BE2; }
-            .tracking { font-size: 16px; text-align: center; margin-bottom: 5mm; padding: 2mm; border: 1px solid #8A2BE2; }
-            .section { margin-bottom: 5mm; }
-            .title { font-weight: bold; margin-bottom: 2mm; font-size: 14px; }
-            .address { font-size: 14px; line-height: 1.5; }
-            .barcode { text-align: center; margin: 5mm 0; font-size: 16px; }
-            .footer { text-align: center; font-size: 12px; margin-top: 5mm; color: #666; }
-            .box { border: 1px solid #ccc; padding: 3mm; }
-            .print-button { text-align: center; margin: 20px; }
-            .print-button button { padding: 10px 20px; background: #8A2BE2; color: white; border: none; border-radius: 5px; cursor: pointer; }
+            @page {
+              size: ${labelSize};
+              margin: 0;
+            }
+            body { 
+              font-family: 'Kanit', sans-serif; 
+              margin: 0; 
+              padding: 0; 
+              background-color: #f5f5f5;
+            }
+            .page {
+              width: ${labelWidthPx};
+              height: ${labelHeightPx};
+              background-color: white;
+              margin: 20px auto;
+              padding: 0;
+              box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+              position: relative;
+              overflow: hidden;
+              page-break-after: always;
+            }
+            .label-container { 
+              width: 100%; 
+              height: 100%; 
+              box-sizing: border-box;
+              padding: ${labelSize === '100x100mm' ? '8mm' : '6mm'};
+              position: relative;
+            }
+            .logo { 
+              text-align: center; 
+              margin-bottom: ${labelSize === '100x100mm' ? '5mm' : '3mm'}; 
+              font-size: ${labelSize === '100x100mm' ? '22px' : '18px'}; 
+              font-weight: bold; 
+              color: #8A2BE2; 
+            }
+            .tracking { 
+              font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; 
+              text-align: center; 
+              margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '2mm'}; 
+              padding: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'}; 
+              border: 1px solid #8A2BE2; 
+              border-radius: 3px; 
+              background-color: #faf6ff;
+            }
+            .section { 
+              margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '2mm'}; 
+            }
+            .title { 
+              font-weight: bold; 
+              margin-bottom: 1mm; 
+              font-size: ${labelSize === '100x100mm' ? '13px' : '11px'}; 
+              color: #555; 
+            }
+            .address { 
+              font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; 
+              line-height: 1.3; 
+            }
+            .barcode { 
+              text-align: center; 
+              margin: ${labelSize === '100x100mm' ? '3mm 0' : '2mm 0'}; 
+              font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; 
+              letter-spacing: 2px;
+              background-color: #f9f9f9;
+              padding: 1mm;
+              font-family: monospace;
+            }
+            .footer { 
+              text-align: center; 
+              font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; 
+              margin-top: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'};
+              color: #666;
+              position: ${labelSize === '100x100mm' ? 'relative' : 'absolute'};
+              bottom: ${labelSize === '100x100mm' ? 'auto' : '5mm'};
+              left: 0;
+              right: 0;
+            }
+            .box { 
+              border: 1px solid #ddd; 
+              padding: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'};
+              border-radius: 2px;
+              background-color: #fff;
+            }
+            .print-button { 
+              text-align: center; 
+              margin: 20px; 
+            }
+            .print-button button { 
+              padding: 10px 20px; 
+              background: #8A2BE2; 
+              color: white; 
+              border: none; 
+              border-radius: 5px; 
+              cursor: pointer;
+              font-family: 'Kanit', sans-serif;
+              font-size: 14px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .print-button button:hover {
+              background: #7B1FA2;
+            }
+            .label-size-info { 
+              text-align: center; 
+              margin-bottom: 10px; 
+              font-size: 14px; 
+              color: #666; 
+            }
+            .tracking-num {
+              font-size: ${labelSize === '100x100mm' ? '18px' : '14px'}; 
+              font-weight: bold;
+              margin-top: 1mm;
+            }
+            .cod-badge {
+              background-color: #ffe8e8;
+              border: 1px solid #ffcccc;
+              color: #d32f2f;
+              font-weight: bold;
+              padding: 1mm 2mm;
+              border-radius: 3px;
+              display: inline-block;
+              margin-left: 2mm;
+              font-size: ${labelSize === '100x100mm' ? '11px' : '9px'};
+            }
             @media print {
-              body { margin: 0; padding: 0; }
-              .print-button { display: none; }
+              body { background-color: white; }
+              .page { box-shadow: none; margin: 0; }
+              .print-button, .label-size-info { display: none; }
             }
           </style>
         </head>
@@ -617,46 +731,54 @@ const OrderList: React.FC = () => {
           <div class="print-button">
             <button onclick="window.print();">พิมพ์ใบลาเบล (${ordersToPrint.length} รายการ)</button>
           </div>
+          
+          <div class="label-size-info">
+            ขนาดใบลาเบล: ${labelSize} (${ordersToPrint.length} รายการ)
+          </div>
       `);
       
       // เพิ่มใบลาเบลแต่ละรายการ
-      ordersToPrint.forEach(order => {
+      ordersToPrint.forEach((order, index) => {
         printWindow.document.write(`
-          <div class="label-container">
-            <div class="logo">PURPLEDASH</div>
-            
-            <div class="tracking box">
-              <div>เลขพัสดุ</div>
-              <div style="font-size: ${labelSize === '100x100mm' ? '18px' : '14px'}; font-weight: bold;">${order.trackingNumber}</div>
-            </div>
-            
-            <div class="section">
-              <div class="title">ผู้ส่ง:</div>
-              <div class="box address">
-                PURPLEDASH<br />
-                เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
-                ถนนพระราม 4 แขวงลุมพินี<br />
-                เขตปทุมวัน กรุงเทพฯ 10330<br />
-                โทร: 02-123-4567
+          <div class="page">
+            <div class="label-container">
+              <div class="logo">PURPLEDASH</div>
+              
+              <div class="tracking box">
+                <div style="font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; color: #666;">เลขพัสดุ</div>
+                <div class="tracking-num">${order.trackingNumber}</div>
               </div>
-            </div>
-            
-            <div class="section">
-              <div class="title">ผู้รับ:</div>
-              <div class="box address">
-                ${order.recipientName || 'ไม่ระบุ'}<br />
-                ${order.recipientAddress || ''} ${order.recipientSubdistrict || ''}<br />
-                ${order.recipientDistrict || ''} ${order.recipientProvince || ''} ${order.recipientZipCode || ''}<br />
-                โทร: ${order.recipientPhone || 'ไม่ระบุ'}
+              
+              <div class="section">
+                <div class="title">ผู้ส่ง:</div>
+                <div class="box address">
+                  PURPLEDASH<br />
+                  เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
+                  ถนนพระราม 4 แขวงลุมพินี<br />
+                  เขตปทุมวัน กรุงเทพฯ 10330<br />
+                  โทร: 02-123-4567
+                </div>
               </div>
-            </div>
-            
-            <div class="barcode box">
-              ${order.trackingNumber}
-            </div>
-            
-            <div class="footer">
-              ${order.paymentMethod === 'cash_on_delivery' ? 'เก็บเงินปลายทาง: ' + formatCurrency(order.total || parseFloat(order.totalAmount || '0')) : 'จ่ายเงินแล้ว'}
+              
+              <div class="section">
+                <div class="title">ผู้รับ:</div>
+                <div class="box address">
+                  <strong>${order.recipientName || 'ไม่ระบุ'}</strong><br />
+                  ${order.recipientAddress || ''} ${order.recipientSubdistrict || ''}<br />
+                  ${order.recipientDistrict || ''} ${order.recipientProvince || ''} ${order.recipientZipCode || ''}<br />
+                  โทร: ${order.recipientPhone || 'ไม่ระบุ'}
+                </div>
+              </div>
+              
+              <div class="barcode box">
+                ${order.trackingNumber}
+              </div>
+              
+              <div class="footer">
+                ${order.paymentMethod === 'cash_on_delivery' 
+                  ? `<span>เก็บเงินปลายทาง: ${formatCurrency(order.total || parseFloat(order.totalAmount || '0'))}</span><span class="cod-badge">COD</span>` 
+                  : 'จ่ายเงินแล้ว'}
+              </div>
             </div>
           </div>
         `);
@@ -731,9 +853,12 @@ const OrderList: React.FC = () => {
         throw new Error('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ โปรดตรวจสอบการตั้งค่าป้องกันป๊อปอัพ');
       }
       
-      // กำหนดขนาดใบลาเบลตามที่เลือก
+      // กำหนดขนาดใบลาเบลตามที่เลือกอย่างแม่นยำ
       let labelWidth = '100mm';
       let labelHeight = labelSize === '100x100mm' ? '100mm' : '75mm';
+      // กำหนดขนาดสำหรับ CSS ในหน้าพิมพ์
+      const labelWidthPx = labelSize === '100x100mm' ? '378px' : '378px';
+      const labelHeightPx = labelSize === '100x100mm' ? '378px' : '284px';
       
       // สร้าง HTML สำหรับใบลาเบล
       printWindow.document.write(`
@@ -742,27 +867,130 @@ const OrderList: React.FC = () => {
         <head>
           <title>ใบลาเบลพัสดุ - ${order.orderNumber}</title>
           <style>
-            body { font-family: 'Kanit', sans-serif; margin: 0; padding: 0; }
-            .label-container { 
-              width: ${labelWidth}; 
-              height: ${labelHeight}; 
-              border: 1px solid #ccc; 
-              padding: 5mm; 
-              margin: 10px auto; 
-              box-sizing: border-box;
+            @page {
+              size: ${labelSize};
+              margin: 0;
             }
-            .logo { text-align: center; margin-bottom: 3mm; font-size: ${labelSize === '100x100mm' ? '24px' : '20px'}; font-weight: bold; color: #8A2BE2; }
-            .tracking { font-size: ${labelSize === '100x100mm' ? '16px' : '14px'}; text-align: center; margin-bottom: 3mm; padding: 2mm; border: 1px solid #8A2BE2; }
-            .section { margin-bottom: 3mm; }
-            .title { font-weight: bold; margin-bottom: 1mm; font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; }
-            .address { font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; line-height: 1.3; }
-            .barcode { text-align: center; margin: 3mm 0; font-size: ${labelSize === '100x100mm' ? '16px' : '14px'}; }
-            .footer { text-align: center; font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; margin-top: 3mm; color: #666; }
-            .box { border: 1px solid #ccc; padding: 2mm; }
-            .print-button { text-align: center; margin: 20px; }
-            .print-button button { padding: 10px 20px; background: #8A2BE2; color: white; border: none; border-radius: 5px; cursor: pointer; }
-            .label-size-info { text-align: center; margin-bottom: 10px; font-size: 14px; color: #666; }
+            body { 
+              font-family: 'Kanit', sans-serif; 
+              margin: 0; 
+              padding: 0; 
+              background-color: #f5f5f5;
+            }
+            .page {
+              width: ${labelWidthPx};
+              height: ${labelHeightPx};
+              background-color: white;
+              margin: 10px auto;
+              padding: 0;
+              box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+              position: relative;
+              overflow: hidden;
+            }
+            .label-container { 
+              width: 100%; 
+              height: 100%; 
+              box-sizing: border-box;
+              padding: ${labelSize === '100x100mm' ? '8mm' : '6mm'};
+              position: relative;
+            }
+            .logo { 
+              text-align: center; 
+              margin-bottom: ${labelSize === '100x100mm' ? '5mm' : '3mm'}; 
+              font-size: ${labelSize === '100x100mm' ? '22px' : '18px'}; 
+              font-weight: bold; 
+              color: #8A2BE2; 
+            }
+            .tracking { 
+              font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; 
+              text-align: center; 
+              margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '2mm'}; 
+              padding: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'}; 
+              border: 1px solid #8A2BE2; 
+              border-radius: 3px; 
+              background-color: #faf6ff;
+            }
+            .section { 
+              margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '2mm'}; 
+            }
+            .title { 
+              font-weight: bold; 
+              margin-bottom: 1mm; 
+              font-size: ${labelSize === '100x100mm' ? '13px' : '11px'}; 
+              color: #555; 
+            }
+            .address { 
+              font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; 
+              line-height: 1.3; 
+            }
+            .barcode { 
+              text-align: center; 
+              margin: ${labelSize === '100x100mm' ? '3mm 0' : '2mm 0'}; 
+              font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; 
+              letter-spacing: 2px;
+              background-color: #f9f9f9;
+              padding: 1mm;
+              font-family: monospace;
+            }
+            .footer { 
+              text-align: center; 
+              font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; 
+              margin-top: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'};
+              color: #666;
+              position: ${labelSize === '100x100mm' ? 'relative' : 'absolute'};
+              bottom: ${labelSize === '100x100mm' ? 'auto' : '5mm'};
+              left: 0;
+              right: 0;
+            }
+            .box { 
+              border: 1px solid #ddd; 
+              padding: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'};
+              border-radius: 2px;
+              background-color: #fff;
+            }
+            .print-button { 
+              text-align: center; 
+              margin: 20px; 
+            }
+            .print-button button { 
+              padding: 10px 20px; 
+              background: #8A2BE2; 
+              color: white; 
+              border: none; 
+              border-radius: 5px; 
+              cursor: pointer;
+              font-family: 'Kanit', sans-serif;
+              font-size: 14px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .print-button button:hover {
+              background: #7B1FA2;
+            }
+            .label-size-info { 
+              text-align: center; 
+              margin-bottom: 10px; 
+              font-size: 14px; 
+              color: #666; 
+            }
+            .tracking-num {
+              font-size: ${labelSize === '100x100mm' ? '18px' : '14px'}; 
+              font-weight: bold;
+              margin-top: 1mm;
+            }
+            .cod-badge {
+              background-color: #ffe8e8;
+              border: 1px solid #ffcccc;
+              color: #d32f2f;
+              font-weight: bold;
+              padding: 1mm 2mm;
+              border-radius: 3px;
+              display: inline-block;
+              margin-left: 2mm;
+              font-size: ${labelSize === '100x100mm' ? '11px' : '9px'};
+            }
             @media print {
+              body { background-color: white; }
+              .page { box-shadow: none; margin: 0; }
               .print-button, .label-size-info { display: none; }
             }
           </style>
@@ -776,41 +1004,45 @@ const OrderList: React.FC = () => {
             ขนาดใบลาเบล: ${labelSize}
           </div>
           
-          <div class="label-container">
-            <div class="logo">PURPLEDASH</div>
-            
-            <div class="tracking box">
-              <div>เลขพัสดุ</div>
-              <div style="font-size: ${labelSize === '100x100mm' ? '20px' : '16px'}; font-weight: bold;">${order.trackingNumber}</div>
-            </div>
-            
-            <div class="section">
-              <div class="title">ผู้ส่ง:</div>
-              <div class="box address">
-                PURPLEDASH<br />
-                เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
-                ถนนพระราม 4 แขวงลุมพินี<br />
-                เขตปทุมวัน กรุงเทพฯ 10330<br />
-                โทร: 02-123-4567
+          <div class="page">
+            <div class="label-container">
+              <div class="logo">PURPLEDASH</div>
+              
+              <div class="tracking box">
+                <div style="font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; color: #666;">เลขพัสดุ</div>
+                <div class="tracking-num">${order.trackingNumber}</div>
               </div>
-            </div>
-            
-            <div class="section">
-              <div class="title">ผู้รับ:</div>
-              <div class="box address">
-                ${order.recipientName || 'ไม่ระบุ'}<br />
-                ${order.recipientAddress || ''} ${order.recipientSubdistrict || ''}<br />
-                ${order.recipientDistrict || ''} ${order.recipientProvince || ''} ${order.recipientZipCode || ''}<br />
-                โทร: ${order.recipientPhone || 'ไม่ระบุ'}
+              
+              <div class="section">
+                <div class="title">ผู้ส่ง:</div>
+                <div class="box address">
+                  PURPLEDASH<br />
+                  เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
+                  ถนนพระราม 4 แขวงลุมพินี<br />
+                  เขตปทุมวัน กรุงเทพฯ 10330<br />
+                  โทร: 02-123-4567
+                </div>
               </div>
-            </div>
-            
-            <div class="barcode box">
-              ${order.trackingNumber}
-            </div>
-            
-            <div class="footer">
-              ${order.paymentMethod === 'cash_on_delivery' ? 'เก็บเงินปลายทาง: ' + formatCurrency(order.total || parseFloat(order.totalAmount || '0')) : 'จ่ายเงินแล้ว'}
+              
+              <div class="section">
+                <div class="title">ผู้รับ:</div>
+                <div class="box address">
+                  <strong>${order.recipientName || 'ไม่ระบุ'}</strong><br />
+                  ${order.recipientAddress || ''} ${order.recipientSubdistrict || ''}<br />
+                  ${order.recipientDistrict || ''} ${order.recipientProvince || ''} ${order.recipientZipCode || ''}<br />
+                  โทร: ${order.recipientPhone || 'ไม่ระบุ'}
+                </div>
+              </div>
+              
+              <div class="barcode box">
+                ${order.trackingNumber}
+              </div>
+              
+              <div class="footer">
+                ${order.paymentMethod === 'cash_on_delivery' 
+                  ? `<span>เก็บเงินปลายทาง: ${formatCurrency(order.total || parseFloat(order.totalAmount || '0'))}</span><span class="cod-badge">COD</span>` 
+                  : 'จ่ายเงินแล้ว'}
+              </div>
             </div>
           </div>
         </body>
