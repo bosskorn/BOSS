@@ -15,6 +15,7 @@ import uploadRouter from "./routes/upload";
 import userProfileRouter from "./routes/user-profile";
 import topupsRouter from "./routes/topups";
 import locationsRouter from "./routes/locations";
+import mockShippingRouter from "./routes/mock-shipping";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // แสดงข้อมูลข้อมูลของทุกคำขอเพื่อแก้ไขปัญหา
@@ -45,6 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/user", userProfileRouter);
   app.use("/api/topups", topupsRouter);
   app.use("/api/locations", locationsRouter);
+  app.use("/api/mock-shipping", mockShippingRouter);
 
   // ตรวจสอบสถานะ Flash Express API
   app.get("/api/flash-express/status", (req, res) => {
