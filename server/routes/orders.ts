@@ -248,12 +248,57 @@ router.post('/', auth, async (req, res) => {
       
       for (const item of orderData.items) {
         try {
-          await storage.createOrderItem({
+          // ข้อมูลสำหรับบันทึกรายการสินค้า
+          const orderItemData: any = {
             orderId: order.id,
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-          });
+            quantity: item.quantity || 1,
+            price: item.price || 0,
+          };
+          
+          // ตรวจสอบว่ามีการส่ง productId มาหรือไม่
+          if (item.productId) {
+            orderItemData.productId = item.productId;
+          } 
+          // กรณีที่มีการส่ง sku มาแทน (จากการนำเข้า Excel)
+          else if (item.sku) {
+            // ค้นหาสินค้าจาก sku
+            try {
+              const products = await storage.getProductsBySku(item.sku);
+              if (products && products.length > 0) {
+                orderItemData.productId = products[0].id;
+                console.log(`พบสินค้าจาก SKU ${item.sku}: ID = ${orderItemData.productId}`);
+              } else {
+                // ถ้าไม่พบสินค้าจาก SKU แต่มีชื่อสินค้า
+                if (item.name) {
+                  const product = await storage.createProduct({
+                    userId: orderData.userId,
+                    name: item.name,
+                    sku: item.sku,
+                    price: item.price || 0,
+                    cost: item.price ? (item.price * 0.7) : 0, // ประมาณต้นทุน 70% ของราคาขาย
+                    stock: 0,
+                    categoryId: null,
+                    status: 'active',
+                  });
+                  
+                  if (product) {
+                    orderItemData.productId = product.id;
+                    console.log(`สร้างสินค้าใหม่จาก SKU ${item.sku}: ID = ${orderItemData.productId}`);
+                  }
+                }
+              }
+            } catch (skuError) {
+              console.error(`เกิดข้อผิดพลาดในการค้นหาสินค้าจาก SKU:`, skuError);
+            }
+          }
+          
+          // ถ้ามี productId แล้วจึงบันทึกข้อมูลรายการสินค้า
+          if (orderItemData.productId) {
+            await storage.createOrderItem(orderItemData);
+            console.log(`บันทึกรายการสินค้า ${orderItemData.productId} สำเร็จ`);
+          } else {
+            console.warn(`ไม่สามารถบันทึกรายการสินค้า: ไม่มี productId และไม่สามารถค้นหาจาก SKU ${item.sku}`);
+          }
         } catch (error) {
           console.error(`เกิดข้อผิดพลาดในการบันทึกรายการสินค้า:`, error);
         }
