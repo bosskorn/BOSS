@@ -1156,7 +1156,28 @@ const OrderList: React.FC = () => {
               
               <div class="barcode-small">
                 <div style="font-size: 9px; color: #666; margin-bottom: 3px;">บาร์โค้ด</div>
-                ${generateBarcode(order.trackingNumber || '')}
+                <div style="background-color: white; display: flex; justify-content: center; margin: 5px auto; height: 30px; width: 80%;">
+                  <div style="width: 1px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 2px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 1px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 3px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 1px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 2px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 2px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 1px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 2px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 1px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 1px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 3px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 1px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 2px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 1px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 2px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 1px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 2px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 3px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                  <div style="width: 1px; height: 30px; background-color: #000; margin: 0 0.7px;"></div>
+                </div>
                 <div style="font-size: 9px; margin-top: 3px;">${order.trackingNumber}</div>
               </div>
               `}
