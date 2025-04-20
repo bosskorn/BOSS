@@ -848,7 +848,9 @@ const OrderList: React.FC = () => {
   // ฟังก์ชันพิมพ์ใบลาเบลสำหรับรายการที่เลือก
   // สำหรับฟังก์ชันพิมพ์ใบลาเบลแบบปกติ (เพื่อความเข้ากันได้)
   const handlePrintLabel = (order: Order) => {
-    handlePrintLabelWithSizeDialog(order);
+    // แสดง Dialog ให้เลือกรูปแบบลาเบล
+    setOrderToPrint(order);
+    setLabelTypeDialogOpen(true);
   };
 
   // ฟังก์ชันเปิด Dialog สำหรับเลือกขนส่ง
