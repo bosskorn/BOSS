@@ -26,6 +26,7 @@ import TopUp from "@/pages/top-up";
 import ClaimsList from "@/pages/claims-list";
 import UserClaims from "@/pages/user-claims";
 import PrintTestSimple from "@/pages/print-test-simple";
+import BarcodeTest from "@/pages/barcode-test";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/logo" component={LogoDisplay} />
       <Route path="/admin-register" component={AdminRegisterPage} />
       <Route path="/print-test" component={PrintTestSimple} />
+      <Route path="/barcode-test" component={BarcodeTest} />
       
       {/* Protected routes - require authentication */}
       <ProtectedRoute path="/" component={Dashboard} />
