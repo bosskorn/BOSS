@@ -91,6 +91,12 @@ router.get('/:id', auth, async (req, res) => {
       customerDistrict: customer ? customer.district : '',
       customerSubdistrict: customer ? customer.subdistrict : '',
       customerZipcode: customer ? customer.zipcode : '',
+      customerAddressNumber: customer ? customer.addressNumber : '',
+      customerRoad: customer ? customer.road : '',
+      customerMoo: customer ? customer.moo : '',
+      customerSoi: customer ? customer.soi : '',
+      customerBuilding: customer ? customer.building : '',
+      customerFloor: customer ? customer.floor : '',
       items: orderItems
     };
     
@@ -204,11 +210,17 @@ router.post('/', auth, async (req, res) => {
           userId: orderData.userId,
           name: orderData.customerName || 'ไม่ระบุชื่อ',
           phone: orderData.customerPhone || '',
-          address: orderData.houseNumber || '',
+          address: orderData.fullAddress || '',
           subdistrict: orderData.subdistrict || '',
           district: orderData.district || '',
           province: orderData.province || '',
           zipcode: orderData.zipcode || '',
+          addressNumber: orderData.houseNumber || '',
+          road: orderData.road || '',
+          moo: orderData.village || '',
+          soi: orderData.soi || '',
+          building: orderData.building || '',
+          floor: orderData.floor || '',
           email: '',
           notes: `ลูกค้าจากออเดอร์ ${orderData.orderNumber}`
         };

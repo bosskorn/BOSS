@@ -41,6 +41,12 @@ interface Customer {
   district: string;
   subdistrict: string;
   zipcode: string;
+  addressNumber?: string;
+  road?: string;
+  moo?: string;
+  soi?: string;
+  building?: string;
+  floor?: string;
 }
 
 // อินเทอร์เฟซสำหรับข้อมูลการจัดส่ง
@@ -122,6 +128,13 @@ const OrderDetail: React.FC = () => {
           district: data.order.customerDistrict || '',
           subdistrict: data.order.customerSubdistrict || '',
           zipcode: data.order.customerZipcode || '',
+          // ข้อมูลเพิ่มเติม
+          addressNumber: data.order.customerAddressNumber || '',
+          road: data.order.customerRoad || '',
+          moo: data.order.customerMoo || '',
+          soi: data.order.customerSoi || '',
+          building: data.order.customerBuilding || '',
+          floor: data.order.customerFloor || '',
         };
         
         // ดึงข้อมูลสินค้า (ถ้ามี)
@@ -642,16 +655,35 @@ const OrderDetail: React.FC = () => {
                     <div>
                       <div className="font-medium mb-1">ที่อยู่จัดส่ง</div>
                       <div className="text-gray-600">
-                        {order.customer.address ? (
-                          <p className="mb-1">{order.customer.address}</p>
+                        {/* ตรวจสอบข้อมูลบ้านเลขที่และถนน */}
+                        {order.customer.address || (order.customer.addressNumber && order.customer.road) ? (
+                          <div className="mb-2">
+                            {/* ถ้ามีเลขที่บ้านหรือถนน ให้แสดงเป็นรายการแยก */}
+                            {order.customer.addressNumber && (
+                              <p className="mb-1">
+                                <span className="font-medium">บ้านเลขที่:</span> {order.customer.addressNumber}
+                              </p>
+                            )}
+                            {order.customer.road && (
+                              <p className="mb-1">
+                                <span className="font-medium">ถนน:</span> {order.customer.road}
+                              </p>
+                            )}
+                            {/* ถ้ามีที่อยู่แบบรวม */}
+                            {order.customer.address && (
+                              <p className="mb-1">
+                                <span className="font-medium">ที่อยู่:</span> {order.customer.address}
+                              </p>
+                            )}
+                          </div>
                         ) : (
-                          <div className="mb-1">
-                            <div className="flex items-center mb-1 p-1 bg-yellow-50 border border-yellow-200 rounded text-yellow-700">
+                          <div className="mb-2">
+                            <div className="flex items-center mb-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-700">
                               <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2" />
                               <span className="font-medium">ข้อมูลที่อยู่ไม่ครบถ้วน</span>
                             </div>
-                            <p className="text-sm text-gray-500">
-                              กรุณาแก้ไขข้อมูลที่อยู่ให้ครบถ้วนก่อนจัดส่งเพื่อป้องกันปัญหาการจัดส่ง
+                            <p className="text-sm text-gray-500 mt-1">
+                              กรุณาระบุบ้านเลขที่และถนนให้ครบถ้วนก่อนจัดส่งเพื่อป้องกันปัญหาการจัดส่ง
                             </p>
                           </div>
                         )}
