@@ -645,10 +645,15 @@ const OrderDetail: React.FC = () => {
                         {order.customer.address ? (
                           <p className="mb-1">{order.customer.address}</p>
                         ) : (
-                          <p className="mb-1 text-yellow-600">
-                            <AlertTriangle className="h-3 w-3 inline mr-1" />
-                            ข้อมูลบ้านเลขที่และถนนไม่ครบถ้วน
-                          </p>
+                          <div className="mb-1">
+                            <div className="flex items-center mb-1 p-1 bg-yellow-50 border border-yellow-200 rounded text-yellow-700">
+                              <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2" />
+                              <span className="font-medium">ข้อมูลที่อยู่ไม่ครบถ้วน</span>
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              กรุณาแก้ไขข้อมูลที่อยู่ให้ครบถ้วนก่อนจัดส่งเพื่อป้องกันปัญหาการจัดส่ง
+                            </p>
+                          </div>
                         )}
                         <p>
                           {order.customer.subdistrict} {order.customer.district} {order.customer.province} {order.customer.zipcode}

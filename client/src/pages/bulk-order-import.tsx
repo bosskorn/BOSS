@@ -24,6 +24,8 @@ interface OrderPreview {
   customerName: string;
   customerPhone: string;
   address: string;
+  houseNumber: string; // เพิ่มฟิลด์บ้านเลขที่
+  road: string;        // เพิ่มฟิลด์ถนน
   province: string;
   district: string;
   subdistrict: string;
@@ -404,6 +406,7 @@ const BulkOrderImportPage: React.FC = () => {
             </h3>
             <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
               <li>ไฟล์ต้องมีคอลัมน์ตามรูปแบบที่กำหนด (ชื่อลูกค้า, เบอร์โทรศัพท์, ที่อยู่, ฯลฯ)</li>
+              <li><b>ควรระบุบ้านเลขที่และถนนในคอลัมน์ที่กำหนด</b> เพื่อให้ข้อมูลการจัดส่งครบถ้วนและถูกต้อง</li>
               <li>ไม่จำเป็นต้องกรอกข้อมูลในทุกคอลัมน์ แต่ข้อมูลสำคัญต้องมี เช่น ชื่อลูกค้า, เบอร์โทร, ที่อยู่</li>
               <li>คอลัมน์ "เก็บเงินปลายทาง" ให้ใส่ true/yes/y สำหรับ COD</li>
               <li><b>ไม่ต้องระบุบริษัทขนส่ง</b> - คุณจะสามารถเลือกบริษัทขนส่งหลังจากอัพโหลดไฟล์แล้ว</li>
