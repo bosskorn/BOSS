@@ -1056,77 +1056,99 @@ const CreateOrderTabsPage: React.FC = () => {
     analyzeAllCustomerData(text);
   };
   
-  // ฟังก์ชันดึงตัวเลือกการจัดส่ง
+  // ฟังก์ชันดึงตัวเลือกการจัดส่งโดยใช้บริการขนส่งจำลอง
   const fetchShippingOptions = async () => {
     try {
       console.log("กำลังดึงข้อมูลตัวเลือกการจัดส่ง...");
       
-      // สร้างตัวเลือกการจัดส่งแบบ fallback โดยตรง (ไม่ต้องเรียก API) เพื่อให้มีข้อมูลให้ใช้งานได้เสมอ
+      // สร้างตัวเลือกการจัดส่งเริ่มต้น (สำหรับกรณีเรียก API ไม่สำเร็จ)
       const defaultOptions = [
         {
-          id: 1,
-          name: 'Flash Express - ส่งด่วน',
+          id: 'bluexpress_express',
+          name: 'Blue Express - ด่วน (1 วัน)',
           price: 60,
-          deliveryTime: '1-2 วัน',
-          provider: 'Flash Express',
-          serviceId: 'FLASH-FAST',
-          logo: '/images/flash-express.png'
+          deliveryTime: '1 วัน',
+          provider: 'Blue Express',
+          serviceId: 'bluexpress_express',
+          logo: '/assets/shipping-icon.png',
+          icon: '⚡',
+          isPopular: true
         },
         {
-          id: 2,
-          name: 'Flash Express - ส่งธรรมดา',
+          id: 'bluexpress_normal',
+          name: 'Blue Express - ปกติ',
           price: 40,
+          deliveryTime: '1-2 วัน',
+          provider: 'Blue Express',
+          serviceId: 'bluexpress_normal',
+          logo: '/assets/shipping-icon.png',
+          icon: '🚚'
+        },
+        {
+          id: 'speedline_economy',
+          name: 'SpeedLine - ประหยัด',
+          price: 35,
           deliveryTime: '2-3 วัน',
-          provider: 'Flash Express',
-          serviceId: 'FLASH-NORMAL',
-          logo: '/images/flash-express.png'
+          provider: 'SpeedLine',
+          serviceId: 'speedline_economy',
+          logo: '/assets/shipping-icon.png',
+          icon: '🚚'
         },
         {
-          id: 3,
-          name: 'ไปรษณีย์ไทย - EMS',
-          price: 50,
-          deliveryTime: '1-3 วัน',
-          provider: 'Thailand Post',
-          serviceId: 'TP-EMS',
-          logo: '/images/thailand-post.png'
-        },
-        {
-          id: 4,
-          name: 'ไปรษณีย์ไทย - ลงทะเบียน',
-          price: 30,
-          deliveryTime: '3-5 วัน',
-          provider: 'Thailand Post',
-          serviceId: 'TP-REG',
-          logo: '/images/thailand-post.png'
+          id: 'thaistar_premium',
+          name: 'ThaiStar - พรีเมียม',
+          price: 55,
+          deliveryTime: '1-2 วัน',
+          provider: 'ThaiStar Delivery',
+          serviceId: 'thaistar_premium',
+          logo: '/assets/shipping-icon.png',
+          icon: '⭐'
         }
       ];
       
-      // พยายามดึงข้อมูลจาก API ก่อน
+      // พยายามดึงข้อมูลจากบริการขนส่งจำลอง
       try {
-        // เรียก API เพื่อดึงข้อมูลตัวเลือกการจัดส่ง
-        const response = await api.post('/api/shipping/options', {
-          // ส่งข้อมูลที่อยู่และน้ำหนักพัสดุเพื่อคำนวณค่าจัดส่ง
-          address: {
-            province: form.getValues('province') || 'กรุงเทพมหานคร',
-            district: form.getValues('district') || 'พระนคร',
-            zipcode: form.getValues('zipcode') || '10200'
-          },
-          weight: 1 // น้ำหนักเริ่มต้น 1 กิโลกรัม
-        });
+        // สร้างข้อมูลที่อยู่สำหรับส่งไปยังบริการขนส่งจำลอง
+        const address = {
+          province: form.getValues('province') || 'กรุงเทพมหานคร',
+          district: form.getValues('district') || 'พระนคร',
+          zipcode: form.getValues('zipcode') || '10200'
+        };
         
-        if (response.data.success && response.data.options && response.data.options.length > 0) {
-          console.log("ดึงข้อมูลตัวเลือกการจัดส่งสำเร็จ:", response.data.options);
-          setShippingOptions(response.data.options);
+        // เรียกใช้บริการขนส่งจำลอง
+        const options = await getMockShippingOptions(address, 1);
+        
+        if (options && options.length > 0) {
+          console.log("ดึงข้อมูลตัวเลือกการจัดส่งจากบริการจำลองสำเร็จ:", options);
+          
+          // แปลงรูปแบบข้อมูลให้ตรงกับที่ใช้ในฟอร์ม
+          const formattedOptions = options.map(option => ({
+            id: option.code,
+            name: `${option.providerName} - ${option.name}`,
+            price: option.price,
+            deliveryTime: option.estimatedDays === 0 ? 'วันนี้' : 
+                         option.estimatedDays === 1 ? '1 วัน' :
+                         `${option.estimatedDays} วัน`,
+            provider: option.providerName,
+            serviceId: option.code,
+            logo: '/assets/shipping-icon.png',
+            icon: option.icon || '🚚',
+            isPopular: option.isPopular || false,
+            isCODAvailable: option.isCODAvailable,
+            maxCODAmount: option.maxCODAmount
+          }));
+          
+          setShippingOptions(formattedOptions);
           return;
         } else {
-          console.log("ไม่พบข้อมูลตัวเลือกการจัดส่งจาก API ใช้ข้อมูลเริ่มต้นแทน");
+          console.log("ไม่พบข้อมูลตัวเลือกการจัดส่งจากบริการจำลอง ใช้ข้อมูลเริ่มต้นแทน");
         }
       } catch (apiError) {
-        console.error("เกิดข้อผิดพลาดในการเรียก API:", apiError);
+        console.error("เกิดข้อผิดพลาดในการเรียกบริการขนส่งจำลอง:", apiError);
         console.log("ใช้ข้อมูลเริ่มต้นแทน");
       }
       
-      // ถ้าเรียก API ไม่สำเร็จหรือไม่มีข้อมูล ให้ใช้ข้อมูลเริ่มต้น
+      // ถ้าเรียกบริการจำลองไม่สำเร็จหรือไม่มีข้อมูล ให้ใช้ข้อมูลเริ่มต้น
       setShippingOptions(defaultOptions);
       
     } catch (error) {
@@ -1182,11 +1204,22 @@ const CreateOrderTabsPage: React.FC = () => {
   };
   
   // ฟังก์ชันการเลือกวิธีการจัดส่ง
-  const handleShippingSelect = (shippingId: number) => {
+  const handleShippingSelect = (shippingId: string | number) => {
     const selectedShipping = shippingOptions.find(s => s.id === shippingId);
     if (selectedShipping) {
+      console.log('เลือกตัวเลือกการจัดส่ง:', selectedShipping);
       form.setValue('shippingMethod', selectedShipping.name);
       form.setValue('shippingCost', selectedShipping.price);
+      
+      // ตรวจสอบว่าตัวเลือกนี้รองรับ COD หรือไม่
+      if (selectedShipping.isCODAvailable === false && form.getValues('isCOD')) {
+        toast({
+          title: 'ไม่รองรับ COD',
+          description: 'บริการจัดส่งนี้ไม่รองรับการเก็บเงินปลายทาง',
+          variant: 'destructive',
+        });
+        form.setValue('isCOD', false);
+      }
     }
   };
   
