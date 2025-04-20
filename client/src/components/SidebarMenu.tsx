@@ -89,27 +89,56 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
           </div>
         </div>
 
-        {/* รายการเมนู */}
+        {/* รายการเมนูที่เหลือ */}
         <div className="py-2">
-          <div className="px-4 py-3 text-center text-sm text-gray-500">
-            เมนูถูกย้ายไปที่แถบนำทางด้านบน
-          </div>
-        </div>
-
-        {/* ปุ่มออกจากระบบ */}
-        <div className="py-4 px-4">
-          <button 
-            onClick={() => {
-              if (logoutMutation) {
-                logoutMutation.mutate();
-              }
-              onClose();
-            }}
-            className="w-full flex items-center px-4 py-2 text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100"
-          >
-            <i className="fa-solid fa-sign-out-alt w-5 mr-3 text-red-600"></i>
-            <span>ออกจากระบบ</span>
-          </button>
+          <ul className="space-y-1">
+            {/* เมนูตั้งค่า */}
+            <li>
+              <Link 
+                href="/settings"
+                className={`flex items-center px-4 py-2 text-sm hover:bg-blue-50 ${
+                  location === '/settings' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                }`}
+                onClick={onClose}
+              >
+                <i className={`fa-solid fa-cog w-5 mr-3 ${location === '/settings' ? 'text-blue-600' : 'text-gray-500'}`}></i>
+                <span>ตั้งค่า</span>
+              </Link>
+            </li>
+            
+            {/* เมนูเติมเครดิต */}
+            <li>
+              <Link 
+                href="/top-up"
+                className={`flex items-center px-4 py-2 text-sm hover:bg-blue-50 ${
+                  location === '/top-up' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                }`}
+                onClick={onClose}
+              >
+                <i className={`fa-solid fa-wallet w-5 mr-3 ${location === '/top-up' ? 'text-blue-600' : 'text-gray-500'}`}></i>
+                <span>เติมเครดิต</span>
+              </Link>
+            </li>
+            
+            {/* เมนูออกจากระบบ */}
+            <li>
+              <Link 
+                href="/auth"
+                className={`flex items-center px-4 py-2 text-sm hover:bg-red-50 ${
+                  location === '/auth' ? 'bg-red-50 text-red-600' : 'text-gray-700'
+                }`}
+                onClick={() => {
+                  if (logoutMutation) {
+                    logoutMutation.mutate();
+                  }
+                  onClose();
+                }}
+              >
+                <i className={`fa-solid fa-sign-out-alt w-5 mr-3 text-red-500`}></i>
+                <span className="text-red-500">ออกจากระบบ</span>
+              </Link>
+            </li>
+          </ul>
         </div>
 
         {/* ส่วนล่าง */}
