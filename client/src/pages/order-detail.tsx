@@ -168,23 +168,50 @@ const OrderDetail: React.FC = () => {
         
         // ระบุผู้ให้บริการจากเลขพัสดุ
         if (data.order.trackingNumber) {
-          const trackingNumber = data.order.trackingNumber;
+          const trackingNumber = data.order.trackingNumber.toUpperCase();
           
-          // ตรวจสอบผู้ให้บริการจัดส่งจากเลขพัสดุ
-          if (trackingNumber.startsWith('TST') || trackingNumber.startsWith('THA')) {
+          // ตรวจสอบผู้ให้บริการจัดส่งจากเลขพัสดุอย่างละเอียด
+          if (trackingNumber.includes('TST') || trackingNumber.includes('THA')) {
             shippingData.carrier = 'ThaiStar Delivery';
-          } else if (trackingNumber.startsWith('THP')) {
+          } else if (trackingNumber.includes('THP') || trackingNumber.includes('TH')) {
             shippingData.carrier = 'Thailand Post';
-          } else if (trackingNumber.startsWith('SPE')) {
+          } else if (trackingNumber.includes('SPE') || trackingNumber.includes('PD')) {
             shippingData.carrier = 'SpeedLine';
-          } else if (trackingNumber.startsWith('KRF')) {
+          } else if (trackingNumber.includes('KRY') || trackingNumber.includes('KERRY')) {
             shippingData.carrier = 'Kerry Express';
-          } else if (trackingNumber.startsWith('JNT') || trackingNumber.startsWith('J&T')) {
+          } else if (trackingNumber.includes('JNT') || trackingNumber.includes('J&T')) {
             shippingData.carrier = 'J&T Express';
-          } else if (trackingNumber.startsWith('เสี') || trackingNumber.startsWith('XBE')) {
+          } else if (trackingNumber.includes('XBE') || trackingNumber.includes('XB')) {
             shippingData.carrier = 'Xiaobai Express';
-          } else if (trackingNumber.startsWith('FLE')) {
+          } else if (trackingNumber.includes('FLE') || trackingNumber.includes('FLASH')) {
             shippingData.carrier = 'Flash Express';
+          } else if (trackingNumber.includes('DHL')) {
+            shippingData.carrier = 'DHL Express';
+          } else if (trackingNumber.includes('NJV') || trackingNumber.includes('NINJA')) {
+            shippingData.carrier = 'Ninja Van';
+          }
+          
+          // ลอจิกตรวจสอบแบบที่ 2: ดูจากตัวอักษร 3 ตัวแรก
+          if (shippingData.carrier === 'ไม่ระบุ') {
+            if (trackingNumber.startsWith('TST') || trackingNumber.startsWith('THA')) {
+              shippingData.carrier = 'ThaiStar Delivery';
+            } else if (trackingNumber.startsWith('THP')) {
+              shippingData.carrier = 'Thailand Post';
+            } else if (trackingNumber.startsWith('SPE')) {
+              shippingData.carrier = 'SpeedLine';
+            } else if (trackingNumber.startsWith('KRY')) {
+              shippingData.carrier = 'Kerry Express';
+            } else if (trackingNumber.startsWith('JNT')) {
+              shippingData.carrier = 'J&T Express';
+            } else if (trackingNumber.startsWith('XBE')) {
+              shippingData.carrier = 'Xiaobai Express';
+            } else if (trackingNumber.startsWith('FLE')) {
+              shippingData.carrier = 'Flash Express';
+            } else if (trackingNumber.startsWith('DHL')) {
+              shippingData.carrier = 'DHL Express';
+            } else if (trackingNumber.startsWith('NJV')) {
+              shippingData.carrier = 'Ninja Van';
+            }
           }
         }
         
