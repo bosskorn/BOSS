@@ -448,7 +448,7 @@ const OrderList: React.FC = () => {
             .footer { text-align: center; font-size: 12px; margin-top: 5mm; color: #666; }
             .box { border: 1px solid #ccc; padding: 3mm; }
             .print-button { text-align: center; margin: 20px; }
-            .print-button button { padding: 10px 20px; background: #8A2BE2; color: white; border: none; border-radius: 5px; cursor: pointer; }
+            .print-button button { padding: 10px 20px; background: #0078D7; color: white; border: none; border-radius: 5px; cursor: pointer; }
             @media print {
               .print-button { display: none; }
             }
@@ -684,9 +684,9 @@ const OrderList: React.FC = () => {
               text-align: center; 
               margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '2mm'}; 
               padding: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'}; 
-              border: 1px solid #8A2BE2; 
+              border: 1px solid #0078D7; 
               border-radius: 3px; 
-              background-color: #faf6ff;
+              background-color: #f0f9ff;
             }
             .flex-container {
               display: flex;
