@@ -2206,7 +2206,9 @@ const OrderList: React.FC = () => {
                       <TableCell className="font-medium">
                         <div className="flex items-center">
                           {getStatusIcon(order.status)}
-                          <span className="ml-2">{order.orderNumber}</span>
+                          <Link href={`/order-detail/${order.id}`} className="ml-2 text-blue-600 hover:text-blue-700 hover:underline">
+                            {order.orderNumber}
+                          </Link>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">{order.total !== undefined ? formatCurrency(order.total) : formatCurrency(parseFloat(order.totalAmount || "0"))}</TableCell>
@@ -2227,7 +2229,9 @@ const OrderList: React.FC = () => {
                         {order.trackingNumber ? (
                           <div className="flex items-center">
                             <Truck className="h-4 w-4 text-blue-500 mr-1" />
-                            <span className="font-medium text-blue-700">{order.trackingNumber}</span>
+                            <Link href={`/order-detail/${order.id}`} className="font-medium text-blue-700 hover:text-blue-800 hover:underline">
+                              {order.trackingNumber}
+                            </Link>
                           </div>
                         ) : (
                           <div className="flex items-center">
