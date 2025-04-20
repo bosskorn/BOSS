@@ -53,13 +53,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-600 text-sm mb-2 md:mb-0">
-              &copy; {new Date().getFullYear()} PURPLEDASH - ระบบจัดการข้อมูลขนส่งอัจฉริยะ | หน้าผู้ดูแลระบบ
+              &copy; {new Date().getFullYear()} BLUEDASH - ระบบจัดการข้อมูลขนส่งอัจฉริยะ | หน้าผู้ดูแลระบบ
             </div>
             <div className="flex items-center space-x-4">
-              <a href="#" className="text-gray-500 hover:text-purple-600">
+              <a href="#" className="text-gray-500 hover:text-blue-600">
                 <i className="fa-solid fa-circle-info mr-1"></i> ช่วยเหลือ
               </a>
-              <a href="#" className="text-gray-500 hover:text-purple-600">
+              <a href="#" className="text-gray-500 hover:text-blue-600">
                 <i className="fa-solid fa-envelope mr-1"></i> ติดต่อทีมงาน
               </a>
             </div>
