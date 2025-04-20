@@ -10,6 +10,7 @@ import locationsRoutes from './locations';
 import shippingRoutes from './shipping';
 import adminAuthRoutes from './admin-auth';
 import testRoutes from './test';
+import dashboardRoutes from './dashboard';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use('/customers', customersRoutes);
 router.use('/locations', locationsRoutes);
 router.use('/shipping', shippingRoutes);
 router.use('/test', testRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 // Base API route
 router.get('/', (req, res) => {
