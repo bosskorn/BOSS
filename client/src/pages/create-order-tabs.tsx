@@ -1376,17 +1376,17 @@ const CreateOrderTabsPage: React.FC = () => {
         const response = await api.post('/api/orders', orderData);
         
         if (response.data.success) {
-          // แสดง toast แจ้งเตือนว่าสร้างออเดอร์สำเร็จ
-          toast({
+          // แสดง dialog ยืนยันการสร้างออเดอร์สำเร็จ แทนการไปหน้าอื่นทันที
+          setDialog({
+            open: true,
             title: 'สร้างออเดอร์สำเร็จ',
-            description: `ออเดอร์หมายเลข ${response.data.order.id || orderData.orderNumber} และเลขพัสดุ ${orderData.trackingNumber} ถูกสร้างเรียบร้อยแล้ว`,
+            description: 'ออเดอร์ของคุณได้ถูกบันทึกเรียบร้อยแล้ว',
+            orderNumber: response.data.order.id || orderData.orderNumber,
+            trackingNumber: orderData.trackingNumber
           });
           
           // เคลียร์ฟอร์ม
           form.reset();
-          
-          // นำทางไปยังหน้ารายการคำสั่งซื้อทั้งหมดทันที
-          setLocation('/orders');
         } else {
           throw new Error(response.data.message || 'เกิดข้อผิดพลาดในการสร้างออเดอร์');
         }
@@ -2403,7 +2403,7 @@ const CreateOrderTabsPage: React.FC = () => {
                 setDialog({ ...dialog, open: false });
                 setLocation('/orders');
               }}
-              className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
+              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
             >
               <Truck className="mr-2 h-4 w-4" /> ดูรายการออเดอร์
             </Button>
@@ -2432,7 +2432,7 @@ const CreateOrderTabsPage: React.FC = () => {
             </div>
           )}
           <AlertDialogFooter>
-            <AlertDialogAction className="bg-purple-600 hover:bg-purple-700">
+            <AlertDialogAction className="bg-blue-600 hover:bg-blue-700">
               ตกลง
             </AlertDialogAction>
           </AlertDialogFooter>
