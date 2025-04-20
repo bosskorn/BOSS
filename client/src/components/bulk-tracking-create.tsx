@@ -352,6 +352,33 @@ const BulkTrackingCreate: React.FC<BulkTrackingCreateProps> = ({
                     <SelectValue placeholder="เลือกบริษัทขนส่ง" />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* บริษัทขนส่งจำลอง */}
+                    <SelectItem key="xiaobai" value="เสี่ยวไป๋ เอ็กเพรส">
+                      เสี่ยวไป๋ เอ็กเพรส - ฿45.00
+                    </SelectItem>
+                    <SelectItem key="speedline" value="SpeedLine">
+                      SpeedLine - ฿60.00
+                    </SelectItem>
+                    <SelectItem key="thaistar" value="ThaiStar Delivery">
+                      ThaiStar Delivery - ฿50.00
+                    </SelectItem>
+                    <SelectItem key="jnt" value="J&T Express">
+                      J&T Express - ฿45.00
+                    </SelectItem>
+                    <SelectItem key="kerry" value="Kerry Express">
+                      Kerry Express - ฿50.00
+                    </SelectItem>
+                    <SelectItem key="thaipost" value="ไปรษณีย์ไทย">
+                      ไปรษณีย์ไทย - ฿35.00
+                    </SelectItem>
+                    <SelectItem key="dhl" value="DHL Express">
+                      DHL Express - ฿90.00
+                    </SelectItem>
+                    <SelectItem key="ninja" value="Ninja Van">
+                      Ninja Van - ฿55.00
+                    </SelectItem>
+                    
+                    {/* บริษัทขนส่งจากฐานข้อมูล */}
                     {shippingMethods
                       .filter(method => method.isActive)
                       .map((method) => (
