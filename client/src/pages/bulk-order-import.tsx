@@ -184,10 +184,11 @@ const BulkOrderImportPage: React.FC = () => {
       return;
     }
     
-    if (!selectedShippingMethod) {
+    // ถ้าไม่ได้เลือกขนส่งและไม่ได้เลือก "ยังไม่เลือกขนส่งตอนนี้"
+    if (!selectedShippingMethod && selectedShippingMethod !== 'no_carrier') {
       toast({
         title: 'กรุณาเลือกบริษัทขนส่ง',
-        description: 'โปรดเลือกบริษัทขนส่งก่อนสร้างออเดอร์',
+        description: 'โปรดเลือกบริษัทขนส่งก่อนสร้างออเดอร์ หรือเลือก "ยังไม่เลือกขนส่งตอนนี้"',
         variant: 'destructive',
       });
       return;
@@ -225,7 +226,9 @@ const BulkOrderImportPage: React.FC = () => {
             quantity: item.quantity,
             price: item.price
           })),
-          shippingMethod: selectedShippingMethod, // ใช้การจัดส่งที่เลือกจาก UI แทนที่จะใช้จากไฟล์ Excel
+          // ใช้การจัดส่งที่เลือกจาก UI แทนที่จะใช้จากไฟล์ Excel
+          // ถ้าเลือก "no_carrier" ให้ไม่กำหนดบริษัทขนส่ง
+          shippingMethod: selectedShippingMethod === 'no_carrier' ? '' : selectedShippingMethod,
           shippingCost: 40, // ค่าจัดส่งเริ่มต้น สามารถปรับได้ตามความต้องการ
           isCOD: order.isCOD,
           codAmount: order.codAmount || 0,
@@ -447,9 +450,28 @@ const BulkOrderImportPage: React.FC = () => {
                   <SelectValue placeholder="เลือกบริษัทขนส่ง" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="no_carrier">
+                    ยังไม่เลือกขนส่งตอนนี้
+                  </SelectItem>
                   {shippingMethods.map((method) => (
-                    <SelectItem key={method.id} value={method.name}>
-                      {method.name}
+                    <SelectItem key={method.id} value={method.name === 'Xiaobai Express' ? 'Xiaobai Express' : 
+                      method.name === 'Thailand Post' ? 'Thailand Post' : 
+                      method.name === 'SpeedLine' ? 'SpeedLine' : 
+                      method.name === 'ThaiStar Delivery' ? 'ThaiStar Delivery' : 
+                      method.name === 'J&T Express' ? 'J&T Express' : 
+                      method.name === 'Kerry Express' ? 'Kerry Express' : 
+                      method.name === 'DHL Express' ? 'DHL Express' : 
+                      method.name === 'Ninja Van' ? 'Ninja Van' : 
+                      method.name}>
+                      {method.name === 'เสี่ยวไป๋ เอ็กเพรส' ? 'Xiaobai Express' : 
+                       method.name === 'ไปรษณีย์ไทย' ? 'Thailand Post' : 
+                       method.name === 'สปีดไลน์' ? 'SpeedLine' : 
+                       method.name === 'ไทยสตาร์' ? 'ThaiStar Delivery' : 
+                       method.name === 'เจแอนด์ที เอ็กซ์เพรส' ? 'J&T Express' : 
+                       method.name === 'เคอรี่ เอ็กซ์เพรส' ? 'Kerry Express' : 
+                       method.name === 'ดีเอชแอล' ? 'DHL Express' : 
+                       method.name === 'นินจาแวน' ? 'Ninja Van' : 
+                       method.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
