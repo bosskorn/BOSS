@@ -129,12 +129,12 @@ const OrderDetail: React.FC = () => {
           subdistrict: data.order.customerSubdistrict || '',
           zipcode: data.order.customerZipcode || '',
           // ข้อมูลเพิ่มเติม
-          addressNumber: data.order.customerAddressNumber || '',
-          road: data.order.customerRoad || '',
-          moo: data.order.customerMoo || '',
-          soi: data.order.customerSoi || '',
-          building: data.order.customerBuilding || '',
-          floor: data.order.customerFloor || '',
+          addressNumber: data.order.addressNumber || '',
+          road: data.order.road || '',
+          moo: data.order.moo || '',
+          soi: data.order.soi || '',
+          building: data.order.building || '',
+          floor: data.order.floor || '',
         };
         
         // ดึงข้อมูลสินค้า (ถ้ามี)
@@ -669,10 +669,34 @@ const OrderDetail: React.FC = () => {
                                 <span className="font-medium">ถนน:</span> {order.customer.road}
                               </p>
                             )}
+                            {/* ถ้ามีซอย */}
+                            {order.customer.soi && (
+                              <p className="mb-1">
+                                <span className="font-medium">ซอย:</span> {order.customer.soi}
+                              </p>
+                            )}
+                            {/* ถ้ามีหมู่ */}
+                            {order.customer.moo && (
+                              <p className="mb-1">
+                                <span className="font-medium">หมู่:</span> {order.customer.moo}
+                              </p>
+                            )}
+                            {/* ถ้ามีอาคาร/คอนโด */}
+                            {order.customer.building && (
+                              <p className="mb-1">
+                                <span className="font-medium">อาคาร/คอนโด:</span> {order.customer.building}
+                              </p>
+                            )}
+                            {/* ถ้ามีชั้น */}
+                            {order.customer.floor && (
+                              <p className="mb-1">
+                                <span className="font-medium">ชั้น:</span> {order.customer.floor}
+                              </p>
+                            )}
                             {/* ถ้ามีที่อยู่แบบรวม */}
                             {order.customer.address && (
                               <p className="mb-1">
-                                <span className="font-medium">ที่อยู่:</span> {order.customer.address}
+                                <span className="font-medium">ที่อยู่เพิ่มเติม:</span> {order.customer.address}
                               </p>
                             )}
                           </div>
