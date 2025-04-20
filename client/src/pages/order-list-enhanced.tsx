@@ -146,7 +146,19 @@ const OrderList: React.FC = () => {
   const [shippingDialogOpen, setShippingDialogOpen] = useState<boolean>(false);
   const [orderToPrint, setOrderToPrint] = useState<Order | null>(null);
   const [orderToCreateTracking, setOrderToCreateTracking] = useState<number | null>(null);
-  const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>('เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน');
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>('');
+  
+  // ข้อมูลวิธีการจัดส่งจากฐานข้อมูล
+  interface ShippingMethod {
+    id: number;
+    name: string;
+    provider: string;
+    price: number;
+    deliveryTime?: string;
+    logo?: string;
+    isActive: boolean;
+  }
+  const [dbShippingMethods, setDbShippingMethods] = useState<ShippingMethod[]>([]);
   
 
   // ฟังก์ชันเรียกข้อมูลคำสั่งซื้อจาก API
@@ -213,9 +225,51 @@ const OrderList: React.FC = () => {
     setAvailableShippingMethods(uniqueMethods);
   };
 
+  // ฟังก์ชันเรียกข้อมูลวิธีการจัดส่งจาก API
+  const fetchShippingMethods = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch('/api/shipping-methods', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.shippingMethods)) {
+        console.log('ดึงข้อมูลวิธีการจัดส่งสำเร็จ:', data.shippingMethods.length, 'รายการ');
+        setDbShippingMethods(data.shippingMethods);
+        
+        // ตั้งค่า shipping method แรกเป็นค่าเริ่มต้น (ถ้ามี)
+        if (data.shippingMethods.length > 0) {
+          setSelectedShippingMethod(data.shippingMethods[0].name);
+        }
+      } else {
+        console.warn('ไม่พบข้อมูลวิธีการจัดส่งในรูปแบบที่คาดหวัง:', data);
+      }
+    } catch (error) {
+      console.error('Error fetching shipping methods:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error instanceof Error ? error.message : 'ไม่สามารถโหลดข้อมูลวิธีการจัดส่งได้',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // เรียกข้อมูลเมื่อโหลดหน้า
   useEffect(() => {
     fetchOrders();
+    fetchShippingMethods();
   }, []);
   
   // สกัดข้อมูลวิธีการขนส่งเมื่อข้อมูลออร์เดอร์มีการเปลี่ยนแปลง
@@ -285,39 +339,11 @@ const OrderList: React.FC = () => {
     
     // กรองตามวิธีการขนส่ง
     if (shippingFilter !== 'all') {
-      // แสดงผลเฉพาะออเดอร์ที่มี shippingMethod ตรงกับตัวกรอง
-      // ถ้าไม่มีข้อมูลใน database ให้แสดงผลสาธิตเมื่อเลือกบริษัทขนส่งในกลุ่มที่เพิ่มเข้ามาใหม่
-      const mockCouriers = [
-        'เสี่ยวไป๋ เอ็กเพรส', 
-        'SpeedLine', 
-        'ThaiStar Delivery', 
-        'J&T Express', 
-        'Kerry Express', 
-        'ไปรษณีย์ไทย', 
-        'DHL Express', 
-        'Ninja Van'
-      ];
-      
-      if (mockCouriers.includes(shippingFilter) && !result.some(order => order.shippingMethod === shippingFilter)) {
-        // สร้างข้อมูลตัวอย่างสำหรับการแสดงผล (ไม่ได้บันทึกลงฐานข้อมูล)
-        const demoOrder = orders[0] ? {...orders[0]} : null;
-        
-        if (demoOrder) {
-          // สร้างข้อมูลสาธิตจากข้อมูลจริงที่มีอยู่แล้ว
-          demoOrder.id = -1; // ID ที่ไม่มีในฐานข้อมูลจริง
-          demoOrder.orderNumber = `DEMO-${shippingFilter.substring(0, 3).toUpperCase()}`;
-          demoOrder.shippingMethod = shippingFilter;
-          demoOrder.trackingNumber = `DEMO${Math.floor(Math.random() * 10000000)}TH`;
-          demoOrder.status = 'processing';
-          demoOrder.date = new Date().toISOString(); // ใส่วันที่ปัจจุบัน
-          
-          // แสดงผลแบบสาธิต
-          result = [demoOrder];
-        }
-      }
-      
       // กรณีปกติ กรองตามค่า shippingMethod
       result = result.filter(order => order.shippingMethod === shippingFilter);
+      
+      // ไม่แสดงข้อมูลจำลองเมื่อไม่มีรายการคำสั่งซื้อ
+      // ข้อความ "ยังไม่มีรายการคำสั่งซื้อ" จะถูกแสดงโดยอัตโนมัติเมื่อไม่มีข้อมูล
     }
     
     // จัดเรียงข้อมูล
@@ -1664,8 +1690,14 @@ const OrderList: React.FC = () => {
           ) : filteredOrders.length === 0 ? (
             <div className="text-center py-16 bg-gray-50 rounded-lg">
               <Package className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-              <h3 className="text-lg font-medium text-gray-700">ไม่พบคำสั่งซื้อ</h3>
-              <p className="text-gray-500 mt-1">ยังไม่มีคำสั่งซื้อตามเงื่อนไขที่คุณค้นหา</p>
+              <h3 className="text-lg font-medium text-gray-700">
+                {shippingFilter !== 'all' ? `ยังไม่มีรายการคำสั่งซื้อสำหรับ ${shippingFilter}` : 'ไม่พบคำสั่งซื้อ'}
+              </h3>
+              <p className="text-gray-500 mt-1">
+                {shippingFilter !== 'all' 
+                  ? 'เลือกรูปแบบการขนส่งนี้เมื่อสร้างออเดอร์ใหม่' 
+                  : 'ยังไม่มีคำสั่งซื้อตามเงื่อนไขที่คุณค้นหา'}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -1924,67 +1956,74 @@ const OrderList: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
-            {/* ส่วนเลือกขนส่ง */}
+            {/* ส่วนแสดงเมื่อกำลังโหลดข้อมูล */}
+            {dbShippingMethods.length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-gray-500 mb-2">กำลังโหลดข้อมูลวิธีการจัดส่ง...</p>
+                <div className="flex justify-center">
+                  <RefreshCw className="h-5 w-5 animate-spin text-blue-500" />
+                </div>
+              </div>
+            )}
+            
+            {/* ส่วนเลือกขนส่งจากฐานข้อมูล */}
             <div className="space-y-4">
-              <div 
-                className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-                onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน')}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-medium">เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน</h3>
-                    <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน</p>
+              {dbShippingMethods.length > 0 ? (
+                // แสดงรายการขนส่งจากฐานข้อมูล
+                dbShippingMethods.map(method => (
+                  <div 
+                    key={method.id}
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === method.name ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod(method.name)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">{method.name}</h3>
+                        <p className="text-sm text-gray-500">
+                          {method.deliveryTime ? `จัดส่งภายใน ${method.deliveryTime}` : 'บริการขนส่ง'} 
+                          {method.price && ` • ฿${method.price}`}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                        <Truck className="h-6 w-6 text-blue-500" />
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                    <Truck className="h-6 w-6 text-blue-500" />
+                ))
+              ) : (
+                // ตัวเลือกขนส่งเริ่มต้นเมื่อไม่มีข้อมูลในฐานข้อมูล
+                <>
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน</h3>
+                        <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                        <Truck className="h-6 w-6 text-blue-500" />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              
-              <div 
-                className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส - ประหยัด' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-                onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส - ประหยัด')}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-medium">เสี่ยวไป๋ เอ็กเพรส - ประหยัด</h3>
-                    <p className="text-sm text-gray-500">จัดส่งภายใน 3-5 วัน ราคาประหยัด</p>
+                  
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส - ประหยัด' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส - ประหยัด')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">เสี่ยวไป๋ เอ็กเพรส - ประหยัด</h3>
+                        <p className="text-sm text-gray-500">จัดส่งภายใน 3-5 วัน ราคาประหยัด</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                        <Truck className="h-6 w-6 text-green-500" />
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                    <Truck className="h-6 w-6 text-green-500" />
-                  </div>
-                </div>
-              </div>
-              
-              <div 
-                className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'ไปรษณีย์ไทย - EMS' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-                onClick={() => setSelectedShippingMethod('ไปรษณีย์ไทย - EMS')}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-medium">ไปรษณีย์ไทย - EMS</h3>
-                    <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน ทั่วประเทศ</p>
-                  </div>
-                  <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                    <Truck className="h-6 w-6 text-red-500" />
-                  </div>
-                </div>
-              </div>
-              
-              <div 
-                className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Kerry Express' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-                onClick={() => setSelectedShippingMethod('Kerry Express')}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-medium">Kerry Express</h3>
-                    <p className="text-sm text-gray-500">จัดส่งรวดเร็ว พื้นที่ในเมืองเป็นหลัก</p>
-                  </div>
-                  <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                    <Truck className="h-6 w-6 text-purple-500" />
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -1997,6 +2036,7 @@ const OrderList: React.FC = () => {
             <Button 
               onClick={() => createTrackingNumber()}
               className="bg-blue-600 hover:bg-blue-700"
+              disabled={!selectedShippingMethod}
             >
               <Check className="h-4 w-4 mr-2" />
               ยืนยันการเลือก
