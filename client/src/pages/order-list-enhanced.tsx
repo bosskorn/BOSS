@@ -414,7 +414,7 @@ const OrderList: React.FC = () => {
           }
         }
         
-        // ตรวจสอบเลขพัสดุด้วยการหาคำว่า "SPE" และ "THA" ในทุกส่วนของเลขพัสดุ (ไม่ใช่แค่นำหน้า)
+        // ตรวจสอบเลขพัสดุด้วยการหาคำสำคัญในทุกส่วนของเลขพัสดุ (ไม่ใช่แค่นำหน้า)
         if (order.trackingNumber) {
           const trackingNo = order.trackingNumber;
           
@@ -427,6 +427,48 @@ const OrderList: React.FC = () => {
           // กรณี SpeedLine
           if (shippingFilter === 'SpeedLine' && trackingNo.includes('SPE')) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for SpeedLine`);
+            return true;
+          }
+          
+          // กรณี Ninja Van
+          if (shippingFilter === 'Ninja Van' && (trackingNo.includes('NIN') || trackingNo.includes('NJA') || trackingNo.includes('NJV'))) {
+            console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Ninja Van`);
+            return true;
+          }
+          
+          // กรณี DHL
+          if (shippingFilter === 'DHL Express' && trackingNo.includes('DHL')) {
+            console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for DHL Express`);
+            return true;
+          }
+          
+          // กรณี J&T Express
+          if (shippingFilter === 'J&T Express' && (trackingNo.includes('JNT') || trackingNo.includes('JTE'))) {
+            console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for J&T Express`);
+            return true;
+          }
+          
+          // กรณี Kerry Express
+          if (shippingFilter === 'Kerry Express' && (trackingNo.includes('KRY') || trackingNo.includes('KRE'))) {
+            console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Kerry Express`);
+            return true;
+          }
+          
+          // กรณี ThaiStar Delivery
+          if (shippingFilter === 'ThaiStar Delivery' && (trackingNo.includes('TSD') || trackingNo.includes('TST'))) {
+            console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for ThaiStar Delivery`);
+            return true;
+          }
+          
+          // กรณี Flash Express
+          if (shippingFilter === 'Flash Express' && (trackingNo.includes('FLX') || trackingNo.includes('FLE'))) {
+            console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Flash Express`);
+            return true;
+          }
+          
+          // กรณี Xiaobai Express
+          if (shippingFilter === 'Xiaobai Express' && trackingNo.includes('เสี')) {
+            console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Xiaobai Express`);
             return true;
           }
         }
