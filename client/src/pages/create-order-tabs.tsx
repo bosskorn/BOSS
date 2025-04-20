@@ -1376,11 +1376,18 @@ const CreateOrderTabsPage: React.FC = () => {
         const response = await api.post('/api/orders', orderData);
         
         if (response.data.success) {
+          // แสดงข้อความแจ้งเตือนเมื่อสร้างออเดอร์สำเร็จ
+          toast({
+            title: "สร้างออเดอร์สำเร็จ",
+            description: `ออเดอร์หมายเลข ${response.data.order.id || orderData.orderNumber} ถูกสร้างแล้ว`,
+            variant: "default",
+          });
+          
           // แสดง dialog ยืนยันการสร้างออเดอร์สำเร็จ แทนการไปหน้าอื่นทันที
           setDialog({
             open: true,
-            title: 'สร้างออเดอร์สำเร็จ',
-            description: 'ออเดอร์ของคุณได้ถูกบันทึกเรียบร้อยแล้ว',
+            title: 'สร้างออเดอร์สำเร็จ ✓',
+            description: 'ออเดอร์ของคุณได้ถูกบันทึกเรียบร้อยแล้ว สามารถพิมพ์ใบลาเบลได้จากหน้ารายการออเดอร์',
             orderNumber: response.data.order.id || orderData.orderNumber,
             trackingNumber: orderData.trackingNumber
           });

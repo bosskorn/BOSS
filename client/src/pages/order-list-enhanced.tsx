@@ -653,6 +653,49 @@ const OrderList: React.FC = () => {
   };
 
   // ฟังก์ชันพิมพ์แบบเลือกหลายรายการตามขนาดที่เลือก
+  // ฟังก์ชันสำหรับลบออเดอร์
+  const handleDeleteOrder = async (orderId: number) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: 'ลบออเดอร์สำเร็จ',
+          description: `ออเดอร์หมายเลข ${orderId} ถูกลบออกจากระบบแล้ว`,
+          variant: 'default',
+        });
+        
+        // อัปเดตรายการออเดอร์หลังจากลบสำเร็จ
+        setOrders(orders.filter(order => order.id !== orderId));
+        setFilteredOrders(filteredOrders.filter(order => order.id !== orderId));
+      } else {
+        throw new Error(data.message || 'ไม่สามารถลบออเดอร์ได้');
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error instanceof Error ? error.message : 'ไม่สามารถลบออเดอร์ได้',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const printSelectedLabelsWithSize = async () => {
     // ใช้ขนาดที่เลือกจาก dialog แล้ว
     setIsPrintingLabel(true);
