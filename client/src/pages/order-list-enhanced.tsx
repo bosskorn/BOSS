@@ -19,6 +19,26 @@ import {
   Check,
   Square
 } from 'lucide-react';
+
+// ฟังก์ชันสร้างบาร์โค้ดอย่างง่าย
+function generateBarcode(trackingNumber: string): string {
+  // แปลงตัวเลขและตัวอักษรเป็นเลขฐานสอง
+  let barcodeHtml = '';
+  const cleanNumber = trackingNumber.replace(/\s+/g, '');
+  
+  for (let i = 0; i < cleanNumber.length; i++) {
+    const char = cleanNumber.charAt(i);
+    const charCode = char.charCodeAt(0);
+    // สร้างเส้นบาร์โค้ดตามรหัส ASCII
+    for (let j = 0; j < 5; j++) {
+      const thickness = ((charCode >> j) & 1) === 1 ? 2 : 1;
+      barcodeHtml += `<div class="barcode-line" style="width: ${thickness}px; height: ${thickness * 8}px;"></div>`;
+    }
+    barcodeHtml += '<div style="display: inline-block; width: 3px;"></div>';
+  }
+  
+  return `<div style="text-align: center;">${barcodeHtml}</div>`;
+}
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -688,7 +708,21 @@ const OrderList: React.FC = () => {
               background-color: #f9f9f9;
               padding: ${labelSize === '100x100mm' ? '1mm' : '0.5mm'};
               font-family: monospace;
-              ${labelSize === '100x75mm' ? 'display: none;' : ''}
+            }
+            .barcode-small {
+              margin-top: 1mm;
+              text-align: center;
+              background-color: #f9f9f9;
+              padding: 2mm 0;
+              border-radius: 2px;
+              border: 1px solid #ddd;
+            }
+            .barcode-line {
+              display: inline-block;
+              width: 1px;
+              height: 15px;
+              background-color: #000;
+              margin: 0 0.5px;
             }
             .footer { 
               text-align: center; 
@@ -903,6 +937,13 @@ const OrderList: React.FC = () => {
               margin: 0; 
               padding: 0; 
               background-color: #f5f5f5;
+            }
+            .barcode-line {
+              display: inline-block;
+              width: 1px;
+              height: 15px;
+              background-color: #000;
+              margin: 0 0.5px;
             }
             .page {
               width: ${labelWidthPx};
