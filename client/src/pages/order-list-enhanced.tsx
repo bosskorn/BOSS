@@ -2220,14 +2220,15 @@ const OrderList: React.FC = () => {
               ) : (
                 // ตัวเลือกขนส่งเริ่มต้นเมื่อไม่มีข้อมูลในฐานข้อมูล
                 <>
+                  {/* เสี่ยวไป๋ เอ็กเพรส */}
                   <div 
-                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-                    onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน')}
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส')}
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <h3 className="font-medium">เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน</h3>
-                        <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน</p>
+                        <h3 className="font-medium">เสี่ยวไป๋ เอ็กเพรส</h3>
+                        <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน • ฿45.00</p>
                       </div>
                       <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
                         <Truck className="h-6 w-6 text-blue-500" />
@@ -2235,17 +2236,114 @@ const OrderList: React.FC = () => {
                     </div>
                   </div>
                   
+                  {/* SpeedLine */}
                   <div 
-                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส - ประหยัด' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-                    onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส - ประหยัด')}
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'SpeedLine' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod('SpeedLine')}
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <h3 className="font-medium">เสี่ยวไป๋ เอ็กเพรส - ประหยัด</h3>
-                        <p className="text-sm text-gray-500">จัดส่งภายใน 3-5 วัน ราคาประหยัด</p>
+                        <h3 className="font-medium">SpeedLine</h3>
+                        <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน • ฿60.00</p>
                       </div>
                       <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                        <Truck className="h-6 w-6 text-green-500" />
+                        <Truck className="h-6 w-6 text-blue-500" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* ThaiStar Delivery */}
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'ThaiStar Delivery' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod('ThaiStar Delivery')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">ThaiStar Delivery</h3>
+                        <p className="text-sm text-gray-500">จัดส่งภายใน 1-3 วัน • ฿50.00</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                        <Truck className="h-6 w-6 text-blue-500" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* J&T Express */}
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'J&T Express' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod('J&T Express')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">J&T Express</h3>
+                        <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน • ฿45.00</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                        <Truck className="h-6 w-6 text-red-500" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Kerry Express */}
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Kerry Express' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod('Kerry Express')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">Kerry Express</h3>
+                        <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน • ฿50.00</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                        <Truck className="h-6 w-6 text-orange-500" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* ไปรษณีย์ไทย */}
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'ไปรษณีย์ไทย' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod('ไปรษณีย์ไทย')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">ไปรษณีย์ไทย</h3>
+                        <p className="text-sm text-gray-500">จัดส่งภายใน 2-3 วัน • ฿35.00</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                        <Truck className="h-6 w-6 text-yellow-600" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* DHL Express */}
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'DHL Express' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod('DHL Express')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">DHL Express</h3>
+                        <p className="text-sm text-gray-500">จัดส่งภายใน 1 วัน • ฿90.00</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                        <Truck className="h-6 w-6 text-yellow-500" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Ninja Van */}
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Ninja Van' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    onClick={() => setSelectedShippingMethod('Ninja Van')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">Ninja Van</h3>
+                        <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน • ฿55.00</p>
+                      </div>
+                      <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                        <Truck className="h-6 w-6 text-purple-500" />
                       </div>
                     </div>
                   </div>
