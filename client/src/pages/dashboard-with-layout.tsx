@@ -243,7 +243,7 @@ const Dashboard: React.FC = () => {
                     {summaryData.latestOrders.filter(order => order.status === 'pending').length} รายการรอดำเนินการ
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
+                <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
                   <i className="fa-solid fa-box text-xl"></i>
                 </div>
               </div>
