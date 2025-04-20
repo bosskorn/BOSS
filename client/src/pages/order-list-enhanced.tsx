@@ -2306,36 +2306,46 @@ const OrderList: React.FC = () => {
             </div>
           )}
           
-          {/* เพิ่มส่วน Pagination */}
-          {filteredOrders.length > itemsPerPage && (
-            <div className="mt-6 flex justify-center">
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronUp className="h-4 w-4 -rotate-90" />
-                  ก่อนหน้า
-                </Button>
-                
-                <div className="flex items-center">
-                  <span className="text-sm">หน้า {currentPage} จาก {Math.ceil(filteredOrders.length / itemsPerPage)}</span>
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredOrders.length / itemsPerPage)))}
-                  disabled={currentPage === Math.ceil(filteredOrders.length / itemsPerPage)}
-                >
-                  ถัดไป
-                  <ChevronDown className="h-4 w-4 -rotate-90" />
-                </Button>
-              </div>
+          {/* แสดงจำนวนออเดอร์ทั้งหมดและ Pagination */}
+          <div className="mt-6">
+            {/* แสดงจำนวนออเดอร์ทั้งหมด */}
+            <div className="text-center mb-3">
+              <span className="px-4 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                จำนวนออเดอร์ทั้งหมด: {filteredOrders.length} รายการ
+              </span>
             </div>
-          )}
+            
+            {/* Pagination */}
+            {filteredOrders.length > itemsPerPage && (
+              <div className="flex justify-center">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronUp className="h-4 w-4 -rotate-90" />
+                    ก่อนหน้า
+                  </Button>
+                  
+                  <div className="flex items-center">
+                    <span className="text-sm">หน้า {currentPage} จาก {Math.ceil(filteredOrders.length / itemsPerPage)}</span>
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredOrders.length / itemsPerPage)))}
+                    disabled={currentPage === Math.ceil(filteredOrders.length / itemsPerPage)}
+                  >
+                    ถัดไป
+                    <ChevronDown className="h-4 w-4 -rotate-90" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       {/* Dialog เลือกขนาดใบลาเบล */}
