@@ -340,8 +340,13 @@ const OrderList: React.FC = () => {
     
     // กรองตามวิธีการขนส่ง
     if (shippingFilter !== 'all') {
+      console.log('กำลังกรองตามวิธีการขนส่ง:', shippingFilter);
+      
       // กรองตามค่า shippingMethod และรองรับการเปลี่ยนชื่อขนส่ง
       result = result.filter(order => {
+        // แสดงข้อมูลการเปรียบเทียบในกรณี debug
+        console.log(`ตรวจสอบออเดอร์ ${order.id} - shippingMethod: "${order.shippingMethod}", shippingFilter: "${shippingFilter}"`);
+        
         // ตรวจสอบว่า shippingMethod ตรงกับตัวกรอง
         if (order.shippingMethod === shippingFilter) {
           return true;
@@ -349,10 +354,23 @@ const OrderList: React.FC = () => {
         
         // รองรับการเปลี่ยนชื่อจากภาษาไทยเป็นภาษาอังกฤษ
         if (shippingFilter === 'Xiaobai Express' && order.shippingMethod === 'เสี่ยวไป๋ เอ็กเพรส') {
+          console.log(`Matched Xiaobai Express: ${order.id}`);
           return true;
         }
         
         if (shippingFilter === 'Thailand Post' && order.shippingMethod === 'ไปรษณีย์ไทย') {
+          console.log(`Matched Thailand Post: ${order.id}`);
+          return true;
+        }
+        
+        // เพิ่มกรณีเมื่อมีการตรวจสอบสตริงใน trackingNumber
+        if (shippingFilter === 'Xiaobai Express' && order.trackingNumber && order.trackingNumber.startsWith('XBE')) {
+          console.log(`Matched Xiaobai Express by tracking number: ${order.id} - ${order.trackingNumber}`);
+          return true;
+        }
+        
+        if (shippingFilter === 'Thailand Post' && order.trackingNumber && order.trackingNumber.startsWith('THP')) {
+          console.log(`Matched Thailand Post by tracking number: ${order.id} - ${order.trackingNumber}`);
           return true;
         }
         
