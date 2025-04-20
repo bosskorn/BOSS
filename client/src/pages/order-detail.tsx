@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRoute, Link } from 'wouter';
 import Layout from '@/components/Layout';
-import { Loader2, Clock, CreditCard, Truck, MapPin, Phone, User, Package, ChevronRight, ArrowLeft, Printer, ExternalLink } from 'lucide-react';
+import { Loader2, Clock, CreditCard, Truck, MapPin, Phone, User, Package, ChevronRight, ArrowLeft, Printer, ExternalLink, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -526,7 +526,6 @@ const OrderDetail: React.FC = () => {
           {!isLoading && order && (
             <div className="mt-4 sm:mt-0 flex flex-wrap gap-2 justify-start sm:justify-end">
               {getStatusBadge(order.status)}
-              {getPaymentStatusBadge(order.paymentStatus)}
             </div>
           )}
         </div>
@@ -572,10 +571,7 @@ const OrderDetail: React.FC = () => {
                       {translatePaymentMethod(order.paymentMethod)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">สถานะการชำระเงิน:</span>
-                    <span>{getPaymentStatusBadge(order.paymentStatus)}</span>
-                  </div>
+
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">วิธีการจัดส่ง:</span>
                     <span className="font-medium flex items-center">
@@ -646,7 +642,14 @@ const OrderDetail: React.FC = () => {
                     <div>
                       <div className="font-medium mb-1">ที่อยู่จัดส่ง</div>
                       <div className="text-gray-600">
-                        <p>{order.customer.address}</p>
+                        {order.customer.address ? (
+                          <p className="mb-1">{order.customer.address}</p>
+                        ) : (
+                          <p className="mb-1 text-yellow-600">
+                            <AlertTriangle className="h-3 w-3 inline mr-1" />
+                            ข้อมูลบ้านเลขที่และถนนไม่ครบถ้วน
+                          </p>
+                        )}
                         <p>
                           {order.customer.subdistrict} {order.customer.district} {order.customer.province} {order.customer.zipcode}
                         </p>
