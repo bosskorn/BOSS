@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import axios from 'axios';
+import api from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
+import { useAuth } from '@/hooks/use-auth';
 
 interface Order {
   id: string;
@@ -33,50 +34,38 @@ const Dashboard: React.FC = () => {
     latestOrders: []
   });
   const [isLoading, setIsLoading] = useState(true);
-
-  // โหลดข้อมูลแดชบอร์ดเมื่อคอมโพเนนต์โหลด
+  const { user } = useAuth();
+  
+  // โหลดข้อมูลแดชบอร์ดเมื่อคอมโพเนนต์โหลดและมีการล็อกอิน
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+  
   // ฟังก์ชันเรียกข้อมูลแดชบอร์ดจาก API
   const fetchDashboardData = async () => {
+    if (!user) return; // ไม่ดึงข้อมูลถ้าไม่มีการล็อกอิน
+    
     setIsLoading(true);
     try {
-      // สำหรับการสาธิต ใช้ข้อมูลจำลอง
-      // ในการใช้งานจริง ควรเปลี่ยนเป็น await axios.get('/api/dashboard/summary')
+      // เรียกข้อมูลจริงจาก API
+      const response = await api.get('/api/dashboard/summary');
       
-      // ข้อมูลจำลองสำหรับรายได้วันนี้และเดือนนี้
-      const todayTotal = 25850.50;
-      const monthTotal = 358920.75;
-      
-      // ข้อมูลจำลองสำหรับรายได้ย้อนหลัง 7 วัน
-      const last7Days: DailySale[] = [
-        { date: '2023-04-12', total: 15240.00 },
-        { date: '2023-04-13', total: 18650.75 },
-        { date: '2023-04-14', total: 22450.50 },
-        { date: '2023-04-15', total: 19875.25 },
-        { date: '2023-04-16', total: 23150.00 },
-        { date: '2023-04-17', total: 24780.50 },
-        { date: '2023-04-18', total: 25850.50 }
-      ];
-      
-      // ข้อมูลจำลองสำหรับคำสั่งซื้อล่าสุด
-      const latestOrders: Order[] = [
-        { id: 'ORD-20230418-001', customer: 'บริษัท เอ็กซ์วาย จำกัด', total: 5680.00, date: '2023-04-18 14:30:25', status: 'processing' },
-        { id: 'ORD-20230418-002', customer: 'คุณสมชาย มีสุข', total: 1250.50, date: '2023-04-18 13:15:10', status: 'pending' },
-        { id: 'ORD-20230418-003', customer: 'บริษัท ไทยเทรด จำกัด', total: 8950.25, date: '2023-04-18 11:45:18', status: 'shipped' },
-        { id: 'ORD-20230417-001', customer: 'คุณสมหญิง รักดี', total: 3450.00, date: '2023-04-17 16:20:32', status: 'delivered' },
-        { id: 'ORD-20230417-002', customer: 'ห้างหุ้นส่วน พัฒนา', total: 12750.75, date: '2023-04-17 15:10:45', status: 'cancelled' }
-      ];
-      
-      // อัปเดตข้อมูลแดชบอร์ด
-      setSummaryData({
-        todayTotal,
-        monthTotal,
-        last7Days,
-        latestOrders
-      });
+      if (response.data.success) {
+        const dashboardData = response.data.data;
+        console.log('ได้รับข้อมูลแดชบอร์ดจาก API:', dashboardData);
+        
+        // อัปเดตข้อมูลแดชบอร์ดด้วยข้อมูลจริงจาก API
+        setSummaryData({
+          todayTotal: dashboardData.todayTotal || 0,
+          monthTotal: dashboardData.monthTotal || 0,
+          last7Days: dashboardData.last7Days || [],
+          latestOrders: dashboardData.latestOrders || []
+        });
+      } else {
+        throw new Error(response.data.message || 'ไม่สามารถโหลดข้อมูลแดชบอร์ดได้');
+      }
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -243,12 +232,12 @@ const Dashboard: React.FC = () => {
                   {summaryData.last7Days.map((day, index) => {
                     // คำนวณความสูงของแท่งกราฟตามสัดส่วนของยอดขาย
                     const maxValue = Math.max(...summaryData.last7Days.map(d => d.total));
-                    const height = (day.total / maxValue) * 100;
+                    const height = maxValue ? (day.total / maxValue) * 100 : 0;
                     
                     return (
                       <div key={index} className="flex-1 flex flex-col items-center">
                         <div 
-                          className="w-10/12 bg-green-500 rounded-t-md"
+                          className="w-10/12 bg-blue-500 rounded-t-md"
                           style={{ height: `${height}%` }}
                         ></div>
                         <div className="w-full text-center mt-2">
@@ -320,76 +309,78 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* ตารางคำสั่งซื้อล่าสุด */}
-          <div className="mt-8 bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-gray-800">
-                  คำสั่งซื้อล่าสุด
-                </h2>
-                <Link href="/orders">
-                  <button className="px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-800">
-                    ดูทั้งหมด
-                  </button>
-                </Link>
-              </div>
+          <div className="mt-8 bg-white p-6 rounded-lg shadow">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-800">
+                คำสั่งซื้อล่าสุด
+              </h2>
+              <Link href="/orders-all">
+                <a className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                  ดูทั้งหมด
+                </a>
+              </Link>
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      เลขที่คำสั่งซื้อ
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ลูกค้า
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      วันที่สั่งซื้อ
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      มูลค่า
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      สถานะ
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      การดำเนินการ
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {summaryData.latestOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">
-                        {order.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {order.customer}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDateTime(order.date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                        {formatCurrency(order.total)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                          {getStatusText(order.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link href={`/orders/${order.id}`}>
-                          <button className="text-indigo-600 hover:text-indigo-900">
-                            ดูรายละเอียด
-                          </button>
-                        </Link>
-                      </td>
+            {summaryData.latestOrders.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        รหัสคำสั่งซื้อ
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ลูกค้า
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ยอดรวม
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        วันที่
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        สถานะ
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {summaryData.latestOrders.map((order, index) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {order.id}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {order.customer}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {formatCurrency(order.total)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {formatDateTime(order.date)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                            {getStatusText(order.status)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">ไม่มีคำสั่งซื้อล่าสุด</p>
+              </div>
+            )}
           </div>
         </>
       )}
