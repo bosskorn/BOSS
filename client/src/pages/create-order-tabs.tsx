@@ -247,7 +247,7 @@ const CreateOrderTabsPage: React.FC = () => {
     );
   }
   
-  // ดึงข้อมูลสินค้าและตัวเลือกการจัดส่งเมื่อโหลดหน้า
+  // ดึงข้อมูลสินค้า, ข้อมูลผู้ส่ง และตัวเลือกการจัดส่งเมื่อโหลดหน้า
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -263,7 +263,45 @@ const CreateOrderTabsPage: React.FC = () => {
     // เรียกใช้งานฟังก์ชันดึงตัวเลือกการจัดส่ง
     fetchProducts();
     fetchShippingOptions();
-  }, []);
+    
+    // ดึงข้อมูลผู้ส่ง (ข้อมูลผู้ใช้) 
+    if (user) {
+      // กำหนดข้อมูลผู้ส่งเริ่มต้นจากข้อมูลผู้ใช้
+      console.log("กำลังดึงข้อมูลผู้ส่งจากโปรไฟล์:", user);
+      
+      if (user.fullname) {
+        // ตั้งค่าข้อมูลผู้ส่งจากโปรไฟล์ผู้ใช้
+        const senderInfo = {
+          name: user.fullname || "",
+          phone: user.phone || "",
+          email: user.email || "",
+          address: user.address || "",
+          province: user.province || "",
+          district: user.district || "",
+          subdistrict: user.subdistrict || "",
+          zipcode: user.zipcode || ""
+        };
+        
+        console.log("ข้อมูลผู้ส่งที่ดึงจากโปรไฟล์:", senderInfo);
+        
+        // สร้างตัวแปร global เพื่อเก็บข้อมูลผู้ส่งสำหรับใช้ในฟอร์ม
+        window.senderInfoFromProfile = senderInfo;
+        
+        // แสดงข้อความแจ้งเตือนว่าได้ใช้ข้อมูลจากโปรไฟล์
+        toast({
+          title: 'ดึงข้อมูลผู้ส่งสำเร็จ',
+          description: 'ระบบใช้ข้อมูลผู้ส่งจากโปรไฟล์ของคุณ',
+        });
+      } else {
+        console.log("ไม่พบข้อมูลผู้ส่งในโปรไฟล์ผู้ใช้");
+        toast({
+          title: 'ไม่พบข้อมูลผู้ส่ง',
+          description: 'กรุณากำหนดข้อมูลผู้ส่งในหน้าตั้งค่าโปรไฟล์',
+          variant: 'destructive',
+        });
+      }
+    }
+  }, [user]);
   
   // คำนวณราคารวมเมื่อรายการสินค้าหรือค่าจัดส่งเปลี่ยนแปลง
   useEffect(() => {
