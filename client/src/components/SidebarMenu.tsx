@@ -69,19 +69,26 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       label: 'แดชบอร์ด', 
     },
     { 
-      path: '/orders-all', 
+      path: '#', 
       icon: 'fa-clipboard-list', 
-      label: 'คำสั่งซื้อทั้งหมด', 
-    },
-    { 
-      path: '/create-order', 
-      icon: 'fa-plus-circle', 
-      label: 'สร้างออเดอร์' 
-    },
-    { 
-      path: '/bulk-order-import', 
-      icon: 'fa-file-import', 
-      label: 'นำเข้าออเดอร์จาก Excel' 
+      label: 'คำสั่งซื้อ',
+      submenu: [
+        { 
+          path: '/orders-all', 
+          icon: 'fa-clipboard-list', 
+          label: 'คำสั่งซื้อทั้งหมด' 
+        },
+        { 
+          path: '/create-order', 
+          icon: 'fa-plus-circle', 
+          label: 'สร้างออเดอร์' 
+        },
+        { 
+          path: '/bulk-order-import', 
+          icon: 'fa-file-import', 
+          label: 'นำเข้าออเดอร์จาก Excel' 
+        },
+      ]
     },
     { 
       path: '/parcel-list', 
@@ -172,7 +179,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
         }`}
       >
         {/* ส่วนหัวข้อมูลผู้ใช้ */}
-        <div className="bg-gradient-to-r from-purple-700 to-purple-500 text-white p-4">
+        <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white p-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium">บัญชีของฉัน</h3>
             <button onClick={onClose} className="text-white hover:text-gray-200">
@@ -190,7 +197,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
             </div>
           </div>
           
-          <p className="text-sm opacity-80 text-white mt-2 text-center">ระบบจัดการขนส่ง PURPLEDASH</p>
+          <p className="text-sm opacity-80 text-white mt-2 text-center">ระบบจัดการขนส่ง BLUEDASH</p>
 
           <div className="mt-3 px-3 py-2 bg-white bg-opacity-10 rounded-md">
             <div className="flex justify-between items-center">
@@ -209,7 +216,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
                   <div>
                     {/* หัวข้อเมนูที่มีเมนูย่อย */}
                     <button
-                      className={`w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-purple-50 text-gray-700`}
+                      className={`w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-blue-50 text-gray-700`}
                       onClick={() => toggleSubmenu(item.path)}
                     >
                       <div className="flex items-center">
@@ -221,7 +228,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
 
                     {/* เมนูย่อย */}
                     {expandedMenus.includes(item.path) && (
-                      <ul className="mt-1 border-r border-purple-200">
+                      <ul className="mt-1 border-r border-blue-200">
                         {item.submenu.map((subItem) => {
                           const isActive = location === subItem.path;
                           return (
@@ -229,11 +236,11 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
                               <Link
                                 href={subItem.path}
                                 className={`flex items-center pl-10 pr-4 py-2 text-sm ${
-                                  isActive ? 'bg-purple-50 text-purple-600 border-r-4 border-purple-500' : 'text-gray-600 hover:bg-purple-50'
+                                  isActive ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-500' : 'text-gray-600 hover:bg-blue-50'
                                 }`}
                                 onClick={onClose}
                               >
-                                <i className={`fa-solid ${subItem.icon} w-5 mr-3 ${isActive ? 'text-purple-600' : 'text-gray-500'}`}></i>
+                                <i className={`fa-solid ${subItem.icon} w-5 mr-3 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}></i>
                                 <span className="text-sm">{subItem.label}</span>
                               </Link>
                             </li>
@@ -245,12 +252,12 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
                 ) : (
                   <Link 
                     href={item.path}
-                    className={`flex items-center px-4 py-2 text-sm hover:bg-purple-50 ${
-                      location === item.path ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
+                    className={`flex items-center px-4 py-2 text-sm hover:bg-blue-50 ${
+                      location === item.path ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
                     }`}
                     onClick={onClose}
                   >
-                    <i className={`fa-solid ${item.icon} w-5 mr-3 ${location === item.path ? 'text-purple-600' : 'text-gray-500'}`}></i>
+                    <i className={`fa-solid ${item.icon} w-5 mr-3 ${location === item.path ? 'text-blue-600' : 'text-gray-500'}`}></i>
                     <span>{item.label}</span>
                   </Link>
                 )}
@@ -279,7 +286,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
         <div className="sticky bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <span className="text-purple-700 font-semibold">PURPLE</span><span className="text-purple-500 font-semibold">DASH</span>
+              <span className="text-blue-700 font-semibold">BLUE</span><span className="text-blue-500 font-semibold">DASH</span>
             </div>
             <span className="text-xs text-gray-500">v1.5.0</span>
           </div>
