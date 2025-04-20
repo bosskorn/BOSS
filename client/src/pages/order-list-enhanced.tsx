@@ -22,41 +22,47 @@ import {
 } from 'lucide-react';
 
 // ฟังก์ชันสร้างบาร์โค้ด Code128 สำหรับเลขพัสดุ
+function generateJSBarcode(trackingNumber: string): void {
+  if (!trackingNumber) return;
+  
+  setTimeout(() => {
+    try {
+      // หลังจากหน้าพิมพ์โหลดเสร็จ ค้นหา element ที่มี class barcode-element
+      const barcodeElements = document.querySelectorAll('.barcode-element');
+      
+      if (barcodeElements.length > 0) {
+        barcodeElements.forEach((element) => {
+          if (element.getAttribute('data-tracking') === trackingNumber) {
+            JsBarcode(element, trackingNumber, {
+              format: "CODE128",
+              lineColor: "#000",
+              width: 1.5,
+              height: 30,
+              displayValue: false,
+              margin: 0
+            });
+          }
+        });
+        console.log(`Generated ${barcodeElements.length} barcodes for tracking ${trackingNumber}`);
+      } else {
+        console.warn('No barcode elements found');
+      }
+    } catch (error) {
+      console.error('Error generating barcode:', error);
+    }
+  }, 100);
+}
+
+// ฟังก์ชันสร้างบาร์โค้ด HTML
 function generateBarcode(trackingNumber: string): string {
   if (!trackingNumber) return '';
-
-  // สร้าง SVG สำหรับเป็น barcode
-  const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svgElement.setAttribute('style', 'display:none');  // ซ่อน SVG เพื่อไม่ให้แสดงผลก่อน
-  document.body.appendChild(svgElement);
-
-  try {
-    // ใช้ JsBarcode เพื่อสร้าง barcode แบบ Code128
-    JsBarcode(svgElement, trackingNumber, {
-      format: "CODE128",
-      lineColor: "#000",
-      width: 2,
-      height: 30,
-      displayValue: false
-    });
-
-    // ดึง SVG String จาก element
-    const svgString = new XMLSerializer().serializeToString(svgElement);
-    
-    // แปลง SVG เป็น base64 เพื่อสามารถใช้ใน img tag
-    const svgBase64 = btoa(svgString);
-    
-    // นำ SVG ออกจาก DOM
-    document.body.removeChild(svgElement);
-    
-    // สร้าง HTML สำหรับ barcode
-    return `<img src="data:image/svg+xml;base64,${svgBase64}" alt="Barcode" style="width:100%; max-width:180px; height:35px;" />`;
-  } catch (error) {
-    console.error('Error generating barcode:', error);
-    document.body.removeChild(svgElement);
-    // ถ้าเกิดข้อผิดพลาดให้แสดงเลขพัสดุแทน
-    return `<div style="font-family: monospace; letter-spacing: 4px; font-size: 16px; text-align: center;">${trackingNumber}</div>`;
-  }
+  
+  return `
+    <div style="text-align: center; padding:1px;">
+      <svg class="barcode-element" data-tracking="${trackingNumber}" style="width:100%; max-width:180px; height:30px;"></svg>
+      <div style="font-family: monospace; letter-spacing: 1px; font-size: 9px; margin-top:2px;">${trackingNumber}</div>
+    </div>
+  `;
 }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
