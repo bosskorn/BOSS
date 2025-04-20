@@ -110,7 +110,73 @@ const OrderDetail: React.FC = () => {
       
       if (data.success) {
         console.log('ข้อมูลคำสั่งซื้อที่ได้รับจาก API:', data.order);
-        setOrder(data.order);
+        
+        // ดึงข้อมูลลูกค้า
+        let customerData = {
+          id: data.order.customerId || 0,
+          name: data.order.customerName || 'ไม่ระบุชื่อ',
+          email: '',
+          phone: data.order.customerPhone || '',
+          address: data.order.customerAddress || '',
+          province: data.order.customerProvince || '',
+          district: data.order.customerDistrict || '',
+          subdistrict: data.order.customerSubdistrict || '',
+          zipcode: data.order.customerZipcode || '',
+        };
+        
+        // ดึงข้อมูลสินค้า (ถ้ามี)
+        let orderItems = data.order.items || [];
+        if (!Array.isArray(orderItems)) {
+          orderItems = [];
+        }
+        
+        // สร้างข้อมูลการจัดส่ง
+        let shippingData = {
+          method: data.order.shippingMethod || 'ไม่ระบุ',
+          trackingNumber: data.order.trackingNumber || undefined,
+          trackingUrl: data.order.trackingUrl || undefined,
+          carrier: data.order.shippingCarrier || 'ไม่ระบุ',
+          cost: parseFloat(data.order.shippingFee || '0'),
+          estimatedDelivery: undefined,
+          status: data.order.status || 'pending',
+          statusHistory: [{
+            date: data.order.createdAt || new Date().toISOString(),
+            status: 'สร้างคำสั่งซื้อ',
+            description: 'คำสั่งซื้อถูกสร้างขึ้นในระบบ'
+          }]
+        };
+        
+        // สร้างข้อมูลคำสั่งซื้อที่เข้ากับ interface Order
+        const formattedOrder: Order = {
+          id: data.order.id,
+          orderNumber: data.order.orderNumber,
+          date: data.order.createdAt,
+          status: data.order.status || 'pending',
+          customer: customerData,
+          items: orderItems.map((item: any) => ({
+            id: item.id || 0,
+            productId: item.productId || 0,
+            productName: item.productName || 'ไม่ระบุสินค้า',
+            sku: item.sku || '',
+            quantity: item.quantity || 1,
+            price: parseFloat(item.price || '0'),
+            discount: parseFloat(item.discount || '0'),
+            total: parseFloat(item.total || '0'),
+            imageUrl: item.imageUrl
+          })),
+          paymentMethod: data.order.paymentMethod || 'ไม่ระบุ',
+          paymentStatus: data.order.paymentStatus || 'unpaid',
+          shipping: shippingData,
+          subtotal: parseFloat(data.order.subtotal || '0'),
+          discount: parseFloat(data.order.discount || '0'),
+          tax: 0,
+          shippingCost: parseFloat(data.order.shippingFee || '0'),
+          total: parseFloat(data.order.totalAmount || '0'),
+          notes: data.order.note
+        };
+        
+        console.log('ข้อมูลคำสั่งซื้อที่จัดรูปแบบแล้ว:', formattedOrder);
+        setOrder(formattedOrder);
       } else {
         throw new Error(data.message || 'ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้');
       }

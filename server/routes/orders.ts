@@ -70,9 +70,33 @@ router.get('/:id', auth, async (req, res) => {
         message: 'ไม่พบคำสั่งซื้อนี้'
       });
     }
+    
+    // ดึงข้อมูลสินค้าในออเดอร์
+    const orderItems = await storage.getOrderItems(orderId);
+    
+    // ดึงข้อมูลลูกค้า
+    let customer = null;
+    if (order.customerId) {
+      customer = await storage.getCustomer(order.customerId);
+    }
+    
+    // สร้างข้อมูลสำหรับส่งกลับไปยัง client
+    const orderWithDetails = {
+      ...order,
+      customerName: customer ? customer.name : 'ไม่ระบุ',
+      customerPhone: customer ? customer.phone : '',
+      customerEmail: customer ? customer.email : '',
+      customerAddress: customer ? customer.address : '',
+      customerProvince: customer ? customer.province : '',
+      customerDistrict: customer ? customer.district : '',
+      customerSubdistrict: customer ? customer.subdistrict : '',
+      customerZipcode: customer ? customer.zipcode : '',
+      items: orderItems
+    };
+    
     res.json({
       success: true,
-      order
+      order: orderWithDetails
     });
   } catch (error) {
     console.error(`Error fetching order ${req.params.id}:`, error);
