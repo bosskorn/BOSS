@@ -479,6 +479,86 @@ router.get('/summary', auth, async (req, res) => {
   }
 });
 
+// สร้างเลขพัสดุสำหรับออเดอร์
+router.post('/:id/tracking', auth, async (req, res) => {
+  try {
+    // ตรวจสอบข้อมูลผู้ใช้
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
+      });
+    }
+    
+    const orderId = parseInt(req.params.id, 10);
+    if (isNaN(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'รูปแบบ ID ไม่ถูกต้อง'
+      });
+    }
+    
+    // ดึงข้อมูลออเดอร์
+    const order = await storage.getOrder(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบคำสั่งซื้อนี้'
+      });
+    }
+    
+    // ตรวจสอบว่ามีเลขพัสดุแล้วหรือไม่
+    if (order.trackingNumber) {
+      return res.json({
+        success: true,
+        message: 'ออเดอร์นี้มีเลขพัสดุแล้ว',
+        trackingNumber: order.trackingNumber
+      });
+    }
+    
+    // ดึงข้อมูล shipping method จาก request
+    const { shippingMethod } = req.body;
+    if (!shippingMethod) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุวิธีการจัดส่ง'
+      });
+    }
+    
+    // สร้างเลขพัสดุจำลองตามวิธีการจัดส่ง
+    const prefix = shippingMethod.substring(0, 3).toUpperCase();
+    const randomPart = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
+    const trackingNumber = `${prefix}${randomPart}TH`;
+    
+    // อัพเดตข้อมูลออเดอร์
+    const updatedOrder = await storage.updateOrder(orderId, {
+      trackingNumber,
+      shippingMethod,
+      status: 'processing'
+    });
+    
+    if (!updatedOrder) {
+      return res.status(500).json({
+        success: false,
+        message: 'ไม่สามารถอัพเดตข้อมูลออเดอร์ได้'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'สร้างเลขพัสดุสำเร็จ',
+      trackingNumber,
+      order: updatedOrder
+    });
+  } catch (error) {
+    console.error(`Error creating tracking number for order ${req.params.id}:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการสร้างเลขพัสดุ'
+    });
+  }
+});
+
 // อัพเดตสถานะการพิมพ์ใบลาเบล
 router.patch('/:id/print-status', auth, async (req, res) => {
   try {
