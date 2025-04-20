@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
 import api, { apiRequest } from '@/services/api';
 import { parseCustomerAndAddressData } from '@/utils/addressParser';
+import { getMockShippingOptions, createMockShipment } from '@/services/mock-shipping';
 import Layout from '@/components/Layout';
 import { 
   Card, 
