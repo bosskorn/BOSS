@@ -142,21 +142,21 @@ const FlashExpressLabel: React.FC = () => {
           }
           .barcode-container {
             width: 100%;
-            height: 20mm;
+            height: 15mm;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 2mm;
+            margin-top: 1mm;
           }
           .barcode {
             width: 90%;
-            height: 16mm;
+            height: 14mm;
           }
           .tracking-number-text {
-            font-size: 14px;
+            font-size: 10px;
             font-weight: bold;
             text-align: center;
-            margin-top: 1mm;
+            margin-top: 0;
           }
           .info-row {
             display: flex;
