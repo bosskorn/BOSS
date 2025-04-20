@@ -655,6 +655,62 @@ const OrderList: React.FC = () => {
     handlePrintLabelWithSizeDialog(order);
   };
 
+  // ฟังก์ชันเปิด Dialog สำหรับเลือกขนส่ง
+  const openShippingDialog = (orderId: number) => {
+    setOrderToCreateTracking(orderId);
+    setShippingDialogOpen(true);
+  };
+  
+  // ฟังก์ชันสร้างเลขพัสดุและอัพเดทสถานะออเดอร์
+  const createTrackingNumber = async () => {
+    if (!orderToCreateTracking) return;
+    
+    try {
+      const token = localStorage.getItem('auth_token');
+      
+      // เรียก API เพื่อสร้างเลขพัสดุ
+      const response = await fetch(`/api/orders/${orderToCreateTracking}/tracking`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          shippingMethod: selectedShippingMethod
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: 'สร้างเลขพัสดุสำเร็จ',
+          description: `เลขพัสดุ: ${data.trackingNumber}`,
+        });
+        
+        // รีเฟรชข้อมูลเพื่อแสดงเลขพัสดุที่สร้างขึ้นใหม่
+        fetchOrders();
+        
+        // ปิด Dialog
+        setShippingDialogOpen(false);
+      } else {
+        throw new Error(data.message || 'ไม่สามารถสร้างเลขพัสดุได้');
+      }
+    } catch (error) {
+      console.error('Error creating tracking number:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error instanceof Error ? error.message : 'ไม่สามารถสร้างเลขพัสดุได้',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // ฟังก์ชันสำหรับลบออเดอร์
   const handleDeleteOrder = async (orderId: number) => {
     try {
@@ -1853,6 +1909,97 @@ const OrderList: React.FC = () => {
             >
               <Printer className="h-4 w-4 mr-2" />
               พิมพ์ใบลาเบล
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog เลือกขนส่ง */}
+      <Dialog open={shippingDialogOpen} onOpenChange={setShippingDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>เลือกบริษัทขนส่ง</DialogTitle>
+            <DialogDescription>
+              เลือกบริษัทขนส่งเพื่อสร้างเลขพัสดุสำหรับออเดอร์นี้
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            {/* ส่วนเลือกขนส่ง */}
+            <div className="space-y-4">
+              <div 
+                className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน')}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน</h3>
+                    <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                    <Truck className="h-6 w-6 text-blue-500" />
+                  </div>
+                </div>
+              </div>
+              
+              <div 
+                className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส - ประหยัด' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส - ประหยัด')}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">เสี่ยวไป๋ เอ็กเพรส - ประหยัด</h3>
+                    <p className="text-sm text-gray-500">จัดส่งภายใน 3-5 วัน ราคาประหยัด</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                    <Truck className="h-6 w-6 text-green-500" />
+                  </div>
+                </div>
+              </div>
+              
+              <div 
+                className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'ไปรษณีย์ไทย - EMS' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedShippingMethod('ไปรษณีย์ไทย - EMS')}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">ไปรษณีย์ไทย - EMS</h3>
+                    <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน ทั่วประเทศ</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                    <Truck className="h-6 w-6 text-red-500" />
+                  </div>
+                </div>
+              </div>
+              
+              <div 
+                className={`p-4 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Kerry Express' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedShippingMethod('Kerry Express')}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">Kerry Express</h3>
+                    <p className="text-sm text-gray-500">จัดส่งรวดเร็ว พื้นที่ในเมืองเป็นหลัก</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                    <Truck className="h-6 w-6 text-purple-500" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShippingDialogOpen(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button 
+              onClick={createTrackingNumber}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Check className="h-4 w-4 mr-2" />
+              ยืนยันการเลือก
             </Button>
           </DialogFooter>
         </DialogContent>
