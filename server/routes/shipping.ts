@@ -298,31 +298,27 @@ router.post('/create', auth, async (req: Request, res: Response) => {
     } = req.body;
     
     // ตรวจสอบข้อมูลที่จำเป็นอย่างละเอียด
+    console.log('ข้อมูลที่ได้รับ:', req.body);
+
+    // ตรวจสอบข้อมูลที่จำเป็น
     const missingFields = [];
     
-    if (!outTradeNo) missingFields.push('เลขออเดอร์');
+    // ตรวจสอบข้อมูลพื้นฐาน
+    if (!req.body.outTradeNo) missingFields.push('เลขออเดอร์');
+    if (!req.body.srcName) missingFields.push('ชื่อผู้ส่ง');
+    if (!req.body.srcPhone) missingFields.push('เบอร์โทรผู้ส่ง');
+    if (!req.body.srcProvinceName) missingFields.push('จังหวัดผู้ส่ง');
+    if (!req.body.srcCityName) missingFields.push('อำเภอ/เขตผู้ส่ง');
+    if (!req.body.srcPostalCode) missingFields.push('รหัสไปรษณีย์ผู้ส่ง');
+    if (!req.body.srcDetailAddress) missingFields.push('ที่อยู่ผู้ส่ง');
     
-    if (!senderInfo) {
-      missingFields.push('ข้อมูลผู้ส่ง');
-    } else {
-      if (!senderInfo.name) missingFields.push('ชื่อผู้ส่ง');
-      if (!senderInfo.phone) missingFields.push('เบอร์โทรผู้ส่ง');
-      if (!senderInfo.address) missingFields.push('ที่อยู่ผู้ส่ง');
-      if (!senderInfo.province) missingFields.push('จังหวัดผู้ส่ง');
-      if (!senderInfo.district) missingFields.push('อำเภอ/เขตผู้ส่ง');
-      if (!senderInfo.zipcode) missingFields.push('รหัสไปรษณีย์ผู้ส่ง');
-    }
-    
-    if (!receiverInfo) {
-      missingFields.push('ข้อมูลผู้รับ');
-    } else {
-      if (!receiverInfo.name) missingFields.push('ชื่อผู้รับ');
-      if (!receiverInfo.phone) missingFields.push('เบอร์โทรผู้รับ');
-      if (!receiverInfo.address) missingFields.push('ที่อยู่ผู้รับ');
-      if (!receiverInfo.province) missingFields.push('จังหวัดผู้รับ');
-      if (!receiverInfo.district) missingFields.push('อำเภอ/เขตผู้รับ');
-      if (!receiverInfo.zipcode) missingFields.push('รหัสไปรษณีย์ผู้รับ');
-    }
+    // ตรวจสอบข้อมูลผู้รับ
+    if (!req.body.dstName) missingFields.push('ชื่อผู้รับ');
+    if (!req.body.dstPhone) missingFields.push('เบอร์โทรผู้รับ');
+    if (!req.body.dstProvinceName) missingFields.push('จังหวัดผู้รับ');
+    if (!req.body.dstCityName) missingFields.push('อำเภอ/เขตผู้รับ');
+    if (!req.body.dstPostalCode) missingFields.push('รหัสไปรษณีย์ผู้รับ');
+    if (!req.body.dstDetailAddress) missingFields.push('ที่อยู่ผู้รับ');
     
     if (!packageInfo) {
       missingFields.push('ข้อมูลพัสดุ');
