@@ -1892,7 +1892,7 @@ const OrderList: React.FC = () => {
                       'ThaiStar Delivery', 
                       'J&T Express', 
                       'Kerry Express', 
-                      'ไปรษณีย์ไทย', 
+                      'Thailand Post', 
                       'DHL Express', 
                       'Ninja Van',
                       'Flash Express'
