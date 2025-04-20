@@ -443,19 +443,19 @@ const OrderList: React.FC = () => {
           }
           
           // กรณี J&T Express
-          if (shippingFilter === 'J&T Express' && (trackingNo.includes('JNT') || trackingNo.includes('JTE'))) {
+          if (shippingFilter === 'J&T Express' && (trackingNo.includes('JNT') || trackingNo.includes('JTE') || trackingNo.includes('J&T'))) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for J&T Express`);
             return true;
           }
           
           // กรณี Kerry Express
-          if (shippingFilter === 'Kerry Express' && (trackingNo.includes('KRY') || trackingNo.includes('KRE'))) {
+          if (shippingFilter === 'Kerry Express' && (trackingNo.includes('KRY') || trackingNo.includes('KRE') || trackingNo.includes('KER'))) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Kerry Express`);
             return true;
           }
           
           // กรณี ThaiStar Delivery
-          if (shippingFilter === 'ThaiStar Delivery' && (trackingNo.includes('TSD') || trackingNo.includes('TST'))) {
+          if (shippingFilter === 'ThaiStar Delivery' && (trackingNo.includes('TSD') || trackingNo.includes('TST') || trackingNo.includes('TSR') || trackingNo.includes('THS'))) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for ThaiStar Delivery`);
             return true;
           }
