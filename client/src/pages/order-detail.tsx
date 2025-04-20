@@ -139,12 +139,54 @@ const OrderDetail: React.FC = () => {
           cost: parseFloat(data.order.shippingFee || '0'),
           estimatedDelivery: undefined,
           status: data.order.status || 'pending',
-          statusHistory: [{
+          statusHistory: []
+        };
+        
+        // เพิ่มประวัติการจัดส่ง
+        if (data.order.trackingNumber) {
+          // กรณีมีเลขพัสดุแล้ว
+          shippingData.statusHistory = [
+            {
+              date: data.order.shippingDate || data.order.updatedAt || data.order.createdAt,
+              status: 'เตรียมการจัดส่ง',
+              description: `สร้างเลขพัสดุ ${data.order.trackingNumber} แล้ว`
+            },
+            {
+              date: data.order.createdAt,
+              status: 'สร้างคำสั่งซื้อ',
+              description: 'คำสั่งซื้อถูกสร้างขึ้นในระบบ'
+            }
+          ];
+        } else {
+          // กรณียังไม่มีเลขพัสดุ
+          shippingData.statusHistory = [{
             date: data.order.createdAt || new Date().toISOString(),
             status: 'สร้างคำสั่งซื้อ',
             description: 'คำสั่งซื้อถูกสร้างขึ้นในระบบ'
-          }]
-        };
+          }];
+        }
+        
+        // ระบุผู้ให้บริการจากเลขพัสดุ
+        if (data.order.trackingNumber) {
+          const trackingNumber = data.order.trackingNumber;
+          
+          // ตรวจสอบผู้ให้บริการจัดส่งจากเลขพัสดุ
+          if (trackingNumber.startsWith('TST') || trackingNumber.startsWith('THA')) {
+            shippingData.carrier = 'ThaiStar Delivery';
+          } else if (trackingNumber.startsWith('THP')) {
+            shippingData.carrier = 'Thailand Post';
+          } else if (trackingNumber.startsWith('SPE')) {
+            shippingData.carrier = 'SpeedLine';
+          } else if (trackingNumber.startsWith('KRF')) {
+            shippingData.carrier = 'Kerry Express';
+          } else if (trackingNumber.startsWith('JNT') || trackingNumber.startsWith('J&T')) {
+            shippingData.carrier = 'J&T Express';
+          } else if (trackingNumber.startsWith('เสี') || trackingNumber.startsWith('XBE')) {
+            shippingData.carrier = 'Xiaobai Express';
+          } else if (trackingNumber.startsWith('FLE')) {
+            shippingData.carrier = 'Flash Express';
+          }
+        }
         
         // สร้างข้อมูลคำสั่งซื้อที่เข้ากับ interface Order
         const formattedOrder: Order = {
