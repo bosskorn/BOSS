@@ -30,6 +30,7 @@ import BarcodeTest from "@/pages/barcode-test";
 import PrintLabelEnhanced from "@/pages/print-label-enhanced";
 import BarcodeTestImproved from "@/pages/barcode-test-improved";
 import JTExpressLabel from "@/pages/jt-express-label";
+import FlashExpressLabel from "@/pages/flash-express-label";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/print-label-enhanced" component={PrintLabelEnhanced} />
       <Route path="/barcode-test-improved" component={BarcodeTestImproved} />
       <Route path="/jt-express-label" component={JTExpressLabel} />
+      <Route path="/flash-express-label" component={FlashExpressLabel} />
       
       {/* Protected routes - require authentication */}
       <ProtectedRoute path="/" component={Dashboard} />
