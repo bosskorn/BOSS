@@ -68,6 +68,8 @@ const JTExpressLabel: React.FC = () => {
         <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
         <style>
+          @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap');
+          
           @page {
             size: 100mm 150mm;
             margin: 0;
@@ -98,39 +100,53 @@ const JTExpressLabel: React.FC = () => {
           }
           .header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            margin-bottom: 2mm;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 2mm;
+            margin-bottom: 1mm;
           }
-          .logo {
+          .flash-logo {
+            border: 1px solid #e61e25;
+            padding: 1mm 2mm;
+            font-weight: bold;
+            font-size: 14px;
             width: 20mm;
-            height: 10mm;
-            background-color: #e61e25; /* J&T สีแดง */
-            color: white;
+            text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-            border-radius: 2px;
+            background-color: white;
           }
-          .logo-text {
-            font-size: 18px;
-            font-weight: bold;
-          }
-          .header-text {
+          .tracking-number-container {
             flex: 1;
-            margin-left: 3mm;
-          }
-          .tracking-label {
-            font-size: 8px;
-            color: #666;
-          }
-          .tracking-number {
-            font-size: 16px;
+            text-align: center;
+            background-color: black;
+            color: white;
             font-weight: bold;
-            letter-spacing: 1px;
+            font-size: 16px;
+            padding: 1mm 0;
+            margin: 0 2mm;
+          }
+          .sorting-destination-box {
+            margin: 2mm 0;
+          }
+          .zipcode-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f5f5f5;
+            padding: 2mm;
+            border: 1px solid #ddd;
+          }
+          .zipcode-text {
+            font-weight: bold;
+            font-size: 16px;
+          }
+          .area-code {
+            background-color: #e61e25;
+            color: white;
+            font-weight: bold;
+            padding: 1mm 3mm;
+            font-size: 14px;
           }
           .barcode-container {
             margin: 2mm 0;
@@ -275,20 +291,19 @@ const JTExpressLabel: React.FC = () => {
         <div class="page">
           <div class="label-container">
             <div class="header">
-              <div class="logo">J&T</div>
-              <div class="header-text">
-                <div class="tracking-label">เลขพัสดุ / Tracking No.</div>
-                <div class="tracking-number">${trackingNumber}</div>
-              </div>
+              <div class="flash-logo">J&T</div>
+              <div class="tracking-number-container">${trackingNumber}</div>
+              <div class="flash-logo">J&T</div>
             </div>
             
             <div class="barcode-container">
               <svg id="barcode"></svg>
             </div>
 
-            <div class="sorting-code-container">
-              <div style="font-size: 14px; text-align: center; font-weight: bold; background-color: #eee; padding: 3mm; margin: 2mm 0; border-radius: 2px;">
-                รหัสพื้นที่คัดแยก: <span style="color: #e61e25;">${sortingCode}</span>
+            <div class="sorting-destination-box">
+              <div class="zipcode-area">
+                <span class="zipcode-text">${recipientZipcode}</span>
+                <span class="area-code">${sortingCode}</span>
               </div>
             </div>
 
