@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 
 interface SidebarMenuProps {
