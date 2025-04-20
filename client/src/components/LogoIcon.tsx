@@ -21,14 +21,14 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 40, className = '' }) => {
         {/* รูปร่างสามเหลี่ยมสื่อถึงความเร็ว */}
         <path
           d="M20 40 L40 20 L44 40 Z"
-          fill="#8A2BE2"
+          fill="#1E88E5"
           strokeWidth="0"
         />
         
         {/* เส้นประสานด้านล่าง */}
         <path 
           d="M15 35 C25 25, 35 45, 50 32" 
-          stroke="#8A2BE2" 
+          stroke="#1E88E5" 
           strokeWidth="4" 
           strokeLinecap="round"
           strokeDasharray="1 4"
@@ -37,7 +37,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 40, className = '' }) => {
         {/* เส้นประสานด้านบน */}
         <path 
           d="M10 30 C20 20, 30 40, 45 25" 
-          stroke="#6A1CB2" 
+          stroke="#0D47A1" 
           strokeWidth="4" 
           strokeLinecap="round"
           strokeDasharray="2 2"

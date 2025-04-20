@@ -25,45 +25,45 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
         {/* สีพื้นหลัง */}
         <rect width="240" height="80" rx="12" fill="white" />
         
-        {/* เส้นประสานด้านล่าง (เส้นขนส่งม่วง) */}
+        {/* เส้นประสานด้านล่าง (เส้นขนส่งน้ำเงิน) */}
         <path 
           d="M20 50 C60 30, 120 70, 220 45" 
-          stroke="#8A2BE2" 
+          stroke="#1E88E5" 
           strokeWidth="6" 
           strokeLinecap="round"
           strokeDasharray="1 7"
         />
         
-        {/* เส้นประสานด้านบน (เส้นขนส่งม่วงเข้ม) */}
+        {/* เส้นประสานด้านบน (เส้นขนส่งน้ำเงินเข้ม) */}
         <path 
           d="M30 40 C80 20, 150 60, 210 30" 
-          stroke="#6A1CB2" 
+          stroke="#0D47A1" 
           strokeWidth="8" 
           strokeLinecap="round"
           strokeDasharray="2 4"
         />
         
-        {/* ตัวอักษรแนวเฉียง PURPLE */}
+        {/* ตัวอักษรแนวเฉียง BLUE */}
         <text 
           x="45" 
           y="42" 
           fontFamily="Arial, sans-serif" 
           fontWeight="800" 
           fontSize="28" 
-          fill="#8A2BE2"
+          fill="#1E88E5"
           transform="skewX(-10)"
         >
-          PURPLE
+          BLUE
         </text>
         
         {/* ตัวอักษรแนวเฉียง DASH */}
         <text 
-          x="145" 
+          x="115" 
           y="42" 
           fontFamily="Arial, sans-serif" 
           fontWeight="900" 
           fontSize="28" 
-          fill="#6A1CB2"
+          fill="#0D47A1"
           transform="skewX(-10)"
         >
           DASH
@@ -76,9 +76,9 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           fontFamily="Kanit, sans-serif" 
           fontWeight="600" 
           fontSize="12" 
-          fill="#6A1CB2"
+          fill="#0D47A1"
         >
-          ส่งด่วน ม่วงสะดุด!
+          ส่งด่วน สะดวกรวดเร็ว
         </text>
       </svg>
     </div>
