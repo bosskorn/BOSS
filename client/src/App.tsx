@@ -33,6 +33,7 @@ import JTExpressLabel from "@/pages/jt-express-label";
 import FlashExpressLabel from "@/pages/flash-express-label";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
+import TikTokFlashLabel from './pages/tiktok-flash-label'; // Added import for new component
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -54,7 +55,9 @@ function Router() {
       <Route path="/barcode-test-improved" component={BarcodeTestImproved} />
       <Route path="/jt-express-label" component={JTExpressLabel} />
       <Route path="/flash-express-label" component={FlashExpressLabel} />
-      
+      <Route path="/tiktok-flash-label" component={TikTokFlashLabel} /> {/* Added route for new component */}
+
+
       {/* Protected routes - require authentication */}
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
@@ -69,31 +72,31 @@ function Router() {
       <ProtectedRoute path="/create-order" component={CreateOrderTabs} />
       <ProtectedRoute path="/create-order-old" component={CreateOrder} />
       <ProtectedRoute path="/bulk-order-import" component={BulkOrderImport} />
-      
+
       {/* คำสั่งซื้อ - protected */}
       <ProtectedRoute path="/orders-all" component={OrderList} />
       <ProtectedRoute path="/order-detail/:id" component={OrderDetail} />
-      
+
       {/* พัสดุและการจัดส่ง - protected */}
       <ProtectedRoute path="/parcel-list" component={ShipmentList} />
-      
+
       {/* รายงาน - protected */}
       <ProtectedRoute path="/reports/overview" component={ReportsOverview} />
       <ProtectedRoute path="/reports/by-courier" component={ReportsByCourier} />
       <ProtectedRoute path="/reports/by-area" component={ReportsByArea} />
       <ProtectedRoute path="/reports/cod" component={ReportsCOD} />
       <ProtectedRoute path="/reports/returns" component={ReportsReturns} />
-      
+
       {/* ตั้งค่า - protected */}
       <ProtectedRoute path="/settings" component={Settings} />
-      
+
       {/* เติมเงิน - protected */}
       <ProtectedRoute path="/top-up" component={TopUp} />
-      
+
       {/* การเคลม - protected */}
       <ProtectedRoute path="/claims-list" component={ClaimsList} />
       <ProtectedRoute path="/user-claims" component={UserClaims} />
-      
+
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
