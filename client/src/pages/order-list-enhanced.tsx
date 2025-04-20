@@ -852,8 +852,21 @@ const OrderList: React.FC = () => {
   // ฟังก์ชันพิมพ์ใบลาเบลสำหรับรายการที่เลือก
   // สำหรับฟังก์ชันพิมพ์ใบลาเบลแบบปกติ (เพื่อความเข้ากันได้)
   const handlePrintLabel = (order: Order) => {
-    // แสดง Dialog ให้เลือกรูปแบบลาเบล
+    console.log("พิมพ์ลาเบลสำหรับออเดอร์:", order);
+    
+    // ตรวจสอบว่าออเดอร์มีเลขพัสดุหรือไม่
+    if (!order.trackingNumber) {
+      toast({
+        title: 'ไม่สามารถพิมพ์ลาเบลได้',
+        description: 'ออเดอร์นี้ไม่มีเลขพัสดุ กรุณาสร้างเลขพัสดุก่อนพิมพ์ลาเบล',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // บันทึกข้อมูลออเดอร์ที่จะพิมพ์และแสดงไดอะล็อก
     setOrderToPrint(order);
+    setSelectedLabelType('standard'); // ตั้งค่าเริ่มต้นเป็นลาเบลมาตรฐาน
     setLabelTypeDialogOpen(true);
   };
 
@@ -2689,15 +2702,35 @@ const OrderList: React.FC = () => {
                 });
                 
                 // เปิดลาเบลตามประเภทที่เลือก
+                console.log(`กำลังเปิดลาเบลประเภท ${selectedLabelType} สำหรับออเดอร์ ${orderToPrint.id}`);
+                
+                let labelUrl = '';
+                
                 if (selectedLabelType === 'standard') {
-                  window.open(`/print-label-enhanced?order=${orderToPrint.id}`, '_blank');
+                  labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
                 } else if (selectedLabelType === 'flash') {
-                  window.open(`/flash-express-label-new?order=${orderToPrint.id}`, '_blank');
+                  labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
                 } else if (selectedLabelType === 'jt') {
-                  window.open(`/jt-express-label?order=${orderToPrint.id}`, '_blank');
+                  labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
                 } else if (selectedLabelType === 'tiktok') {
-                  window.open(`/tiktok-shipping-label?order=${orderToPrint.id}`, '_blank');
+                  labelUrl = `/tiktok-shipping-label?order=${orderToPrint.id}`;
                 }
+                
+                console.log("Opening URL:", labelUrl);
+                
+                // ใช้ setTimeout เพื่อหลีกเลี่ยงการถูกบล็อกโดย popup blocker
+                setTimeout(() => {
+                  const newWindow = window.open(labelUrl, '_blank');
+                  
+                  // ตรวจสอบว่าสามารถเปิดได้หรือไม่
+                  if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                    toast({
+                      title: 'ไม่สามารถเปิดหน้าลาเบลได้',
+                      description: 'โปรดอนุญาตให้เว็บไซต์เปิดหน้าต่างป๊อปอัพได้ในการตั้งค่าเบราว์เซอร์ของคุณ',
+                      variant: 'destructive',
+                    });
+                  }
+                }, 100);
               }}
               className="bg-blue-600 hover:bg-blue-700"
               disabled={!selectedLabelType}
