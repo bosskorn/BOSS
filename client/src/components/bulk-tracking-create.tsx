@@ -352,7 +352,12 @@ const BulkTrackingCreate: React.FC<BulkTrackingCreateProps> = ({
                     <SelectValue placeholder="เลือกบริษัทขนส่ง" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* บริษัทขนส่งจำลอง */}
+                    {/* ตัวเลือกไม่เลือกขนส่ง */}
+                    <SelectItem key="no_carrier" value="no_carrier">
+                      ยังไม่เลือกขนส่งตอนนี้
+                    </SelectItem>
+                    
+                    {/* บริษัทขนส่งมาตรฐาน - ต้องตรงกับที่ใช้ในหน้า order-list-enhanced.tsx */}
                     <SelectItem key="xiaobai" value="Xiaobai Express">
                       Xiaobai Express - ฿45.00
                     </SelectItem>
@@ -377,10 +382,19 @@ const BulkTrackingCreate: React.FC<BulkTrackingCreateProps> = ({
                     <SelectItem key="ninja" value="Ninja Van">
                       Ninja Van - ฿55.00
                     </SelectItem>
+                    <SelectItem key="flash" value="Flash Express">
+                      Flash Express - ฿45.00
+                    </SelectItem>
                     
-                    {/* บริษัทขนส่งจากฐานข้อมูล */}
+                    {/* บริษัทขนส่งจากฐานข้อมูล - เฉพาะที่ไม่ใช่ขนส่งมาตรฐานด้านบน */}
                     {shippingMethods
                       .filter(method => method.isActive)
+                      .filter(method => 
+                        !['Xiaobai Express', 'SpeedLine', 'ThaiStar Delivery', 'J&T Express', 
+                          'Kerry Express', 'Thailand Post', 'DHL Express', 'Ninja Van', 'Flash Express',
+                          'เสี่ยวไป๋ เอ็กเพรส', 'สปีดไลน์', 'ไทยสตาร์', 'เจแอนด์ที เอ็กซ์เพรส',
+                          'เคอรี่ เอ็กซ์เพรส', 'ไปรษณีย์ไทย', 'ดีเอชแอล', 'นินจาแวน', 'แฟลช เอ็กซ์เพรส']
+                        .includes(method.name))
                       .map((method) => (
                         <SelectItem key={method.id} value={method.name}>
                           {method.name} - ฿{parseFloat(method.price).toFixed(2)}

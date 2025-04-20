@@ -450,30 +450,54 @@ const BulkOrderImportPage: React.FC = () => {
                   <SelectValue placeholder="เลือกบริษัทขนส่ง" />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* ตัวเลือกไม่เลือกขนส่ง */}
                   <SelectItem value="no_carrier">
                     ยังไม่เลือกขนส่งตอนนี้
                   </SelectItem>
-                  {shippingMethods.map((method) => (
-                    <SelectItem key={method.id} value={method.name === 'Xiaobai Express' ? 'Xiaobai Express' : 
-                      method.name === 'Thailand Post' ? 'Thailand Post' : 
-                      method.name === 'SpeedLine' ? 'SpeedLine' : 
-                      method.name === 'ThaiStar Delivery' ? 'ThaiStar Delivery' : 
-                      method.name === 'J&T Express' ? 'J&T Express' : 
-                      method.name === 'Kerry Express' ? 'Kerry Express' : 
-                      method.name === 'DHL Express' ? 'DHL Express' : 
-                      method.name === 'Ninja Van' ? 'Ninja Van' : 
-                      method.name}>
-                      {method.name === 'เสี่ยวไป๋ เอ็กเพรส' ? 'Xiaobai Express' : 
-                       method.name === 'ไปรษณีย์ไทย' ? 'Thailand Post' : 
-                       method.name === 'สปีดไลน์' ? 'SpeedLine' : 
-                       method.name === 'ไทยสตาร์' ? 'ThaiStar Delivery' : 
-                       method.name === 'เจแอนด์ที เอ็กซ์เพรส' ? 'J&T Express' : 
-                       method.name === 'เคอรี่ เอ็กซ์เพรส' ? 'Kerry Express' : 
-                       method.name === 'ดีเอชแอล' ? 'DHL Express' : 
-                       method.name === 'นินจาแวน' ? 'Ninja Van' : 
-                       method.name}
-                    </SelectItem>
-                  ))}
+                  
+                  {/* บริษัทขนส่งมาตรฐาน - ต้องตรงกับที่ใช้ในหน้า order-list-enhanced.tsx */}
+                  <SelectItem key="xiaobai" value="Xiaobai Express">
+                    Xiaobai Express
+                  </SelectItem>
+                  <SelectItem key="speedline" value="SpeedLine">
+                    SpeedLine
+                  </SelectItem>
+                  <SelectItem key="thaistar" value="ThaiStar Delivery">
+                    ThaiStar Delivery
+                  </SelectItem>
+                  <SelectItem key="jnt" value="J&T Express">
+                    J&T Express
+                  </SelectItem>
+                  <SelectItem key="kerry" value="Kerry Express">
+                    Kerry Express
+                  </SelectItem>
+                  <SelectItem key="thaipost" value="Thailand Post">
+                    Thailand Post
+                  </SelectItem>
+                  <SelectItem key="dhl" value="DHL Express">
+                    DHL Express
+                  </SelectItem>
+                  <SelectItem key="ninja" value="Ninja Van">
+                    Ninja Van
+                  </SelectItem>
+                  <SelectItem key="flash" value="Flash Express">
+                    Flash Express
+                  </SelectItem>
+                  
+                  {/* บริษัทขนส่งจากฐานข้อมูล - เฉพาะที่ไม่ใช่ขนส่งมาตรฐานด้านบน */}
+                  {shippingMethods
+                    .filter(method => 
+                      !['Xiaobai Express', 'SpeedLine', 'ThaiStar Delivery', 'J&T Express', 
+                        'Kerry Express', 'Thailand Post', 'DHL Express', 'Ninja Van', 'Flash Express',
+                        'เสี่ยวไป๋ เอ็กเพรส', 'สปีดไลน์', 'ไทยสตาร์', 'เจแอนด์ที เอ็กซ์เพรส',
+                        'เคอรี่ เอ็กซ์เพรส', 'ไปรษณีย์ไทย', 'ดีเอชแอล', 'นินจาแวน', 'แฟลช เอ็กซ์เพรส']
+                      .includes(method.name))
+                    .map((method) => (
+                      <SelectItem key={method.id} value={method.name}>
+                        {method.name}
+                      </SelectItem>
+                    ))
+                  }
                 </SelectContent>
               </Select>
               <p className="text-sm text-gray-500 mt-1">
