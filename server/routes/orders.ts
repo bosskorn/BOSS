@@ -215,7 +215,7 @@ router.post('/', auth, async (req, res) => {
           district: orderData.district || '',
           province: orderData.province || '',
           zipcode: orderData.zipcode || '',
-          addressNumber: orderData.houseNumber || orderData.addressNumber || '',
+          addressNumber: orderData.addressNumber || '',  // ใช้ addressNumber เท่านั้น
           road: orderData.road || '',
           moo: orderData.village || orderData.moo || '',
           soi: orderData.soi || '',

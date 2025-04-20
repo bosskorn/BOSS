@@ -214,13 +214,13 @@ const BulkOrderImportPage: React.FC = () => {
         const orderData = {
           customerName: order.customerName,
           customerPhone: order.customerPhone,
-          houseNumber: order.houseNumber || '', // ใช้ค่าจากข้อมูลนำเข้า (บ้านเลขที่)
+          addressNumber: order.houseNumber || '', // เปลี่ยนจาก houseNumber เป็น addressNumber ให้ตรงกับฐานข้อมูล
           village: '',
           building: '',
           floor: '',
           roomNumber: '',
           soi: '',
-          road: order.road || '', // ใช้ค่าจากข้อมูลนำเข้า (ถนน)
+          road: order.road || '', // ยังคงใช้ road
           fullAddress: order.address,
           province: order.province,
           district: order.district,
