@@ -155,6 +155,8 @@ const OrderDetail: React.FC = () => {
           statusHistory: []
         };
         
+        console.log('ค่าขนส่งที่ได้รับจาก API:', data.order.shippingFee);
+        
         // เพิ่มประวัติการจัดส่ง
         if (data.order.trackingNumber) {
           // กรณีมีเลขพัสดุแล้ว

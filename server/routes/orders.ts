@@ -155,13 +155,16 @@ router.post('/', auth, async (req, res) => {
     }
     
     if (!orderData.hasOwnProperty('shippingFee')) {
-      orderData.shippingFee = 0;
+      // ถ้ามี shippingCost ให้ใช้ค่านั้น อย่างอื่นใช้ค่าเริ่มต้น 40
+      orderData.shippingFee = orderData.shippingCost || 40;
       
       // แปลงค่าจาก snake_case เป็น camelCase ถ้ามี
       if (orderData.shipping_fee) {
         orderData.shippingFee = orderData.shipping_fee;
         delete orderData.shipping_fee;
       }
+      
+      console.log('ตั้งค่าขนส่งเป็น:', orderData.shippingFee);
     }
     
     if (!orderData.hasOwnProperty('discount')) {
