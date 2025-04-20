@@ -33,7 +33,9 @@ import JTExpressLabel from "@/pages/jt-express-label";
 import FlashExpressLabel from "@/pages/flash-express-label";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
-import TikTokFlashLabel from './pages/tiktok-flash-label'; // Added import for new component
+import TikTokFlashLabel from './pages/tiktok-flash-label';
+import TikTokShippingLabel from './pages/tiktok-shipping-label'; // Added import for new component
+
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -55,7 +57,8 @@ function Router() {
       <Route path="/barcode-test-improved" component={BarcodeTestImproved} />
       <Route path="/jt-express-label" component={JTExpressLabel} />
       <Route path="/flash-express-label" component={FlashExpressLabel} />
-      <Route path="/tiktok-flash-label" component={TikTokFlashLabel} /> {/* Added route for new component */}
+      <Route path="/tiktok-flash-label" component={TikTokFlashLabel} />
+      <Route path="/tiktok-shipping-label" component={TikTokShippingLabel} />
 
 
       {/* Protected routes - require authentication */}
