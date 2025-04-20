@@ -11,60 +11,68 @@ const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 // กำหนดค่า timeout สำหรับการเชื่อมต่อ API (เพิ่มขึ้นเป็น 15 วินาที)
 const API_TIMEOUT = 15000; // 15 วินาที
 
-// ฟังก์ชันสร้างลายเซ็นตามเอกสาร Flash Express
+// ฟังก์ชันสร้างลายเซ็นตามเอกสาร Flash Express 
+// ปรับปรุงให้ตรงตามเอกสารมากขึ้น
 function createDirectSignature(params: Record<string, any>, apiKey: string): string {
   try {
-    // ขั้นตอนแรก: ตั้งค่าข้อมูลทั้งหมดที่ส่งหรือรับเป็นชุด M
-    // สร้างชุดข้อมูลใหม่ (ไม่รวม sign และ subItemTypes)
+    // ขั้นตอนที่ 1: คัดกรองพารามิเตอร์ตามกฎของ Flash Express
     const paramsCopy: Record<string, any> = {};
     
-    // จัดเรียงพารามิเตอร์โดยนำค่าพารามิเตอร์ที่ไม่เป็นค่าว่างไว้ในชุด M
+    // จัดเรียงพารามิเตอร์โดยนำค่าพารามิเตอร์ที่ไม่เป็นค่าว่างไว้ในชุด paramsCopy
     for (const key in params) {
-      // ข้ามฟิลด์ sign และ subItemTypes ตามเอกสาร
+      // 1.1 ข้ามฟิลด์ sign และ subItemTypes ตามเอกสาร
       if (key === 'sign' || key === 'subItemTypes') continue;
       
       const value = params[key];
       
-      // ตรวจสอบค่า null และ undefined
+      // 1.2 ข้ามค่า null และ undefined
       if (value === null || value === undefined) continue;
       
-      // ตรวจสอบสตริงว่างตามที่เอกสารระบุ
-      // ค่าว่างหมายถึงสตริงที่ประกอบด้วยอักขระเว้นวรรคทั้งหมด
-      if (typeof value === 'string' && /^[ \t\n\f\r\u000b\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
+      // 1.3 ข้ามค่าว่าง ตามเอกสาร
+      // "Empty means a string consisting entirely of whitespace characters"
+      if (typeof value === 'string' && /^[ \t\n\r\f\u000b\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
       
-      // เพิ่มค่าที่ผ่านเข้าไปในชุดข้อมูลใหม่
+      // 1.4 เพิ่มค่าที่ผ่านเกณฑ์เข้าไปในชุดข้อมูลใหม่
       paramsCopy[key] = value;
     }
     
-    // เรียงชื่อพารามิเตอร์ตาม ASCII code โดยเรียงจากเล็กไปใหญ่ (dictionary order) ตามเอกสาร
+    // ขั้นตอนที่ 2: เรียงลำดับตาม ASCII
+    // "Sort parameters by parameter name based on ASCII code from smallest to largest"
     const sortedKeys = Object.keys(paramsCopy).sort();
     const stringParts: string[] = [];
     
-    // สร้างสตริงตามรูปแบบ key1=value1&key2=value2... ตามเอกสาร
+    // ขั้นตอนที่ 3: สร้างสตริงตามรูปแบบที่กำหนด
     for (const key of sortedKeys) {
       let value = paramsCopy[key];
       
-      // แปลงค่า Array หรือ Object เป็น JSON string
+      // 3.1 แปลงค่า Array หรือ Object เป็น JSON string
       if (typeof value === 'object' && value !== null) {
         value = JSON.stringify(value);
+      } else if (value === 0) {
+        // 3.2 รักษาค่า 0 เป็นสตริง '0' ไม่ใช่ค่าว่าง
+        value = '0';
       }
       
-      // ใช้ค่าแบบดั้งเดิมโดยไม่มีการ URL encoding ตามเอกสาร
-      // "คำนวณลายเซ็นก่อนเรียกใช้ฟังก์ชั่น urlencode()"
+      // 3.3 ใช้ค่าแบบดั้งเดิมโดยไม่มีการ URL encoding
+      // ตามคำแนะนำในเอกสาร: "calculate the signature before calling the urlencode() function"
       stringParts.push(`${key}=${value}`);
     }
     
-    // สร้าง stringA ด้วยการรวมพารามิเตอร์เป็นสตริงเดียว คั่นด้วย &
+    // ขั้นตอนที่ 4: สร้าง stringA
+    // "Connect the parameters in the format of key=value to a string stringA"
     const stringA = stringParts.join('&');
     
-    // นำ stringA มาต่อด้วย secret_key และเก็บไว้ที่ stringSignTemp
+    // ขั้นตอนที่ 5: เพิ่ม key parameter
+    // "Append stringSignTemp=stringA&key={merchant key}"
     const stringSignTemp = `${stringA}&key=${apiKey}`;
     
+    // บันทึกข้อมูลสำหรับตรวจสอบ
     console.log('===========================================================');
-    console.log('ข้อมูลที่ใช้สร้างลายเซ็น Flash Express:');
+    console.log('ข้อมูลที่ใช้สร้างลายเซ็น Flash Express ปรับปรุงใหม่:');
     console.log(stringSignTemp);
     
-    // เข้ารหัสด้วย SHA256 และทำเป็นตัวพิมพ์ใหญ่ทั้งหมด
+    // ขั้นตอนที่ 6: คำนวณ SHA256 hash
+    // "Calculate the SHA256 hash value of stringSignTemp and convert it to uppercase"
     const signature = crypto
       .createHash('sha256')
       .update(stringSignTemp)

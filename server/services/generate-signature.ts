@@ -37,7 +37,8 @@ export function generateFlashExpressSignature(
       if (value === null || value === undefined) continue;
       
       // ตรวจสอบและข้ามสตริงว่างตามที่เอกสารระบุ
-      if (typeof value === 'string' && /^[ \t\n\f\r\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
+      // ค่าว่างหมายถึงสตริงที่ประกอบด้วยอักขระเว้นวรรคทั้งหมด (แก้ไขรูปแบบ regex ให้ตรงกับเอกสาร)
+      if (typeof value === 'string' && /^[ \t\n\r\f\u000b\u001c\u001d\u001e\u001f]*$/.test(value)) continue;
       
       // เพิ่มคีย์-ค่าทีผ่านเงื่อนไขเข้าไปในชุดข้อมูลใหม่
       paramsCopy[key] = value;
