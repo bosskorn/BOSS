@@ -418,25 +418,25 @@ const OrderList: React.FC = () => {
         if (order.trackingNumber) {
           const trackingNo = order.trackingNumber;
           
-          // กรณี SpeedLine
-          if (shippingFilter === 'SpeedLine' && 
-              (trackingNo.includes('SPE') || (order.orderNumber && order.orderNumber.startsWith('PD')))) {
-            console.log(`✓ Matched Order #${order.id}: ${trackingNo || order.orderNumber} substring match for SpeedLine`);
-            return true;
-          }
-          
           // กรณี Thailand Post
           if (shippingFilter === 'Thailand Post' && trackingNo.includes('THA')) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Thailand Post`);
             return true;
           }
+          
+          // กรณี SpeedLine
+          if (shippingFilter === 'SpeedLine' && trackingNo.includes('SPE')) {
+            console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for SpeedLine`);
+            return true;
+          }
         }
         
-        // ตรวจสอบเลขออเดอร์ (กรณีออเดอร์มีรูปแบบพิเศษ)
-        if (shippingFilter === 'SpeedLine' && order.orderNumber && order.orderNumber.startsWith('PD')) {
-          console.log(`✓ Matched Order #${order.id}: ${order.orderNumber} by orderNumber prefix PD`);
-          return true;
-        }
+        // ตรวจสอบเลขออเดอร์ (กรณีออเดอร์มีรูปแบบพิเศษ) - แค่ไม่มีเลขพัสดุเฉยๆ ไม่ใช่ว่าทุกออเดอร์เป็น SpeedLine
+        // ถ้าอยากให้แสดงเฉพาะออเดอร์ที่ไม่มีเลขพัสดุเลย ให้ใช้อันนี้ ซึ่งจะไม่ตรวจสอบเลขออเดอร์
+        // if (shippingFilter === 'SpeedLine' && order.orderNumber && order.orderNumber.startsWith('PD') && !order.trackingNumber) {
+        //   console.log(`✓ Matched Order #${order.id}: ${order.orderNumber} by orderNumber prefix PD (no tracking)`);
+        //   return true;
+        // }
         
         // ตรวจสอบชื่อวิธีการจัดส่ง (กรณีไม่มีเลขพัสดุหรือเลขพัสดุไม่ตรงกับรูปแบบ)
         const shippingMethodName = order.shippingMethod || '';
