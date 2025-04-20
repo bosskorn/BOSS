@@ -129,12 +129,12 @@ const OrderDetail: React.FC = () => {
           subdistrict: data.order.customerSubdistrict || '',
           zipcode: data.order.customerZipcode || '',
           // ข้อมูลเพิ่มเติม
-          addressNumber: data.order.addressNumber || '',
-          road: data.order.road || '',
-          moo: data.order.moo || '',
-          soi: data.order.soi || '',
-          building: data.order.building || '',
-          floor: data.order.floor || '',
+          addressNumber: data.order.customerAddressNumber || '',
+          road: data.order.customerRoad || '',
+          moo: data.order.customerMoo || '',
+          soi: data.order.customerSoi || '',
+          building: data.order.customerBuilding || '',
+          floor: data.order.customerFloor || '',
         };
         
         // ดึงข้อมูลสินค้า (ถ้ามี)
