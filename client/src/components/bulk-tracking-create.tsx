@@ -355,7 +355,7 @@ const BulkTrackingCreate: React.FC<BulkTrackingCreateProps> = ({
                     {shippingMethods
                       .filter(method => method.isActive)
                       .map((method) => (
-                        <SelectItem key={method.id} value={method.code}>
+                        <SelectItem key={method.id} value={method.name}>
                           {method.name} - ฿{parseFloat(method.price).toFixed(2)}
                         </SelectItem>
                       ))}
