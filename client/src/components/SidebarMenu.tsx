@@ -1,13 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
-
-interface MenuItem {
-  path: string;
-  icon: string;
-  label: string;
-  submenu?: MenuItem[];
-}
 
 interface SidebarMenuProps {
   isOpen: boolean;
@@ -51,89 +44,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
     };
   }, [isOpen]);
 
-  // รายการเมนูทั้งหมด
-  const menuItems = [
-    { 
-      path: '/dashboard', 
-      icon: 'fa-chart-pie', 
-      label: 'แดชบอร์ด', 
-    },
-    { 
-      path: '/orders-all', 
-      icon: 'fa-clipboard-list', 
-      label: 'คำสั่งซื้อทั้งหมด' 
-    },
-    { 
-      path: '/create-order', 
-      icon: 'fa-plus-circle', 
-      label: 'สร้างออเดอร์' 
-    },
-    { 
-      path: '/parcel-list', 
-      icon: 'fa-box-open', 
-      label: 'รายการพัสดุ' 
-    },
-    { 
-      path: '/user-claims', 
-      icon: 'fa-shield-halved', 
-      label: 'รายการเคลม' 
-    },
-    { 
-      path: '/product-list', 
-      icon: 'fa-tags', 
-      label: 'สินค้าทั้งหมด' 
-    },
-    { 
-      path: '/product-create', 
-      icon: 'fa-plus-square', 
-      label: 'สร้างสินค้า' 
-    },
-    { 
-      path: '/category-management', 
-      icon: 'fa-folder-plus', 
-      label: 'จัดการหมวดหมู่' 
-    },
-    { 
-      path: '/reports/overview', 
-      icon: 'fa-chart-line', 
-      label: 'ภาพรวมรายงาน' 
-    },
-    { 
-      path: '/reports/by-courier', 
-      icon: 'fa-shipping-fast', 
-      label: 'รายงานตามขนส่ง' 
-    },
-    { 
-      path: '/reports/by-area', 
-      icon: 'fa-map-marked-alt', 
-      label: 'รายงานตามพื้นที่' 
-    },
-    { 
-      path: '/reports/cod', 
-      icon: 'fa-dollar-sign', 
-      label: 'รายงาน COD' 
-    },
-    { 
-      path: '/reports/returns', 
-      icon: 'fa-undo', 
-      label: 'รายงานพัสดุตีกลับ' 
-    },
-    { 
-      path: '/settings', 
-      icon: 'fa-cog', 
-      label: 'ตั้งค่า' 
-    },
-    { 
-      path: '/top-up', 
-      icon: 'fa-wallet', 
-      label: 'เติมเครดิต' 
-    },
-    { 
-      path: '/auth', 
-      icon: 'fa-sign-out-alt', 
-      label: 'ออกจากระบบ' 
-    }
-  ];
+  // ไม่ใช้รายการเมนูแล้ว เนื่องจากย้ายไปแสดงในแถบด้านบน
 
   return (
     <>
@@ -180,22 +91,9 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
 
         {/* รายการเมนู */}
         <div className="py-2">
-          <ul className="space-y-1">
-            {menuItems.map((item) => (
-              <li key={item.path}>
-                <Link 
-                  href={item.path}
-                  className={`flex items-center px-4 py-2 text-sm hover:bg-blue-50 ${
-                    location === item.path ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                  }`}
-                  onClick={onClose}
-                >
-                  <i className={`fa-solid ${item.icon} w-5 mr-3 ${location === item.path ? 'text-blue-600' : 'text-gray-500'}`}></i>
-                  <span>{item.label}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="px-4 py-3 text-center text-sm text-gray-500">
+            เมนูถูกย้ายไปที่แถบนำทางด้านบน
+          </div>
         </div>
 
         {/* ปุ่มออกจากระบบ */}
