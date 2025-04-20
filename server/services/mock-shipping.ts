@@ -69,13 +69,13 @@ export interface MockRecipientInfo {
 // ผู้ให้บริการขนส่งแบบจำลอง
 const MOCK_SHIPPING_PROVIDERS = [
   {
-    id: 'bluexpress', 
-    name: 'Blue Express',
-    logo: '🚚 Blue Express',
+    id: 'xiaobaix', 
+    name: 'เสี่ยวไป๋ เอ็กเพรส',
+    logo: '🚚 เสี่ยวไป๋ เอ็กเพรส',
     description: 'บริการจัดส่งด่วนภายใน 1-2 วัน',
     services: [
       {
-        code: 'bluexpress_normal',
+        code: 'xiaobaix_normal',
         name: 'ปกติ (1-2 วัน)',
         estimatedDays: 2,
         icon: '🚚',
@@ -83,7 +83,7 @@ const MOCK_SHIPPING_PROVIDERS = [
         maxCODAmount: 30000,
       },
       {
-        code: 'bluexpress_express',
+        code: 'xiaobaix_express',
         name: 'ด่วน (1 วัน)',
         estimatedDays: 1,
         icon: '⚡',
@@ -92,7 +92,7 @@ const MOCK_SHIPPING_PROVIDERS = [
         maxCODAmount: 30000,
       },
       {
-        code: 'bluexpress_sameday',
+        code: 'xiaobaix_sameday',
         name: 'ส่งด่วนวันนี้',
         estimatedDays: 0,
         icon: '🔥',

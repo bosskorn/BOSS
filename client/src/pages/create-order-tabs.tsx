@@ -1064,23 +1064,23 @@ const CreateOrderTabsPage: React.FC = () => {
       // สร้างตัวเลือกการจัดส่งเริ่มต้น (สำหรับกรณีเรียก API ไม่สำเร็จ)
       const defaultOptions = [
         {
-          id: 'bluexpress_express',
-          name: 'Blue Express - ด่วน (1 วัน)',
+          id: 'xiaobaix_express',
+          name: 'เสี่ยวไป๋ เอ็กเพรส - ด่วน (1 วัน)',
           price: 60,
           deliveryTime: '1 วัน',
-          provider: 'Blue Express',
-          serviceId: 'bluexpress_express',
+          provider: 'เสี่ยวไป๋ เอ็กเพรส',
+          serviceId: 'xiaobaix_express',
           logo: '/assets/shipping-icon.png',
           icon: '⚡',
           isPopular: true
         },
         {
-          id: 'bluexpress_normal',
-          name: 'Blue Express - ปกติ',
+          id: 'xiaobaix_normal',
+          name: 'เสี่ยวไป๋ เอ็กเพรส - ปกติ',
           price: 40,
           deliveryTime: '1-2 วัน',
-          provider: 'Blue Express',
-          serviceId: 'bluexpress_normal',
+          provider: 'เสี่ยวไป๋ เอ็กเพรส',
+          serviceId: 'xiaobaix_normal',
           logo: '/assets/shipping-icon.png',
           icon: '🚚'
         },
@@ -1288,7 +1288,7 @@ const CreateOrderTabsPage: React.FC = () => {
       
       // ดึง serviceId จากชื่อบริการที่เลือก
       const selectedShipping = shippingOptions.find(option => option.name === data.shippingMethod);
-      const shippingCode = selectedShipping?.serviceId || 'bluexpress_normal';
+      const shippingCode = selectedShipping?.serviceId || 'xiaobaix_normal';
       
       console.log('ข้อมูลการจัดส่ง:', {
         sender,
