@@ -780,6 +780,104 @@ const OrderList: React.FC = () => {
     }
   };
   
+  // ฟังก์ชันสำหรับลบออเดอร์หลายรายการพร้อมกัน
+  const handleDeleteMultipleOrders = async (orderIds: number[]) => {
+    if (orderIds.length === 0) {
+      toast({
+        title: 'ไม่มีรายการที่เลือก',
+        description: 'กรุณาเลือกรายการที่ต้องการลบ',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // ยืนยันการลบ
+    if (!window.confirm(`คุณต้องการลบออเดอร์ที่เลือก ${orderIds.length} รายการใช่หรือไม่?`)) {
+      return;
+    }
+    
+    setIsLoading(true);
+    let successCount = 0;
+    let failCount = 0;
+    
+    try {
+      // ลบทีละรายการ
+      for (const orderId of orderIds) {
+        try {
+          const token = localStorage.getItem('auth_token');
+          const response = await fetch(`/api/orders/${orderId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': token ? `Bearer ${token}` : '',
+            }
+          });
+          
+          if (response.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          failCount++;
+          console.error(`Error deleting order ${orderId}:`, error);
+        }
+      }
+      
+      // อัปเดตรายการออเดอร์
+      fetchOrders();
+      
+      // แสดงผลลัพธ์
+      if (failCount === 0) {
+        toast({
+          title: 'ลบออเดอร์สำเร็จทั้งหมด',
+          description: `ลบออเดอร์ ${successCount} รายการเรียบร้อยแล้ว`,
+        });
+      } else if (successCount > 0) {
+        toast({
+          title: 'ลบออเดอร์สำเร็จบางส่วน',
+          description: `ลบสำเร็จ ${successCount} รายการ, ล้มเหลว ${failCount} รายการ`,
+          variant: 'warning',
+        });
+      } else {
+        toast({
+          title: 'ลบออเดอร์ไม่สำเร็จ',
+          description: 'ไม่สามารถลบออเดอร์ที่เลือกได้',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error in bulk delete operation:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'เกิดข้อผิดพลาดในการลบออเดอร์',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // ฟังก์ชันสำหรับลบออเดอร์ที่ไม่มีเลขพัสดุทั้งหมด
+  const handleDeleteOrdersWithoutTracking = () => {
+    const ordersWithoutTracking = orders
+      .filter(order => !order.trackingNumber && order.status === 'pending')
+      .map(order => order.id);
+      
+    if (ordersWithoutTracking.length === 0) {
+      toast({
+        title: 'ไม่พบรายการที่เข้าเงื่อนไข',
+        description: 'ไม่พบออเดอร์ที่ไม่มีเลขพัสดุและมีสถานะรอดำเนินการ',
+        variant: 'warning',
+      });
+      return;
+    }
+    
+    handleDeleteMultipleOrders(ordersWithoutTracking);
+  };
+  
   // ฟังก์ชันสำหรับลบออเดอร์หลายรายการที่เลือก
   const handleDeleteSelectedOrders = async () => {
     if (selectedOrders.length === 0) {
