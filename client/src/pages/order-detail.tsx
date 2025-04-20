@@ -382,6 +382,21 @@ const OrderDetail: React.FC = () => {
     }
   };
 
+  // แปลงวิธีการชำระเงินเป็นข้อความภาษาไทย
+  const translatePaymentMethod = (method: string) => {
+    switch (method.toLowerCase()) {
+      case 'cod': return 'เก็บเงินปลายทาง';
+      case 'cash_on_delivery': return 'เก็บเงินปลายทาง';
+      case 'bank_transfer': return 'โอนเงินผ่านธนาคาร';
+      case 'credit_card': return 'บัตรเครดิต';
+      case 'debit_card': return 'บัตรเดบิต';
+      case 'counter_service': return 'เคาน์เตอร์เซอร์วิส';
+      case 'promptpay': return 'พร้อมเพย์';
+      case 'true_money': return 'ทรูมันนี่';
+      default: return method;
+    }
+  };
+
   // แปลงสถานะการชำระเงินเป็นข้อความภาษาไทย
   const getPaymentStatusText = (status: Order['paymentStatus']) => {
     switch (status) {
@@ -554,7 +569,7 @@ const OrderDetail: React.FC = () => {
                     <span className="text-gray-500">วิธีการชำระเงิน:</span>
                     <span className="font-medium flex items-center">
                       <CreditCard className="h-4 w-4 mr-1 text-gray-400" />
-                      {order.paymentMethod}
+                      {translatePaymentMethod(order.paymentMethod)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
