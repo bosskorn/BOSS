@@ -1725,7 +1725,17 @@ const OrderList: React.FC = () => {
                             <span className="font-medium text-blue-700">{order.trackingNumber}</span>
                           </div>
                         ) : (
-                          <span className="text-gray-400">ไม่มีเลขพัสดุ</span>
+                          <div className="flex items-center">
+                            <span className="text-gray-400 mr-2">ไม่มีเลขพัสดุ</span>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 text-xs h-6 px-2"
+                              onClick={() => openShippingDialog(order.id)}
+                            >
+                              เลือกขนส่ง
+                            </Button>
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>{getStatusBadge(order.status)}</TableCell>
