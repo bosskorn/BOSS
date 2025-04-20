@@ -297,11 +297,48 @@ router.post('/create', auth, async (req: Request, res: Response) => {
       items = []
     } = req.body;
     
-    // ตรวจสอบข้อมูลที่จำเป็น
-    if (!outTradeNo || !senderInfo || !receiverInfo || !packageInfo) {
+    // ตรวจสอบข้อมูลที่จำเป็นอย่างละเอียด
+    const missingFields = [];
+    
+    if (!outTradeNo) missingFields.push('เลขออเดอร์');
+    
+    if (!senderInfo) {
+      missingFields.push('ข้อมูลผู้ส่ง');
+    } else {
+      if (!senderInfo.name) missingFields.push('ชื่อผู้ส่ง');
+      if (!senderInfo.phone) missingFields.push('เบอร์โทรผู้ส่ง');
+      if (!senderInfo.address) missingFields.push('ที่อยู่ผู้ส่ง');
+      if (!senderInfo.province) missingFields.push('จังหวัดผู้ส่ง');
+      if (!senderInfo.district) missingFields.push('อำเภอ/เขตผู้ส่ง');
+      if (!senderInfo.zipcode) missingFields.push('รหัสไปรษณีย์ผู้ส่ง');
+    }
+    
+    if (!receiverInfo) {
+      missingFields.push('ข้อมูลผู้รับ');
+    } else {
+      if (!receiverInfo.name) missingFields.push('ชื่อผู้รับ');
+      if (!receiverInfo.phone) missingFields.push('เบอร์โทรผู้รับ');
+      if (!receiverInfo.address) missingFields.push('ที่อยู่ผู้รับ');
+      if (!receiverInfo.province) missingFields.push('จังหวัดผู้รับ');
+      if (!receiverInfo.district) missingFields.push('อำเภอ/เขตผู้รับ');
+      if (!receiverInfo.zipcode) missingFields.push('รหัสไปรษณีย์ผู้รับ');
+    }
+    
+    if (!packageInfo) {
+      missingFields.push('ข้อมูลพัสดุ');
+    } else {
+      if (!packageInfo.weight) missingFields.push('น้ำหนักพัสดุ');
+    }
+    
+    if (codEnabled === 1 && !codAmount) {
+      missingFields.push('จำนวนเงินเก็บปลายทาง (COD)');
+    }
+    
+    if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required information'
+        message: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+        missingFields: missingFields
       });
     }
     
