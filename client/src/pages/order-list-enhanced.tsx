@@ -283,10 +283,10 @@ const OrderList: React.FC = () => {
       extractShippingMethods(orders);
     }
     
-    // เพิ่มขนส่งจำลองเป็นตัวเลือกเริ่มต้นเสมอ (แทน Flash Express)
+    // เพิ่มรายชื่อขนส่งเป็นตัวเลือกเริ่มต้นเสมอ
     // เพื่อให้สามารถกรองได้ทันที แม้ไม่มีข้อมูลขนส่งในออร์เดอร์
     setAvailableShippingMethods(prev => {
-      // เพิ่มรายชื่อขนส่งที่จำลองทั้งหมด
+      // เพิ่มรายชื่อขนส่งมาตรฐานทั้งหมด
       const mockCouriers = [
         'Xiaobai Express',
         'SpeedLine',
@@ -295,7 +295,8 @@ const OrderList: React.FC = () => {
         'Kerry Express',
         'Thailand Post',
         'DHL Express',
-        'Ninja Van'
+        'Ninja Van',
+        'Flash Express'
       ];
       
       // สร้างรายการใหม่ที่รวมขนส่งทั้งหมด
