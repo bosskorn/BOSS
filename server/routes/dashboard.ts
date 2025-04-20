@@ -78,7 +78,7 @@ router.get('/summary', async (req: Request, res: Response) => {
       });
     }
     
-    // 4. ดึงคำสั่งซื้อล่าสุด 5 รายการ พร้อมข้อมูลลูกค้า
+    // 4. ดึงคำสั่งซื้อล่าสุดที่รอดำเนินการ (สถานะ pending) 5 รายการ พร้อมข้อมูลลูกค้า
     const ordersResult = await db.select({
       id: orders.id,
       orderNumber: orders.orderNumber,
@@ -88,7 +88,12 @@ router.get('/summary', async (req: Request, res: Response) => {
       customerId: orders.customerId
     })
     .from(orders)
-    .where(eq(orders.userId, userId))
+    .where(
+      and(
+        eq(orders.userId, userId),
+        eq(orders.status, 'pending')
+      )
+    )
     .orderBy(desc(orders.createdAt))
     .limit(5);
     
