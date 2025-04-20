@@ -27,6 +27,7 @@ import ClaimsList from "@/pages/claims-list";
 import UserClaims from "@/pages/user-claims";
 import PrintLabelTest from "@/pages/print-label-test";
 import BarcodeLabel from "@/pages/barcode-label";
+import PrintLabelEnhanced from "@/pages/print-label-enhanced";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/admin-register" component={AdminRegisterPage} />
       <Route path="/print-label-test" component={PrintLabelTest} />
       <Route path="/barcode-test" component={BarcodeLabel} />
+      <Route path="/print-label-enhanced" component={PrintLabelEnhanced} />
       
       {/* Protected routes - require authentication */}
       <ProtectedRoute path="/" component={Dashboard} />
