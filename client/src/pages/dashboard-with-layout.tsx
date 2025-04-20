@@ -314,10 +314,8 @@ const Dashboard: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-800">
                 คำสั่งซื้อล่าสุด
               </h2>
-              <Link href="/orders-all">
-                <a className="text-sm font-medium text-blue-600 hover:text-blue-800">
-                  ดูทั้งหมด
-                </a>
+              <Link href="/orders-all" className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                ดูทั้งหมด
               </Link>
             </div>
             
