@@ -138,6 +138,21 @@ const JTExpressLabel: React.FC = () => {
             padding: 2mm 0;
             background-color: #fff;
           }
+          .qr-code-container {
+            text-align: center;
+            margin: 0 auto;
+            padding: 2mm;
+            background-color: #fff;
+            width: 30mm;
+            height: 30mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .qr-code-container canvas {
+            width: 100% !important;
+            height: auto !important;
+          }
           .section {
             margin-bottom: 2mm;
           }
@@ -290,14 +305,18 @@ const JTExpressLabel: React.FC = () => {
         <script>
           window.onload = function() {
             try {
-              // สร้างบาร์โค้ดด้วยขนาดใหญ่ขึ้น
+              // สร้างบาร์โค้ดแบบ Code 128 (มาตรฐานสำหรับบริษัทขนส่ง)
               JsBarcode("#barcode", "${trackingNumber}", {
-                format: "CODE128",
-                width: 3,
-                height: 60,
-                displayValue: true,
-                fontSize: 14,
-                margin: 0
+                format: "CODE128",  // รูปแบบ CODE128 เป็นมาตรฐานที่ใช้กับเลขพัสดุ
+                width: 3,           // ตั้งค่าความกว้างของแท่งบาร์โค้ด
+                height: 70,         // เพิ่มความสูงให้มากขึ้น
+                displayValue: true, // แสดงเลขพัสดุด้านล่างบาร์โค้ด
+                text: "${trackingNumber}", // ข้อความที่จะแสดงใต้บาร์โค้ด
+                fontSize: 16,       // ขนาดตัวอักษรใต้บาร์โค้ด
+                textMargin: 8,      // ระยะห่างระหว่างบาร์โค้ดกับข้อความ
+                margin: 0,          // ไม่มีระยะห่างรอบบาร์โค้ด
+                background: "#FFFFFF", // พื้นหลังสีขาว
+                lineColor: "#000000"  // เส้นบาร์โค้ดสีดำ
               });
               
               // สร้าง QR code
