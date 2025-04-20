@@ -146,6 +146,8 @@ const BulkOrderImportPage: React.FC = () => {
           customerName: row['ชื่อลูกค้า'] || '',
           customerPhone: row['เบอร์โทรศัพท์'] || '',
           address: row['ที่อยู่'] || '',
+          houseNumber: row['บ้านเลขที่'] || '', // เพิ่มฟิลด์บ้านเลขที่
+          road: row['ถนน'] || '', // เพิ่มฟิลด์ถนน
           province: row['จังหวัด'] || '',
           district: row['อำเภอ'] || '',
           subdistrict: row['ตำบล'] || '',
@@ -210,13 +212,13 @@ const BulkOrderImportPage: React.FC = () => {
         const orderData = {
           customerName: order.customerName,
           customerPhone: order.customerPhone,
-          houseNumber: '', // จะต้องแยกจากที่อยู่
+          houseNumber: order.houseNumber || '', // ใช้ค่าจากข้อมูลนำเข้า (บ้านเลขที่)
           village: '',
           building: '',
           floor: '',
           roomNumber: '',
           soi: '',
-          road: '',
+          road: order.road || '', // ใช้ค่าจากข้อมูลนำเข้า (ถนน)
           fullAddress: order.address,
           province: order.province,
           district: order.district,
@@ -303,7 +305,9 @@ const BulkOrderImportPage: React.FC = () => {
       {
         'ชื่อลูกค้า': 'นายตัวอย่าง นามสกุล',
         'เบอร์โทรศัพท์': '0812345678',
-        'ที่อยู่': '123/45 หมู่ 6 ซอยตัวอย่าง ถนนตัวอย่าง',
+        'บ้านเลขที่': '123/45',  // เพิ่มคอลัมน์บ้านเลขที่
+        'ถนน': 'ถนนตัวอย่าง',   // เพิ่มคอลัมน์ถนน
+        'ที่อยู่': 'หมู่ 6 ซอยตัวอย่าง',
         'จังหวัด': 'กรุงเทพมหานคร',
         'อำเภอ': 'บางรัก',
         'ตำบล': 'สีลม',
