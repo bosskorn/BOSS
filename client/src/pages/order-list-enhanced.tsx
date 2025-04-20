@@ -133,6 +133,10 @@ const OrderList: React.FC = () => {
   const [isPrintingLabel, setIsPrintingLabel] = useState<boolean>(false);
   const [currentPrintingOrder, setCurrentPrintingOrder] = useState<number | null>(null);
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
+  
+  // State สำหรับการแบ่งหน้า (pagination)
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage] = useState<number>(50);
   const [sortConfig, setSortConfig] = useState<{key: keyof Order, direction: 'asc' | 'desc'}>({
     key: 'date',
     direction: 'desc'
@@ -2183,7 +2187,13 @@ const OrderList: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => (
+                  {/* แสดงเฉพาะข้อมูลตามหน้าปัจจุบัน (pagination) */}
+                {filteredOrders
+                  .slice(
+                    (currentPage - 1) * itemsPerPage,
+                    currentPage * itemsPerPage
+                  )
+                  .map((order) => (
                     <TableRow key={order.id} className="hover:bg-gray-50">
                       <TableCell className="w-[50px]">
                         {order.trackingNumber && (
@@ -2288,6 +2298,37 @@ const OrderList: React.FC = () => {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+          )}
+          
+          {/* เพิ่มส่วน Pagination */}
+          {filteredOrders.length > itemsPerPage && (
+            <div className="mt-6 flex justify-center">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronUp className="h-4 w-4 -rotate-90" />
+                  ก่อนหน้า
+                </Button>
+                
+                <div className="flex items-center">
+                  <span className="text-sm">หน้า {currentPage} จาก {Math.ceil(filteredOrders.length / itemsPerPage)}</span>
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredOrders.length / itemsPerPage)))}
+                  disabled={currentPage === Math.ceil(filteredOrders.length / itemsPerPage)}
+                >
+                  ถัดไป
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </Button>
+              </div>
             </div>
           )}
         </div>
