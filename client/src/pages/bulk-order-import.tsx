@@ -11,6 +11,7 @@ import { Upload, FileText, AlertCircle, CheckCircle2, X, Package, Truck } from '
 import api from '@/services/api';
 import * as XLSX from 'xlsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 interface ShippingMethod {
   id: number;
@@ -540,7 +541,7 @@ const BulkOrderImportPage: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         {order.isCOD ? (
-                          <Badge className="bg-orange-500">
+                          <Badge variant="default" className="bg-orange-500">
                             ฿{order.codAmount || 0}
                           </Badge>
                         ) : (
@@ -687,24 +688,33 @@ const BulkOrderImportPage: React.FC = () => {
             <div>
               <h3 className="text-lg font-medium text-red-600 mb-2">รายการที่ล้มเหลว</h3>
               <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-red-50">
-                      <TableHead className="w-[80px]">ลำดับ</TableHead>
-                      <TableHead>ชื่อลูกค้า</TableHead>
-                      <TableHead>สาเหตุ</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {results.failedOrders.map((failed, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{failed.index + 1}</TableCell>
-                        <TableCell>{failed.data.customerName}</TableCell>
-                        <TableCell className="text-red-600">{failed.reason}</TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-red-50">
+                        <TableHead className="w-16">ลำดับ</TableHead>
+                        <TableHead className="w-40">ชื่อลูกค้า</TableHead>
+                        <TableHead>สาเหตุ</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {results.failedOrders.slice(0, 5).map((failed, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{failed.index + 1}</TableCell>
+                          <TableCell className="max-w-[160px] truncate" title={failed.data.customerName}>{failed.data.customerName}</TableCell>
+                          <TableCell className="text-red-600">{failed.reason}</TableCell>
+                        </TableRow>
+                      ))}
+                      {results.failedOrders.length > 5 && (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-gray-500">
+                            ... และอีก {results.failedOrders.length - 5} รายการ
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           )}
