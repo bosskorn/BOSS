@@ -96,7 +96,7 @@ const FlashExpressLabel: React.FC = () => {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 3mm 5mm;
+            padding: 1mm 3mm;
             border-bottom: 1px solid #ddd;
             background-color: #fff;
           }
@@ -136,8 +136,8 @@ const FlashExpressLabel: React.FC = () => {
             position: relative;
             width: 100%;
             text-align: center;
-            margin-top: 3mm;
-            padding: 0 5mm;
+            margin-top: 1mm;
+            padding: 0 3mm;
             box-sizing: border-box;
           }
           .barcode-container {
@@ -165,41 +165,41 @@ const FlashExpressLabel: React.FC = () => {
           }
           .warehouse-box {
             flex: 1;
-            padding: 2mm 3mm;
+            padding: 1mm 2mm;
             border-right: 1px solid #eee;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 9px;
           }
           .sorting-box {
             width: 40%;
-            padding: 2mm 3mm;
+            padding: 1mm 2mm;
             font-weight: bold;
             text-align: right;
-            font-size: 12px;
+            font-size: 9px;
           }
           .customer-code {
             display: block;
             text-align: right;
-            font-size: 10px;
+            font-size: 8px;
           }
           .district-text {
             display: block;
             text-align: right;
-            font-size: 10px;
+            font-size: 8px;
           }
           .shipper-info {
-            padding: 2mm 3mm;
+            padding: 1mm 2mm;
             border: 1px solid #000;
-            font-size: 11px;
+            font-size: 9px;
             line-height: 1.2;
             max-width: 48%;
             word-wrap: break-word;
             overflow-wrap: break-word;
           }
           .recipient-info {
-            padding: 2mm 3mm;
+            padding: 1mm 2mm;
             border: 1px solid #000;
-            font-size: 11px;
+            font-size: 9px;
             line-height: 1.2;
             max-width: 48%;
             word-wrap: break-word;
@@ -227,27 +227,27 @@ const FlashExpressLabel: React.FC = () => {
             flex: 2;
             background-color: #000;
             color: #fff;
-            padding: 2mm 3mm;
+            padding: 1mm 2mm;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 16px;
+            font-size: 12px;
           }
           .cod-text {
-            font-size: 12px;
-            padding-top: 1mm;
+            font-size: 10px;
+            padding-top: 0.5mm;
           }
           .weight-box {
             flex: 1;
-            padding: 2mm 3mm;
+            padding: 1mm 2mm;
             display: flex;
             flex-direction: column;
-            font-size: 12px;
+            font-size: 10px;
           }
           .signature-label {
-            margin-bottom: 2mm;
+            margin-bottom: 1mm;
           }
           .weight-info {
-            font-size: 11px;
+            font-size: 9px;
           }
           .order-row {
             display: flex;
@@ -255,20 +255,20 @@ const FlashExpressLabel: React.FC = () => {
           }
           .order-id-box {
             flex: 1;
-            padding: 2mm 3mm;
-            font-size: 10px;
+            padding: 1mm 2mm;
+            font-size: 8px;
           }
           .date-box {
             flex: 1;
-            padding: 2mm 3mm;
-            font-size: 10px;
+            padding: 1mm 2mm;
+            font-size: 8px;
           }
           .pickup-badge {
             position: absolute;
-            bottom: 10mm;
-            right: 5mm;
-            padding: 1mm 3mm;
-            font-size: 12px;
+            bottom: 8mm;
+            right: 3mm;
+            padding: 0.5mm 2mm;
+            font-size: 10px;
             text-transform: uppercase;
             font-weight: bold;
           }
