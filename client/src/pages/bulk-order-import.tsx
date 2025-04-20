@@ -159,7 +159,7 @@ const BulkOrderImportPage: React.FC = () => {
             }
           ],
           shippingMethod: '', // ไม่ใช้ข้อมูลจากไฟล์ Excel จะใช้วิธีเลือกแทน
-          isCOD: row['เก็บเงินปลายทาง']?.toString().toLowerCase() === 'true' || row['เก็บเงินปลายทาง'] === 'yes' || row['เก็บเงินปลายทาง'] === 'y' || false,
+          isCOD: Boolean(row['เก็บเงินปลายทาง']) && ['true', 'yes', 'y', '1', 'on', 'cod', 'เก็บเงินปลายทาง'].includes(row['เก็บเงินปลายทาง']?.toString().toLowerCase()) || false,
           codAmount: row['จำนวนเงิน COD'] ? parseFloat(row['จำนวนเงิน COD']) : undefined
         };
       });
@@ -233,6 +233,8 @@ const BulkOrderImportPage: React.FC = () => {
           shippingMethod: selectedShippingMethod === 'no_carrier' ? '' : selectedShippingMethod,
           shippingCost: 40, // ค่าจัดส่งเริ่มต้น สามารถปรับได้ตามความต้องการ
           isCOD: order.isCOD,
+          // กำหนดวิธีการชำระเงินตามค่า isCOD
+          paymentMethod: order.isCOD ? 'cash_on_delivery' : 'bank_transfer',
           codAmount: order.codAmount || 0,
           note: '',
           // เพิ่มการส่งค่าเพื่อสร้างเลขพัสดุอัตโนมัติถ้าเลือกบริษัทขนส่ง
