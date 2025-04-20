@@ -64,9 +64,41 @@ const BulkOrderImportPage: React.FC = () => {
       try {
         const response = await api.get('/api/shipping-methods');
         if (response.data.success) {
-          setShippingMethods(response.data.shippingMethods);
-          if (response.data.shippingMethods.length > 0) {
-            setSelectedShippingMethod(response.data.shippingMethods[0].name);
+          // เพิ่มขนส่งจำลองทั้งหมดที่ใช้ในระบบ
+          const mockCouriers = [
+            'เสี่ยวไป๋ เอ็กเพรส',
+            'SpeedLine',
+            'ThaiStar Delivery',
+            'J&T Express', 
+            'Kerry Express',
+            'ไปรษณีย์ไทย',
+            'DHL Express',
+            'Ninja Van'
+          ];
+          
+          // รวมข้อมูลขนส่งจำลองกับข้อมูลจริงจาก API
+          const allMethods = [...response.data.shippingMethods];
+          
+          // สร้าง mock shipping method objects
+          mockCouriers.forEach(courier => {
+            // ตรวจสอบว่ามีชื่อขนส่งนี้ในข้อมูลจริงแล้วหรือไม่
+            const exists = allMethods.some(method => method.name === courier);
+            if (!exists) {
+              allMethods.push({
+                id: `mock-${courier}`,
+                name: courier,
+                code: courier.substring(0, 3).toUpperCase(),
+                description: `${courier} จำลอง`,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                userId: 1
+              });
+            }
+          });
+          
+          setShippingMethods(allMethods);
+          if (allMethods.length > 0) {
+            setSelectedShippingMethod(allMethods[0].name);
           }
         }
       } catch (error) {
