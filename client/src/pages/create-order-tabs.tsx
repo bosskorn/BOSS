@@ -247,6 +247,21 @@ const CreateOrderTabsPage: React.FC = () => {
     );
   }
   
+  // กำหนด interface สำหรับข้อมูลผู้ส่ง
+  interface SenderInfo {
+    name: string;
+    phone: string;
+    email: string;
+    address: string;
+    province: string;
+    district: string;
+    subdistrict: string;
+    zipcode: string;
+  }
+  
+  // กำหนด state สำหรับเก็บข้อมูลผู้ส่ง
+  const [senderInfo, setSenderInfo] = useState<SenderInfo | null>(null);
+  
   // ดึงข้อมูลสินค้า, ข้อมูลผู้ส่ง และตัวเลือกการจัดส่งเมื่อโหลดหน้า
   useEffect(() => {
     const fetchProducts = async () => {
@@ -271,7 +286,7 @@ const CreateOrderTabsPage: React.FC = () => {
       
       if (user.fullname) {
         // ตั้งค่าข้อมูลผู้ส่งจากโปรไฟล์ผู้ใช้
-        const senderInfo = {
+        const userSenderInfo: SenderInfo = {
           name: user.fullname || "",
           phone: user.phone || "",
           email: user.email || "",
@@ -282,10 +297,10 @@ const CreateOrderTabsPage: React.FC = () => {
           zipcode: user.zipcode || ""
         };
         
-        console.log("ข้อมูลผู้ส่งที่ดึงจากโปรไฟล์:", senderInfo);
+        console.log("ข้อมูลผู้ส่งที่ดึงจากโปรไฟล์:", userSenderInfo);
         
-        // สร้างตัวแปร global เพื่อเก็บข้อมูลผู้ส่งสำหรับใช้ในฟอร์ม
-        window.senderInfoFromProfile = senderInfo;
+        // บันทึกข้อมูลผู้ส่งไว้ใน state
+        setSenderInfo(userSenderInfo);
         
         // แสดงข้อความแจ้งเตือนว่าได้ใช้ข้อมูลจากโปรไฟล์
         toast({
@@ -1882,18 +1897,32 @@ const CreateOrderTabsPage: React.FC = () => {
                             variant="outline"
                             onClick={() => {
                               // ใช้ข้อมูลผู้ส่งจากโปรไฟล์
-                              if ((window as any).senderInfoFromProfile) {
-                                const senderInfo = (window as any).senderInfoFromProfile;
+                              if (senderInfo) {
+                                // กำหนดค่าฟิลด์ที่เกี่ยวข้องในฟอร์ม
+                                if (senderInfo.name) form.setValue('customerName', `ผู้ส่ง: ${senderInfo.name}`);
+                                if (senderInfo.phone) form.setValue('customerPhone', senderInfo.phone);
                                 
-                                // ตั้งค่าข้อมูลสำหรับการจัดส่ง
-                                form.setValue('srcName', senderInfo.name || '');
-                                form.setValue('srcPhone', senderInfo.phone || '');
-                                form.setValue('srcEmail', senderInfo.email || '');
-                                form.setValue('srcProvince', senderInfo.province || '');
-                                form.setValue('srcDistrict', senderInfo.district || '');
-                                form.setValue('srcSubdistrict', senderInfo.subdistrict || '');
-                                form.setValue('srcZipcode', senderInfo.zipcode || '');
-                                form.setValue('srcAddress', senderInfo.address || '');
+                                // ถ้ามีข้อมูลที่อยู่ของผู้ส่ง ก็กำหนดค่าในฟอร์ม
+                                let addressFields = '';
+                                if (senderInfo.address) addressFields += senderInfo.address + ' ';
+                                if (senderInfo.subdistrict) addressFields += senderInfo.subdistrict + ' ';
+                                if (senderInfo.district) addressFields += senderInfo.district + ' ';
+                                if (senderInfo.province) addressFields += senderInfo.province + ' ';
+                                if (senderInfo.zipcode) addressFields += senderInfo.zipcode;
+                                
+                                if (addressFields.trim()) {
+                                  form.setValue('fullAddress', addressFields.trim());
+                                  
+                                  // วิเคราะห์ที่อยู่ที่ได้จากผู้ส่ง
+                                  const addressComponents = parseCustomerAndAddressData(addressFields);
+                                  
+                                  // กำหนดค่าให้ฟิลด์ต่างๆ
+                                  if (senderInfo.address) form.setValue('houseNumber', senderInfo.address);
+                                  if (senderInfo.subdistrict) form.setValue('subdistrict', senderInfo.subdistrict);
+                                  if (senderInfo.district) form.setValue('district', senderInfo.district);
+                                  if (senderInfo.province) form.setValue('province', senderInfo.province);
+                                  if (senderInfo.zipcode) form.setValue('zipcode', senderInfo.zipcode);
+                                }
                                 
                                 toast({
                                   title: 'ใช้ข้อมูลผู้ส่งจากโปรไฟล์',
@@ -1909,7 +1938,7 @@ const CreateOrderTabsPage: React.FC = () => {
                             }}
                             className="text-purple-600 border-purple-200 hover:bg-purple-50"
                           >
-                            <UserCircle className="mr-2 h-4 w-4" />
+                            <User className="mr-2 h-4 w-4" />
                             ใช้ข้อมูลผู้ส่งจากโปรไฟล์
                           </Button>
                         </div>
