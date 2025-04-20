@@ -245,6 +245,8 @@ const OrderList: React.FC = () => {
       
       return newCouriers;
     });
+    
+    // ไม่มีการ cleanup ที่จำเป็น จึงไม่ต้องคืนค่าอะไร
   }, [orders]);
 
   // กรองข้อมูลเมื่อแท็บเปลี่ยน หรือค้นหา หรือช่วงวันที่เปลี่ยน หรือกรองขนส่ง
@@ -306,7 +308,7 @@ const OrderList: React.FC = () => {
           demoOrder.date = new Date().toISOString(); // ใส่วันที่ปัจจุบัน
           
           // แสดงผลแบบสาธิต
-          return [demoOrder];
+          result = [demoOrder];
         }
       }
       
