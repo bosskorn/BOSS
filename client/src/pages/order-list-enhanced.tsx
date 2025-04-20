@@ -1995,7 +1995,7 @@ const OrderList: React.FC = () => {
               ยกเลิก
             </Button>
             <Button 
-              onClick={createTrackingNumber}
+              onClick={() => createTrackingNumber()}
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Check className="h-4 w-4 mr-2" />
