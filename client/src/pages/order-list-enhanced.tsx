@@ -2704,32 +2704,39 @@ const OrderList: React.FC = () => {
                 // เปิดลาเบลตามประเภทที่เลือก
                 console.log(`กำลังเปิดลาเบลประเภท ${selectedLabelType} สำหรับออเดอร์ ${orderToPrint.id}`);
                 
+                // สร้าง URL สำหรับหน้าลาเบล
                 let labelUrl = '';
-                
-                if (selectedLabelType === 'standard') {
-                  labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
-                } else if (selectedLabelType === 'flash') {
-                  labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
-                } else if (selectedLabelType === 'jt') {
-                  labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
-                } else if (selectedLabelType === 'tiktok') {
-                  labelUrl = `/tiktok-shipping-label?order=${orderToPrint.id}`;
+                switch(selectedLabelType) {
+                  case 'standard':
+                    labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
+                    break;
+                  case 'flash':
+                    labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
+                    break;
+                  case 'jt':
+                    labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
+                    break;
+                  case 'tiktok':
+                    labelUrl = `/tiktok-shipping-label?order=${orderToPrint.id}`;
+                    break;
+                  default:
+                    labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
                 }
                 
                 console.log("Opening URL:", labelUrl);
                 
-                // ใช้ setTimeout เพื่อหลีกเลี่ยงการถูกบล็อกโดย popup blocker
+                // วิธีการเปิดแบบใหม่ไม่ใช้ window.open โดยตรง
+                // สร้าง link element แล้วจำลองการคลิก
+                const link = document.createElement('a');
+                link.href = labelUrl;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                document.body.appendChild(link);
+                link.click();
+                
+                // ลบ link element หลังจากใช้งาน
                 setTimeout(() => {
-                  const newWindow = window.open(labelUrl, '_blank');
-                  
-                  // ตรวจสอบว่าสามารถเปิดได้หรือไม่
-                  if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                    toast({
-                      title: 'ไม่สามารถเปิดหน้าลาเบลได้',
-                      description: 'โปรดอนุญาตให้เว็บไซต์เปิดหน้าต่างป๊อปอัพได้ในการตั้งค่าเบราว์เซอร์ของคุณ',
-                      variant: 'destructive',
-                    });
-                  }
+                  document.body.removeChild(link);
                 }, 100);
               }}
               className="bg-blue-600 hover:bg-blue-700"
