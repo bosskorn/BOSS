@@ -220,13 +220,14 @@ const OrderList: React.FC = () => {
       extractShippingMethods(orders);
     }
     
-    // เพิ่ม Flash Express เป็นตัวเลือกเริ่มต้นเสมอ
+    // เพิ่มขนส่งจำลองเป็นตัวเลือกเริ่มต้นเสมอ (แทน Flash Express)
     // เพื่อให้สามารถกรองได้ทันที แม้ไม่มีข้อมูลขนส่งในออร์เดอร์
     setAvailableShippingMethods(prev => {
-      if (prev.includes('Flash Express')) {
+      const mockCourierName = 'เสี่ยวไป๋ เอ็กเพรส';
+      if (prev.includes(mockCourierName)) {
         return prev;
       }
-      return [...prev, 'Flash Express'];
+      return [...prev, mockCourierName];
     });
   }, [orders]);
 
@@ -459,7 +460,7 @@ const OrderList: React.FC = () => {
           </div>
           
           <div class="label-container">
-            <div class="logo">PURPLEDASH</div>
+            <div class="logo">BLUEDASH</div>
             
             <div class="tracking box">
               <div>เลขพัสดุ</div>
@@ -469,7 +470,7 @@ const OrderList: React.FC = () => {
             <div class="section">
               <div class="title">ผู้ส่ง:</div>
               <div class="box address">
-                PURPLEDASH<br />
+                BLUEDASH<br />
                 เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
                 ถนนพระราม 4 แขวงลุมพินี<br />
                 เขตปทุมวัน กรุงเทพฯ 10330<br />
@@ -676,7 +677,7 @@ const OrderList: React.FC = () => {
               margin-bottom: ${labelSize === '100x100mm' ? '5mm' : '2mm'}; 
               font-size: ${labelSize === '100x100mm' ? '22px' : '16px'}; 
               font-weight: bold; 
-              color: #8A2BE2; 
+              color: #0078D7; 
             }
             .tracking { 
               font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; 
