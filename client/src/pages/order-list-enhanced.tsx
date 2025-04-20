@@ -680,6 +680,142 @@ const OrderList: React.FC = () => {
       setIsPrintingLabel(false);
     }
   };
+  // ฟังก์ชันเตรียมพิมพ์ใบลาเบล - เปิด Dialog เพื่อเลือกขนาด
+  const handlePrintLabelWithSizeDialog = (order: Order) => {
+    if (!order.trackingNumber) {
+      toast({
+        title: 'ไม่สามารถพิมพ์ใบลาเบล',
+        description: 'ออเดอร์นี้ยังไม่มีเลขพัสดุ กรุณาสร้างเลขพัสดุก่อน',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // เก็บค่าออเดอร์ที่จะพิมพ์และเปิด Dialog เลือกขนาด
+    setOrderToPrint(order);
+    setPrintDialogOpen(true);
+  };
+  
+  // ฟังก์ชันสำหรับพิมพ์ใบลาเบลตามขนาดที่เลือก
+  const printLabelWithSelectedSize = async () => {
+    if (!orderToPrint) return;
+    
+    const order = orderToPrint;
+    setCurrentPrintingOrder(order.id);
+    setPrintDialogOpen(false);
+    
+    try {
+      // สร้างหน้าต่างใหม่สำหรับพิมพ์
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        throw new Error('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ โปรดตรวจสอบการตั้งค่าป้องกันป๊อปอัพ');
+      }
+      
+      // กำหนดขนาดใบลาเบลตามที่เลือก
+      let labelWidth = '100mm';
+      let labelHeight = labelSize === '100x100mm' ? '100mm' : '75mm';
+      
+      // สร้าง HTML สำหรับใบลาเบล
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>ใบลาเบลพัสดุ - ${order.orderNumber}</title>
+          <style>
+            body { font-family: 'Kanit', sans-serif; margin: 0; padding: 0; }
+            .label-container { 
+              width: ${labelWidth}; 
+              height: ${labelHeight}; 
+              border: 1px solid #ccc; 
+              padding: 5mm; 
+              margin: 10px auto; 
+              box-sizing: border-box;
+            }
+            .logo { text-align: center; margin-bottom: 3mm; font-size: ${labelSize === '100x100mm' ? '24px' : '20px'}; font-weight: bold; color: #8A2BE2; }
+            .tracking { font-size: ${labelSize === '100x100mm' ? '16px' : '14px'}; text-align: center; margin-bottom: 3mm; padding: 2mm; border: 1px solid #8A2BE2; }
+            .section { margin-bottom: 3mm; }
+            .title { font-weight: bold; margin-bottom: 1mm; font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; }
+            .address { font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; line-height: 1.3; }
+            .barcode { text-align: center; margin: 3mm 0; font-size: ${labelSize === '100x100mm' ? '16px' : '14px'}; }
+            .footer { text-align: center; font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; margin-top: 3mm; color: #666; }
+            .box { border: 1px solid #ccc; padding: 2mm; }
+            .print-button { text-align: center; margin: 20px; }
+            .print-button button { padding: 10px 20px; background: #8A2BE2; color: white; border: none; border-radius: 5px; cursor: pointer; }
+            .label-size-info { text-align: center; margin-bottom: 10px; font-size: 14px; color: #666; }
+            @media print {
+              .print-button, .label-size-info { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-button">
+            <button onclick="window.print();">พิมพ์ใบลาเบล</button>
+          </div>
+          
+          <div class="label-size-info">
+            ขนาดใบลาเบล: ${labelSize}
+          </div>
+          
+          <div class="label-container">
+            <div class="logo">PURPLEDASH</div>
+            
+            <div class="tracking box">
+              <div>เลขพัสดุ</div>
+              <div style="font-size: ${labelSize === '100x100mm' ? '20px' : '16px'}; font-weight: bold;">${order.trackingNumber}</div>
+            </div>
+            
+            <div class="section">
+              <div class="title">ผู้ส่ง:</div>
+              <div class="box address">
+                PURPLEDASH<br />
+                เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
+                ถนนพระราม 4 แขวงลุมพินี<br />
+                เขตปทุมวัน กรุงเทพฯ 10330<br />
+                โทร: 02-123-4567
+              </div>
+            </div>
+            
+            <div class="section">
+              <div class="title">ผู้รับ:</div>
+              <div class="box address">
+                ${order.recipientName || 'ไม่ระบุ'}<br />
+                ${order.recipientAddress || ''} ${order.recipientSubdistrict || ''}<br />
+                ${order.recipientDistrict || ''} ${order.recipientProvince || ''} ${order.recipientZipCode || ''}<br />
+                โทร: ${order.recipientPhone || 'ไม่ระบุ'}
+              </div>
+            </div>
+            
+            <div class="barcode box">
+              ${order.trackingNumber}
+            </div>
+            
+            <div class="footer">
+              ${order.paymentMethod === 'cash_on_delivery' ? 'เก็บเงินปลายทาง: ' + formatCurrency(order.total || parseFloat(order.totalAmount || '0')) : 'จ่ายเงินแล้ว'}
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+      
+      // รอให้หน้าต่างพิมพ์โหลดเสร็จ
+      printWindow.addEventListener('load', () => {
+        // อัพเดตสถานะการพิมพ์
+        updatePrintStatus(order.id);
+      });
+      
+    } catch (error) {
+      console.error('Error printing label:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error instanceof Error ? error.message : 'ไม่สามารถพิมพ์ใบลาเบลได้',
+        variant: 'destructive',
+      });
+      setCurrentPrintingOrder(null);
+    }
+  };
 
   return (
     <Layout>
@@ -999,7 +1135,7 @@ const OrderList: React.FC = () => {
                               size="sm" 
                               className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
                               disabled={currentPrintingOrder === order.id || isPrintingLabel}
-                              onClick={() => handlePrintLabel(order)}
+                              onClick={() => handlePrintLabelWithSizeDialog(order)}
                             >
                               {currentPrintingOrder === order.id ? (
                                 <RefreshCw className="h-3 w-3 animate-spin mr-1" />
@@ -1026,6 +1162,63 @@ const OrderList: React.FC = () => {
           )}
         </div>
       </div>
+      {/* Dialog เลือกขนาดใบลาเบล */}
+      <Dialog open={printDialogOpen} onOpenChange={setPrintDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>เลือกขนาดใบลาเบล</DialogTitle>
+            <DialogDescription>
+              เลือกขนาดของใบลาเบลที่คุณต้องการพิมพ์
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <div 
+              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x100mm' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+              onClick={() => setLabelSize('100x100mm')}
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-medium">ใบลาเบลขนาด 100x100mm</h3>
+                  <p className="text-sm text-gray-500">ขนาดมาตรฐาน เหมาะสำหรับพัสดุทั่วไป</p>
+                </div>
+                <div className="w-16 h-16 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                  <div className="w-10 h-10 bg-purple-100 rounded"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div 
+              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x75mm' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+              onClick={() => setLabelSize('100x75mm')}
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-medium">ใบลาเบลขนาด 100x75mm</h3>
+                  <p className="text-sm text-gray-500">ขนาดเล็กกว่า ประหยัดกระดาษ</p>
+                </div>
+                <div className="w-16 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                  <div className="w-10 h-7 bg-purple-100 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setPrintDialogOpen(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button 
+              onClick={printLabelWithSelectedSize}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              พิมพ์ใบลาเบล
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
