@@ -20,7 +20,8 @@ import {
   X,
   Check,
   Square,
-  Trash
+  Trash,
+  Tag
 } from 'lucide-react';
 
 // ฟังก์ชันสร้างบาร์โค้ด Code128 สำหรับเลขพัสดุ
