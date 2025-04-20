@@ -694,6 +694,87 @@ const OrderList: React.FC = () => {
       });
     }
   };
+  
+  // ฟังก์ชันสำหรับลบออเดอร์หลายรายการที่เลือก
+  const handleDeleteSelectedOrders = async () => {
+    if (selectedOrders.length === 0) {
+      toast({
+        title: 'ไม่มีรายการที่เลือก',
+        description: 'กรุณาเลือกรายการที่ต้องการลบ',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // ขอการยืนยันจากผู้ใช้ก่อนลบ
+    const confirmed = window.confirm(`คุณต้องการลบออเดอร์ที่เลือกจำนวน ${selectedOrders.length} รายการใช่หรือไม่?`);
+    
+    if (!confirmed) return;
+    
+    // สร้างตัวแปรเพื่อติดตามความสำเร็จและความล้มเหลว
+    let successCount = 0;
+    let failCount = 0;
+    
+    // แสดง toast แจ้งเตือนว่ากำลังลบ
+    toast({
+      title: 'กำลังลบรายการที่เลือก',
+      description: `กำลังลบออเดอร์ ${selectedOrders.length} รายการ`,
+      variant: 'default',
+    });
+    
+    // ทำ Promise.all เพื่อส่งคำขอหลายรายการพร้อมกัน
+    await Promise.all(selectedOrders.map(async (orderId) => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`/api/orders/${orderId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          successCount++;
+        } else {
+          failCount++;
+          console.error(`Failed to delete order ${orderId}:`, data.message || 'Unknown error');
+        }
+      } catch (error) {
+        failCount++;
+        console.error(`Error deleting order ${orderId}:`, error);
+      }
+    }));
+    
+    // อัปเดตรายการออเดอร์เมื่อลบเสร็จสิ้น
+    if (successCount > 0) {
+      // อัปเดตรายการออเดอร์ โดยกรองออเดอร์ที่เลือกออก
+      setOrders(orders.filter(order => !selectedOrders.includes(order.id)));
+      setFilteredOrders(filteredOrders.filter(order => !selectedOrders.includes(order.id)));
+      
+      // ล้างรายการที่เลือก
+      setSelectedOrders([]);
+      
+      // แสดงผลสรุปการลบ
+      toast({
+        title: 'ลบออเดอร์เสร็จสิ้น',
+        description: failCount > 0 
+          ? `ลบสำเร็จ ${successCount} รายการ, ล้มเหลว ${failCount} รายการ` 
+          : `ลบสำเร็จทั้งหมด ${successCount} รายการ`,
+        variant: 'default',
+      });
+    } else if (failCount > 0) {
+      toast({
+        title: 'ลบออเดอร์ล้มเหลว',
+        description: 'ไม่สามารถลบออเดอร์ที่เลือกได้ โปรดลองอีกครั้ง',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // ฟังก์ชันพิมพ์แบบเลือกหลายรายการตามขนาดที่เลือก
   const printSelectedLabelsWithSize = async () => {
@@ -1424,6 +1505,17 @@ const OrderList: React.FC = () => {
                 >
                   <X className="h-4 w-4 mr-1" />
                   ยกเลิกการเลือก
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleDeleteSelectedOrders}
+                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  disabled={selectedOrders.length === 0}
+                >
+                  <Trash className="h-4 w-4 mr-1" />
+                  ลบรายการที่เลือก
                 </Button>
                 
                 <Button 
