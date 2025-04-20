@@ -90,7 +90,7 @@ const BulkOrderImportPage: React.FC = () => {
           items: [
             {
               productSku: row['รหัสสินค้า'] || '',
-              productName: row['ชื่อสินค้า'] || '',
+              productName: '', // ไม่ใช้ชื่อสินค้าจากไฟล์ Excel แล้ว จะดึงจากฐานข้อมูลแทน
               quantity: parseInt(row['จำนวน'] || '1', 10),
               price: parseFloat(row['ราคา'] || '0')
             }
@@ -224,7 +224,6 @@ const BulkOrderImportPage: React.FC = () => {
         'ตำบล': 'สีลม',
         'รหัสไปรษณีย์': '10500',
         'รหัสสินค้า': 'PD001',
-        'ชื่อสินค้า': 'สินค้าตัวอย่าง',
         'จำนวน': 1,
         'ราคา': 299,
         'วิธีจัดส่ง': 'Flash Express - ส่งด่วน',
@@ -388,7 +387,7 @@ const BulkOrderImportPage: React.FC = () => {
                     <TableCell>
                       {order.items.map((item, idx) => (
                         <div key={idx} className="text-sm">
-                          {item.productName} x{item.quantity} (฿{item.price})
+                          รหัส: {item.productSku} x{item.quantity} (฿{item.price})
                         </div>
                       ))}
                     </TableCell>
