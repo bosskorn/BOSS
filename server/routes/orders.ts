@@ -74,6 +74,33 @@ router.get('/:id', auth, async (req, res) => {
     // ดึงข้อมูลสินค้าในออเดอร์
     const orderItems = await storage.getOrderItems(orderId);
     
+    // เพิ่มข้อมูลสินค้าให้กับรายการสินค้า
+    const orderItemsWithProductDetails = await Promise.all(orderItems.map(async (item) => {
+      // ถ้ามี productId ให้ดึงข้อมูลสินค้า
+      if (item.productId) {
+        try {
+          const product = await storage.getProduct(item.productId);
+          if (product) {
+            return {
+              ...item,
+              productName: product.name,
+              sku: product.sku,
+              imageUrl: product.imageUrl
+            };
+          }
+        } catch (err) {
+          console.error(`ไม่สามารถดึงข้อมูลสินค้า ID: ${item.productId}`, err);
+        }
+      }
+      
+      // ถ้าไม่พบสินค้าหรือไม่มี productId ใช้ข้อมูลเดิม
+      return {
+        ...item,
+        productName: item.productName || 'ไม่ระบุสินค้า',
+        sku: item.sku || ''
+      };
+    }));
+    
     // ดึงข้อมูลลูกค้า
     let customer = null;
     if (order.customerId) {
@@ -97,7 +124,7 @@ router.get('/:id', auth, async (req, res) => {
       customerSoi: customer ? customer.soi : '',
       customerBuilding: customer ? customer.building : '',
       customerFloor: customer ? customer.floor : '',
-      items: orderItems
+      items: orderItemsWithProductDetails
     };
     
     res.json({
