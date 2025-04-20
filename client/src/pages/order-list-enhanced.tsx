@@ -143,7 +143,10 @@ const OrderList: React.FC = () => {
   const [availableShippingMethods, setAvailableShippingMethods] = useState<string[]>([]);
   const [labelSize, setLabelSize] = useState<'100x100mm' | '100x75mm'>('100x100mm');
   const [printDialogOpen, setPrintDialogOpen] = useState<boolean>(false);
+  const [shippingDialogOpen, setShippingDialogOpen] = useState<boolean>(false);
   const [orderToPrint, setOrderToPrint] = useState<Order | null>(null);
+  const [orderToCreateTracking, setOrderToCreateTracking] = useState<number | null>(null);
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>('เสี่ยวไป๋ เอ็กเพรส - ส่งด่วน');
   
 
   // ฟังก์ชันเรียกข้อมูลคำสั่งซื้อจาก API
