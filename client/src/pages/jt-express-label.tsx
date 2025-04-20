@@ -140,18 +140,23 @@ const JTExpressLabel: React.FC = () => {
           }
           .qr-code-container {
             text-align: center;
-            margin: 0 auto;
-            padding: 2mm;
+            margin: 0 auto 3mm auto;
+            padding: 3mm;
             background-color: #fff;
-            width: 30mm;
-            height: 30mm;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            width: 32mm;
+            height: 32mm;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
           }
-          .qr-code-container canvas {
+          .qr-code-container canvas, 
+          .qr-code-container img {
             width: 100% !important;
             height: auto !important;
+            display: block;
           }
           .section {
             margin-bottom: 2mm;
@@ -174,17 +179,40 @@ const JTExpressLabel: React.FC = () => {
             grid-template-columns: 1fr 1fr;
             gap: 2mm;
           }
+          .left-column, .right-column {
+            display: flex;
+            flex-direction: column;
+          }
           .recipient-box, .sender-box {
             border: 1px solid #ddd;
             border-radius: 2px;
-            padding: 2mm;
-            min-height: 20mm;
+            padding: 4mm;
+            min-height: 25mm;
+            background-color: #fafafa;
+            line-height: 1.4;
           }
           .recipient-box {
             border-width: 2px;
+            border-color: #e61e25;
+            background-color: #fff;
           }
           .name {
             font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 2mm;
+            color: #000;
+          }
+          .contact {
+            color: #333;
+            margin-bottom: 1mm;
+          }
+          .address-line {
+            color: #444;
+            margin-bottom: 1mm;
+          }
+          .zipcode {
+            font-weight: bold;
+            color: #000;
           }
           .cod-section {
             background-color: #ffe6e6;
@@ -265,28 +293,33 @@ const JTExpressLabel: React.FC = () => {
             </div>
 
             <div class="grid-2">
-              <div class="qr-code-container">
-                <div id="qrcode"></div>
-              </div>
-              
-              <div>
-              <div class="section">
-                <div class="section-title">ผู้รับ / RECIPIENT</div>
-                <div class="recipient-box">
-                  <div class="name">${recipientName}</div>
-                  <div>${recipientPhone}</div>
-                  <div>${recipientAddress}</div>
-                  <div>${recipientDistrict} ${recipientProvince} ${recipientZipcode}</div>
+              <div class="left-column">
+                <div class="qr-code-container">
+                  <div id="qrcode"></div>
+                </div>
+                
+                <div class="section">
+                  <div class="section-title">ผู้ส่ง / SENDER</div>
+                  <div class="sender-box">
+                    <div class="name">${senderName}</div>
+                    <div class="contact">โทร: ${senderPhone}</div>
+                    <div class="address-line">${senderAddress}</div>
+                    <div class="address-line">${senderDistrict} ${senderProvince}</div>
+                    <div class="zipcode">${senderZipcode}</div>
+                  </div>
                 </div>
               </div>
               
-              <div class="section">
-                <div class="section-title">ผู้ส่ง / SENDER</div>
-                <div class="sender-box">
-                  <div class="name">${senderName}</div>
-                  <div>${senderPhone}</div>
-                  <div>${senderAddress}</div>
-                  <div>${senderDistrict} ${senderProvince} ${senderZipcode}</div>
+              <div class="right-column">
+                <div class="section">
+                  <div class="section-title">ผู้รับ / RECIPIENT</div>
+                  <div class="recipient-box">
+                    <div class="name">${recipientName}</div>
+                    <div class="contact">โทร: ${recipientPhone}</div>
+                    <div class="address-line">${recipientAddress}</div>
+                    <div class="address-line">${recipientDistrict} ${recipientProvince}</div>
+                    <div class="zipcode">${recipientZipcode}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -308,28 +341,55 @@ const JTExpressLabel: React.FC = () => {
               // สร้างบาร์โค้ดแบบ Code 128 (มาตรฐานสำหรับบริษัทขนส่ง)
               JsBarcode("#barcode", "${trackingNumber}", {
                 format: "CODE128",  // รูปแบบ CODE128 เป็นมาตรฐานที่ใช้กับเลขพัสดุ
-                width: 3,           // ตั้งค่าความกว้างของแท่งบาร์โค้ด
-                height: 70,         // เพิ่มความสูงให้มากขึ้น
+                width: 1.5,         // ตั้งค่าความกว้างของแท่งบาร์โค้ด (ลดลง)
+                height: 35,         // ความสูงที่เหมาะสม (ลดลง)
                 displayValue: true, // แสดงเลขพัสดุด้านล่างบาร์โค้ด
-                text: "${trackingNumber}", // ข้อความที่จะแสดงใต้บาร์โค้ด
-                fontSize: 16,       // ขนาดตัวอักษรใต้บาร์โค้ด
-                textMargin: 8,      // ระยะห่างระหว่างบาร์โค้ดกับข้อความ
+                fontSize: 12,       // ขนาดตัวอักษรใต้บาร์โค้ด (ลดลง)
+                textMargin: 5,      // ระยะห่างระหว่างบาร์โค้ดกับข้อความ (ลดลง)
                 margin: 0,          // ไม่มีระยะห่างรอบบาร์โค้ด
                 background: "#FFFFFF", // พื้นหลังสีขาว
                 lineColor: "#000000"  // เส้นบาร์โค้ดสีดำ
               });
               
-              // สร้าง QR code
-              QRCode.toCanvas(document.getElementById('qrcode'), "${trackingNumber}", {
-                width: 100,
-                margin: 1,
-                color: {
-                  dark: '#000000',
-                  light: '#FFFFFF'
+              // สร้าง QR code (วิธีที่ 1: ใช้ QRCode.toCanvas)
+              try {
+                QRCode.toCanvas(document.getElementById('qrcode'), "${trackingNumber}", {
+                  width: 120,
+                  height: 120,
+                  margin: 1,
+                  color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                  }
+                });
+              } catch (qrError) {
+                console.error('Error with QRCode.toCanvas:', qrError);
+                
+                // สร้าง QR code (วิธีที่ 2: ใช้ QRCode.toDataURL แทนถ้าวิธีแรกล้มเหลว)
+                try {
+                  const qrContainer = document.getElementById('qrcode');
+                  const qrImg = document.createElement('img');
+                  qrImg.style.width = '100%';
+                  qrImg.style.height = 'auto';
+                  
+                  QRCode.toDataURL("${trackingNumber}", { 
+                    width: 120,
+                    margin: 1,
+                    color: {
+                      dark: '#000000',
+                      light: '#FFFFFF'
+                    }
+                  }, function(err, url) {
+                    if (err) throw err;
+                    qrImg.src = url;
+                    qrContainer.innerHTML = '';
+                    qrContainer.appendChild(qrImg);
+                  });
+                } catch (fallbackError) {
+                  console.error('Both QR code methods failed:', fallbackError);
+                  document.getElementById('qrcode').innerHTML = '<div style="text-align:center;padding:10px;background:#ffeeee;color:#e00;font-size:12px;">ไม่สามารถสร้าง QR code ได้</div>';
                 }
-              }, function(error) {
-                if (error) console.error('Error generating QR Code:', error);
-              });
+              }
               
               console.log("Generated barcode and QR code successfully");
               
