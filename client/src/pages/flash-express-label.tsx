@@ -90,6 +90,7 @@ const FlashExpressLabel: React.FC = () => {
             border: 1px solid #ddd;
             display: grid;
             grid-template-rows: auto auto auto auto auto auto;
+            font-size: 9px;
           }
           .header {
             display: flex;
@@ -101,19 +102,19 @@ const FlashExpressLabel: React.FC = () => {
           }
           .tiktok-logo {
             font-weight: bold;
-            font-size: 14px;
+            font-size: 10px;
             display: flex;
             align-items: center;
           }
           .tiktok-logo:before {
             content: "♪";
-            font-size: 18px;
+            font-size: 12px;
             margin-right: 2px;
           }
           .flash-logo {
             text-align: center;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 10px;
             display: flex;
             align-items: center;
           }
@@ -127,7 +128,7 @@ const FlashExpressLabel: React.FC = () => {
             clip-path: polygon(0 0, 100% 50%, 0 100%);
           }
           .service-type {
-            font-size: 14px;
+            font-size: 10px;
             text-transform: uppercase;
             font-weight: bold;
           }
