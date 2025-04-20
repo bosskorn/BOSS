@@ -149,9 +149,12 @@ const OrderList: React.FC = () => {
   const [labelSize, setLabelSize] = useState<'100x100mm' | '100x75mm'>('100x100mm');
   const [printDialogOpen, setPrintDialogOpen] = useState<boolean>(false);
   const [shippingDialogOpen, setShippingDialogOpen] = useState<boolean>(false);
+  const [labelTypeDialogOpen, setLabelTypeDialogOpen] = useState<boolean>(false);
+  const [multipleTrackingDialogOpen, setMultipleTrackingDialogOpen] = useState<boolean>(false);
   const [orderToPrint, setOrderToPrint] = useState<Order | null>(null);
   const [orderToCreateTracking, setOrderToCreateTracking] = useState<number | null>(null);
   const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>('');
+  const [selectedLabelType, setSelectedLabelType] = useState<string>('standard');
   
   // ข้อมูลวิธีการจัดส่งจากฐานข้อมูล
   interface ShippingMethod {
@@ -1171,7 +1174,7 @@ const OrderList: React.FC = () => {
       toast({
         title: 'ไม่พบรายการที่เข้าเงื่อนไข',
         description: 'ไม่พบออเดอร์ที่ไม่มีเลขพัสดุและมีสถานะรอดำเนินการ',
-        variant: 'warning',
+        variant: 'default',
       });
       return;
     }
@@ -2571,6 +2574,135 @@ const OrderList: React.FC = () => {
             >
               <Check className="h-4 w-4 mr-2" />
               ยืนยันการเลือก
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog สำหรับเลือกรูปแบบลาเบล */}
+      <Dialog open={labelTypeDialogOpen} onOpenChange={setLabelTypeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>เลือกรูปแบบลาเบลที่ต้องการพิมพ์</DialogTitle>
+            <DialogDescription>
+              กรุณาเลือกรูปแบบลาเบลที่ต้องการพิมพ์สำหรับออเดอร์นี้
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 gap-3">
+              {/* Standard Label */}
+              <div 
+                className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'standard' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedLabelType('standard')}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">ลาเบลมาตรฐาน</h3>
+                    <p className="text-sm text-gray-500">รูปแบบทั่วไป (100x100mm)</p>
+                  </div>
+                  <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                    <Tag className="h-5 w-5 text-blue-500" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Flash Express Label */}
+              <div 
+                className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'flash' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedLabelType('flash')}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">Flash Express</h3>
+                    <p className="text-sm text-gray-500">รูปแบบของ Flash Express (100x150mm)</p>
+                  </div>
+                  <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                    <Tag className="h-5 w-5 text-purple-500" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* J&T Express Label */}
+              <div 
+                className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'jt' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedLabelType('jt')}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">J&T Express</h3>
+                    <p className="text-sm text-gray-500">รูปแบบของ J&T Express (100x150mm)</p>
+                  </div>
+                  <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                    <Tag className="h-5 w-5 text-red-500" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* TikTok Label */}
+              <div 
+                className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'tiktok' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedLabelType('tiktok')}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">TikTok Shop</h3>
+                    <p className="text-sm text-gray-500">รูปแบบสำหรับผู้ขาย TikTok Shop</p>
+                  </div>
+                  <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
+                    <Tag className="h-5 w-5 text-black" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setLabelTypeDialogOpen(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button 
+              onClick={() => {
+                setLabelTypeDialogOpen(false);
+                
+                // ตรวจสอบว่ามี order และ trackingNumber หรือไม่
+                if (!orderToPrint || !orderToPrint.trackingNumber) {
+                  toast({
+                    title: 'ไม่สามารถพิมพ์ลาเบลได้',
+                    description: 'ออเดอร์นี้ไม่มีเลขพัสดุ กรุณาสร้างเลขพัสดุก่อนพิมพ์ลาเบล',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+                
+                // ทำการอัพเดตสถานะการพิมพ์ในฐานข้อมูล
+                fetch(`/api/orders/${orderToPrint.id}/print-status`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify({ isPrinted: true })
+                });
+                
+                // เปิดลาเบลตามประเภทที่เลือก
+                if (selectedLabelType === 'standard') {
+                  window.open(`/print-label-enhanced?order=${orderToPrint.id}`, '_blank');
+                } else if (selectedLabelType === 'flash') {
+                  window.open(`/flash-express-label-new?order=${orderToPrint.id}`, '_blank');
+                } else if (selectedLabelType === 'jt') {
+                  window.open(`/jt-express-label?order=${orderToPrint.id}`, '_blank');
+                } else if (selectedLabelType === 'tiktok') {
+                  window.open(`/tiktok-shipping-label?order=${orderToPrint.id}`, '_blank');
+                }
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={!selectedLabelType}
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              พิมพ์ลาเบล
             </Button>
           </DialogFooter>
         </DialogContent>
