@@ -109,7 +109,8 @@ const OrderDetail: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        setOrder(data.data);
+        console.log('ข้อมูลคำสั่งซื้อที่ได้รับจาก API:', data.order);
+        setOrder(data.order);
       } else {
         throw new Error(data.message || 'ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้');
       }
