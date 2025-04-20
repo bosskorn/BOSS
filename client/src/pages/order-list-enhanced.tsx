@@ -385,9 +385,22 @@ const OrderList: React.FC = () => {
       // แสดงข้อมูลจำนวนออเดอร์ก่อนกรอง
       console.log(`จำนวนออเดอร์ทั้งหมด: ${result.length} รายการ`);
       
+      // แสดงข้อมูลออเดอร์ตัวอย่างเพื่อดูรูปแบบ
+      if (result.length > 0) {
+        console.log('ตัวอย่างออเดอร์แรก:', {
+          id: result[0].id,
+          orderNumber: result[0].orderNumber,
+          trackingNumber: result[0].trackingNumber || 'ไม่มีเลขพัสดุ',
+          shippingMethod: result[0].shippingMethod || 'ไม่ระบุ'
+        });
+      }
+      
       // กรองตามเลขพัสดุและชื่อขนส่ง
       result = result.filter(order => {
-        // ตรวจสอบเลขพัสดุ
+        // จัดเก็บข้อมูลเพื่อทำ debug
+        console.log(`ตรวจสอบ order #${order.id} ${order.orderNumber || 'ไม่มีเลข'}: ${order.trackingNumber || 'ไม่มีเลขพัสดุ'}, shippingMethod: ${order.shippingMethod || 'ไม่ระบุ'}`);
+        
+        // ตรวจสอบเลขพัสดุก่อน (กรณีมีเลขพัสดุ)
         if (order.trackingNumber) {
           const trackingNo = order.trackingNumber;
           // ตรวจสอบว่าเลขพัสดุขึ้นต้นด้วยรหัสของขนส่งที่กำลังกรองหรือไม่
@@ -401,13 +414,19 @@ const OrderList: React.FC = () => {
           }
         }
         
+        // ตรวจสอบเลขออเดอร์ (กรณีออเดอร์มีรูปแบบพิเศษ)
+        if (shippingFilter === 'SpeedLine' && order.orderNumber && order.orderNumber.startsWith('PD')) {
+          console.log(`✓ Matched Order #${order.id}: ${order.orderNumber} by orderNumber prefix PD`);
+          return true;
+        }
+        
         // ตรวจสอบชื่อวิธีการจัดส่ง (กรณีไม่มีเลขพัสดุหรือเลขพัสดุไม่ตรงกับรูปแบบ)
         const shippingMethodName = order.shippingMethod || '';
         
         // ตรวจสอบคำสำคัญทีละคำ
         if (carrierMappings[shippingFilter]) {
           for (const keyword of carrierMappings[shippingFilter].keywords) {
-            if (shippingMethodName.includes(keyword)) {
+            if (shippingMethodName.toLowerCase().includes(keyword.toLowerCase())) {
               console.log(`✓ Matched Order #${order.id}: ${shippingMethodName} by keyword ${keyword}`);
               return true;
             }
@@ -415,7 +434,7 @@ const OrderList: React.FC = () => {
         }
         
         // ตรวจสอบชื่อขนส่งแบบตรงๆ
-        if (shippingMethodName === shippingFilter) {
+        if (shippingMethodName.toLowerCase() === shippingFilter.toLowerCase()) {
           console.log(`✓ Matched Order #${order.id}: ${shippingMethodName} exact match`);
           return true;
         }
