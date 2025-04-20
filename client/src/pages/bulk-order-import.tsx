@@ -348,7 +348,7 @@ const BulkOrderImportPage: React.FC = () => {
     <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-purple-800">
+          <CardTitle className="text-blue-800">
             ตรวจสอบข้อมูลออเดอร์
           </CardTitle>
           <CardDescription>
@@ -367,7 +367,7 @@ const BulkOrderImportPage: React.FC = () => {
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-purple-50">
+                <TableRow className="bg-blue-50">
                   <TableHead>ลำดับ</TableHead>
                   <TableHead>ชื่อลูกค้า</TableHead>
                   <TableHead>เบอร์โทรศัพท์</TableHead>
@@ -422,7 +422,7 @@ const BulkOrderImportPage: React.FC = () => {
           </Button>
           <Button
             onClick={createOrders}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             สร้างออเดอร์ทั้งหมด
           </Button>
@@ -436,7 +436,7 @@ const BulkOrderImportPage: React.FC = () => {
     <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-purple-800">
+          <CardTitle className="text-blue-800">
             กำลังสร้างออเดอร์
           </CardTitle>
           <CardDescription>
@@ -448,7 +448,7 @@ const BulkOrderImportPage: React.FC = () => {
             <div className="w-full max-w-md mb-4">
               <Progress value={progress} className="h-3" />
             </div>
-            <p className="text-purple-800 font-medium">
+            <p className="text-blue-800 font-medium">
               {progress}% เสร็จสิ้น
             </p>
             <p className="text-gray-500 text-sm">
@@ -466,7 +466,7 @@ const BulkOrderImportPage: React.FC = () => {
     <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-purple-800">
+          <CardTitle className="text-blue-800">
             สรุปผลการนำเข้า
           </CardTitle>
           <CardDescription>
@@ -498,11 +498,11 @@ const BulkOrderImportPage: React.FC = () => {
 
           {results.trackingNumbers.length > 0 && (
             <div>
-              <h3 className="text-lg font-medium text-purple-800 mb-2">เลขพัสดุที่สร้างเสร็จแล้ว</h3>
+              <h3 className="text-lg font-medium text-blue-800 mb-2">เลขพัสดุที่สร้างเสร็จแล้ว</h3>
               <div className="border rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-purple-50">
+                    <TableRow className="bg-blue-50">
                       <TableHead className="w-[80px]">ลำดับ</TableHead>
                       <TableHead>เลขพัสดุ</TableHead>
                     </TableRow>
@@ -549,7 +549,7 @@ const BulkOrderImportPage: React.FC = () => {
         <CardFooter className="justify-end space-x-2 border-t pt-4">
           <Button
             onClick={resetForm}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             สร้างออเดอร์ใหม่
           </Button>
@@ -562,43 +562,43 @@ const BulkOrderImportPage: React.FC = () => {
     <Layout>
       <div className="container mx-auto py-8 px-4 font-kanit bg-gradient-to-br from-white to-blue-50 rounded-xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-700 to-indigo-600 bg-clip-text text-transparent flex items-center">
-            <Package className="mr-2 h-8 w-8 text-purple-600" />
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent flex items-center">
+            <Package className="mr-2 h-8 w-8 text-blue-600" />
             นำเข้าออเดอร์จาก Excel
           </h1>
           <p className="text-gray-600 text-lg mt-2">สร้างออเดอร์หลายรายการพร้อมกันโดยนำเข้าจากไฟล์ Excel</p>
-          <div className="w-20 h-1 bg-gradient-to-r from-purple-600 to-indigo-500 mt-4 rounded-full"></div>
+          <div className="w-20 h-1 bg-gradient-to-r from-blue-600 to-indigo-500 mt-4 rounded-full"></div>
         </div>
 
         <div className="mb-8">
           <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-100">
             <div className="flex">
-              <div className={`flex items-center ${step === 'upload' ? 'text-purple-600 font-medium' : 'text-gray-500'}`}>
-                <div className={`w-8 h-8 rounded-full ${step === 'upload' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-600'} flex items-center justify-center mr-2`}>
+              <div className={`flex items-center ${step === 'upload' ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                <div className={`w-8 h-8 rounded-full ${step === 'upload' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'} flex items-center justify-center mr-2`}>
                   1
                 </div>
                 <span>อัพโหลดไฟล์</span>
               </div>
-              <div className={`w-16 h-[2px] mx-2 ${step === 'upload' ? 'bg-gray-200' : 'bg-purple-400'}`}></div>
+              <div className={`w-16 h-[2px] mx-2 ${step === 'upload' ? 'bg-gray-200' : 'bg-blue-400'}`}></div>
               
-              <div className={`flex items-center ${step === 'preview' ? 'text-purple-600 font-medium' : 'text-gray-500'}`}>
-                <div className={`w-8 h-8 rounded-full ${step === 'preview' ? 'bg-purple-600 text-white' : step === 'upload' ? 'bg-gray-200 text-gray-600' : 'bg-purple-600 text-white'} flex items-center justify-center mr-2`}>
+              <div className={`flex items-center ${step === 'preview' ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                <div className={`w-8 h-8 rounded-full ${step === 'preview' ? 'bg-blue-600 text-white' : step === 'upload' ? 'bg-gray-200 text-gray-600' : 'bg-blue-600 text-white'} flex items-center justify-center mr-2`}>
                   2
                 </div>
                 <span>ตรวจสอบข้อมูล</span>
               </div>
-              <div className={`w-16 h-[2px] mx-2 ${step === 'upload' || step === 'preview' ? 'bg-gray-200' : 'bg-purple-400'}`}></div>
+              <div className={`w-16 h-[2px] mx-2 ${step === 'upload' || step === 'preview' ? 'bg-gray-200' : 'bg-blue-400'}`}></div>
               
-              <div className={`flex items-center ${step === 'processing' ? 'text-purple-600 font-medium' : 'text-gray-500'}`}>
-                <div className={`w-8 h-8 rounded-full ${step === 'processing' ? 'bg-purple-600 text-white' : step === 'complete' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-600'} flex items-center justify-center mr-2`}>
+              <div className={`flex items-center ${step === 'processing' ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                <div className={`w-8 h-8 rounded-full ${step === 'processing' ? 'bg-blue-600 text-white' : step === 'complete' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'} flex items-center justify-center mr-2`}>
                   3
                 </div>
                 <span>กำลังประมวลผล</span>
               </div>
-              <div className={`w-16 h-[2px] mx-2 ${step === 'complete' ? 'bg-purple-400' : 'bg-gray-200'}`}></div>
+              <div className={`w-16 h-[2px] mx-2 ${step === 'complete' ? 'bg-blue-400' : 'bg-gray-200'}`}></div>
               
-              <div className={`flex items-center ${step === 'complete' ? 'text-purple-600 font-medium' : 'text-gray-500'}`}>
-                <div className={`w-8 h-8 rounded-full ${step === 'complete' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-600'} flex items-center justify-center mr-2`}>
+              <div className={`flex items-center ${step === 'complete' ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                <div className={`w-8 h-8 rounded-full ${step === 'complete' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'} flex items-center justify-center mr-2`}>
                   4
                 </div>
                 <span>เสร็จสิ้น</span>
