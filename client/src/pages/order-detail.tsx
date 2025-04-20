@@ -466,7 +466,7 @@ const OrderDetail: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div className="flex items-center">
             <Button variant="ghost" className="mr-2 p-0 hover:bg-transparent" asChild>
-              <Link href="/order-list">
+              <Link href="/order-list-enhanced">
                 <ArrowLeft className="h-5 w-5 text-gray-500" />
               </Link>
             </Button>
@@ -500,7 +500,7 @@ const OrderDetail: React.FC = () => {
             <h3 className="text-lg font-medium text-gray-700">ไม่พบข้อมูลคำสั่งซื้อ</h3>
             <p className="text-gray-500 mt-1">คำสั่งซื้อที่คุณต้องการดูอาจถูกลบไปแล้วหรือไม่มีอยู่ในระบบ</p>
             <Button className="mt-4" asChild>
-              <Link href="/order-list">กลับไปยังรายการคำสั่งซื้อ</Link>
+              <Link href="/order-list-enhanced">กลับไปยังรายการคำสั่งซื้อ</Link>
             </Button>
           </div>
         ) : (
