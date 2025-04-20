@@ -34,6 +34,15 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 // อินเทอร์เฟซสำหรับข้อมูลคำสั่งซื้อ
 interface Order {
@@ -86,6 +95,9 @@ const OrderList: React.FC = () => {
     end: ''
   });
   const [availableShippingMethods, setAvailableShippingMethods] = useState<string[]>([]);
+  const [labelSize, setLabelSize] = useState<'100x100mm' | '100x75mm'>('100x100mm');
+  const [printDialogOpen, setPrintDialogOpen] = useState<boolean>(false);
+  const [orderToPrint, setOrderToPrint] = useState<Order | null>(null);
   
 
   // ฟังก์ชันเรียกข้อมูลคำสั่งซื้อจาก API
