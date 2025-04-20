@@ -528,7 +528,9 @@ router.post('/:id/tracking', auth, async (req, res) => {
     // สร้างเลขพัสดุจำลองตามวิธีการจัดส่ง
     const prefix = shippingMethod.substring(0, 3).toUpperCase();
     const randomPart = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
-    const trackingNumber = `${prefix}${randomPart}TH`;
+    const randomLetters = String.fromCharCode(65 + Math.floor(Math.random() * 26)) +
+                         String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    const trackingNumber = `${prefix}${randomPart}${randomLetters}`;
     
     // อัพเดตข้อมูลออเดอร์
     const updatedOrder = await storage.updateOrder(orderId, {
