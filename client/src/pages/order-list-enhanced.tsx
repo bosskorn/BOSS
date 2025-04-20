@@ -829,7 +829,7 @@ const OrderList: React.FC = () => {
         printWindow.document.write(`
           <div class="page">
             <div class="label-container">
-              <div class="logo">PURPLEDASH</div>
+              <div class="logo">BLUEDASH</div>
               
               <div class="tracking box">
                 <div style="font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; color: #666;">เลขพัสดุ</div>
@@ -839,7 +839,7 @@ const OrderList: React.FC = () => {
               <div class="section">
                 <div class="title">ผู้ส่ง:</div>
                 <div class="box address">
-                  PURPLEDASH<br />
+                  BLUEDASH<br />
                   เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
                   ถนนพระราม 4 แขวงลุมพินี<br />
                   เขตปทุมวัน กรุงเทพฯ 10330<br />
@@ -993,16 +993,16 @@ const OrderList: React.FC = () => {
               margin-bottom: ${labelSize === '100x100mm' ? '5mm' : '3mm'}; 
               font-size: ${labelSize === '100x100mm' ? '22px' : '18px'}; 
               font-weight: bold; 
-              color: #8A2BE2; 
+              color: #0078D7; 
             }
             .tracking { 
               font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; 
               text-align: center; 
               margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '2mm'}; 
               padding: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'}; 
-              border: 1px solid #8A2BE2; 
+              border: 1px solid #0078D7; 
               border-radius: 3px; 
-              background-color: #faf6ff;
+              background-color: #f0f9ff;
             }
             .section { 
               margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '2mm'}; 
@@ -1108,7 +1108,7 @@ const OrderList: React.FC = () => {
           
           <div class="page">
             <div class="label-container">
-              <div class="logo">PURPLEDASH</div>
+              <div class="logo">BLUEDASH</div>
               
               ${labelSize === '100x100mm' ? `
               <!-- สำหรับขนาด 100x100mm -->
@@ -1120,7 +1120,7 @@ const OrderList: React.FC = () => {
               <div class="section">
                 <div class="title">ผู้ส่ง:</div>
                 <div class="box address">
-                  PURPLEDASH<br />
+                  BLUEDASH<br />
                   เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
                   ถนนพระราม 4 แขวงลุมพินี<br />
                   เขตปทุมวัน กรุงเทพฯ 10330<br />
@@ -1159,7 +1159,7 @@ const OrderList: React.FC = () => {
                 <div style="flex: 1; padding-right: 2mm;">
                   <div class="title" style="font-size: 9px; background-color: #f7f7f7; padding: 1px 3px; border-radius: 2px;">ผู้ส่ง</div>
                   <div class="box address" style="font-size: 8px; height: 23mm;">
-                    <strong>PURPLEDASH</strong><br />
+                    <strong>BLUEDASH</strong><br />
                     เลขที่ 888 อาคารมณียาเซ็นเตอร์<br />
                     ถนนพระราม 4 แขวงลุมพินี<br />
                     เขตปทุมวัน กรุงเทพฯ 10330<br />
