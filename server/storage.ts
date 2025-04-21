@@ -73,7 +73,9 @@ export interface IStorage {
   createTopUp(topup: InsertTopup): Promise<Topup>;
   updateTopUp(id: number, topup: Partial<InsertTopup>): Promise<Topup | undefined>;
   updateTopUpStatus(id: number, status: 'pending' | 'completed' | 'failed'): Promise<Topup | undefined>;
+  updateTopUpStripeSession(id: number, sessionId: string): Promise<Topup | undefined>;
   updateUserBalance(userId: number, newBalance: number): Promise<User | undefined>;
+  addUserBalance(userId: number, amount: number): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -328,6 +330,32 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return updatedUser;
+  }
+
+  async updateTopUpStripeSession(id: number, sessionId: string): Promise<Topup | undefined> {
+    const [updatedTopup] = await db.update(topups)
+      .set({ 
+        stripeSessionId: sessionId,
+        updatedAt: new Date() 
+      })
+      .where(eq(topups.id, id))
+      .returning();
+    return updatedTopup;
+  }
+
+  async addUserBalance(userId: number, amount: number): Promise<User | undefined> {
+    // ดึงข้อมูลผู้ใช้
+    const user = await this.getUser(userId);
+    if (!user) {
+      return undefined;
+    }
+
+    // คำนวณยอดเงินใหม่
+    const currentBalance = parseFloat(user.balance || '0');
+    const newBalance = currentBalance + amount;
+
+    // อัพเดตยอดเงิน
+    return await this.updateUserBalance(userId, newBalance);
   }
 }
 

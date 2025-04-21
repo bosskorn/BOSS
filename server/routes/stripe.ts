@@ -132,7 +132,7 @@ router.get('/check-session/:sessionId', auth, async (req, res) => {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     
     // ดึงข้อมูลการเติมเงินจากฐานข้อมูล
-    const topup = await storage.getTopUpByStripeSession(sessionId);
+    const topup = await storage.getTopupByStripeSessionId(sessionId);
     
     if (!topup) {
       return res.status(404).json({
@@ -202,7 +202,7 @@ router.post('/webhook', async (req, res) => {
       // ตรวจสอบว่ามี client_reference_id หรือไม่
       if (session.client_reference_id) {
         // ดึงข้อมูลการเติมเงินจากฐานข้อมูล
-        const topup = await storage.getTopUpByReferenceId(session.client_reference_id);
+        const topup = await storage.getTopupByReferenceId(session.client_reference_id);
         
         if (topup && topup.status !== 'completed') {
           // อัพเดตสถานะการเติมเงินเป็น completed

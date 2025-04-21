@@ -54,7 +54,7 @@ const stripeService = {
     error?: string;
   }> {
     try {
-      const response = await axios.get(`/api/stripe/checkout-session/${sessionId}`, {
+      const response = await axios.get(`/api/stripe/check-session/${sessionId}`, {
         withCredentials: true,
       });
 
