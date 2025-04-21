@@ -468,10 +468,9 @@ const SettingsPage: React.FC = () => {
           {/* แท็บตั้งค่า */}
           <div className="md:col-span-3">
             <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="profile">ข้อมูลส่วนตัว</TabsTrigger>
                 <TabsTrigger value="security">ความปลอดภัย</TabsTrigger>
-                <TabsTrigger value="shipping">ขนส่ง</TabsTrigger>
               </TabsList>
               
               {/* แท็บข้อมูลส่วนตัว */}
@@ -683,102 +682,7 @@ const SettingsPage: React.FC = () => {
                 </Card>
               </TabsContent>
               
-              {/* แท็บขนส่ง */}
-              <TabsContent value="shipping">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>ตั้งค่าขนส่ง</CardTitle>
-                    <CardDescription>จัดการตัวเลือกและราคาการจัดส่งสินค้าของคุณ</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {loadingShipping ? (
-                      <div className="text-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-600" />
-                        <p className="mt-2 text-gray-500">กำลังโหลดข้อมูลขนส่ง...</p>
-                      </div>
-                    ) : shippingMethods.length === 0 ? (
-                      <div className="text-center py-8 border rounded-lg bg-gray-50 dark:bg-gray-900">
-                        <AlertTriangle className="h-12 w-12 mx-auto text-yellow-500 mb-3" />
-                        <h3 className="text-lg font-medium mb-1">ไม่พบข้อมูลขนส่ง</h3>
-                        <p className="text-gray-500 mb-4">ยังไม่มีตัวเลือกขนส่งในระบบ</p>
-                        <Button variant="outline" className="mx-auto">
-                          <span>รีเฟรช</span>
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="text-sm text-gray-500 mb-6 flex items-start">
-                          <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-                          <p>
-                            เปิดหรือปิดบริการขนส่งตามที่ต้องการ โดยขนส่งที่ปิดจะไม่แสดงเป็นตัวเลือกในหน้าสร้างออเดอร์ 
-                            นอกจากนี้คุณยังสามารถปรับราคาขนส่งเริ่มต้นสำหรับแต่ละบริการได้ตามต้องการ
-                          </p>
-                        </div>
-                        
-                        <div className="space-y-6">
-                          {shippingMethods.map((method) => (
-                            <div key={method.id} className="border rounded-lg p-4 bg-white dark:bg-gray-950">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                  <Truck className="h-8 w-8 text-purple-600 mr-3 flex-shrink-0" />
-                                  <div>
-                                    <h4 className="font-medium text-base">{method.name}</h4>
-                                    <p className="text-sm text-gray-500">{method.description}</p>
-                                    <p className="text-xs text-gray-400 mt-1">ระยะเวลาส่งโดยประมาณ: {method.estimatedDelivery}</p>
-                                  </div>
-                                </div>
-                                <div className="flex flex-col items-end">
-                                  <div className="flex items-center space-x-2 mb-2">
-                                    <span className="text-sm text-gray-500">{method.enabled ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</span>
-                                    <Switch 
-                                      checked={method.enabled} 
-                                      onCheckedChange={(checked) => toggleShippingMethod(method.id, checked)}
-                                    />
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-sm text-gray-500">ราคา:</span>
-                                    <div className="relative">
-                                      <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-500">฿</span>
-                                      <Input 
-                                        type="number"
-                                        value={method.basePrice.toString()}
-                                        onChange={(e) => {
-                                          const newPrice = parseFloat(e.target.value);
-                                          if (!isNaN(newPrice)) {
-                                            updateShippingPrice(method.id, newPrice);
-                                          }
-                                        }}
-                                        className="pl-6 w-24"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        <div className="flex justify-end mt-6">
-                          <Button
-                            onClick={() => fetchShippingMethods()}
-                            variant="outline"
-                            className="mr-2"
-                          >
-                            รีเซ็ต
-                          </Button>
-                          <Button 
-                            disabled={loadingShipping}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            {loadingShipping && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            บันทึกการตั้งค่า
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+
             </Tabs>
           </div>
         </div>
