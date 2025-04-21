@@ -15,6 +15,7 @@ const FlashExpressLabelNew = () => {
   const [ordersData, setOrdersData] = useState<any[]>([]);
   const [orderIds, setOrderIds] = useState<string[]>([]);
   const [sortingCode] = useState('SS1');
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   // CSS สำหรับการแสดงลาเบล
   const labelStyles = `
@@ -344,6 +345,34 @@ const FlashExpressLabelNew = () => {
       transform: rotate(90deg);
     }
   `;
+
+  // ดึงข้อมูลผู้ใช้งาน
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`/api/user`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+          },
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.user) {
+            console.log('ข้อมูลผู้ใช้จาก API:', data.user);
+            setUserProfile(data.user);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
 
   // ดึงข้อมูลออเดอร์จาก URL parameter
   useEffect(() => {
