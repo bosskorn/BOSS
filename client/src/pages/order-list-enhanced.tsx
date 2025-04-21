@@ -1250,7 +1250,7 @@ const OrderList: React.FC = () => {
                       console.log("พิมพ์ลาเบลสำหรับ:", orderIds);
                       toast({
                         title: 'กำลังเปิดหน้าพิมพ์ลาเบล',
-                        description: `กำลังเตรียมพิมพ์ลาเบลทั้งหมด ${ordersToPrint.length} รายการ`,
+                        description: `กำลังเตรียมพิมพ์ลาเบลทั้งหมด ${ordersToPrint.length} รายการ (รูปแบบ TikTok Shop)`,
                       });
                       break;
                     case 'jt':
