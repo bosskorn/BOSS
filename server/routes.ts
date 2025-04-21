@@ -13,7 +13,7 @@ import reportsRouter from "./routes/reports";
 import shippingRouter from "./routes/shipping";
 import uploadRouter from "./routes/upload";
 import userProfileRouter from "./routes/user-profile";
-import topupsRouter from "./routes/topups";
+import topupsRouter from "./routes/topups-fixed";
 import locationsRouter from "./routes/locations";
 import mockShippingRouter from "./routes/mock-shipping";
 import dashboardRouter from "./routes/dashboard";
