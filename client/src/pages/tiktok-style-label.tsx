@@ -243,6 +243,36 @@ const TikTokStyleLabelPage = () => {
       padding: 5px;
     }
     
+    .product-details {
+      border-bottom: 1px solid #000;
+      padding: 8px 10px;
+      font-size: 11px;
+    }
+    
+    .product-title {
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+    
+    .product-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    
+    .product-item {
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .product-name {
+      font-weight: normal;
+    }
+    
+    .product-quantity {
+      font-weight: bold;
+    }
+    
     .pickup-delivery {
       position: absolute;
       right: 10px;
@@ -711,6 +741,26 @@ const TikTokStyleLabelPage = () => {
                   <div className="shipping-date">
                     <div>Shipping Date:</div>
                     <div>{order.currentDate} 23:34</div>
+                  </div>
+                </div>
+                
+                {/* เพิ่มส่วนแสดงข้อมูลสินค้าและจำนวน */}
+                <div className="product-details">
+                  <div className="product-title">รายการสินค้า:</div>
+                  <div className="product-list">
+                    {order.items && order.items.length > 0 ? (
+                      order.items.map((item: any, i: number) => (
+                        <div key={i} className="product-item">
+                          <span className="product-name">{item.productName || 'สินค้า'}</span>
+                          <span className="product-quantity">x {item.quantity || 1}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="product-item">
+                        <span className="product-name">{order.productName || 'เสื้อยืดคอกลม'}</span>
+                        <span className="product-quantity">x {order.quantity || 1}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
