@@ -63,6 +63,8 @@ const OrderList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [dateRangeFilter, setDateRangeFilter] = useState('all');
+  const [shippingMethodFilter, setShippingMethodFilter] = useState('all');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [sorting, setSorting] = useState({ column: 'id', direction: 'desc' });
@@ -79,6 +81,7 @@ const OrderList: React.FC = () => {
   const [orderToPrint, setOrderToPrint] = useState<Order | null>(null);
   const [labelTypeDialogOpen, setLabelTypeDialogOpen] = useState(false);
   const [selectedLabelType, setSelectedLabelType] = useState('standard');
+  const [showFilters, setShowFilters] = useState(false);
 
   // ฟังก์ชันดึงข้อมูลคำสั่งซื้อจาก API
   const fetchOrders = async () => {
@@ -216,6 +219,49 @@ const OrderList: React.FC = () => {
       result = result.filter(order => order.status === orderStatusFilter);
     }
     
+    // กรองตามบริษัทขนส่ง
+    if (shippingMethodFilter !== 'all') {
+      if (shippingMethodFilter === 'flash-express') {
+        result = result.filter(order => order.trackingNumber?.startsWith('FLE'));
+      } else if (shippingMethodFilter === 'xiaobaix') {
+        result = result.filter(order => 
+          order.shippingMethod?.includes('เสี่ยวไป๋') || 
+          order.trackingNumber?.startsWith('XBX')
+        );
+      } else if (shippingMethodFilter === 'thailand-post') {
+        result = result.filter(order => 
+          order.shippingMethod?.includes('ไปรษณีย์ไทย') || 
+          order.trackingNumber?.startsWith('TH')
+        );
+      } else if (shippingMethodFilter === 'jnt') {
+        result = result.filter(order => 
+          order.shippingMethod?.includes('J&T') || 
+          order.trackingNumber?.startsWith('JNT')
+        );
+      } else if (shippingMethodFilter === 'none') {
+        result = result.filter(order => !order.trackingNumber);
+      }
+    }
+    
+    // กรองตามวิธีการชำระเงิน
+    if (paymentMethodFilter !== 'all') {
+      if (paymentMethodFilter === 'cod') {
+        result = result.filter(order => 
+          order.paymentMethod === 'cod' || 
+          order.paymentStatus === 'cod'
+        );
+      } else if (paymentMethodFilter === 'prepaid') {
+        result = result.filter(order => 
+          order.paymentMethod === 'prepaid' || 
+          order.paymentStatus === 'prepaid'
+        );
+      } else if (paymentMethodFilter === 'paid') {
+        result = result.filter(order => order.paymentStatus === 'paid');
+      } else if (paymentMethodFilter === 'pending') {
+        result = result.filter(order => order.paymentStatus === 'pending');
+      }
+    }
+    
     // กรองตามช่วงวันที่
     if (dateRangeFilter !== 'all') {
       const now = new Date();
@@ -269,7 +315,7 @@ const OrderList: React.FC = () => {
   // เรียกใช้ฟังก์ชันกรองข้อมูลเมื่อตัวแปรที่เกี่ยวข้องมีการเปลี่ยนแปลง
   useEffect(() => {
     filterOrders();
-  }, [orders, activeTab, searchTerm, orderStatusFilter, dateRangeFilter, sorting]);
+  }, [orders, activeTab, searchTerm, orderStatusFilter, dateRangeFilter, shippingMethodFilter, paymentMethodFilter, sorting]);
 
   // ฟังก์ชันจัดการเมื่อมีการเลือกแท็บ
   const handleTabChange = (value: string) => {
@@ -644,6 +690,15 @@ const OrderList: React.FC = () => {
                     className="pl-9 text-sm h-9"
                   />
                 </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={`px-3 py-0 h-9 text-xs ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : ''}`}
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  <Filter className="h-3.5 w-3.5 mr-1" />
+                  กรอง
+                </Button>
               </div>
             </div>
             
@@ -799,8 +854,69 @@ const OrderList: React.FC = () => {
                               onClick={() => handlePrintLabel(order)}
                               disabled={!order.trackingNumber}
                               className="px-2 py-0 h-7 text-gray-700 hover:text-blue-700 hover:bg-blue-50"
+                              title="พิมพ์ลาเบล"
                             >
                               <Printer className="h-3.5 w-3.5" />
+                            </Button>
+                            
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="px-2 py-0 h-7 text-gray-700 hover:text-blue-700 hover:bg-blue-50"
+                              title="แก้ไขออเดอร์"
+                              onClick={() => window.location.href = `/order-detail/${order.id}`}
+                            >
+                              <ChevronUp className="h-3.5 w-3.5 rotate-90" />
+                            </Button>
+                            
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="px-2 py-0 h-7 text-gray-700 hover:text-red-700 hover:bg-red-50"
+                              title="ลบออเดอร์"
+                              onClick={() => {
+                                if (confirm(`ต้องการลบออเดอร์ ${order.orderNumber} ใช่หรือไม่?`)) {
+                                  // ส่งคำขอลบออเดอร์ไปยัง API
+                                  const token = localStorage.getItem('auth_token');
+                                  fetch(`/api/orders/${order.id}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': token ? `Bearer ${token}` : '',
+                                    },
+                                    credentials: 'include'
+                                  })
+                                  .then(response => {
+                                    if (!response.ok) {
+                                      throw new Error(`Error ${response.status}: ${response.statusText}`);
+                                    }
+                                    return response.json();
+                                  })
+                                  .then(data => {
+                                    if (data.success) {
+                                      toast({
+                                        title: 'ลบออเดอร์สำเร็จ',
+                                        description: `ลบออเดอร์ ${order.orderNumber} เรียบร้อยแล้ว`,
+                                        variant: 'default',
+                                      });
+                                      // รีเฟรชข้อมูลเพื่อแสดงการเปลี่ยนแปลง
+                                      fetchOrders();
+                                    } else {
+                                      throw new Error(data.message || 'ไม่สามารถลบออเดอร์ได้');
+                                    }
+                                  })
+                                  .catch(error => {
+                                    console.error('Error deleting order:', error);
+                                    toast({
+                                      title: 'เกิดข้อผิดพลาด',
+                                      description: error instanceof Error ? error.message : 'ไม่สามารถลบออเดอร์ได้',
+                                      variant: 'destructive',
+                                    });
+                                  });
+                                }
+                              }}
+                            >
+                              <X className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </TableCell>
