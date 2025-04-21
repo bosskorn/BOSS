@@ -102,21 +102,25 @@ const FlashExpressLabelNew: React.FC = () => {
         setCodAmount(orderData.paymentMethod === 'cod' || orderData.paymentMethod === 'cash_on_delivery' ? 
           (orderData.totalAmount || '0.00') : '0.00');
         
-        // ข้อมูลของผู้รับ
-        if (orderData.customer) {
-          setRecipientName(orderData.customerName || orderData.customer.name || '');
-          setRecipientPhone(orderData.customer.phone || '');
-          setRecipientAddress(orderData.customer.address || '');
-          
-          // ดึงตำบล/อำเภอจากที่อยู่ (แบบพื้นฐาน)
-          const addressParts = (orderData.customer.address || '').split(' ');
-          if (addressParts.length > 0) {
-            const possibleDistrict = addressParts.find((part: string) => 
-              part.includes('อ.') || part.includes('อำเภอ') || part.includes('เขต')
-            );
-            if (possibleDistrict) {
-              setDistrict(possibleDistrict.replace('อ.', '').replace('อำเภอ', '').replace('เขต', ''));
-            }
+        // ข้อมูลของผู้รับ - ใช้ทั้ง customerName และ customer.name เพื่อความแน่ใจ
+        const cusName = orderData.customerName || (orderData.customer?.name) || 'ไม่ระบุชื่อผู้รับ';
+        const cusPhone = (orderData.customer?.phone) || '';
+        const cusAddress = (orderData.customer?.address) || 'ไม่ระบุที่อยู่ผู้รับ';
+        
+        setRecipientName(cusName);
+        setRecipientPhone(cusPhone);
+        setRecipientAddress(cusAddress);
+        
+        console.log('ข้อมูลผู้รับ:', { cusName, cusPhone, cusAddress });
+        
+        // ดึงตำบล/อำเภอจากที่อยู่ (แบบพื้นฐาน)
+        const addressParts = cusAddress.split(' ');
+        if (addressParts.length > 0) {
+          const possibleDistrict = addressParts.find((part: string) => 
+            part.includes('อ.') || part.includes('อำเภอ') || part.includes('เขต')
+          );
+          if (possibleDistrict) {
+            setDistrict(possibleDistrict.replace('อ.', '').replace('อำเภอ', '').replace('เขต', ''));
           }
         }
         
