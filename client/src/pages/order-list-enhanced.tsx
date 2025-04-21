@@ -1166,22 +1166,6 @@ const OrderList: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-3 py-4">
-            {/* แบบมาตรฐาน */}
-            <div 
-              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedLabelType === 'standard' ? 'border-blue-600' : 'border-gray-200'}`}
-              onClick={() => setSelectedLabelType('standard')}
-            >
-              <div>
-                <h4 className="font-medium">แบบมาตรฐาน</h4>
-                <p className="text-sm text-gray-500">รูปแบบทั่วไป ใช้ได้กับทุกบริษัทขนส่ง</p>
-              </div>
-              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'standard' ? 'border-blue-600' : 'border-gray-300'}`}>
-                {selectedLabelType === 'standard' && (
-                  <div className="w-full h-full rounded-full bg-blue-600"></div>
-                )}
-              </div>
-            </div>
-            
             {/* เสี่ยวไป๋ เอ็กเพรส */}
             <div 
               className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedLabelType === 'flash' ? 'border-blue-600' : 'border-gray-200'}`}
@@ -1193,22 +1177,6 @@ const OrderList: React.FC = () => {
               </div>
               <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'flash' ? 'border-blue-600' : 'border-gray-300'}`}>
                 {selectedLabelType === 'flash' && (
-                  <div className="w-full h-full rounded-full bg-blue-600"></div>
-                )}
-              </div>
-            </div>
-            
-            {/* J&T Express */}
-            <div 
-              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedLabelType === 'jt' ? 'border-blue-600' : 'border-gray-200'}`}
-              onClick={() => setSelectedLabelType('jt')}
-            >
-              <div>
-                <h4 className="font-medium">J&T Express</h4>
-                <p className="text-sm text-gray-500">รูปแบบสำหรับ J&T Express</p>
-              </div>
-              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'jt' ? 'border-blue-600' : 'border-gray-300'}`}>
-                {selectedLabelType === 'jt' && (
                   <div className="w-full h-full rounded-full bg-blue-600"></div>
                 )}
               </div>
@@ -1272,9 +1240,6 @@ const OrderList: React.FC = () => {
                   let labelUrl = '';
                   
                   switch(selectedLabelType) {
-                    case 'standard':
-                      labelUrl = `/print-multiple-labels?orders=${orderIds}&type=standard`;
-                      break;
                     case 'flash':
                       labelUrl = `/print-multiple-labels?orders=${orderIds}&type=flash`;
                       break;
@@ -1340,9 +1305,6 @@ const OrderList: React.FC = () => {
                   // สร้าง URL สำหรับหน้าลาเบล
                   let labelUrl = '';
                   switch(selectedLabelType) {
-                    case 'standard':
-                      labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
-                      break;
                     case 'flash':
                       labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
                       break;
