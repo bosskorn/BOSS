@@ -68,9 +68,12 @@ export interface IStorage {
   // Topup operations
   getTopup(id: number): Promise<Topup | undefined>;
   getTopupByReferenceId(referenceId: string): Promise<Topup | undefined>;
+  getTopupByStripeSessionId(sessionId: string): Promise<Topup | undefined>;
   getTopupsByUserId(userId: number): Promise<Topup[]>;
-  createTopup(topup: InsertTopup): Promise<Topup>;
-  updateTopup(id: number, topup: Partial<InsertTopup>): Promise<Topup | undefined>;
+  createTopUp(topup: InsertTopup): Promise<Topup>;
+  updateTopUp(id: number, topup: Partial<InsertTopup>): Promise<Topup | undefined>;
+  updateTopUpStatus(id: number, status: 'pending' | 'completed' | 'failed'): Promise<Topup | undefined>;
+  updateUserBalance(userId: number, newBalance: number): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -286,21 +289,45 @@ export class DatabaseStorage implements IStorage {
     return topup;
   }
   
+  async getTopupByStripeSessionId(sessionId: string): Promise<Topup | undefined> {
+    const [topup] = await db.select().from(topups).where(eq(topups.stripeSessionId, sessionId));
+    return topup;
+  }
+  
   async getTopupsByUserId(userId: number): Promise<Topup[]> {
     return await db.select().from(topups).where(eq(topups.userId, userId));
   }
   
-  async createTopup(topup: InsertTopup): Promise<Topup> {
+  async createTopUp(topup: InsertTopup): Promise<Topup> {
     const [newTopup] = await db.insert(topups).values(topup).returning();
     return newTopup;
   }
   
-  async updateTopup(id: number, topupData: Partial<InsertTopup>): Promise<Topup | undefined> {
+  async updateTopUp(id: number, topupData: Partial<InsertTopup>): Promise<Topup | undefined> {
     const [updatedTopup] = await db.update(topups)
       .set({ ...topupData, updatedAt: new Date() })
       .where(eq(topups.id, id))
       .returning();
     return updatedTopup;
+  }
+  
+  async updateTopUpStatus(id: number, status: 'pending' | 'completed' | 'failed'): Promise<Topup | undefined> {
+    const [updatedTopup] = await db.update(topups)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(topups.id, id))
+      .returning();
+    return updatedTopup;
+  }
+  
+  async updateUserBalance(userId: number, newBalance: number): Promise<User | undefined> {
+    const [updatedUser] = await db.update(users)
+      .set({ 
+        balance: newBalance.toFixed(2),
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser;
   }
 }
 
