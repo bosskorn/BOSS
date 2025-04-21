@@ -66,7 +66,7 @@ function Router() {
       <Route path="/barcode-test-improved" component={BarcodeTestImproved} />
       <Route path="/jt-express-label" component={JTExpressLabel} />
       <Route path="/flash-express-label" component={FlashExpressLabel} />
-      <Route path="/flash-express-label-new" component={TikTokStyleLabelPage} />
+      <Route path="/flash-express-label-new" component={FlashExpressLabelNew} />
       <Route path="/tiktok-flash-label" component={TikTokFlashLabel} />
       <Route path="/tiktok-shipping-label" component={TikTokShippingLabel} />
       <Route path="/tiktok-shipping-label-fixed" component={TikTokShippingLabelFixed} />
