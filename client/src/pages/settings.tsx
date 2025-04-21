@@ -44,6 +44,12 @@ const profileFormSchema = z.object({
   district: z.string().optional().or(z.literal('')),
   subdistrict: z.string().optional().or(z.literal('')),
   zipcode: z.string().optional().or(z.literal('')),
+}).transform(data => {
+  // แปลงค่า email ที่เป็น '' เป็น null เพื่อหลีกเลี่ยง validation error
+  return {
+    ...data,
+    email: data.email === '' ? null : data.email
+  };
 });
 
 const passwordFormSchema = z.object({
@@ -309,7 +315,19 @@ const SettingsPage: React.FC = () => {
     try {
       setLoadingProfile(true);
       
-      const response = await axios.put('/api/user/profile', data, {
+      // แปลงค่า empty string เป็น null เพื่อความเข้ากันได้กับ API
+      const profileData = {
+        fullname: data.fullname,
+        email: data.email === '' ? null : data.email,
+        phone: data.phone === '' ? null : data.phone,
+        address: data.address === '' ? null : data.address,
+        province: data.province === '' ? null : data.province,
+        district: data.district === '' ? null : data.district,
+        subdistrict: data.subdistrict === '' ? null : data.subdistrict,
+        zipcode: data.zipcode === '' ? null : data.zipcode,
+      };
+      
+      const response = await axios.put('/api/user/profile', profileData, {
         withCredentials: true
       });
 
@@ -322,14 +340,14 @@ const SettingsPage: React.FC = () => {
         // อัพเดตข้อมูลผู้ใช้ในสถานะ
         setUserProfile({
           ...userProfile!,
-          fullname: data.fullname,
-          email: data.email || null,
-          phone: data.phone || null,
-          address: data.address || null,
-          province: data.province || null,
-          district: data.district || null,
-          subdistrict: data.subdistrict || null,
-          zipcode: data.zipcode || null,
+          fullname: profileData.fullname,
+          email: profileData.email,
+          phone: profileData.phone,
+          address: profileData.address,
+          province: profileData.province,
+          district: profileData.district,
+          subdistrict: profileData.subdistrict,
+          zipcode: profileData.zipcode,
         });
       } else {
         toast({
