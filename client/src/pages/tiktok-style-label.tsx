@@ -108,11 +108,16 @@ const TikTokStyleLabelPage = () => {
       padding: 5px;
       text-align: center;
       border-bottom: 1px solid #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
     
     .barcode-svg {
-      max-width: 90%;
+      max-width: 100%;
       height: 50px;
+      margin: 0 auto;
     }
     
     .tracking-number {
@@ -486,7 +491,8 @@ const TikTokStyleLabelPage = () => {
                 width: 2,
                 height: 50,
                 displayValue: false,
-                margin: 0
+                margin: 5,
+                textAlign: "center"
               });
             }
           } catch (error) {
@@ -657,7 +663,7 @@ const TikTokStyleLabelPage = () => {
                 {order.hasCOD && (
                   <div className="cod-section">
                     <div className="cod-label">COD</div>
-                    <div className="cod-amount">Weight : {order.weight} KG</div>
+                    <div className="cod-amount">Weight : 4.000 KG</div>
                   </div>
                 )}
                 
@@ -677,8 +683,8 @@ const TikTokStyleLabelPage = () => {
                 <div className="pickup-delivery">PICK-UP</div>
                 
                 {/* แสดงข้อความแนวตั้งด้านข้าง */}
-                <div className="vertical-text-left">TH1644441T9NYG7Z</div>
-                <div className="vertical-text-right">TH1644441T9NYG7Z</div>
+                <div className="vertical-text-left">{order.displayTrackingNumber}</div>
+                <div className="vertical-text-right">{order.displayTrackingNumber}</div>
                 
                 {/* แสดงเส้นตัดขอบล่าง */}
                 <div className="dashed-cut-line">
