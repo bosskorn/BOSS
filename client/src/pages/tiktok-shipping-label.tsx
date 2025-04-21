@@ -167,10 +167,9 @@ const TikTokShippingLabel: React.FC = () => {
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>ลาเบลการจัดส่ง - ${orderId}</title>
+        <title>ลาเบลการจัดส่ง TikTok Shop - ${orderId}</title>
         <style>
           @page {
-            size: 100mm 150mm;
             margin: 0;
           }
           body {
@@ -179,8 +178,6 @@ const TikTokShippingLabel: React.FC = () => {
             font-family: 'Kanit', 'Sarabun', Arial, sans-serif;
           }
           .label-container {
-            width: 100mm;
-            height: 150mm;
             border: 1px solid #000;
             position: relative;
             box-sizing: border-box;
@@ -722,10 +719,10 @@ const TikTokShippingLabel: React.FC = () => {
         </Card>
 
         <div className="mt-6 flex justify-center">
-          <div className="w-[100mm] border border-dashed border-gray-400 p-2 bg-white">
-            <div className="text-center text-xs text-gray-500 mb-2">ใบลาเบลขนาด 100x150mm ขนาดมาตรฐาน สำหรับ TikTok Shop</div>
+          <div className="border border-dashed border-gray-400 p-2 bg-white">
+            <div className="text-center text-xs text-gray-500 mb-2">ใบลาเบลมาตรฐาน สำหรับ TikTok Shop</div>
 
-            <div className="relative" style={{ width: '100mm', height: '150mm', border: '1px solid #000' }}>
+            <div className="relative" style={{ border: '1px solid #000' }}>
               <div className="flex justify-between border-b border-black p-1 text-xs">
                 <div>TikTok Shop</div>
                 <div>FLASH</div>
