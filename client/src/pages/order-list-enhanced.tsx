@@ -781,7 +781,7 @@ const OrderList: React.FC = () => {
       const token =localStorage.getItem('auth_token');
 
       const response = await fetch(`/api/orders/${orderId}/print-status`, {
-        method: ''PATCH',
+        method: 'PATCH',
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
@@ -866,6 +866,7 @@ const OrderList: React.FC = () => {
 
     // บันทึกข้อมูลออเดอร์ที่จะพิมพ์และแสดงไดอะล็อก
     setOrderToPrint(order);
+    setSelectedLabelType('standard'); // ตั้งค่าเริ่มต้นเป็นลาเบลมาตรฐาน
     setLabelTypeDialogOpen(true);
   };
 
@@ -1631,7 +1632,8 @@ const OrderList: React.FC = () => {
               background-color: #f5f5f5;
             }
             .barcode-line {
-              display: inline-block;              width: 1px;
+              display: inline-block;
+              width: 1px;
               height: 15px;
               background-color: #000;
               margin: 0 0.5px;
@@ -2367,7 +2369,7 @@ const OrderList: React.FC = () => {
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
             <div 
-              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-500 bgblue-50' : 'border-gray-200'}`}
+              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-500 bg-50' : 'border-gray-200'}`}
               onClick={() => setLabelSize('100x100mm')}
             >
               <div className="flex justify-between items-center">
@@ -2690,27 +2692,11 @@ const OrderList: React.FC = () => {
                   body: JSON.stringify({ isPrinted: true })
                 });
 
-                // เปิดลาเบลตามประเภทที่เลือก
-                console.log(`กำลังเปิดลาเบลประเภท ${selectedLabelType} สำหรับออเดอร์ ${orderToPrint.id}`);
+                // เปิดลาเบล TikTok เสมอ ไม่ว่าจะเลือกแบบไหน
+                console.log(`กำลังเปิดลาเบล TikTok สำหรับออเดอร์ ${orderToPrint.id}`);
 
-                // สร้าง URL สำหรับหน้าลาเบล
-                let labelUrl = '';
-                switch(selectedLabelType) {
-                  case 'standard':
-                    labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
-                    break;
-                  case 'flash':
-                    labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
-                    break;
-                  case 'jt':
-                    labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
-                    break;
-                  case 'tiktok':
-                    labelUrl = `/tiktok-shipping-label?order=${orderToPrint.id}`;
-                    break;
-                  default:
-                    labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
-                }
+                // สร้าง URL สำหรับหน้าลาเบล TikTok
+                const labelUrl = `/tiktok-shipping-label?order=${orderToPrint.id}`;
 
                 console.log("Opening URL:", labelUrl);
 
@@ -2729,7 +2715,6 @@ const OrderList: React.FC = () => {
                 }, 100);
               }}
               className="bg-blue-600 hover:bg-blue-700"
-              disabled={!selectedLabelType}
             >
               <Printer className="h-4 w-4 mr-2" />
               พิมพ์ลาเบล
