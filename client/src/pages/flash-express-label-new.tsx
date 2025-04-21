@@ -487,8 +487,8 @@ const FlashExpressLabelNew: React.FC = () => {
               <strong>ถึง</strong> สมศรี ใจดี ${recipientPhone ? ' โทร: ' + recipientPhone : ''}<br>
               57/3 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ 10310
             </div>
-            <div class="qr-code" style="display: flex; align-items: center; justify-content: center;" id="qrcode">
-              <!-- QR code จะถูกสร้างด้วย JavaScript -->
+            <div class="qr-code" style="display: flex; align-items: center; justify-content: center;">
+              <img src="https://barcode.tec-it.com/en/GS1QRCode?data=${finalTrackingNumber}&multiplebarcodes=true&eclevel=L" alt="QR Code" width="80" height="80">
             </div>
           </div>
           
@@ -583,34 +583,7 @@ const FlashExpressLabelNew: React.FC = () => {
               margin: 0
             });
             
-            // สร้าง QR Code
-            const qrCodeElement = printWindow.document.getElementById('qrcode');
-            if (qrCodeElement) {
-              try {
-                // ล้างข้อมูลเดิม
-                qrCodeElement.innerHTML = '';
-                
-                // สร้าง QR Code แบบ inline ด้วย QRCode.js
-                new QRCode(qrCodeElement, {
-                  text: barcodeText, 
-                  width: 80,
-                  height: 80,
-                  colorDark: "#000000",
-                  colorLight: "#ffffff",
-                  correctLevel: QRCode.CorrectLevel.H
-                });
-              } catch (qrError) {
-                console.error('เกิดข้อผิดพลาดในการสร้าง QR Code:', qrError);
-                // ใช้ Google Chart API เป็น fallback ถ้า QRCode.js ไม่ทำงาน
-                const qrCodeUrl = "https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=" + 
-                  encodeURIComponent(barcodeText);
-                const img = document.createElement("img");
-                img.src = qrCodeUrl;
-                img.width = 80;
-                img.height = 80;
-                qrCodeElement.appendChild(img);
-              }
-            }
+            // ไม่ต้องสร้าง QR Code ด้วย JavaScript เพราะใช้ภาพจากลิงก์ tec-it
             
             // ตั้งค่าให้รอการแสดงบาร์โค้ดและ QR code ก่อนพิมพ์อัตโนมัติ
             setTimeout(() => {

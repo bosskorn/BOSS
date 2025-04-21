@@ -542,7 +542,6 @@ const TikTokShippingLabelFixed: React.FC = () => {
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
         <script type="text/javascript">
           // ฟังก์ชันสร้างบาร์โค้ด
           window.onload = function() {
@@ -557,33 +556,12 @@ const TikTokShippingLabelFixed: React.FC = () => {
                 margin: 0
               });
               
-              // สร้าง QR Code โดยใช้ QRCode.js library ที่โหลดมาแล้ว
+              // ใช้ QR Code จาก tec-it แทนการสร้างด้วย QRCode.js
               const qrCodeElement = document.getElementById("qrcode");
               if (qrCodeElement) {
-                try {
-                  // ล้างข้อมูลเดิม
-                  qrCodeElement.innerHTML = '';
-                  
-                  // สร้าง QR Code แบบ inline ด้วย QRCode.js
-                  new QRCode(qrCodeElement, {
-                    text: "${trackingNumber || 'THT64141T9NYG7Z'}", 
-                    width: 80,
-                    height: 80,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                  });
-                } catch (error) {
-                  console.error('Error generating QR code with QRCode.js:', error);
-                  // ใช้ Google Chart API เป็น fallback ถ้า QRCode.js ไม่ทำงาน
-                  const qrCodeUrl = "https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=" + 
-                    encodeURIComponent("${trackingNumber || 'THT64141T9NYG7Z'}");
-                  const img = document.createElement("img");
-                  img.src = qrCodeUrl;
-                  img.width = 80;
-                  img.height = 80;
-                  qrCodeElement.appendChild(img);
-                }
+                const trackingNo = "${trackingNumber || 'THT64141T9NYG7Z'}";
+                qrCodeElement.innerHTML = '<img src="https://barcode.tec-it.com/en/GS1QRCode?data=' + trackingNo + '&multiplebarcodes=true&eclevel=L" alt="QR Code" width="80" height="80">';
+              }
               }
               
               // พิมพ์อัตโนมัติหลังจากโหลดเสร็จและสร้างบาร์โค้ดเสร็จ
