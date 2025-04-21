@@ -2,7 +2,7 @@ import { Router } from 'express';
 import Stripe from 'stripe';
 import { z } from 'zod';
 import { storage } from '../storage';
-import auth from '../middlewares/auth';
+import { auth } from '../middleware/auth';
 import { fromZodError } from 'zod-validation-error';
 
 // สร้าง Stripe instance
@@ -11,7 +11,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2023-10-16' as any,
 });
 
 // สร้าง Router
