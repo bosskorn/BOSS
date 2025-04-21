@@ -615,7 +615,7 @@ const TopUpPage: React.FC = () => {
               <Button
                 onClick={checkPaymentStatus}
                 disabled={processing}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 ตรวจสอบสถานะการชำระเงิน
@@ -648,7 +648,7 @@ const TopUpPage: React.FC = () => {
             <div className="flex justify-center">
               <Button
                 onClick={startNewTopUp}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 เติมเงินอีกครั้ง
               </Button>
@@ -663,7 +663,7 @@ const TopUpPage: React.FC = () => {
       <Layout>
         <div className="container mx-auto py-12 px-4 max-w-4xl font-kanit">
           <div className="flex flex-col items-center justify-center h-64">
-            <Loader2 className="h-12 w-12 animate-spin text-purple-600 mb-4" />
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
             <p className="text-gray-500">กำลังโหลดข้อมูล...</p>
           </div>
         </div>
