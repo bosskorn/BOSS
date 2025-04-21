@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,8 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import JsBarcode from 'jsbarcode';
 import { QRCodeSVG } from 'qrcode.react';
+import { useToast } from '@/hooks/use-toast';
 
 const TikTokShippingLabel: React.FC = () => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('THT64141T9NYG7Z');
   const [orderId, setOrderId] = useState('21S-38041-02');
   const [sortCode, setSortCode] = useState('SS1');
@@ -20,6 +23,88 @@ const TikTokShippingLabel: React.FC = () => {
   const [weight, setWeight] = useState('4.000');
   const [orderIdFull, setOrderIdFull] = useState('5785159668395229951');
   const [shippingDate, setShippingDate] = useState('21/04/2025 23:39');
+  
+  // โหลดข้อมูลออเดอร์จาก URL parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderParam = params.get('order');
+    
+    if (orderParam) {
+      loadOrderData(orderParam);
+    }
+  }, []);
+  
+  // ฟังก์ชันโหลดข้อมูลออเดอร์
+  const loadOrderData = async (orderId: string) => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const order = data.data || data.order;
+        
+        if (order) {
+          // ตั้งค่าข้อมูลลาเบลจากข้อมูลออเดอร์
+          if (order.trackingNumber) setTrackingNumber(order.trackingNumber);
+          if (order.orderNumber) setOrderId(order.orderNumber);
+          setOrderIdFull(order.id.toString());
+          
+          // ข้อมูลผู้รับ
+          if (order.recipientName || order.customerName) setRecipientName(order.recipientName || order.customerName);
+          if (order.recipientPhone || order.customerPhone) setRecipientPhone(order.recipientPhone || order.customerPhone);
+          
+          // สร้างที่อยู่ผู้รับ
+          const addressParts = [];
+          if (order.recipientAddress || order.customerAddress) addressParts.push(order.recipientAddress || order.customerAddress);
+          if (order.recipientSubdistrict || order.customerSubdistrict) addressParts.push(order.recipientSubdistrict || order.customerSubdistrict);
+          if (order.recipientDistrict || order.customerDistrict) addressParts.push(order.recipientDistrict || order.customerDistrict);
+          if (order.recipientProvince || order.customerProvince) addressParts.push(order.recipientProvince || order.customerProvince);
+          if (order.recipientZipCode || order.customerZipcode) addressParts.push(order.recipientZipCode || order.customerZipcode);
+          
+          setRecipientAddress(addressParts.join(', '));
+          
+          // วันที่สร้างออเดอร์
+          if (order.createdAt) {
+            const date = new Date(order.createdAt);
+            setShippingDate(date.toLocaleDateString('th-TH') + ' ' + date.toLocaleTimeString('th-TH'));
+          }
+          
+          // น้ำหนัก
+          if (order.weight) setWeight(order.weight.toString());
+          
+          toast({
+            title: 'โหลดข้อมูลสำเร็จ',
+            description: `โหลดข้อมูลออเดอร์ ${order.orderNumber} เรียบร้อยแล้ว`,
+          });
+        }
+      } else {
+        throw new Error(data.message || 'ไม่สามารถโหลดข้อมูลออเดอร์ได้');
+      }
+    } catch (error) {
+      console.error('Error loading order data:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error instanceof Error ? error.message : 'ไม่สามารถโหลดข้อมูลออเดอร์ได้',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const barcodeRef = useRef<SVGSVGElement>(null);
 

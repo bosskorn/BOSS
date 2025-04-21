@@ -850,7 +850,7 @@ const OrderList: React.FC = () => {
   };
 
   // ฟังก์ชันพิมพ์ใบลาเบลสำหรับรายการที่เลือก
-  // สำหรับฟังก์ชันพิมพ์ใบลาเบลแบบปกติ (เพื่อความเข้ากันได้)
+  // ส่งไปที่หน้า tiktok-shipping-label โดยตรง
   const handlePrintLabel = (order: Order) => {
     console.log("พิมพ์ลาเบลสำหรับออเดอร์:", order);
 
@@ -864,10 +864,32 @@ const OrderList: React.FC = () => {
       return;
     }
 
-    // บันทึกข้อมูลออเดอร์ที่จะพิมพ์และแสดงไดอะล็อก
-    setOrderToPrint(order);
-    setSelectedLabelType('standard'); // ตั้งค่าเริ่มต้นเป็นลาเบลมาตรฐาน
-    setLabelTypeDialogOpen(true);
+    // อัพเดตสถานะการพิมพ์ในฐานข้อมูล
+    fetch(`/api/orders/${order.id}/print-status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
+      },
+      credentials: 'include',
+      body: JSON.stringify({ isPrinted: true })
+    });
+
+    // เปิดหน้า tiktok-shipping-label โดยตรง
+    const labelUrl = `/tiktok-shipping-label?order=${order.id}`;
+    
+    // สร้าง link element แล้วจำลองการคลิก
+    const link = document.createElement('a');
+    link.href = labelUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+
+    // ลบ link element หลังจากใช้งาน
+    setTimeout(() => {
+      document.body.removeChild(link);
+    }, 100);
   };
 
   // ฟังก์ชันเปิด Dialog สำหรับเลือกขนส่ง
