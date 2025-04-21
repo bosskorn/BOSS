@@ -30,6 +30,7 @@ const FlashExpressLabelNew: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [dataReady, setDataReady] = useState(false);
   const [order, setOrder] = useState<any>(null);
+  const [orderItems, setOrderItems] = useState<Array<{productName: string, quantity: number, price: number}>>([]);
   
   // Reference สำหรับบาร์โค้ด
   const barcodeRef = useRef(null);
@@ -75,6 +76,18 @@ const FlashExpressLabelNew: React.FC = () => {
         const orderData = data.order;
         console.log('พิมพ์ลาเบลสำหรับออเดอร์:', orderData);
         setOrder(orderData);
+        
+        // ตรวจสอบ items ในออเดอร์
+        if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
+          console.log('พบรายการสินค้า:', orderData.items);
+          setOrderItems(orderData.items.map((item: any) => ({
+            productName: item.productName || 'รายการสินค้า',
+            quantity: item.quantity || 1,
+            price: item.price || 0
+          })));
+        } else {
+          console.log('ไม่พบรายการสินค้าในออเดอร์');
+        }
         
         // ตรวจสอบเลขพัสดุ
         if (!orderData.trackingNumber) {
@@ -491,6 +504,13 @@ const FlashExpressLabelNew: React.FC = () => {
               <div class="product-qty">จำนวน</div>
               <div class="product-total">ราคา</div>
             </div>
+            ${orderItems.map(item => `
+              <div class="product-item">
+                <div class="product-name">${item.productName}</div>
+                <div class="product-qty">${item.quantity}</div>
+                <div class="product-total">${item.price * item.quantity} ฿</div>
+              </div>
+            `).join('')}
             <div class="product-summary">
               <div>รวมทั้งสิ้น:</div>
               <div>${codAmount} บาท</div>
