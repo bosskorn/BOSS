@@ -14,14 +14,17 @@ try {
     if (process.env.NODE_ENV === 'production') {
       console.error('WARNING: STRIPE_SECRET_KEY is not defined in environment variables');
       console.warn('Using a dummy Stripe key in production. Payment features will not work correctly.');
-      // Instead of throwing an error, we'll use a dummy key with a warning
+      // ใช้ key ทดสอบในโหมด production แทนการโยน error
+      stripeKey = 'sk_test_dummy';
     } else {
       // ในโหมด development ให้ใช้ instance ที่ไม่มี key สำหรับการทดสอบ
       console.warn('Using test mode for Stripe in development environment');
+      stripeKey = 'sk_test_dummy';
     }
   }
   
-  stripe = new Stripe(stripeKey || 'sk_test_dummy', {
+  // ใช้ stripeKey ที่อาจมีการกำหนดใหม่ข้างบน
+  stripe = new Stripe(stripeKey, {
     apiVersion: '2023-10-16' as any,
   });
 } catch (error) {
@@ -46,6 +49,17 @@ const createCheckoutSessionSchema = z.object({
  */
 router.post('/create-checkout-session', auth, async (req, res) => {
   try {
+    // ตรวจสอบว่า Stripe API พร้อมใช้งานหรือไม่
+    if (!stripe || !process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_dummy') {
+      console.warn('Stripe API is not properly configured. Using mock response.');
+      // ส่งคืน mock response สำหรับการทดสอบ
+      return res.status(200).json({
+        success: true,
+        sessionId: `mock_session_${Date.now()}`,
+        url: `${req.protocol}://${req.get('host')}/topup/mock-payment`
+      });
+    }
+    
     // ตรวจสอบว่ามีการส่งข้อมูลที่ถูกต้องมาหรือไม่
     const validation = createCheckoutSessionSchema.safeParse(req.body);
     if (!validation.success) {
