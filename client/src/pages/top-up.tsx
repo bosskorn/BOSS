@@ -562,20 +562,124 @@ const TopUpPage: React.FC = () => {
                     <CardTitle>เติมเงินด้วยบัตรเครดิต/เดบิต</CardTitle>
                     <CardDescription>เติมเงินด้วยบัตรเครดิตหรือบัตรเดบิต</CardDescription>
                   </CardHeader>
-                  <CardContent className="text-center py-8">
-                    <AlertCircle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">รอการตั้งค่า Stripe API</h3>
-                    <p className="text-gray-500 max-w-md mx-auto mb-4">
-                      ระบบกำลังรอการตั้งค่า Stripe API Key สำหรับการชำระเงิน
-                      กรุณาใช้วิธีการเติมเงินอื่น หรือติดต่อผู้ดูแลระบบเพื่อตั้งค่า API
-                    </p>
-                    <Button
-                      variant="outline"
-                      onClick={() => setActiveTab('promptpay')}
-                    >
-                      <QrCode className="mr-2 h-4 w-4" />
-                      เปลี่ยนเป็นเติมเงินผ่าน PromptPay
-                    </Button>
+                  <CardContent>
+                    {paymentStep === 1 && (
+                      <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                          <FormField
+                            control={form.control}
+                            name="amount"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>จำนวนเงิน (บาท)</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">฿</span>
+                                    <Input {...field} className="pl-7" placeholder="100" />
+                                  </div>
+                                </FormControl>
+                                <FormDescription>
+                                  จำนวนเงินขั้นต่ำ 100 บาท สูงสุด 50,000 บาท
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <div className="flex mt-6 items-center">
+                            <CreditCard className="h-6 w-6 text-purple-600 mr-2" />
+                            <div className="text-sm">
+                              <div className="font-medium">การชำระเงินที่ปลอดภัย</div>
+                              <div className="text-gray-500">ดำเนินการโดย Stripe - รองรับทุกธนาคาร</div>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end">
+                            <Button type="submit" disabled={processing} className="bg-purple-600 hover:bg-purple-700">
+                              {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              ดำเนินการ
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    )}
+                    
+                    {paymentStep === 2 && (
+                      <div className="space-y-6">
+                        <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
+                          <h3 className="font-medium text-lg mb-4">กรุณาชำระเงินด้วยบัตรเครดิต/เดบิต</h3>
+                          
+                          <div className="bg-white p-5 rounded-lg mb-4">
+                            {/* ที่นี่จะใช้ Stripe Elements สำหรับฟอร์มบัตรเครดิต */}
+                            <div className="border rounded-lg p-4 mb-4">
+                              <div className="flex justify-between mb-2">
+                                <span className="text-sm text-gray-500">Stripe Payment Form</span>
+                                <CreditCard className="h-5 w-5 text-gray-400" />
+                              </div>
+                              <div className="h-10 bg-gray-100 rounded mb-2"></div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="h-10 bg-gray-100 rounded"></div>
+                                <div className="h-10 bg-gray-100 rounded"></div>
+                              </div>
+                            </div>
+                            
+                            <div className="text-sm text-gray-600 mb-2">
+                              จำนวนเงิน: <span className="font-medium text-black dark:text-white">฿{form.getValues().amount}</span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              รหัสอ้างอิง: {referenceId}
+                            </div>
+                          </div>
+                          
+                          <Button 
+                            onClick={checkPaymentStatus}
+                            disabled={processing}
+                            className="bg-purple-600 hover:bg-purple-700 w-full"
+                          >
+                            {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            ชำระเงิน
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            onClick={cancelTopUp}
+                            disabled={processing}
+                            className="mt-2 w-full"
+                          >
+                            ยกเลิกการชำระเงิน
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {paymentStep === 3 && (
+                      <div className="space-y-6">
+                        <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
+                          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle2 className="h-8 w-8 text-green-600" />
+                          </div>
+                          <h3 className="font-medium text-lg mb-2">เติมเงินสำเร็จ</h3>
+                          <p className="text-gray-600 mb-4">
+                            คุณได้เติมเงินจำนวน <span className="font-medium text-black dark:text-white">฿{form.getValues().amount}</span> เข้าบัญชีเรียบร้อยแล้ว
+                          </p>
+                          <div className="bg-white p-3 rounded-lg inline-block mb-4">
+                            <p className="text-sm text-gray-600">
+                              ยอดเงินคงเหลือ: <span className="font-medium text-black dark:text-white">฿{user?.balance || '0'}</span>
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              รหัสอ้างอิง: {referenceId}
+                            </p>
+                          </div>
+                          
+                          <Button
+                            onClick={startNewTopUp}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            เติมเงินอีกครั้ง
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
