@@ -35,7 +35,8 @@ import FlashExpressLabelNew from "@/pages/flash-express-label-new";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import TikTokFlashLabel from './pages/tiktok-flash-label';
-import TikTokShippingLabel from './pages/tiktok-shipping-label'; // Added import for new component
+import TikTokShippingLabel from './pages/tiktok-shipping-label';
+import PrintMultipleLabels from './pages/print-multiple-labels';
 
 
 // รายงาน
