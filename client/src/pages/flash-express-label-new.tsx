@@ -249,6 +249,8 @@ const FlashExpressLabelNew: React.FC = () => {
       <head>
         <meta charset="UTF-8">
         <title>ลาเบลการจัดส่ง</title>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap');
           
@@ -581,10 +583,39 @@ const FlashExpressLabelNew: React.FC = () => {
               margin: 0
             });
             
-            // ตั้งค่าให้รอการแสดงบาร์โค้ดก่อนพิมพ์อัตโนมัติ
+            // สร้าง QR Code
+            const qrCodeElement = printWindow.document.getElementById('qrcode');
+            if (qrCodeElement) {
+              try {
+                // ล้างข้อมูลเดิม
+                qrCodeElement.innerHTML = '';
+                
+                // สร้าง QR Code แบบ inline ด้วย QRCode.js
+                new QRCode(qrCodeElement, {
+                  text: barcodeText, 
+                  width: 80,
+                  height: 80,
+                  colorDark: "#000000",
+                  colorLight: "#ffffff",
+                  correctLevel: QRCode.CorrectLevel.H
+                });
+              } catch (qrError) {
+                console.error('เกิดข้อผิดพลาดในการสร้าง QR Code:', qrError);
+                // ใช้ Google Chart API เป็น fallback ถ้า QRCode.js ไม่ทำงาน
+                const qrCodeUrl = "https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=" + 
+                  encodeURIComponent(barcodeText);
+                const img = document.createElement("img");
+                img.src = qrCodeUrl;
+                img.width = 80;
+                img.height = 80;
+                qrCodeElement.appendChild(img);
+              }
+            }
+            
+            // ตั้งค่าให้รอการแสดงบาร์โค้ดและ QR code ก่อนพิมพ์อัตโนมัติ
             setTimeout(() => {
               printWindow.print();
-            }, 800);
+            }, 1000);
           } catch (barcodeError) {
             console.error('ไม่สามารถสร้างบาร์โค้ดได้:', barcodeError);
             printWindow.document.body.innerHTML += `<div style="color: red; padding: 20px;">
