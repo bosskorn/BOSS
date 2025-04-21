@@ -166,26 +166,35 @@ const TopUpPage: React.FC = () => {
   const onSubmit = async (data: z.infer<typeof topUpSchema>) => {
     try {
       setProcessing(true);
+      console.log("เริ่มการทำงานของ onSubmit กับจำนวนเงิน:", data.amount);
       
       // ใช้การชำระเงินด้วย PromptPay เป็นหลัก
       // ใช้ฟังก์ชัน createPromptPayQRCode จาก stripeService
       const result = await stripeService.createPromptPayQRCode(parseFloat(data.amount));
+      console.log("ผลลัพธ์จาก createPromptPayQRCode:", result);
       
       if (result.success && result.qrCodeUrl) {
+        console.log("การสร้าง QR Code สำเร็จ, QR URL:", result.qrCodeUrl);
         // เก็บค่า reference และ QR Code URL
         setReferenceId(result.topup?.referenceId || '');
         setQrCodeUrl(result.qrCodeUrl);
         
+        // เริ่มการจับเวลาถอยหลัง
+        setIsTimerActive(true);
+        
         // ไปยังขั้นตอนการชำระเงิน
         setPaymentStep(2);
+        
+        console.log("การทำงานเสร็จสิ้น, paymentStep:", 2);
       } else {
+        console.error("ไม่พบ QR Code URL ในผลลัพธ์:", result);
         throw new Error('ไม่สามารถสร้างรายการเติมเงินได้');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('เกิดข้อผิดพลาดในการสร้างรายการเติมเงิน:', error);
       toast({
         title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถสร้างรายการเติมเงินได้ กรุณาลองใหม่อีกครั้ง',
+        description: error.message || 'ไม่สามารถสร้างรายการเติมเงินได้ กรุณาลองใหม่อีกครั้ง',
         variant: 'destructive',
       });
     } finally {
