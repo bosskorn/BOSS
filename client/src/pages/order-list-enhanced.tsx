@@ -935,15 +935,7 @@ const OrderList: React.FC = () => {
                       <Tag className="h-4 w-4 mr-1.5" />
                       สร้างเลขพัสดุ
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-10 border-blue-300 text-blue-700 hover:bg-blue-50"
-                      onClick={handlePrintMultiple}
-                    >
-                      <Printer className="h-4 w-4 mr-1.5" />
-                      พิมพ์ลาเบล
-                    </Button>
+
                   </div>
                 )}
               </div>
