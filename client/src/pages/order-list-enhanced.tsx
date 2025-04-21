@@ -781,7 +781,7 @@ const OrderList: React.FC = () => {
       const token =localStorage.getItem('auth_token');
 
       const response = await fetch(`/api/orders/${orderId}/print-status`, {
-        method: 'PATCH',
+        method: ''PATCH',
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
@@ -1624,6 +1624,7 @@ const OrderList: React.FC = () => {
       const labelHeightPx = labelSize === '100x100mm' ? '378px' : '284px';
 
       // สร้าง HTML สำหรับใบลาเบล
+      ```javascript
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
