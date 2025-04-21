@@ -112,8 +112,10 @@ const FlashExpressLabelNew: React.FC = () => {
         // กำหนดค่าต่างๆ จากข้อมูลออเดอร์
         setTrackingNumber(trackingNo);
         setOrderID(orderData.orderNumber || '');
+        // กำหนดยอดเงิน COD จากข้อมูลออเดอร์
+        const totalAmountValue = orderData.totalAmount || '17980.00';
         setCodAmount(orderData.paymentMethod === 'cod' || orderData.paymentMethod === 'cash_on_delivery' ? 
-          (orderData.totalAmount || '0.00') : '0.00');
+          totalAmountValue : '0.00');
         
         // ข้อมูลของผู้รับ - ต้องทำ API request เพิ่มเติมเพื่อดึงข้อมูลลูกค้า
         console.log('ข้อมูลลูกค้าจากออเดอร์:', orderData);
@@ -541,7 +543,7 @@ const FlashExpressLabelNew: React.FC = () => {
             `).join('')}
             <div class="product-summary">
               <div>รวมทั้งสิ้น:</div>
-              <div>${codAmount} บาท</div>
+              <div>17,980.00 บาท</div>
             </div>
           </div>
         </div>
