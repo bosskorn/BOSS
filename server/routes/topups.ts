@@ -14,18 +14,19 @@ const router = Router();
  */
 router.post('/create', auth, async (req: Request, res: Response) => {
   try {
+    // สร้างรหัสอ้างอิง
+    const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 12);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(4, '0');
+    const prefix = req.body.method === 'prompt_pay' ? 'PP' : 
+                req.body.method === 'credit_card' ? 'CC' : 'BT';
+    const referenceId = `${prefix}${timestamp}${random}`;
+    
     // ตรวจสอบข้อมูลด้วย zod schema
     const validatedData = insertTopupSchema.parse({
       ...req.body,
       userId: req.user?.id,
+      referenceId: referenceId,
     });
-
-    // สร้างรหัสอ้างอิงทุกครั้ง
-    const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 12);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(4, '0');
-    const prefix = validatedData.method === 'prompt_pay' ? 'PP' : 
-                validatedData.method === 'credit_card' ? 'CC' : 'BT';
-    const referenceId = `${prefix}${timestamp}${random}`;
 
     // สร้าง QR Code สำหรับ PromptPay แบบใช้งานได้จริง
     if (validatedData.method === 'prompt_pay' && !validatedData.qrCodeUrl) {
@@ -50,10 +51,7 @@ router.post('/create', auth, async (req: Request, res: Response) => {
     }
 
     // สร้างรายการเติมเงินในฐานข้อมูล
-    const topup = await storage.createTopUp({
-      ...validatedData,
-      referenceId: referenceId
-    });
+    const topup = await storage.createTopUp(validatedData);
 
     res.status(201).json({
       success: true,
