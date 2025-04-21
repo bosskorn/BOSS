@@ -709,22 +709,6 @@ const OrderList: React.FC = () => {
         <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
           <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange}>
             <div className="px-4 pt-4 pb-2 border-b border-gray-200">
-              <div className="flex justify-end gap-2 mb-4">
-                <Button 
-                  variant="outline" 
-                  className="border-blue-300 text-blue-700 hover:bg-blue-50 h-9"
-                  onClick={() => fetchOrders()}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  รีเฟรช
-                </Button>
-                <Link href="/create-order-tabs">
-                  <Button className="bg-blue-600 hover:bg-blue-700 h-9">
-                    <FileText className="h-4 w-4 mr-2" />
-                    สร้างออเดอร์ใหม่
-                  </Button>
-                </Link>
-              </div>
               
               <div className="w-full overflow-x-auto hide-scrollbar pb-2">
                 <div className="flex flex-nowrap border-b border-gray-200 py-1">
@@ -738,6 +722,19 @@ const OrderList: React.FC = () => {
                         <span>ทั้งหมด</span>
                         <span className="ml-1 bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
                           {orders.length}
+                        </span>
+                      </div>
+                    </TabsTrigger>
+
+                    <TabsTrigger 
+                      value="waiting" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-4 w-4 text-purple-500" />
+                        <span>รอดำเนินการ</span>
+                        <span className="ml-1 bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                          {orders.filter(o => !o.status || o.status === 'waiting').length}
                         </span>
                       </div>
                     </TabsTrigger>
@@ -846,18 +843,6 @@ const OrderList: React.FC = () => {
                       </div>
                     </TabsTrigger>
 
-                    <TabsTrigger 
-                      value="waiting" 
-                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-700 data-[state=active]:bg-transparent hover:bg-gray-50"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-4 w-4 text-purple-500" />
-                        <span>รอดำเนินการ</span>
-                        <span className="ml-1 bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">
-                          {orders.filter(o => !o.status || o.status === 'waiting').length}
-                        </span>
-                      </div>
-                    </TabsTrigger>
                   </TabsList>
                 </div>
                 
