@@ -863,75 +863,80 @@ const OrderList: React.FC = () => {
                     </TabsTrigger>
                   </TabsList>
                 </div>
-
-                <div className="bg-white px-4 pt-4 flex flex-wrap gap-1.5">
-                  <div className="px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs font-medium border border-orange-200 flex items-center gap-1">
-                    <span className="w-2 h-2 inline-block bg-orange-500 rounded-full"></span>
-                    Flash Express
-                  </div>
-                  <div className="px-3 py-1.5 rounded-full bg-red-50 text-red-700 text-xs font-medium border border-red-200 flex items-center gap-1">
-                    <span className="w-2 h-2 inline-block bg-red-500 rounded-full"></span>
-                    J&T Express
-                  </div>
-                  <div className="px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-medium border border-green-200 flex items-center gap-1">
-                    <span className="w-2 h-2 inline-block bg-green-500 rounded-full"></span>
-                    เสี่ยวไป๋ เอ็กเพรส
-                  </div>
-                  <div className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200 flex items-center gap-1">
-                    <span className="w-2 h-2 inline-block bg-blue-500 rounded-full"></span>
-                    ไปรษณีย์ไทย
-                  </div>
-                </div>
+                
               </div>
             </div>
             
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
-              <div className="flex space-x-2 w-full md:w-auto">
-                <div className="relative w-full md:w-80">
-                  <Search className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input 
-                    placeholder="ค้นหาเลขออเดอร์, ชื่อลูกค้า, เลขพัสดุ..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 text-sm h-10 bg-white border-gray-300 focus-visible:ring-blue-500"
-                  />
+            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+              {/* ส่วนป้ายกำกับบริษัทขนส่ง */}
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                <div className="px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs font-medium border border-orange-200 flex items-center gap-1">
+                  <span className="w-2 h-2 inline-block bg-orange-500 rounded-full"></span>
+                  Flash Express
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="default" 
-                  className={`h-10 gap-1.5 ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : 'border-gray-300'}`}
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  <Filter className="h-4 w-4" />
-                  <span className="font-medium">กรอง</span>
-                </Button>
+                <div className="px-3 py-1.5 rounded-full bg-red-50 text-red-700 text-xs font-medium border border-red-200 flex items-center gap-1">
+                  <span className="w-2 h-2 inline-block bg-red-500 rounded-full"></span>
+                  J&T Express
+                </div>
+                <div className="px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-medium border border-green-200 flex items-center gap-1">
+                  <span className="w-2 h-2 inline-block bg-green-500 rounded-full"></span>
+                  เสี่ยวไป๋ เอ็กเพรส
+                </div>
+                <div className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200 flex items-center gap-1">
+                  <span className="w-2 h-2 inline-block bg-blue-500 rounded-full"></span>
+                  ไปรษณีย์ไทย
+                </div>
               </div>
               
-              {selectedOrders.length > 0 && (
-                <div className="hidden md:flex items-center gap-2 ml-2">
-                  <span className="text-sm text-blue-700 font-medium bg-blue-50 px-3 py-1 rounded-md">
-                    เลือก {selectedOrders.length} รายการ
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-10 border-blue-300 text-blue-700 hover:bg-blue-50"
-                    onClick={handleCreateMultipleTracking}
+              {/* ส่วนค้นหาและกรอง */}
+              <div className="flex items-center justify-between">
+                <div className="flex space-x-2 w-full md:w-auto">
+                  <div className="relative w-full md:w-80">
+                    <Search className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input 
+                      placeholder="ค้นหาเลขออเดอร์, ชื่อลูกค้า, เลขพัสดุ..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 text-sm h-10 bg-white border-gray-300 focus-visible:ring-blue-500"
+                    />
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="default" 
+                    className={`h-10 gap-1.5 ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : 'border-gray-300'}`}
+                    onClick={() => setShowFilters(!showFilters)}
                   >
-                    <Tag className="h-4 w-4 mr-1.5" />
-                    สร้างเลขพัสดุ
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-10 border-blue-300 text-blue-700 hover:bg-blue-50"
-                    onClick={handlePrintMultiple}
-                  >
-                    <Printer className="h-4 w-4 mr-1.5" />
-                    พิมพ์ลาเบล
+                    <Filter className="h-4 w-4" />
+                    <span className="font-medium">กรอง</span>
                   </Button>
                 </div>
-              )}
+                
+                {selectedOrders.length > 0 && (
+                  <div className="hidden md:flex items-center gap-2 ml-2">
+                    <span className="text-sm text-blue-700 font-medium bg-blue-50 px-3 py-1 rounded-md">
+                      เลือก {selectedOrders.length} รายการ
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-10 border-blue-300 text-blue-700 hover:bg-blue-50"
+                      onClick={() => setMultipleTrackingDialogOpen(true)}
+                    >
+                      <Tag className="h-4 w-4 mr-1.5" />
+                      สร้างเลขพัสดุ
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-10 border-blue-300 text-blue-700 hover:bg-blue-50"
+                      onClick={handlePrintMultiple}
+                    >
+                      <Printer className="h-4 w-4 mr-1.5" />
+                      พิมพ์ลาเบล
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
             
             {/* ตารางแสดงข้อมูล */}
