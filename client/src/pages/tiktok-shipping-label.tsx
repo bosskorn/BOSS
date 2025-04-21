@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,15 +20,15 @@ const TikTokShippingLabel: React.FC = () => {
   const [weight, setWeight] = useState('4.000');
   const [orderIdFull, setOrderIdFull] = useState('5785159668395229951');
   const [shippingDate, setShippingDate] = useState('21/04/2025 23:39');
-  
+
   const barcodeRef = useRef<SVGSVGElement>(null);
-  
+
   // สินค้าในคำสั่งซื้อ
   const [products, setProducts] = useState([
     { name: 'เค้กช็อคโกแลต Red Velvet', quantity: 2, price: 590 },
     { name: 'คุกกี้เนยสด', quantity: 1, price: 250 },
   ]);
-  
+
   // คำนวณยอดรวม
   const totalAmount = products.reduce((sum, product) => sum + product.price * product.quantity, 0);
 
@@ -51,32 +50,32 @@ const TikTokShippingLabel: React.FC = () => {
     // ตรวจสอบว่ามีการอัพโหลดไฟล์หรือไม่
     const labelFileInput = document.getElementById('labelFile') as HTMLInputElement;
     const uploadedFile = labelFileInput?.files?.[0];
-    
+
     if (uploadedFile) {
       // หากมีการอัพโหลดไฟล์ ให้เปิดไฟล์นั้นเพื่อพิมพ์
       const fileUrl = URL.createObjectURL(uploadedFile);
       const printWindow = window.open(fileUrl, '_blank');
-      
+
       if (!printWindow) {
         alert('โปรดอนุญาตให้เปิดหน้าต่างป๊อปอัพเพื่อพิมพ์ลาเบล');
         return;
       }
-      
+
       printWindow.onload = () => {
         printWindow.print();
       };
-      
+
       return;
     }
-    
+
     // หากไม่มีการอัพโหลดไฟล์ ให้สร้างลาเบลแบบเดิม
     const printWindow = window.open('', '_blank');
-    
+
     if (!printWindow) {
       alert('โปรดอนุญาตให้เปิดหน้าต่างป๊อปอัพเพื่อพิมพ์ลาเบล');
       return;
     }
-    
+
     // ตั้งค่า HTML และ CSS สำหรับการพิมพ์
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -262,12 +261,12 @@ const TikTokShippingLabel: React.FC = () => {
             <div>FLASH</div>
             <div>Standard</div>
           </div>
-          
+
           <div class="barcode-section">
             <svg id="barcode"></svg>
             <div class="barcode-number">${trackingNumber}</div>
           </div>
-          
+
           <div class="info-section">
             <div class="order-id">${orderId}</div>
             <div class="shipping-type">
@@ -276,12 +275,12 @@ const TikTokShippingLabel: React.FC = () => {
               พร้อม
             </div>
           </div>
-          
+
           <div class="address-section">
             <strong>จาก</strong> ${senderName} ${senderPhone}<br>
             ${senderAddress}
           </div>
-          
+
           <div class="qr-section">
             <div class="sender-info">
               <strong>ถึง</strong> ${recipientName} ${recipientPhone}<br>
@@ -291,7 +290,7 @@ const TikTokShippingLabel: React.FC = () => {
               <div id="qrcode"></div>
             </div>
           </div>
-          
+
           <div class="cod-section">
             <div class="cod-label">COD</div>
             <div class="weight-info">
@@ -304,7 +303,7 @@ const TikTokShippingLabel: React.FC = () => {
               </table>
             </div>
           </div>
-          
+
           <div class="footer">
             <div class="order-details">
               <table>
@@ -324,7 +323,7 @@ const TikTokShippingLabel: React.FC = () => {
             </div>
             <div class="pickup-label">PICK-UP</div>
           </div>
-          
+
           <div class="product-section">
             <div class="product-header">
               <div class="product-name">รายการสินค้า</div>
@@ -344,7 +343,7 @@ const TikTokShippingLabel: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <script type="text/javascript">
           // สร้าง QR Code
           const qr = new QRCode(document.getElementById("qrcode"), {
@@ -352,7 +351,7 @@ const TikTokShippingLabel: React.FC = () => {
             width: 80,
             height: 80
           });
-          
+
           // สร้างบาร์โค้ด
           JsBarcode("#barcode", "${trackingNumber}", {
             format: "CODE128",
@@ -361,7 +360,7 @@ const TikTokShippingLabel: React.FC = () => {
             height: 40,
             displayValue: false
           });
-          
+
           // พิมพ์อัตโนมัติหลังจากโหลดเสร็จ
           window.onload = function() {
             setTimeout(function() {
@@ -369,13 +368,13 @@ const TikTokShippingLabel: React.FC = () => {
             }, 500);
           };
         </script>
-        
+
         <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
       </body>
       </html>
     `);
-    
+
     printWindow.document.close();
   };
 
@@ -383,12 +382,12 @@ const TikTokShippingLabel: React.FC = () => {
     <Layout>
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-6">พิมพ์ลาเบล TikTok Shop</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardContent className="p-6 space-y-4">
               <h2 className="text-lg font-semibold">ข้อมูลการจัดส่ง</h2>
-              
+
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="trackingNumber">เลขพัสดุ</Label>
@@ -399,7 +398,7 @@ const TikTokShippingLabel: React.FC = () => {
                     placeholder="เลขติดตามพัสดุ"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="orderId">รหัสคำสั่งซื้อย่อ</Label>
@@ -420,7 +419,7 @@ const TikTokShippingLabel: React.FC = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="orderIdFull">รหัสคำสั่งซื้อเต็ม</Label>
                   <Input
@@ -430,7 +429,7 @@ const TikTokShippingLabel: React.FC = () => {
                     placeholder="รหัสคำสั่งซื้อเต็ม"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="shippingDate">วันที่จัดส่ง</Label>
                   <Input
@@ -440,7 +439,7 @@ const TikTokShippingLabel: React.FC = () => {
                     placeholder="วันที่จัดส่ง"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="weight">น้ำหนัก (กิโลกรัม)</Label>
                   <Input
@@ -453,11 +452,11 @@ const TikTokShippingLabel: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6 space-y-4">
               <h2 className="text-lg font-semibold">ข้อมูลผู้ส่ง/ผู้รับ</h2>
-              
+
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="senderName">ชื่อผู้ส่ง</Label>
@@ -468,7 +467,7 @@ const TikTokShippingLabel: React.FC = () => {
                     placeholder="ชื่อผู้ส่ง"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="senderPhone">เบอร์โทรผู้ส่ง</Label>
                   <Input
@@ -478,7 +477,7 @@ const TikTokShippingLabel: React.FC = () => {
                     placeholder="เบอร์โทรผู้ส่ง"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="senderAddress">ที่อยู่ผู้ส่ง</Label>
                   <Input
@@ -488,7 +487,7 @@ const TikTokShippingLabel: React.FC = () => {
                     placeholder="ที่อยู่ผู้ส่ง"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="recipientName">ชื่อผู้รับ</Label>
                   <Input
@@ -498,7 +497,7 @@ const TikTokShippingLabel: React.FC = () => {
                     placeholder="ชื่อผู้รับ"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="recipientPhone">เบอร์โทรผู้รับ</Label>
                   <Input
@@ -508,7 +507,7 @@ const TikTokShippingLabel: React.FC = () => {
                     placeholder="เบอร์โทรผู้รับ"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="recipientAddress">ที่อยู่ผู้รับ</Label>
                   <Input
@@ -540,11 +539,11 @@ const TikTokShippingLabel: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-        
+
         <Card className="mt-6">
           <CardContent className="p-6 space-y-4">
             <h2 className="text-lg font-semibold">รายการสินค้า</h2>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-100">
@@ -602,7 +601,7 @@ const TikTokShippingLabel: React.FC = () => {
                 </tfoot>
               </table>
             </div>
-            
+
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -611,7 +610,7 @@ const TikTokShippingLabel: React.FC = () => {
               >
                 เพิ่มสินค้า
               </Button>
-              
+
               {products.length > 1 && (
                 <Button
                   type="button"
@@ -624,23 +623,23 @@ const TikTokShippingLabel: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <div className="mt-6 flex justify-center">
           <div className="w-[100mm] border border-dashed border-gray-400 p-2 bg-white">
             <div className="text-center text-xs text-gray-500 mb-2">ใบลาเบลขนาด 100x150mm เหมาะสำหรับพัสดุทั่วไป</div>
-            
+
             <div className="relative" style={{ width: '100mm', height: '150mm', border: '1px solid #000' }}>
               <div className="flex justify-between border-b border-black p-1 text-xs">
                 <div>TikTok Shop</div>
                 <div>FLASH</div>
                 <div>Standard</div>
               </div>
-              
+
               <div className="text-center border-b border-black p-1">
                 <svg ref={barcodeRef} className="mx-auto"></svg>
                 <div className="text-xs mt-1">{trackingNumber}</div>
               </div>
-              
+
               <div className="flex border-b border-black">
                 <div className="w-3/5 text-center p-2 border-r border-black font-bold">
                   {orderId}
@@ -651,12 +650,12 @@ const TikTokShippingLabel: React.FC = () => {
                   <div>พร้อม</div>
                 </div>
               </div>
-              
+
               <div className="p-1 text-xs border-b border-black">
                 <strong>จาก</strong> {senderName} {senderPhone}<br />
                 {senderAddress}
               </div>
-              
+
               <div className="flex border-b border-black">
                 <div className="w-3/5 p-1 text-xs border-r border-black">
                   <strong>ถึง</strong> {recipientName} {recipientPhone}<br />
@@ -666,7 +665,7 @@ const TikTokShippingLabel: React.FC = () => {
                   <QRCodeSVG value={trackingNumber} size={80} />
                 </div>
               </div>
-              
+
               <div className="flex border-b border-black">
                 <div className="w-2/5 bg-black text-white text-center p-1 flex items-center justify-center font-bold text-xl border-r border-black">
                   COD
@@ -681,7 +680,7 @@ const TikTokShippingLabel: React.FC = () => {
                   </table>
                 </div>
               </div>
-              
+
               <div className="flex border-b border-black">
                 <div className="w-7/10 p-1 text-xs border-r border-black">
                   <table className="w-full text-xs">
@@ -703,14 +702,14 @@ const TikTokShippingLabel: React.FC = () => {
                   PICK-UP
                 </div>
               </div>
-              
+
               <div className="p-1 text-xs">
                 <div className="flex font-bold border-b border-gray-300 pb-1 mb-1">
                   <div className="w-7/10">รายการสินค้า</div>
                   <div className="w-1.5/10 text-center">จำนวน</div>
                   <div className="w-1.5/10 text-right">ราคา</div>
                 </div>
-                
+
                 {products.map((product, index) => (
                   <div key={index} className="flex py-0.5">
                     <div className="w-7/10 truncate">{product.name}</div>
@@ -718,7 +717,7 @@ const TikTokShippingLabel: React.FC = () => {
                     <div className="w-1.5/10 text-right">{product.price}</div>
                   </div>
                 ))}
-                
+
                 <div className="flex justify-between font-bold mt-1 pt-1 border-t border-gray-300">
                   <div>รวมทั้งสิ้น:</div>
                   <div>{totalAmount} บาท</div>
@@ -727,7 +726,7 @@ const TikTokShippingLabel: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="mt-6 flex justify-center">
           <Button size="lg" onClick={printLabel}>
             <i className="fa-solid fa-print mr-2"></i>พิมพ์ลาเบล

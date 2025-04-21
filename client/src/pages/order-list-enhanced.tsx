@@ -27,12 +27,12 @@ import {
 // ฟังก์ชันสร้างบาร์โค้ด Code128 สำหรับเลขพัสดุ
 function generateJSBarcode(trackingNumber: string): void {
   if (!trackingNumber) return;
-  
+
   setTimeout(() => {
     try {
       // หลังจากหน้าพิมพ์โหลดเสร็จ ค้นหา element ที่มี class barcode-element
       const barcodeElements = document.querySelectorAll('.barcode-element');
-      
+
       if (barcodeElements.length > 0) {
         barcodeElements.forEach((element) => {
           if (element.getAttribute('data-tracking') === trackingNumber) {
@@ -59,7 +59,7 @@ function generateJSBarcode(trackingNumber: string): void {
 // ฟังก์ชันสร้างบาร์โค้ด HTML
 function generateBarcode(trackingNumber: string): string {
   if (!trackingNumber) return '';
-  
+
   return `
     <div style="text-align: center; padding:1px;">
       <svg class="barcode-element" data-tracking="${trackingNumber}" style="width:100%; max-width:180px; height:30px;"></svg>
@@ -134,7 +134,7 @@ const OrderList: React.FC = () => {
   const [isPrintingLabel, setIsPrintingLabel] = useState<boolean>(false);
   const [currentPrintingOrder, setCurrentPrintingOrder] = useState<number | null>(null);
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
-  
+
   // State สำหรับการแบ่งหน้า (pagination)
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(50);
@@ -156,7 +156,7 @@ const OrderList: React.FC = () => {
   const [orderToCreateTracking, setOrderToCreateTracking] = useState<number | null>(null);
   const [selectedShippingMethod, setSelectedShippingMethod] = useState<string>('');
   const [selectedLabelType, setSelectedLabelType] = useState<string>('standard');
-  
+
   // ข้อมูลวิธีการจัดส่งจากฐานข้อมูล
   interface ShippingMethod {
     id: number;
@@ -168,7 +168,7 @@ const OrderList: React.FC = () => {
     isActive: boolean;
   }
   const [dbShippingMethods, setDbShippingMethods] = useState<ShippingMethod[]>([]);
-  
+
 
   // ฟังก์ชันเรียกข้อมูลคำสั่งซื้อจาก API
   const fetchOrders = async () => {
@@ -176,7 +176,7 @@ const OrderList: React.FC = () => {
     try {
       // ดึง token จาก localStorage
       const token = localStorage.getItem('auth_token');
-      
+
       const response = await fetch('/api/orders', {
         method: 'GET',
         credentials: 'include',
@@ -186,13 +186,13 @@ const OrderList: React.FC = () => {
           'Authorization': token ? `Bearer ${token}` : '', // เพิ่ม Authorization header ถ้ามี token
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         // ตรวจสอบรูปแบบข้อมูลว่ามาในรูปแบบไหน
         if (Array.isArray(data.data)) {
@@ -229,7 +229,7 @@ const OrderList: React.FC = () => {
     const methods = orders
       .map(order => order.shippingMethod)
       .filter((method): method is string => !!method);
-      
+
     const uniqueMethods = Array.from(new Set(methods));
     setAvailableShippingMethods(uniqueMethods);
   };
@@ -238,7 +238,7 @@ const OrderList: React.FC = () => {
   const fetchShippingMethods = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      
+
       const response = await fetch('/api/shipping-methods', {
         method: 'GET',
         credentials: 'include',
@@ -247,17 +247,17 @@ const OrderList: React.FC = () => {
           'Authorization': token ? `Bearer ${token}` : '',
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success && Array.isArray(data.shippingMethods)) {
         console.log('ดึงข้อมูลวิธีการจัดส่งสำเร็จ:', data.shippingMethods.length, 'รายการ');
         setDbShippingMethods(data.shippingMethods);
-        
+
         // ตั้งค่า shipping method แรกเป็นค่าเริ่มต้น (ถ้ามี)
         if (data.shippingMethods.length > 0) {
           setSelectedShippingMethod(data.shippingMethods[0].name);
@@ -280,15 +280,15 @@ const OrderList: React.FC = () => {
     fetchOrders();
     fetchShippingMethods();
   }, []);
-  
+
   // สกัดข้อมูลวิธีการขนส่งเมื่อข้อมูลออร์เดอร์มีการเปลี่ยนแปลง
   useEffect(() => {
     if (orders.length > 0) {
       extractShippingMethods(orders);
     }
-    
+
     // เพิ่มรายชื่อขนส่งเป็นตัวเลือกเริ่มต้นเสมอ
-    // เพื่อให้สามารถกรองได้ทันที แม้ไม่มีข้อมูลขนส่งในออร์เดอร์
+    // เพื่อให้สามารถกรองได้ทันที แม้ไม่มีข้อมูลขนส่งในออเดอร์
     setAvailableShippingMethods(prev => {
       // เพิ่มรายชื่อขนส่งมาตรฐานทั้งหมด
       const standardCouriers = [
@@ -302,7 +302,7 @@ const OrderList: React.FC = () => {
         'Ninja Van',
         'Flash Express'
       ];
-      
+
       // สร้างรายการใหม่ที่รวมขนส่งทั้งหมด
       let newCouriers = [...prev];
       standardCouriers.forEach(courier => {
@@ -310,22 +310,22 @@ const OrderList: React.FC = () => {
           newCouriers.push(courier);
         }
       });
-      
+
       return newCouriers;
     });
-    
+
     // ไม่มีการ cleanup ที่จำเป็น จึงไม่ต้องคืนค่าอะไร
   }, [orders]);
 
   // กรองข้อมูลเมื่อแท็บเปลี่ยน หรือค้นหา หรือช่วงวันที่เปลี่ยน หรือกรองขนส่ง
   useEffect(() => {
     let result = [...orders];
-    
+
     // กรองตามแท็บ
     if (activeTab !== 'all') {
       result = result.filter(order => order.status === activeTab);
     }
-    
+
     // กรองตามข้อความค้นหา
     if (searchTerm) {
       const searchTermLower = searchTerm.toLowerCase();
@@ -334,23 +334,23 @@ const OrderList: React.FC = () => {
         (order.trackingNumber && order.trackingNumber.toLowerCase().includes(searchTermLower))
       );
     }
-    
+
     // กรองตามช่วงวันที่
     if (dateRange.start && dateRange.end) {
       const startDate = new Date(dateRange.start);
       const endDate = new Date(dateRange.end);
       endDate.setHours(23, 59, 59, 999); // ตั้งค่าให้เป็นสิ้นสุดของวัน
-      
+
       result = result.filter(order => {
         const orderDate = new Date(order.date);
         return orderDate >= startDate && orderDate <= endDate;
       });
     }
-    
+
     // กรองตามวิธีการขนส่ง
     if (shippingFilter !== 'all') {
       console.log('กำลังกรองตามวิธีการขนส่ง:', shippingFilter);
-      
+
       // กำหนดการจับคู่ระหว่างชื่อขนส่งกับรหัสนำหน้า และคำค้นหาอื่นๆ
       const carrierMappings: Record<string, {prefixes: string[], keywords: string[]}> = {
         'Xiaobai Express': {
@@ -390,10 +390,10 @@ const OrderList: React.FC = () => {
           keywords: ['Flash', 'แฟลช']
         }
       };
-      
+
       // แสดงข้อมูลจำนวนออเดอร์ก่อนกรอง
       console.log(`จำนวนออเดอร์ทั้งหมด: ${result.length} รายการ`);
-      
+
       // แสดงข้อมูลออเดอร์ตัวอย่างเพื่อดูรูปแบบ
       if (result.length > 0) {
         console.log('ตัวอย่างออเดอร์แรก:', {
@@ -403,12 +403,12 @@ const OrderList: React.FC = () => {
           shippingMethod: result[0].shippingMethod || 'ไม่ระบุ'
         });
       }
-      
+
       // กรองตามเลขพัสดุและชื่อขนส่ง
       result = result.filter(order => {
         // จัดเก็บข้อมูลเพื่อทำ debug
         console.log(`ตรวจสอบ order #${order.id} ${order.orderNumber || 'ไม่มีเลข'}: ${order.trackingNumber || 'ไม่มีเลขพัสดุ'}, shippingMethod: ${order.shippingMethod || 'ไม่ระบุ'}`);
-        
+
         // ตรวจสอบเลขพัสดุก่อน (กรณีมีเลขพัสดุ)
         if (order.trackingNumber) {
           const trackingNo = order.trackingNumber;
@@ -422,76 +422,76 @@ const OrderList: React.FC = () => {
             }
           }
         }
-        
+
         // ตรวจสอบเลขพัสดุด้วยการหาคำสำคัญในทุกส่วนของเลขพัสดุ (ไม่ใช่แค่นำหน้า)
         if (order.trackingNumber) {
           const trackingNo = order.trackingNumber;
-          
+
           // กรณี Thailand Post
           if (shippingFilter === 'Thailand Post' && trackingNo.includes('THA')) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Thailand Post`);
             return true;
           }
-          
+
           // กรณี SpeedLine
           if (shippingFilter === 'SpeedLine' && trackingNo.includes('SPE')) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for SpeedLine`);
             return true;
           }
-          
+
           // กรณี Ninja Van
           if (shippingFilter === 'Ninja Van' && (trackingNo.includes('NIN') || trackingNo.includes('NJA') || trackingNo.includes('NJV'))) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Ninja Van`);
             return true;
           }
-          
+
           // กรณี DHL
           if (shippingFilter === 'DHL Express' && trackingNo.includes('DHL')) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for DHL Express`);
             return true;
           }
-          
+
           // กรณี J&T Express
           if (shippingFilter === 'J&T Express' && (trackingNo.includes('JNT') || trackingNo.includes('JTE') || trackingNo.includes('J&T'))) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for J&T Express`);
             return true;
           }
-          
+
           // กรณี Kerry Express
           if (shippingFilter === 'Kerry Express' && (trackingNo.includes('KRY') || trackingNo.includes('KRE') || trackingNo.includes('KER'))) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Kerry Express`);
             return true;
           }
-          
+
           // กรณี ThaiStar Delivery
           if (shippingFilter === 'ThaiStar Delivery' && (trackingNo.includes('TSD') || trackingNo.includes('TST') || trackingNo.includes('TSR') || trackingNo.includes('THS'))) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for ThaiStar Delivery`);
             return true;
           }
-          
+
           // กรณี Flash Express
           if (shippingFilter === 'Flash Express' && (trackingNo.includes('FLX') || trackingNo.includes('FLE'))) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Flash Express`);
             return true;
           }
-          
+
           // กรณี Xiaobai Express
           if (shippingFilter === 'Xiaobai Express' && trackingNo.includes('เสี')) {
             console.log(`✓ Matched Order #${order.id}: ${trackingNo} substring match for Xiaobai Express`);
             return true;
           }
         }
-        
+
         // ตรวจสอบเลขออเดอร์ (กรณีออเดอร์มีรูปแบบพิเศษ) - แค่ไม่มีเลขพัสดุเฉยๆ ไม่ใช่ว่าทุกออเดอร์เป็น SpeedLine
         // ถ้าอยากให้แสดงเฉพาะออเดอร์ที่ไม่มีเลขพัสดุเลย ให้ใช้อันนี้ ซึ่งจะไม่ตรวจสอบเลขออเดอร์
         // if (shippingFilter === 'SpeedLine' && order.orderNumber && order.orderNumber.startsWith('PD') && !order.trackingNumber) {
         //   console.log(`✓ Matched Order #${order.id}: ${order.orderNumber} by orderNumber prefix PD (no tracking)`);
         //   return true;
         // }
-        
+
         // ตรวจสอบชื่อวิธีการจัดส่ง (กรณีไม่มีเลขพัสดุหรือเลขพัสดุไม่ตรงกับรูปแบบ)
         const shippingMethodName = order.shippingMethod || '';
-        
+
         // ตรวจสอบคำสำคัญทีละคำ
         if (carrierMappings[shippingFilter]) {
           for (const keyword of carrierMappings[shippingFilter].keywords) {
@@ -501,31 +501,31 @@ const OrderList: React.FC = () => {
             }
           }
         }
-        
+
         // ตรวจสอบชื่อขนส่งแบบตรงๆ
         if (shippingMethodName.toLowerCase() === shippingFilter.toLowerCase()) {
           console.log(`✓ Matched Order #${order.id}: ${shippingMethodName} exact match`);
           return true;
         }
-        
+
         // ไม่ตรงกับเงื่อนไขใดๆ
         return false;
       });
-      
+
       // แสดงข้อมูลจำนวนออเดอร์หลังกรอง
       console.log(`จำนวนออเดอร์ของ ${shippingFilter} หลังกรอง: ${result.length} รายการ`);
-      
-      
+
+
       // ไม่แสดงข้อมูลจำลองเมื่อไม่มีรายการคำสั่งซื้อ
       // ข้อความ "ยังไม่มีรายการคำสั่งซื้อ" จะถูกแสดงโดยอัตโนมัติเมื่อไม่มีข้อมูล
     }
-    
+
     // จัดเรียงข้อมูล
     result.sort((a, b) => {
       if (sortConfig.key === 'date') {
         const dateA = new Date(a[sortConfig.key]).getTime();
         const dateB = new Date(b[sortConfig.key]).getTime();
-        
+
         return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
       } else if (sortConfig.key === 'total') {
         const aTotal = a.total !== undefined ? a.total : parseFloat(a.totalAmount || "0");
@@ -536,7 +536,7 @@ const OrderList: React.FC = () => {
       } else {
         const valueA = String(a[sortConfig.key]).toLowerCase();
         const valueB = String(b[sortConfig.key]).toLowerCase();
-        
+
         if (valueA < valueB) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
@@ -546,7 +546,7 @@ const OrderList: React.FC = () => {
         return 0;
       }
     });
-    
+
     setFilteredOrders(result);
   }, [orders, activeTab, searchTerm, dateRange, sortConfig, shippingFilter]);
 
@@ -593,7 +593,7 @@ const OrderList: React.FC = () => {
         return <Badge variant="outline">ไม่ระบุ</Badge>;
     }
   };
-  
+
   // ฟังก์ชันแสดงสถานะการพิมพ์ใบลาเบล
   const getPrintStatus = (isPrinted?: boolean) => {
     if (isPrinted) {
@@ -616,12 +616,12 @@ const OrderList: React.FC = () => {
   // ฟังก์ชันฟอร์แมตวันที่เป็นรูปแบบวันที่ไทยที่อ่านง่าย
   const formatDate = (dateString: string) => {
     if (!dateString) return "-";
-    
+
     const date = new Date(dateString);
-    
+
     // เช็คว่าเป็นวันที่ถูกต้องหรือไม่
     if (isNaN(date.getTime())) return "-";
-    
+
     const options: Intl.DateTimeFormatOptions = { 
       year: 'numeric', 
       month: 'long', 
@@ -629,13 +629,13 @@ const OrderList: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     };
-    
+
     // แปลงเป็นรูปแบบไทย
     const thaiDate = date.toLocaleDateString('th-TH', options);
-    
+
     // แยกวันที่และเวลา
     const [datePart, timePart] = thaiDate.split(' ');
-    
+
     // สร้างรูปแบบที่อ่านง่ายขึ้น
     return (
       <div className="text-sm">
@@ -644,11 +644,11 @@ const OrderList: React.FC = () => {
       </div>
     );
   };
-  
+
   // ฟังก์ชันฟอร์แมตวิธีการชำระเงิน
   const formatPaymentMethod = (method: string | null | undefined) => {
     if (!method) return <span className="text-gray-400">ไม่ระบุ</span>;
-    
+
     switch (method) {
       case 'bank_transfer':
         return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">โอนเงิน</Badge>;
@@ -673,17 +673,17 @@ const OrderList: React.FC = () => {
       });
       return;
     }
-    
+
     setCurrentPrintingOrder(order.id);
-    
+
     try {
       // สร้างหน้าต่างใหม่สำหรับพิมพ์
       const printWindow = window.open('', '_blank');
-      
+
       if (!printWindow) {
         throw new Error('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ โปรดตรวจสอบการตั้งค่าป้องกันป๊อปอัพ');
       }
-      
+
       // สร้าง HTML สำหรับใบลาเบล
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -712,15 +712,15 @@ const OrderList: React.FC = () => {
           <div class="print-button">
             <button onclick="window.print();">พิมพ์ใบลาเบล</button>
           </div>
-          
+
           <div class="label-container">
             <div class="logo">BLUEDASH</div>
-            
+
             <div class="tracking box">
               <div>เลขพัสดุ</div>
               <div style="font-size: 20px; font-weight: bold;">${order.trackingNumber}</div>
             </div>
-            
+
             <div class="section">
               <div class="title">ผู้ส่ง:</div>
               <div class="box address">
@@ -731,7 +731,7 @@ const OrderList: React.FC = () => {
                 โทร: 02-123-4567
               </div>
             </div>
-            
+
             <div class="section">
               <div class="title">ผู้รับ:</div>
               <div class="box address">
@@ -741,11 +741,11 @@ const OrderList: React.FC = () => {
                 โทร: ${order.recipientPhone || 'ไม่ระบุ'}
               </div>
             </div>
-            
+
             <div class="barcode box">
               ${order.trackingNumber}
             </div>
-            
+
             <div class="footer">
               ${order.paymentMethod === 'cash_on_delivery' ? 'เก็บเงินปลายทาง: ' + formatCurrency(order.total || parseFloat(order.totalAmount || '0')) : 'จ่ายเงินแล้ว'}
             </div>
@@ -753,15 +753,15 @@ const OrderList: React.FC = () => {
         </body>
         </html>
       `);
-      
+
       printWindow.document.close();
-      
+
       // รอให้หน้าต่างพิมพ์โหลดเสร็จ
       printWindow.addEventListener('load', () => {
         // อัพเดตสถานะการพิมพ์
         updatePrintStatus(order.id);
       });
-      
+
     } catch (error) {
       console.error('Error printing label:', error);
       toast({
@@ -773,13 +773,13 @@ const OrderList: React.FC = () => {
       setCurrentPrintingOrder(null);
     }
   };
-  
+
   // ฟังก์ชันอัพเดตสถานะการพิมพ์ที่ฐานข้อมูล
   const updatePrintStatus = async (orderId: number) => {
     try {
       // ดึง token จาก localStorage
-      const token = localStorage.getItem('auth_token');
-      
+      const token =localStorage.getItem('auth_token');
+
       const response = await fetch(`/api/orders/${orderId}/print-status`, {
         method: 'PATCH',
         credentials: 'include',
@@ -790,13 +790,13 @@ const OrderList: React.FC = () => {
         },
         body: JSON.stringify({ isPrinted: true }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         // อัพเดตสถานะในข้อมูลที่แสดง
         setOrders(prevOrders => 
@@ -806,7 +806,7 @@ const OrderList: React.FC = () => {
               : order
           )
         );
-        
+
         toast({
           title: 'สำเร็จ',
           description: 'อัพเดตสถานะการพิมพ์ใบลาเบลเรียบร้อย',
@@ -823,7 +823,7 @@ const OrderList: React.FC = () => {
       });
     }
   };
-  
+
   // ฟังก์ชันจัดการเลือกและยกเลิกการเลือกออเดอร์
   const toggleOrderSelection = (orderId: number) => {
     setSelectedOrders(prev => {
@@ -834,26 +834,26 @@ const OrderList: React.FC = () => {
       }
     });
   };
-  
+
   // ฟังก์ชันเลือกทั้งหมดที่แสดงในหน้า
   const selectAllOrders = () => {
     const orderIds = filteredOrders
       .filter(order => order.trackingNumber) // เลือกเฉพาะรายการที่มีเลขพัสดุ
       .map(order => order.id);
-    
+
     setSelectedOrders(orderIds);
   };
-  
+
   // ฟังก์ชันยกเลิกการเลือกทั้งหมด
   const clearAllSelections = () => {
     setSelectedOrders([]);
   };
-  
+
   // ฟังก์ชันพิมพ์ใบลาเบลสำหรับรายการที่เลือก
   // สำหรับฟังก์ชันพิมพ์ใบลาเบลแบบปกติ (เพื่อความเข้ากันได้)
   const handlePrintLabel = (order: Order) => {
     console.log("พิมพ์ลาเบลสำหรับออเดอร์:", order);
-    
+
     // ตรวจสอบว่าออเดอร์มีเลขพัสดุหรือไม่
     if (!order.trackingNumber) {
       toast({
@@ -863,7 +863,7 @@ const OrderList: React.FC = () => {
       });
       return;
     }
-    
+
     // บันทึกข้อมูลออเดอร์ที่จะพิมพ์และแสดงไดอะล็อก
     setOrderToPrint(order);
     setSelectedLabelType('standard'); // ตั้งค่าเริ่มต้นเป็นลาเบลมาตรฐาน
@@ -875,17 +875,17 @@ const OrderList: React.FC = () => {
     setOrderToCreateTracking(orderId);
     setShippingDialogOpen(true);
   };
-  
+
   // ฟังก์ชันสร้างเลขพัสดุและอัพเดทสถานะออเดอร์
   const createTrackingNumber = async () => {
     if (!orderToCreateTracking) return;
-    
+
     try {
       const token = localStorage.getItem('auth_token');
-      
+
       // ตรวจสอบและแปลงชื่อขนส่งภาษาอังกฤษให้ตรงกับที่ backend ใช้
       let shippingMethodForServer = selectedShippingMethod;
-      
+
       // แปลงชื่อขนส่งภาษาอังกฤษเป็นภาษาไทยสำหรับการส่งไปยัง backend
       // เนื่องจาก backend ยังใช้ชื่อภาษาไทยอยู่ (เช่น "เสี่ยวไป๋ เอ็กเพรส")
       if (selectedShippingMethod === "Xiaobai Express") {
@@ -893,7 +893,7 @@ const OrderList: React.FC = () => {
       } else if (selectedShippingMethod === "Thailand Post") {
         shippingMethodForServer = "ไปรษณีย์ไทย";
       }
-      
+
       // เรียก API เพื่อสร้างเลขพัสดุ
       const response = await fetch(`/api/orders/${orderToCreateTracking}/tracking`, {
         method: 'POST',
@@ -906,22 +906,22 @@ const OrderList: React.FC = () => {
           shippingMethod: shippingMethodForServer
         })
       });
-      
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast({
           title: 'สร้างเลขพัสดุสำเร็จ',
           description: `เลขพัสดุ: ${data.trackingNumber}`,
         });
-        
+
         // รีเฟรชข้อมูลเพื่อแสดงเลขพัสดุที่สร้างขึ้นใหม่
         fetchOrders();
-        
+
         // ปิด Dialog
         setShippingDialogOpen(false);
       } else {
@@ -936,7 +936,7 @@ const OrderList: React.FC = () => {
       });
     }
   };
-  
+
   // ฟังก์ชันสร้างเลขพัสดุสำหรับหลายออเดอร์พร้อมกัน
   const createMultipleTrackingNumbers = async () => {
     if (!selectedOrders || selectedOrders.length === 0) {
@@ -947,7 +947,7 @@ const OrderList: React.FC = () => {
       });
       return;
     }
-    
+
     if (!selectedShippingMethod) {
       toast({
         title: 'กรุณาเลือกบริษัทขนส่ง',
@@ -956,21 +956,21 @@ const OrderList: React.FC = () => {
       });
       return;
     }
-    
+
     // ยืนยันการสร้างเลขพัสดุ
     if (!window.confirm(`คุณต้องการสร้างเลขพัสดุสำหรับ ${selectedOrders.length} รายการโดยใช้บริษัทขนส่ง ${selectedShippingMethod} ใช่หรือไม่?`)) {
       return;
     }
-    
+
     // แสดงการโหลด
     setIsLoading(true);
-    
+
     try {
       const token = localStorage.getItem('auth_token');
       let successCount = 0;
       let failCount = 0;
       const results = [];
-      
+
       // ดำเนินการทีละรายการ
       for (const orderId of selectedOrders) {
         try {
@@ -988,9 +988,9 @@ const OrderList: React.FC = () => {
                               selectedShippingMethod
             })
           });
-          
+
           const data = await response.json();
-          
+
           if (response.ok && data.success) {
             successCount++;
             results.push({ 
@@ -1015,7 +1015,7 @@ const OrderList: React.FC = () => {
           });
         }
       }
-      
+
       // แสดงผลลัพธ์
       if (failCount === 0) {
         toast({
@@ -1035,14 +1035,14 @@ const OrderList: React.FC = () => {
           variant: 'destructive',
         });
       }
-      
+
       // อัพเดทข้อมูลออเดอร์
       fetchOrders();
-      
+
       // ยกเลิกการเลือกทั้งหมด
       setSelectedOrders([]);
       setMultipleTrackingDialogOpen(false);
-      
+
     } catch (error) {
       console.error('Error creating multiple tracking numbers:', error);
       toast({
@@ -1068,20 +1068,20 @@ const OrderList: React.FC = () => {
           'Authorization': token ? `Bearer ${token}` : '',
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast({
           title: 'ลบออเดอร์สำเร็จ',
           description: `ออเดอร์หมายเลข ${orderId} ถูกลบออกจากระบบแล้ว`,
           variant: 'default',
         });
-        
+
         // อัปเดตรายการออเดอร์หลังจากลบสำเร็จ
         setOrders(orders.filter(order => order.id !== orderId));
         setFilteredOrders(filteredOrders.filter(order => order.id !== orderId));
@@ -1097,7 +1097,7 @@ const OrderList: React.FC = () => {
       });
     }
   };
-  
+
   // ฟังก์ชันสำหรับลบออเดอร์หลายรายการพร้อมกัน
   const handleDeleteMultipleOrders = async (orderIds: number[]) => {
     if (orderIds.length === 0) {
@@ -1108,16 +1108,16 @@ const OrderList: React.FC = () => {
       });
       return;
     }
-    
+
     // ยืนยันการลบ
     if (!window.confirm(`คุณต้องการลบออเดอร์ที่เลือก ${orderIds.length} รายการใช่หรือไม่?`)) {
       return;
     }
-    
+
     setIsLoading(true);
     let successCount = 0;
     let failCount = 0;
-    
+
     try {
       // ลบทีละรายการ
       for (const orderId of orderIds) {
@@ -1132,7 +1132,7 @@ const OrderList: React.FC = () => {
               'Authorization': token ? `Bearer ${token}` : '',
             }
           });
-          
+
           if (response.ok) {
             successCount++;
           } else {
@@ -1143,10 +1143,10 @@ const OrderList: React.FC = () => {
           console.error(`Error deleting order ${orderId}:`, error);
         }
       }
-      
+
       // อัปเดตรายการออเดอร์
       fetchOrders();
-      
+
       // แสดงผลลัพธ์
       if (failCount === 0) {
         toast({
@@ -1177,13 +1177,13 @@ const OrderList: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   // ฟังก์ชันสำหรับลบออเดอร์ที่ไม่มีเลขพัสดุทั้งหมด
   const handleDeleteOrdersWithoutTracking = () => {
     const ordersWithoutTracking = orders
       .filter(order => !order.trackingNumber && order.status === 'pending')
       .map(order => order.id);
-      
+
     if (ordersWithoutTracking.length === 0) {
       toast({
         title: 'ไม่พบรายการที่เข้าเงื่อนไข',
@@ -1192,10 +1192,10 @@ const OrderList: React.FC = () => {
       });
       return;
     }
-    
+
     handleDeleteMultipleOrders(ordersWithoutTracking);
   };
-  
+
   // ฟังก์ชันสำหรับลบออเดอร์หลายรายการที่เลือก
   const handleDeleteSelectedOrders = async () => {
     if (selectedOrders.length === 0) {
@@ -1206,23 +1206,23 @@ const OrderList: React.FC = () => {
       });
       return;
     }
-    
+
     // ขอการยืนยันจากผู้ใช้ก่อนลบ
     const confirmed = window.confirm(`คุณต้องการลบออเดอร์ที่เลือกจำนวน ${selectedOrders.length} รายการใช่หรือไม่?`);
-    
+
     if (!confirmed) return;
-    
+
     // สร้างตัวแปรเพื่อติดตามความสำเร็จและความล้มเหลว
     let successCount = 0;
     let failCount = 0;
-    
+
     // แสดง toast แจ้งเตือนว่ากำลังลบ
     toast({
       title: 'กำลังลบรายการที่เลือก',
       description: `กำลังลบออเดอร์ ${selectedOrders.length} รายการ`,
       variant: 'default',
     });
-    
+
     // ทำ Promise.all เพื่อส่งคำขอหลายรายการพร้อมกัน
     await Promise.all(selectedOrders.map(async (orderId) => {
       try {
@@ -1236,9 +1236,9 @@ const OrderList: React.FC = () => {
             'Authorization': token ? `Bearer ${token}` : '',
           }
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok && data.success) {
           successCount++;
         } else {
@@ -1250,16 +1250,16 @@ const OrderList: React.FC = () => {
         console.error(`Error deleting order ${orderId}:`, error);
       }
     }));
-    
+
     // อัปเดตรายการออเดอร์เมื่อลบเสร็จสิ้น
     if (successCount > 0) {
       // อัปเดตรายการออเดอร์ โดยกรองออเดอร์ที่เลือกออก
       setOrders(orders.filter(order => !selectedOrders.includes(order.id)));
       setFilteredOrders(filteredOrders.filter(order => !selectedOrders.includes(order.id)));
-      
+
       // ล้างรายการที่เลือก
       setSelectedOrders([]);
-      
+
       // แสดงผลสรุปการลบ
       toast({
         title: 'ลบออเดอร์เสร็จสิ้น',
@@ -1281,7 +1281,7 @@ const OrderList: React.FC = () => {
   const printSelectedLabelsWithSize = async () => {
     // ใช้ขนาดที่เลือกจาก dialog แล้ว
     setIsPrintingLabel(true);
-    
+
     if (selectedOrders.length === 0) {
       toast({
         title: 'ไม่มีรายการที่เลือก',
@@ -1291,28 +1291,28 @@ const OrderList: React.FC = () => {
       setIsPrintingLabel(false);
       return;
     }
-    
+
     try {
       // สร้างหน้าต่างใหม่สำหรับพิมพ์
       const printWindow = window.open('', '_blank');
-      
+
       if (!printWindow) {
         throw new Error('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ โปรดตรวจสอบการตั้งค่าป้องกันป๊อปอัพ');
       }
-      
+
       // หาออเดอร์ที่ต้องการพิมพ์
       const ordersToPrint = orders.filter(order => 
         selectedOrders.includes(order.id) && order.trackingNumber
       );
-      
+
       if (ordersToPrint.length === 0) {
         throw new Error('ไม่มีรายการที่เลือกที่มีเลขพัสดุสำหรับพิมพ์');
       }
-      
+
       // กำหนดขนาดใบลาเบลตามที่เลือก
       const labelWidthPx = labelSize === '100x100mm' ? '378px' : '378px';
       const labelHeightPx = labelSize === '100x100mm' ? '378px' : '284px';
-      
+
       // สร้าง HTML เริ่มต้น
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -1494,24 +1494,24 @@ const OrderList: React.FC = () => {
           <div class="print-button">
             <button onclick="window.print();">พิมพ์ใบลาเบล (${ordersToPrint.length} รายการ)</button>
           </div>
-          
+
           <div class="label-size-info">
             ขนาดใบลาเบล: ${labelSize} (${ordersToPrint.length} รายการ)
           </div>
       `);
-      
+
       // เพิ่มใบลาเบลแต่ละรายการ
       ordersToPrint.forEach((order, index) => {
         printWindow.document.write(`
           <div class="page">
             <div class="label-container">
               <div class="logo">BLUEDASH</div>
-              
+
               <div class="tracking box">
                 <div style="font-size: ${labelSize === '100x100mm' ? '12px' : '10px'}; color: #666;">เลขพัสดุ</div>
                 <div class="tracking-num">${order.trackingNumber}</div>
               </div>
-              
+
               <div class="section">
                 <div class="title">ผู้ส่ง:</div>
                 <div class="box address">
@@ -1522,7 +1522,7 @@ const OrderList: React.FC = () => {
                   โทร: 02-123-4567
                 </div>
               </div>
-              
+
               <div class="section">
                 <div class="title">ผู้รับ:</div>
                 <div class="box address">
@@ -1532,11 +1532,11 @@ const OrderList: React.FC = () => {
                   โทร: ${order.recipientPhone || 'ไม่ระบุ'}
                 </div>
               </div>
-              
+
               <div class="barcode box">
                 ${order.trackingNumber}
               </div>
-              
+
               <div class="footer">
                 ${order.paymentMethod === 'cash_on_delivery' 
                   ? `<span>เก็บเงินปลายทาง: ${formatCurrency(order.total || parseFloat(order.totalAmount || '0'))}</span><span class="cod-badge">COD</span>` 
@@ -1546,15 +1546,15 @@ const OrderList: React.FC = () => {
           </div>
         `);
       });
-      
+
       // ปิด HTML
       printWindow.document.write(`
         </body>
         </html>
       `);
-      
+
       printWindow.document.close();
-      
+
       // รอให้หน้าต่างพิมพ์โหลดเสร็จ
       printWindow.addEventListener('load', () => {
         // อัพเดตสถานะการพิมพ์ของแต่ละรายการ
@@ -1562,7 +1562,7 @@ const OrderList: React.FC = () => {
           updatePrintStatus(order.id);
         });
       });
-      
+
     } catch (error) {
       console.error('Error printing selected labels:', error);
       toast({
@@ -1584,45 +1584,45 @@ const OrderList: React.FC = () => {
       });
       return;
     }
-    
+
     // เก็บค่าออเดอร์ที่จะพิมพ์และเปิด Dialog เลือกขนาด
     setOrderToPrint(order);
     setPrintDialogOpen(true);
   };
-  
+
   // ฟังก์ชันสำหรับพิมพ์ใบลาเบลตามขนาดที่เลือก
   // ฟังก์ชันพิมพ์ใบลาเบลตามขนาดที่เลือก (อาจจะเป็นกรณีเลือกรายการเดียว หรือหลายรายการ)
   const printLabelWithSelectedSize = async () => {
     setPrintDialogOpen(false);
-    
+
     // กรณีพิมพ์หลายรายการ
     if (selectedOrders.length > 0) {
       printSelectedLabelsWithSize();
       return;
     }
-    
+
     // กรณีพิมพ์รายการเดียว
     if (!orderToPrint) return;
-    
+
     const order = orderToPrint;
     setCurrentPrintingOrder(order.id);
     setPrintDialogOpen(false);
-    
+
     try {
       // สร้างหน้าต่างใหม่สำหรับพิมพ์
       const printWindow = window.open('', '_blank');
-      
+
       if (!printWindow) {
         throw new Error('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ โปรดตรวจสอบการตั้งค่าป้องกันป๊อปอัพ');
       }
-      
+
       // กำหนดขนาดใบลาเบลตามที่เลือกอย่างแม่นยำ
       let labelWidth = '100mm';
       let labelHeight = labelSize === '100x100mm' ? '100mm' : '75mm';
       // กำหนดขนาดสำหรับ CSS ในหน้าพิมพ์
       const labelWidthPx = labelSize === '100x100mm' ? '378px' : '378px';
       const labelHeightPx = labelSize === '100x100mm' ? '378px' : '284px';
-      
+
       // สร้าง HTML สำหรับใบลาเบล
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -1777,22 +1777,22 @@ const OrderList: React.FC = () => {
           <div class="print-button">
             <button onclick="window.print();">พิมพ์ใบลาเบล</button>
           </div>
-          
+
           <div class="label-size-info">
             ขนาดใบลาเบล: ${labelSize}
           </div>
-          
+
           <div class="page">
             <div class="label-container">
               <div class="logo">BLUEDASH</div>
-              
+
               ${labelSize === '100x100mm' ? `
               <!-- สำหรับขนาด 100x100mm -->
               <div class="tracking box">
                 <div style="font-size: 12px; color: #666;">เลขพัสดุ</div>
                 <div class="tracking-num">${order.trackingNumber}</div>
               </div>
-              
+
               <div class="section">
                 <div class="title">ผู้ส่ง:</div>
                 <div class="box address">
@@ -1803,7 +1803,7 @@ const OrderList: React.FC = () => {
                   โทร: 02-123-4567
                 </div>
               </div>
-              
+
               <div class="section">
                 <div class="title">ผู้รับ:</div>
                 <div class="box address">
@@ -1813,7 +1813,7 @@ const OrderList: React.FC = () => {
                   โทร: ${order.recipientPhone || 'ไม่ระบุ'}
                 </div>
               </div>
-              
+
               <div class="barcode box">
                 ${order.trackingNumber}
               </div>
@@ -1830,7 +1830,7 @@ const OrderList: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div style="display: flex; margin-top: 2mm;">
                 <div style="flex: 1; padding-right: 2mm;">
                   <div class="title" style="font-size: 9px; background-color: #f7f7f7; padding: 1px 3px; border-radius: 2px;">ผู้ส่ง</div>
@@ -1842,7 +1842,7 @@ const OrderList: React.FC = () => {
                     โทร: 02-123-4567
                   </div>
                 </div>
-                
+
                 <div style="flex: 1; border-left: 1px solid #ddd; padding-left: 2mm;">
                   <div class="title" style="font-size: 9px; background-color: #f7f7f7; padding: 1px 3px; border-radius: 2px;">ผู้รับ</div>
                   <div class="box address" style="font-size: 8px; height: 23mm;">
@@ -1854,7 +1854,7 @@ const OrderList: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div class="barcode-small">
                 <div style="font-size: 9px; color: #666; margin-bottom: 3px;">บาร์โค้ด</div>
                 <div style="text-align: center;">
@@ -1865,7 +1865,7 @@ const OrderList: React.FC = () => {
                 </div>
               </div>
               `}
-              
+
               <div class="footer" style="${labelSize === '100x75mm' ? 'background-color: #fff6f6; padding: 1mm; border-radius: 2px;' : ''}">
                 ${order.paymentMethod === 'cash_on_delivery' 
                   ? `<span>เก็บเงินปลายทาง: ${formatCurrency(order.total || parseFloat(order.totalAmount || '0'))}</span>${labelSize === '100x100mm' ? '<span class="cod-badge">COD</span>' : ''}` 
@@ -1876,15 +1876,15 @@ const OrderList: React.FC = () => {
         </body>
         </html>
       `);
-      
+
       printWindow.document.close();
-      
+
       // รอให้หน้าต่างพิมพ์โหลดเสร็จ
       printWindow.addEventListener('load', () => {
         // อัพเดตสถานะการพิมพ์
         updatePrintStatus(order.id);
       });
-      
+
     } catch (error) {
       console.error('Error printing label:', error);
       toast({
@@ -1984,7 +1984,7 @@ const OrderList: React.FC = () => {
               </Button>
             </div>
           </div>
-          
+
           {/* ปุ่มพิมพ์ใบลาเบลด้านบน */}
           <div className="mb-6 p-4 border border-purple-200 rounded-lg bg-purple-50">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -1997,7 +1997,7 @@ const OrderList: React.FC = () => {
                   </Badge>
                 )}
               </div>
-              
+
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
@@ -2008,7 +2008,7 @@ const OrderList: React.FC = () => {
                   <Check className="h-4 w-4 mr-1" />
                   เลือกทั้งหมดที่มีเลขพัสดุ
                 </Button>
-                
+
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -2019,7 +2019,7 @@ const OrderList: React.FC = () => {
                   <X className="h-4 w-4 mr-1" />
                   ยกเลิกการเลือก
                 </Button>
-                
+
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -2030,7 +2030,7 @@ const OrderList: React.FC = () => {
                   <Trash className="h-4 w-4 mr-1" />
                   ลบรายการที่เลือก
                 </Button>
-                
+
                 <Button 
                   onClick={() => {
                     // ถ้ามีออเดอร์ที่ถูกเลือก ให้เปิด Dialog เลือกขนาด
@@ -2208,123 +2208,123 @@ const OrderList: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {/* แสดงเฉพาะข้อมูลตามหน้าปัจจุบัน (pagination) */}
-                {filteredOrders
-                  .slice(
-                    (currentPage - 1) * itemsPerPage,
-                    currentPage * itemsPerPage
-                  )
-                  .map((order) => (
-                    <TableRow key={order.id} className="hover:bg-gray-50">
-                      <TableCell className="w-[50px]">
-                        {order.trackingNumber && (
-                          <Checkbox 
-                            checked={selectedOrders.includes(order.id)}
-                            onCheckedChange={() => toggleOrderSelection(order.id)}
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center">
-                          {getStatusIcon(order.status)}
-                          <Link href={`/order-detail/${order.id}`} className="ml-2 text-blue-600 hover:text-blue-700 hover:underline">
-                            {order.orderNumber}
-                          </Link>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">{order.total !== undefined ? formatCurrency(order.total) : formatCurrency(parseFloat(order.totalAmount || "0"))}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center">
-                          <Package className="h-4 w-4 text-blue-500 mr-1" />
-                          <div className="font-medium">
-                            <span className="text-blue-700">{order.items || 0}</span>
-                            <span className="text-gray-600"> รายการ</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatDate(order.date)}</TableCell>
-                      <TableCell>
-                        {formatPaymentMethod(order.paymentMethod)}
-                      </TableCell>
-                      <TableCell>
-                        {order.trackingNumber ? (
-                          <div className="flex items-center">
-                            <Truck className="h-4 w-4 text-blue-500 mr-1" />
-                            <Link href={`/order-detail/${order.id}`} className="font-medium text-blue-700 hover:text-blue-800 hover:underline">
-                              {order.trackingNumber}
-                            </Link>
-                          </div>
-                        ) : (
-                          <div className="flex items-center">
-                            <span className="text-gray-400 mr-2">ไม่มีเลขพัสดุ</span>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 text-xs h-6 px-2"
-                              onClick={() => openShippingDialog(order.id)}
-                            >
-                              เลือกขนส่ง
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(order.status)}</TableCell>
-                      <TableCell>
-                        {getPrintStatus(order.isPrinted)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/order-detail/${order.id}`}>
-                              รายละเอียด
-                            </Link>
-                          </Button>
+                  {filteredOrders
+                    .slice(
+                      (currentPage - 1) * itemsPerPage,
+                      currentPage * itemsPerPage
+                    )
+                    .map((order) => (
+                      <TableRow key={order.id} className="hover:bg-gray-50">
+                        <TableCell className="w-[50px]">
                           {order.trackingNumber && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
-                              disabled={currentPrintingOrder === order.id || isPrintingLabel}
-                              onClick={() => handlePrintLabelWithSizeDialog(order)}
-                            >
-                              {currentPrintingOrder === order.id ? (
-                                <RefreshCw className="h-3 w-3 animate-spin mr-1" />
-                              ) : (
-                                <Printer className="h-3 w-3 mr-1" />
-                              )}
-                              พิมพ์ใบลาเบล
-                            </Button>
+                            <Checkbox 
+                              checked={selectedOrders.includes(order.id)}
+                              onCheckedChange={() => toggleOrderSelection(order.id)}
+                            />
                           )}
-                          {order.status === 'pending' && (
-                            <>
-                              <Button variant="outline" size="sm" className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100" asChild>
-                                <Link href={`/update-order/${order.id}`}>
-                                  แก้ไข
-                                </Link>
-                              </Button>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center">
+                            {getStatusIcon(order.status)}
+                            <Link href={`/order-detail/${order.id}`} className="ml-2 text-blue-600 hover:text-blue-700 hover:underline">
+                              {order.orderNumber}
+                            </Link>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">{order.total !== undefined ? formatCurrency(order.total) : formatCurrency(parseFloat(order.totalAmount || "0"))}</TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center">
+                            <Package className="h-4 w-4 text-blue-500 mr-1" />
+                            <div className="font-medium">
+                              <span className="text-blue-700">{order.items || 0}</span>
+                              <span className="text-gray-600"> รายการ</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatDate(order.date)}</TableCell>
+                        <TableCell>
+                          {formatPaymentMethod(order.paymentMethod)}
+                        </TableCell>
+                        <TableCell>
+                          {order.trackingNumber ? (
+                            <div className="flex items-center">
+                              <Truck className="h-4 w-4 text-blue-500 mr-1" />
+                              <Link href={`/order-detail/${order.id}`} className="font-medium text-blue-700 hover:text-blue-800 hover:underline">
+                                {order.trackingNumber}
+                              </Link>
+                            </div>
+                          ) : (
+                            <div className="flex items-center">
+                              <span className="text-gray-400 mr-2">ไม่มีเลขพัสดุ</span>
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-                                onClick={() => {
-                                  if (window.confirm(`คุณต้องการลบออเดอร์ ${order.orderNumber} ใช่หรือไม่?`)) {
-                                    handleDeleteOrder(order.id);
-                                  }
-                                }}
+                                className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 text-xs h-6 px-2"
+                                onClick={() => openShippingDialog(order.id)}
                               >
-                                <Trash className="h-3 w-3 mr-1" />
-                                ลบ
+                                เลือกขนส่ง
                               </Button>
-                            </>
+                            </div>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(order.status)}</TableCell>
+                        <TableCell>
+                          {getPrintStatus(order.isPrinted)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/order-detail/${order.id}`}>
+                                รายละเอียด
+                              </Link>
+                            </Button>
+                            {order.trackingNumber && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
+                                disabled={currentPrintingOrder === order.id || isPrintingLabel}
+                                onClick={() => handlePrintLabelWithSizeDialog(order)}
+                              >
+                                {currentPrintingOrder === order.id ? (
+                                  <RefreshCw className="h-3 w-3 animate-spin mr-1" />
+                                ) : (
+                                  <Printer className="h-3 w-3 mr-1" />
+                                )}
+                                พิมพ์ใบลาเบล
+                              </Button>
+                            )}
+                            {order.status === 'pending' && (
+                              <>
+                                <Button variant="outline" size="sm" className="bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100" asChild>
+                                  <Link href={`/update-order/${order.id}`}>
+                                    แก้ไข
+                                  </Link>
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                                  onClick={() => {
+                                    if (window.confirm(`คุณต้องการลบออเดอร์ ${order.orderNumber} ใช่หรือไม่?`)) {
+                                      handleDeleteOrder(order.id);
+                                    }
+                                  }}
+                                >
+                                  <Trash className="h-3 w-3 mr-1" />
+                                  ลบ
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </div>
           )}
-          
+
           {/* แสดงจำนวนออเดอร์ทั้งหมดและ Pagination */}
           <div className="mt-6">
             {/* แสดงจำนวนออเดอร์ทั้งหมด */}
@@ -2333,7 +2333,7 @@ const OrderList: React.FC = () => {
                 จำนวนออเดอร์ทั้งหมด: {filteredOrders.length} รายการ
               </span>
             </div>
-            
+
             {/* Pagination */}
             {filteredOrders.length > itemsPerPage && (
               <div className="flex justify-center">
@@ -2347,11 +2347,11 @@ const OrderList: React.FC = () => {
                     <ChevronUp className="h-4 w-4 -rotate-90" />
                     ก่อนหน้า
                   </Button>
-                  
+
                   <div className="flex items-center">
                     <span className="text-sm">หน้า {currentPage} จาก {Math.ceil(filteredOrders.length / itemsPerPage)}</span>
                   </div>
-                  
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -2391,7 +2391,7 @@ const OrderList: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div 
               className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x75mm' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
               onClick={() => setLabelSize('100x75mm')}
@@ -2424,7 +2424,7 @@ const OrderList: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Dialog เลือกขนส่ง */}
       <Dialog open={shippingDialogOpen} onOpenChange={setShippingDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -2444,7 +2444,7 @@ const OrderList: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
             {/* ตัวเลือกขนส่ง - ตัดคำให้กระชับขึ้น */}
             {/* Xiaobai Express */}
             <div 
@@ -2461,7 +2461,7 @@ const OrderList: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* SpeedLine */}
             <div 
               className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'SpeedLine' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -2477,7 +2477,7 @@ const OrderList: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* ThaiStar Delivery */}
             <div 
               className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'ThaiStar Delivery' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -2493,7 +2493,7 @@ const OrderList: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* J&T Express */}
             <div 
               className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'J&T Express' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -2509,7 +2509,7 @@ const OrderList: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Kerry Express */}
             <div 
               className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Kerry Express' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -2525,7 +2525,7 @@ const OrderList: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Thailand Post */}
             <div 
               className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Thailand Post' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -2541,7 +2541,7 @@ const OrderList: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* DHL Express */}
             <div 
               className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'DHL Express' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -2557,7 +2557,7 @@ const OrderList: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Ninja Van */}
             <div 
               className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Ninja Van' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -2592,7 +2592,7 @@ const OrderList: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Dialog สำหรับเลือกรูปแบบลาเบล */}
       <Dialog open={labelTypeDialogOpen} onOpenChange={setLabelTypeDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -2619,7 +2619,7 @@ const OrderList: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Flash Express Label */}
               <div 
                 className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'flash' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -2635,7 +2635,7 @@ const OrderList: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* J&T Express Label */}
               <div 
                 className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'jt' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -2651,7 +2651,7 @@ const OrderList: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* TikTok Label */}
               <div 
                 className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'tiktok' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -2679,7 +2679,7 @@ const OrderList: React.FC = () => {
             <Button 
               onClick={() => {
                 setLabelTypeDialogOpen(false);
-                
+
                 // ตรวจสอบว่ามี order และ trackingNumber หรือไม่
                 if (!orderToPrint || !orderToPrint.trackingNumber) {
                   toast({
@@ -2689,7 +2689,7 @@ const OrderList: React.FC = () => {
                   });
                   return;
                 }
-                
+
                 // ทำการอัพเดตสถานะการพิมพ์ในฐานข้อมูล
                 fetch(`/api/orders/${orderToPrint.id}/print-status`, {
                   method: 'PATCH',
@@ -2700,10 +2700,10 @@ const OrderList: React.FC = () => {
                   credentials: 'include',
                   body: JSON.stringify({ isPrinted: true })
                 });
-                
+
                 // เปิดลาเบลตามประเภทที่เลือก
                 console.log(`กำลังเปิดลาเบลประเภท ${selectedLabelType} สำหรับออเดอร์ ${orderToPrint.id}`);
-                
+
                 // สร้าง URL สำหรับหน้าลาเบล
                 let labelUrl = '';
                 switch(selectedLabelType) {
@@ -2722,9 +2722,9 @@ const OrderList: React.FC = () => {
                   default:
                     labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
                 }
-                
+
                 console.log("Opening URL:", labelUrl);
-                
+
                 // วิธีการเปิดแบบใหม่ไม่ใช้ window.open โดยตรง
                 // สร้าง link element แล้วจำลองการคลิก
                 const link = document.createElement('a');
@@ -2733,7 +2733,7 @@ const OrderList: React.FC = () => {
                 link.rel = 'noopener noreferrer';
                 document.body.appendChild(link);
                 link.click();
-                
+
                 // ลบ link element หลังจากใช้งาน
                 setTimeout(() => {
                   document.body.removeChild(link);
