@@ -670,6 +670,9 @@ const TopUpPage: React.FC = () => {
 
   return (
     <Layout>
+      {/* Step 2 และ 3 เป็น modal ที่ซ้อนอยู่บนหน้าหลัก */}
+      {renderTopUpStep()}
+      
       <div className="container mx-auto py-8 px-4 max-w-5xl font-kanit bg-gradient-to-b from-blue-50 to-white rounded-lg shadow-sm">
         <div className="flex flex-col md:flex-row items-center justify-between mb-8 border-b pb-6">
           <div className="flex items-center">
