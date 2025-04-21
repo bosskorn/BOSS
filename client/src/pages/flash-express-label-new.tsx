@@ -487,9 +487,6 @@ const FlashExpressLabelNew: React.FC = () => {
               <strong>ถึง</strong> สมศรี ใจดี ${recipientPhone ? ' โทร: ' + recipientPhone : ''}<br>
               57/3 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ 10310
             </div>
-            <div class="qr-code" style="display: flex; align-items: center; justify-content: center;">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${finalTrackingNumber}" alt="QR Code" width="80" height="80">
-            </div>
           </div>
           
           <div class="cod-section">
@@ -526,7 +523,13 @@ const FlashExpressLabelNew: React.FC = () => {
                 </tr>
               </table>
             </div>
-            <div class="pickup-label">${pickupPackage ? 'PICK-UP' : 'SELF-DROP'}</div>
+            <div class="pickup-label" style="background-color: black; padding: 5px; border-radius: 5px;">
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <span style="color: white; margin-bottom: 5px;">${pickupPackage ? 'PICK-UP' : 'SELF-DROP'}</span>
+                <span style="color: white; font-weight: bold; margin-bottom: 5px;">C05</span>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${finalTrackingNumber}" alt="QR Code" width="80" height="80" style="margin: 5px 0;">
+              </div>
+            </div>
           </div>
           
           <!-- ส่วนรายการสินค้า -->
