@@ -506,6 +506,22 @@ const OrderList: React.FC = () => {
       return;
     }
     
+    // ตรวจสอบว่ามีออเดอร์ที่มีเลขพัสดุหรือไม่
+    const ordersWithTracking = filteredOrders.filter(order => 
+      selectedOrders.includes(order.id) && order.trackingNumber
+    );
+    
+    if (ordersWithTracking.length === 0) {
+      toast({
+        title: 'ไม่สามารถพิมพ์ลาเบลได้',
+        description: 'ออเดอร์ที่เลือกไม่มีเลขพัสดุ กรุณาสร้างเลขพัสดุก่อนพิมพ์ลาเบล',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // ตั้งค่าเป็นการพิมพ์หลายรายการและเปิดไดอะล็อก
+    setIsPrintingMultiple(true);
     setPrintDialogOpen(true);
   };
 
@@ -519,9 +535,45 @@ const OrderList: React.FC = () => {
       return;
     }
     
-    const selectedOrdersData = filteredOrders.filter(order => selectedOrders.includes(order.id));
-    const printWindow = window.open('', '_blank');
+    // ปิด Dialog
+    setPrintDialogOpen(false);
     
+    if (isPrintingMultiple) {
+      // พิมพ์ลาเบลหลายรายการ
+      const selectedOrdersData = filteredOrders.filter(order => selectedOrders.includes(order.id));
+      // กรองเฉพาะออเดอร์ที่มีเลขพัสดุ
+      const ordersToPrint = selectedOrdersData.filter(order => order.trackingNumber);
+      
+      // สร้าง URL พร้อมพารามิเตอร์ขนาดและรายการออเดอร์
+      const orderIds = ordersToPrint.map(order => order.id).join(',');
+      const labelUrl = `/print-multiple-labels?orders=${orderIds}&size=${labelSize}`;
+      
+      // เปิดหน้าพิมพ์ในแท็บใหม่
+      window.open(labelUrl, '_blank');
+    } else {
+      // พิมพ์ลาเบลเดี่ยว
+      if (!orderToPrint || !orderToPrint.id) return;
+      
+      // อัพเดตสถานะการพิมพ์ในฐานข้อมูล
+      fetch(`/api/orders/${orderToPrint.id}/print-status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ isPrinted: true })
+      });
+      
+      // เปิดหน้าพิมพ์ในแท็บใหม่
+      window.open(`/print-label-enhanced?order=${orderToPrint.id}&size=${labelSize}`, '_blank');
+    }
+    
+    // รีเซ็ตสถานะการพิมพ์หลายรายการ
+    setIsPrintingMultiple(false);
+    
+    // ตรวจสอบว่า printWindow ถูกเปิดหรือไม่
+    const printWindow = window.open('', '_blank', 'hidden=true');
     if (!printWindow) {
       toast({
         title: 'ไม่สามารถเปิดหน้าต่างใหม่ได้',
@@ -530,6 +582,7 @@ const OrderList: React.FC = () => {
       });
       return;
     }
+    printWindow.close();
     
     // หาออเดอร์ที่ไม่มีเลขพัสดุ
     const ordersWithoutTracking = selectedOrdersData.filter(order => !order.trackingNumber);
