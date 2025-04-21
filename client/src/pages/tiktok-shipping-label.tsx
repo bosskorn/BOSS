@@ -181,10 +181,11 @@ const TikTokShippingLabel: React.FC = () => {
           .label-container {
             width: 100mm;
             height: 150mm;
-            border: 1px dashed #000;
+            border: 1px solid #000;
             position: relative;
             box-sizing: border-box;
             page-break-after: always;
+            font-size: 10px;
           }
           .header {
             display: flex;
@@ -200,21 +201,17 @@ const TikTokShippingLabel: React.FC = () => {
           }
           .barcode {
             height: 40px;
-            width: 90%;
+            width: 95%;
             margin: 0 auto;
-          }
-          .barcode-number {
-            font-size: 10px;
-            margin-top: 2px;
           }
           .info-section {
             display: flex;
             border-bottom: 1px solid #000;
           }
           .order-id {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            padding: 10px;
+            padding: 5px;
             width: 60%;
             text-align: center;
             border-right: 1px solid #000;
@@ -222,19 +219,19 @@ const TikTokShippingLabel: React.FC = () => {
           .shipping-type {
             width: 40%;
             padding: 5px;
-            font-size: 12px;
+            font-size: 11px;
             text-align: center;
           }
-          .address-section {
+          .sender-section {
             border-bottom: 1px solid #000;
             padding: 5px;
             font-size: 11px;
           }
-          .qr-section {
+          .recipient-section {
             display: flex;
             border-bottom: 1px solid #000;
           }
-          .sender-info {
+          .recipient-info {
             width: 60%;
             padding: 5px;
             font-size: 11px;
@@ -245,19 +242,15 @@ const TikTokShippingLabel: React.FC = () => {
             padding: 5px;
             text-align: center;
           }
-          .qr-image {
-            width: 80%;
-            height: auto;
-          }
           .cod-section {
             display: flex;
             border-bottom: 1px solid #000;
           }
           .cod-label {
-            width: 40%;
+            width: 25%;
             background-color: #000;
             color: #fff;
-            font-size: 22px;
+            font-size: 18px;
             font-weight: bold;
             text-align: center;
             padding: 5px;
@@ -267,7 +260,7 @@ const TikTokShippingLabel: React.FC = () => {
             border-right: 1px solid #000;
           }
           .weight-info {
-            width: 60%;
+            width: 75%;
             font-size: 11px;
             padding: 5px;
           }
@@ -296,26 +289,13 @@ const TikTokShippingLabel: React.FC = () => {
             font-size: 10px;
           }
           .product-header {
-            display: flex;
             font-weight: bold;
             border-bottom: 1px solid #ccc;
             padding-bottom: 3px;
             margin-bottom: 3px;
           }
           .product-item {
-            display: flex;
             padding: 2px 0;
-          }
-          .product-name {
-            width: 70%;
-          }
-          .product-qty {
-            width: 15%;
-            text-align: center;
-          }
-          .product-total {
-            width: 15%;
-            text-align: right;
           }
           .product-summary {
             display: flex;
@@ -349,7 +329,6 @@ const TikTokShippingLabel: React.FC = () => {
 
           <div class="barcode-section">
             <svg id="barcode"></svg>
-            <div class="barcode-number">${trackingNumber}</div>
           </div>
 
           <div class="info-section">
@@ -361,13 +340,13 @@ const TikTokShippingLabel: React.FC = () => {
             </div>
           </div>
 
-          <div class="address-section">
+          <div class="sender-section">
             <strong>จาก</strong> ${senderName} ${senderPhone}<br>
             ${senderAddress}
           </div>
 
-          <div class="qr-section">
-            <div class="sender-info">
+          <div class="recipient-section">
+            <div class="recipient-info">
               <strong>ถึง</strong> ${recipientName} ${recipientPhone}<br>
               ${recipientAddress}
             </div>
@@ -410,16 +389,10 @@ const TikTokShippingLabel: React.FC = () => {
           </div>
 
           <div class="product-section">
-            <div class="product-header">
-              <div class="product-name">รายการสินค้า</div>
-              <div class="product-qty">จำนวน</div>
-              <div class="product-total">ราคา</div>
-            </div>
+            <div class="product-header">รายการสินค้าจำนวนราคา</div>
             ${products.map(product => `
               <div class="product-item">
-                <div class="product-name">${product.name}</div>
-                <div class="product-qty">${product.quantity}</div>
-                <div class="product-total">${product.price}</div>
+                ${product.name} ${product.quantity} ${product.price}
               </div>
             `).join('')}
             <div class="product-summary">
@@ -441,9 +414,10 @@ const TikTokShippingLabel: React.FC = () => {
           JsBarcode("#barcode", "${trackingNumber}", {
             format: "CODE128",
             lineColor: "#000",
-            width: 1.5,
-            height: 40,
-            displayValue: false
+            width: 1.3,
+            height: 45,
+            displayValue: false,
+            margin: 0
           });
 
           // พิมพ์อัตโนมัติหลังจากโหลดเสร็จ
@@ -711,9 +685,9 @@ const TikTokShippingLabel: React.FC = () => {
 
         <div className="mt-6 flex justify-center">
           <div className="w-[100mm] border border-dashed border-gray-400 p-2 bg-white">
-            <div className="text-center text-xs text-gray-500 mb-2">ใบลาเบลขนาด 100x150mm ขนาดมาตรฐาน เหมาะสำหรับพัสดุทั่วไป</div>
+            <div className="text-center text-xs text-gray-500 mb-2">ใบลาเบลขนาด 100x150mm ขนาดมาตรฐาน สำหรับ TikTok Shop</div>
 
-            <div className="relative" style={{ width: '100mm', height: '150mm', border: '1px solid #000' }}>
+            <div className="relative" style={{ width: '100mm', height: '150mm', border: '1px solid #000' }}
               <div className="flex justify-between border-b border-black p-1 text-xs">
                 <div>TikTok Shop</div>
                 <div>FLASH</div>
