@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,10 +6,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /**
  * หน้าทดสอบการพิมพ์ลาเบลที่ปรับปรุงใหม่
- * รองรับการเลือกขนาดและรูปแบบการพิมพ์
+ * รองรับการเลือกประเภทลาเบลที่แตกต่างกัน
  */
 const PrintLabelEnhanced: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState('100x100');
+  const [labelType, setLabelType] = useState('standard');
+  
+  useEffect(() => {
+    // ดึงพารามิเตอร์จาก URL
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get('type') || 'standard';
+    setLabelType(type);
+  }, []);
   
   // ฟังก์ชันสำหรับการพิมพ์ทดสอบขนาด 100x100mm
   const printLabel100x100 = () => {
