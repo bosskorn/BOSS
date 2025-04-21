@@ -855,7 +855,7 @@ const OrderList: React.FC = () => {
                   onClick={() => setShippingMethodFilter(shippingMethodFilter === 'flash-express' ? 'all' : 'flash-express')}
                 >
                   <span className="w-2 h-2 inline-block bg-orange-500 rounded-full"></span>
-                  Flash Express
+                  เสี่ยวไป๋ เอ็กเพรส
                 </div>
                 <div 
                   className={`px-3 py-1.5 rounded-full flex items-center gap-1 cursor-pointer transition-colors ${shippingMethodFilter === 'jt-express' ? 'bg-red-100 text-red-800 border-2 border-red-300 font-semibold' : 'bg-red-50 text-red-700 text-xs font-medium border border-red-200 hover:bg-red-100'}`}
@@ -864,13 +864,7 @@ const OrderList: React.FC = () => {
                   <span className="w-2 h-2 inline-block bg-red-500 rounded-full"></span>
                   J&T Express
                 </div>
-                <div 
-                  className={`px-3 py-1.5 rounded-full flex items-center gap-1 cursor-pointer transition-colors ${shippingMethodFilter === 'xiaobai-express' ? 'bg-green-100 text-green-800 border-2 border-green-300 font-semibold' : 'bg-green-50 text-green-700 text-xs font-medium border border-green-200 hover:bg-green-100'}`}
-                  onClick={() => setShippingMethodFilter(shippingMethodFilter === 'xiaobai-express' ? 'all' : 'xiaobai-express')}
-                >
-                  <span className="w-2 h-2 inline-block bg-green-500 rounded-full"></span>
-                  เสี่ยวไป๋ เอ็กเพรส
-                </div>
+
                 <div 
                   className={`px-3 py-1.5 rounded-full flex items-center gap-1 cursor-pointer transition-colors ${shippingMethodFilter === 'thailand-post' ? 'bg-blue-100 text-blue-800 border-2 border-blue-300 font-semibold' : 'bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200 hover:bg-blue-100'}`}
                   onClick={() => setShippingMethodFilter(shippingMethodFilter === 'thailand-post' ? 'all' : 'thailand-post')}
