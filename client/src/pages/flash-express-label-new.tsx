@@ -93,11 +93,13 @@ const FlashExpressLabelNew = () => {
       font-weight: bold;
       text-align: left;
       justify-content: flex-start;
+      color: #0066CC;
     }
     
     .flash-logo {
       font-style: italic;
       font-weight: bold;
+      color: #FF6600;
     }
     
     .service-type {
@@ -193,7 +195,7 @@ const FlashExpressLabelNew = () => {
     
     .cod-label {
       flex: 1;
-      background: #000;
+      background: #FF6600;
       color: #fff;
       padding: 10px;
       text-align: center;
@@ -668,7 +670,7 @@ const FlashExpressLabelNew = () => {
                 {/* แสดงส่วนบนของลาเบล */}
                 <div className="label-header">
                   <div className="tiktok-logo">
-                    TikTok Shop
+                    BLUEDASH
                   </div>
                   <div className="flash-logo">
                     FLASH Express
@@ -689,15 +691,15 @@ const FlashExpressLabelNew = () => {
                   <div className="order-number">{order.sortingCode}</div>
                   <div className="sorting-info">
                     <div>SS1</div>
-                    <div>2TPY_BDC-ตบ</div>
+                    <div>FLE-BKK</div>
                     <div>พร้อม</div>
                   </div>
                 </div>
                 
                 {/* แสดงข้อมูลผู้ส่ง */}
                 <div className="sender-info">
-                  <div className="sender-info-header">จาก JSB Candy (+66)0836087712</div>
-                  <div className="sender-address">24 ซอยรามคำแหงมาเก็ต 008 แขวงวังทองหลาง, บางกะปิ, กรุงเทพ 10160</div>
+                  <div className="sender-info-header">จาก BLUEDASH (+66)0632291123</div>
+                  <div className="sender-address">8/88 ถนนพหลโยธิน แขวงจตุจักร เขตจตุจักร กรุงเทพมหานคร 10900</div>
                 </div>
                 
                 {/* แสดงข้อมูลผู้รับ */}
@@ -714,9 +716,19 @@ const FlashExpressLabelNew = () => {
                 {order.hasCOD && (
                   <div className="cod-section">
                     <div className="cod-label">COD</div>
-                    <div className="cod-amount">Weight : 4.000 KG</div>
+                    <div className="cod-amount">฿{order.codAmount}</div>
                   </div>
                 )}
+                
+                {/* แสดงส่วนน้ำหนัก */}
+                <div className="shipment-details">
+                  <div className="weight-info">
+                    Weight: {order.weight || '0.500'} KG
+                  </div>
+                  <div className="signature-area">
+                    ลายเซ็นผู้รับ:
+                  </div>
+                </div>
                 
                 {/* แสดงส่วนรายละเอียดการจัดส่ง */}
                 <div className="dates-section">
