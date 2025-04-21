@@ -586,7 +586,7 @@ const TopUpPage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="w-48 h-48 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-white">
-                    <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
+                    <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
                   </div>
                 )}
               </div>
@@ -675,7 +675,7 @@ const TopUpPage: React.FC = () => {
     <Layout>
       <div className="container mx-auto py-8 px-4 max-w-4xl font-kanit">
         <h1 className="text-2xl font-bold mb-6 flex items-center">
-          <ChevronsUp className="mr-2 h-6 w-6 text-purple-600" />
+          <ChevronsUp className="mr-2 h-6 w-6 text-blue-600" />
           เติมเงิน
         </h1>
 
