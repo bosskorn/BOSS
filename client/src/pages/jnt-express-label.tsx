@@ -22,7 +22,7 @@ const JntExpressLabel = () => {
     
     @media print {
       @page {
-        size: 100mm 150mm;
+        size: 100mm 145mm; /* ลดความสูงลง */
         margin: 0;
       }
       
@@ -36,10 +36,16 @@ const JntExpressLabel = () => {
       }
       
       .shipping-label {
-        page-break-after: always;
+        page-break-after: auto;
         margin: 0 !important;
         padding: 0 !important;
         border: none !important;
+      }
+
+      .shipping-label-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
       }
     }
     
@@ -65,13 +71,13 @@ const JntExpressLabel = () => {
     .shipping-label-container {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 0; /* ลดช่องว่างระหว่างลาเบล */
       justify-content: flex-start;
     }
     
     .shipping-label {
       width: 380px;
-      height: 570px;
+      height: 550px; /* ลดความสูงลาเบลลง */
       border: 1px solid #ccc;
       padding: 0;
       position: relative;
@@ -79,6 +85,7 @@ const JntExpressLabel = () => {
       page-break-after: always;
       background-color: white;
       overflow: hidden;
+      margin-bottom: 1px; /* ลดระยะห่างระหว่างลาเบล */
     }
     
     .label-header {
@@ -189,7 +196,7 @@ const JntExpressLabel = () => {
     
     .recipient-info {
       padding-right: 20px; /* ลดพื้นที่ด้านขวาเพราะเราใช้ float-right สำหรับ QR Code แล้ว */
-      min-height: 85px;
+      min-height: 70px; /* ลดความสูงส่วนข้อมูลผู้รับ */
       display: flex;
       flex-direction: column;
       justify-content: center;

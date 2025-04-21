@@ -1171,14 +1171,14 @@ const OrderList: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-3 py-4">
-            {/* เสี่ยวไป๋ เอ็กเพรส */}
+            {/* ลาเบลขนาดมาตรฐาน */}
             <div 
               className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedLabelType === 'flash' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setSelectedLabelType('flash')}
             >
               <div>
-                <h4 className="font-medium">เสี่ยวไป๋ เอ็กเพรส</h4>
-                <p className="text-sm text-gray-500">บริการขนส่งจำลอง</p>
+                <h4 className="font-medium">ลาเบลขนาดมาตรฐานขนส่ง</h4>
+                <p className="text-sm text-gray-500">ขนาด 100mm x 150mm สำหรับทุกการขนส่ง</p>
               </div>
               <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'flash' ? 'border-blue-600' : 'border-gray-300'}`}>
                 {selectedLabelType === 'flash' && (
@@ -1187,21 +1187,7 @@ const OrderList: React.FC = () => {
               </div>
             </div>
             
-            {/* TikTok Shop */}
-            <div 
-              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedLabelType === 'tiktok' ? 'border-blue-600' : 'border-gray-200'}`}
-              onClick={() => setSelectedLabelType('tiktok')}
-            >
-              <div>
-                <h4 className="font-medium">TikTok Shop</h4>
-                <p className="text-sm text-gray-500">รูปแบบสำหรับผู้ขาย TikTok Shop</p>
-              </div>
-              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'tiktok' ? 'border-blue-600' : 'border-gray-300'}`}>
-                {selectedLabelType === 'tiktok' && (
-                  <div className="w-full h-full rounded-full bg-blue-600"></div>
-                )}
-              </div>
-            </div>
+{/* TikTok Shop option hidden */}
           </div>
           <DialogFooter className="flex space-x-2 justify-end">
             <Button 
