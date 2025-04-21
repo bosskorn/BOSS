@@ -488,7 +488,7 @@ const FlashExpressLabelNew: React.FC = () => {
               57/3 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ 10310
             </div>
             <div class="qr-code" style="display: flex; align-items: center; justify-content: center;">
-              <img src="https://barcode.tec-it.com/en/GS1QRCode?data=${finalTrackingNumber}&multiplebarcodes=true&eclevel=L" alt="QR Code" width="80" height="80">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${finalTrackingNumber}" alt="QR Code" width="80" height="80">
             </div>
           </div>
           

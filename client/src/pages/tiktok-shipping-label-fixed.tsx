@@ -556,11 +556,11 @@ const TikTokShippingLabelFixed: React.FC = () => {
                 margin: 0
               });
               
-              // ใช้ QR Code จาก tec-it แทนการสร้างด้วย QRCode.js
+              // ใช้ QR Code จาก api.qrserver.com แทนการใช้ tec-it
               const qrCodeElement = document.getElementById("qrcode");
               if (qrCodeElement) {
                 const trackingNo = "${trackingNumber || 'THT64141T9NYG7Z'}";
-                qrCodeElement.innerHTML = '<img src="https://barcode.tec-it.com/en/GS1QRCode?data=' + trackingNo + '&multiplebarcodes=true&eclevel=L" alt="QR Code" width="80" height="80">';
+                qrCodeElement.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + trackingNo + '" alt="QR Code" width="80" height="80">';
               }
               }
               
