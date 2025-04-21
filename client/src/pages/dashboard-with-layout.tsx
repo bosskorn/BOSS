@@ -146,7 +146,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // ฟังก์ชันกำหนดสีตามสถานะ
+  // ฟังก์ชันกำหนดสีตามสถานะ (text color)
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -161,6 +161,24 @@ const Dashboard: React.FC = () => {
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  // ฟังก์ชันกำหนดสีพื้นหลังตามสถานะ (background color for progress bars)
+  const getStatusBgColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-500';
+      case 'processing':
+        return 'bg-blue-500';
+      case 'shipped':
+        return 'bg-purple-500';
+      case 'delivered':
+        return 'bg-green-500';
+      case 'cancelled':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
@@ -328,47 +346,37 @@ const Dashboard: React.FC = () => {
                 สถิติการขนส่ง
               </h2>
               <div className="space-y-5">
-                {/* สถิติอัตราการสำเร็จ */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-600">อัตราการสำเร็จ</span>
-                    <span className="text-sm font-medium text-gray-800">95%</span>
+                {/* สถิติคำสั่งซื้อตามสถานะ */}
+                {Object.entries(summaryData.orderStatusCounts).map(([status, count]) => (
+                  <div key={status}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm text-gray-600">{getStatusText(status)}</span>
+                      <span className="text-sm font-medium text-gray-800">
+                        {count} คำสั่ง ({summaryData.totalOrdersCount > 0 
+                          ? ((count as number / summaryData.totalOrdersCount) * 100).toFixed(1) 
+                          : 0}%)
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full ${getStatusBgColor(status)}`} 
+                        style={{ 
+                          width: summaryData.totalOrdersCount > 0 
+                            ? `${(count as number / summaryData.totalOrdersCount) * 100}%` 
+                            : '0%' 
+                        }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '95%' }}></div>
-                  </div>
-                </div>
+                ))}
                 
-                {/* สถิติเวลาเฉลี่ยในการจัดส่ง */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-600">เวลาเฉลี่ยในการจัดส่ง</span>
-                    <span className="text-sm font-medium text-gray-800">1.5 วัน</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '80%' }}></div>
-                  </div>
-                </div>
-                
-                {/* สถิติอัตราการคืนสินค้า */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-600">อัตราการคืนสินค้า</span>
-                    <span className="text-sm font-medium text-gray-800">2.3%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-red-500 h-2 rounded-full" style={{ width: '2.3%' }}></div>
-                  </div>
-                </div>
-                
-                {/* สถิติคะแนนความพึงพอใจ */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-600">คะแนนความพึงพอใจ</span>
-                    <span className="text-sm font-medium text-gray-800">4.8/5.0</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '96%' }}></div>
+                {/* สถิติค่าขนส่งเดือนนี้ */}
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-700">ค่าขนส่งเดือนนี้</span>
+                    <span className="text-sm font-bold text-gray-800">
+                      {formatCurrency(summaryData.monthShippingTotal)}
+                    </span>
                   </div>
                 </div>
               </div>

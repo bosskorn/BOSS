@@ -220,6 +220,24 @@ export const topupsRelations = relations(topups, ({ one }) => ({
   user: one(users, { fields: [topups.userId], references: [users.id] }),
 }));
 
+// ตาราง feeHistory - ประวัติการหักค่าธรรมเนียม
+export const feeHistory = pgTable("fee_history", {
+  id: serial("id").primaryKey(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  balanceBefore: decimal("balance_before", { precision: 10, scale: 2 }).notNull(),
+  balanceAfter: decimal("balance_after", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  feeType: text("fee_type").notNull().default("order"), // order, shipping, other
+  createdAt: timestamp("created_at").defaultNow(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  orderId: integer("order_id").references(() => orders.id),
+});
+
+export const feeHistoryRelations = relations(feeHistory, ({ one }) => ({
+  user: one(users, { fields: [feeHistory.userId], references: [users.id] }),
+  order: one(orders, { fields: [feeHistory.orderId], references: [orders.id] }),
+}));
+
 // อัพเดต usersRelations เพื่อเพิ่มความสัมพันธ์กับ topups
 export const updateUsersRelations = relations(users, ({ many }) => ({
   customers: many(customers),
@@ -253,6 +271,7 @@ export const insertDiscountSchema = createInsertSchema(discounts);
 export const insertOrderItemSchema = createInsertSchema(orderItems);
 export const insertOrderSchema = createInsertSchema(orders);
 export const insertTopupSchema = createInsertSchema(topups);
+export const insertFeeHistorySchema = createInsertSchema(feeHistory);
 
 // สร้าง types จาก schemas
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -281,3 +300,6 @@ export type Order = typeof orders.$inferSelect;
 
 export type InsertTopup = z.infer<typeof insertTopupSchema>;
 export type Topup = typeof topups.$inferSelect;
+
+export type InsertFeeHistory = z.infer<typeof insertFeeHistorySchema>;
+export type FeeHistory = typeof feeHistory.$inferSelect;
