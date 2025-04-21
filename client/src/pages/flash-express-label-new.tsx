@@ -486,7 +486,7 @@ const FlashExpressLabelNew: React.FC = () => {
               57/3 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ 10310
             </div>
             <div class="qr-code">
-              <img class="qr-image" src="https://chart.googleapis.com/chart?cht=qr&chl=${finalTrackingNumber}&chs=200x200&choe=UTF-8" alt="QR Code">
+              <img class="qr-image" src="https://chart.googleapis.com/chart?cht=qr&chl=FLA6202167GB&chs=200x200&choe=UTF-8" alt="QR Code">
             </div>
           </div>
           
