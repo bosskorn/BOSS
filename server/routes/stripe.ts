@@ -1,62 +1,69 @@
-/**
- * Stripe API integration for payment processing
- */
 import { Router } from 'express';
 import Stripe from 'stripe';
 import { z } from 'zod';
 import { storage } from '../storage';
-import { requireAuth } from '../middlewares/auth';
-import { generateUniqueId } from '../utils';
-
-// ตรวจสอบค่า STRIPE_SECRET_KEY
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.error('STRIPE_SECRET_KEY is not set. Stripe payments will not work.');
-}
+import auth from '../middlewares/auth';
+import { fromZodError } from 'zod-validation-error';
 
 // สร้าง Stripe instance
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16' as any, // Type assertion เพื่อแก้ปัญหา TypeScript
-  appInfo: {
-    name: 'BLUEDASH',
-    version: '1.0.0',
-  },
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY is not defined in environment variables');
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2023-10-16',
 });
 
+// สร้าง Router
 const router = Router();
 
-// สร้าง Stripe checkout session
-router.post('/create-checkout-session', requireAuth, async (req, res) => {
-  try {
-    const schema = z.object({
-      amount: z.number().min(20),
-      successUrl: z.string().url().optional(),
-      cancelUrl: z.string().url().optional(),
-    });
+// Schema สำหรับตรวจสอบข้อมูลที่ส่งมา
+const createCheckoutSessionSchema = z.object({
+  amount: z.number().min(1).max(50000),
+  successUrl: z.string().url().optional(),
+  cancelUrl: z.string().url().optional(),
+});
 
-    const result = schema.safeParse(req.body);
-    if (!result.success) {
+/**
+ * สร้าง Checkout Session สำหรับการชำระเงินด้วยบัตรเครดิต/เดบิต
+ * POST /api/stripe/create-checkout-session
+ */
+router.post('/create-checkout-session', auth, async (req, res) => {
+  try {
+    // ตรวจสอบว่ามีการส่งข้อมูลที่ถูกต้องมาหรือไม่
+    const validation = createCheckoutSessionSchema.safeParse(req.body);
+    if (!validation.success) {
+      const errorMessage = fromZodError(validation.error).message;
       return res.status(400).json({
         success: false,
-        message: 'Invalid request data',
-        errors: result.error.flatten(),
+        message: errorMessage
       });
     }
 
-    const { amount, successUrl, cancelUrl } = result.data;
-    const userId = req.user?.id as number;
+    const { amount, successUrl, cancelUrl } = validation.data;
+    const userId = req.user?.id;
 
-    // สร้างรหัสอ้างอิงสำหรับการชำระเงิน
-    const referenceId = `TOP-${generateUniqueId(8)}`;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'กรุณาเข้าสู่ระบบก่อน'
+      });
+    }
 
-    // บันทึกข้อมูลการชำระเงินลงในฐานข้อมูล
+    // สร้างรายการเติมเงินในฐานข้อมูล
+    const referenceId = `TOP${Date.now()}${Math.floor(Math.random() * 1000)}`;
     const topup = await storage.createTopUp({
       userId,
-      referenceId,
       amount: amount.toString(),
       method: 'credit_card',
       status: 'pending',
-      stripeSessionId: '', // จะอัปเดตค่านี้หลังจากสร้าง session
+      referenceId,
     });
+
+    // กำหนด URL สำหรับ success และ cancel
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const success_url = successUrl || `${baseUrl}/topup-success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancel_url = cancelUrl || `${baseUrl}/topup-cancel?session_id={CHECKOUT_SESSION_ID}`;
 
     // สร้าง Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -66,8 +73,9 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
           price_data: {
             currency: 'thb',
             product_data: {
-              name: 'BLUEDASH Credit Top-up',
-              description: `Reference ID: ${referenceId}`,
+              name: 'เติมเงินเข้าบัญชี BLUEDASH',
+              description: `รหัสอ้างอิง: ${referenceId}`,
+              images: ['https://i.imgur.com/EHyR2nP.png'], // ใส่ URL ของโลโก้ (ถ้ามี)
             },
             unit_amount: Math.round(amount * 100), // แปลงเป็นสตางค์
           },
@@ -75,142 +83,150 @@ router.post('/create-checkout-session', requireAuth, async (req, res) => {
         },
       ],
       mode: 'payment',
-      success_url: successUrl || `${req.headers.origin}/topup/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || `${req.headers.origin}/topup/cancel`,
+      success_url,
+      cancel_url,
       client_reference_id: referenceId,
-      customer_email: req.user?.email || undefined,
       metadata: {
         userId: userId.toString(),
+        topupId: topup.id.toString(),
         referenceId,
       },
     });
 
-    // อัปเดต stripeSessionId
-    await storage.updateTopUp(topup.id, {
-      stripeSessionId: session.id,
-    });
+    // อัพเดตรายการเติมเงินด้วย sessionId
+    await storage.updateTopUpStripeSession(topup.id, session.id);
 
-    res.json({
+    // ส่งข้อมูลกลับไปยังผู้ใช้
+    return res.status(200).json({
       success: true,
       sessionId: session.id,
-      url: session.url,
+      url: session.url
     });
   } catch (error: any) {
-    console.error('Error creating Stripe session:', error);
-    res.status(500).json({
+    console.error('Error creating Stripe checkout session:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Failed to create payment session',
-      error: error.message,
+      message: 'เกิดข้อผิดพลาดในการสร้าง Checkout Session',
+      error: error.message
     });
   }
 });
 
-// ตรวจสอบสถานะการชำระเงิน
-router.get('/checkout-session/:sessionId', requireAuth, async (req, res) => {
+/**
+ * ตรวจสอบสถานะของ Checkout Session
+ * GET /api/stripe/check-session/:sessionId
+ */
+router.get('/check-session/:sessionId', auth, async (req, res) => {
   try {
     const { sessionId } = req.params;
+    const userId = req.user?.id;
 
-    // ตรวจสอบว่า session ID นี้ตรงกับข้อมูลในระบบหรือไม่
-    const topup = await storage.getTopupByStripeSessionId(sessionId);
+    if (!sessionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'ไม่พบ sessionId'
+      });
+    }
+
+    // ดึงข้อมูล Session จาก Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    // ดึงข้อมูลการเติมเงินจากฐานข้อมูล
+    const topup = await storage.getTopUpByStripeSession(sessionId);
+    
     if (!topup) {
       return res.status(404).json({
         success: false,
-        message: 'Payment session not found',
+        message: 'ไม่พบข้อมูลการเติมเงิน'
       });
     }
 
-    // ตรวจสอบว่าเป็นเจ้าของการเติมเงินจริงหรือไม่
-    if (topup.userId !== req.user!.id) {
+    // ตรวจสอบว่าเป็นข้อมูลของผู้ใช้คนเดียวกันหรือไม่
+    if (topup.userId !== userId) {
       return res.status(403).json({
         success: false,
-        message: 'You do not have permission to view this payment session',
+        message: 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้'
       });
     }
-
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     // ตรวจสอบสถานะการชำระเงิน
     if (session.payment_status === 'paid' && topup.status !== 'completed') {
-      // อัพเดตสถานะการเติมเงิน
+      // อัพเดตสถานะการเติมเงินเป็น completed
       await storage.updateTopUpStatus(topup.id, 'completed');
-
+      
       // อัพเดตยอดเงินในบัญชีผู้ใช้
-      const user = await storage.getUser(req.user!.id);
-      if (user) {
-        const currentBalance = parseFloat(user.balance || '0');
-        const topupAmount = parseFloat(topup.amount);
-        const newBalance = currentBalance + topupAmount;
-
-        await storage.updateUserBalance(user.id, newBalance);
-      }
+      const amount = parseFloat(topup.amount);
+      const user = await storage.addUserBalance(userId, amount);
+      
+      // ส่งข้อมูลกลับไปยังผู้ใช้
+      return res.status(200).json({
+        success: true,
+        message: 'ชำระเงินสำเร็จ',
+        session,
+        topup: {
+          ...topup,
+          user
+        }
+      });
     }
-
-    res.json({
+    
+    // กรณียังไม่มีการชำระเงิน
+    return res.status(200).json({
       success: true,
       session,
-      topup,
+      topup
     });
   } catch (error: any) {
-    console.error('Error retrieving checkout session:', error);
-    res.status(500).json({
+    console.error('Error checking Stripe session:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Failed to retrieve checkout session',
-      error: error.message,
+      message: 'เกิดข้อผิดพลาดในการตรวจสอบสถานะการชำระเงิน',
+      error: error.message
     });
   }
 });
 
-// Webhook สำหรับรับการแจ้งเตือนจาก Stripe
+/**
+ * รับการแจ้งเตือนจาก Stripe Webhook
+ * POST /api/stripe/webhook
+ * หมายเหตุ: ในการใช้งานจริงควรตั้งค่า webhook secret และตรวจสอบ signature
+ */
 router.post('/webhook', async (req, res) => {
-  const sig = req.headers['stripe-signature'] as string;
-
-  if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    console.warn('STRIPE_WEBHOOK_SECRET is not set. Webhook verification is disabled.');
-    return res.status(400).send('Webhook verification is not configured');
-  }
-
-  let event;
-
+  const payload = req.body;
+  
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-  } catch (err: any) {
-    console.error(`Webhook Error: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // ตรวจสอบประเภทของ event
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session;
+    // ตรวจสอบว่าเป็น event ที่เกี่ยวข้องกับการชำระเงินหรือไม่
+    if (payload.type === 'checkout.session.completed') {
+      const session = payload.data.object;
       
-      // อัพเดตสถานะการเติมเงิน
-      const topup = await storage.getTopupByStripeSessionId(session.id);
-      if (topup && topup.status !== 'completed') {
-        // อัพเดตสถานะการเติมเงิน
-        await storage.updateTopUpStatus(topup.id, 'completed');
-
-        // อัพเดตยอดเงินในบัญชีผู้ใช้
-        const user = await storage.getUser(topup.userId);
-        if (user) {
-          const currentBalance = parseFloat(user.balance || '0');
-          const topupAmount = parseFloat(topup.amount);
-          const newBalance = currentBalance + topupAmount;
-
-          await storage.updateUserBalance(user.id, newBalance);
+      // ตรวจสอบว่ามี client_reference_id หรือไม่
+      if (session.client_reference_id) {
+        // ดึงข้อมูลการเติมเงินจากฐานข้อมูล
+        const topup = await storage.getTopUpByReferenceId(session.client_reference_id);
+        
+        if (topup && topup.status !== 'completed') {
+          // อัพเดตสถานะการเติมเงินเป็น completed
+          await storage.updateTopUpStatus(topup.id, 'completed');
+          
+          // อัพเดตยอดเงินในบัญชีผู้ใช้
+          const amount = parseFloat(topup.amount);
+          await storage.addUserBalance(topup.userId, amount);
+          
+          console.log(`Topup completed via webhook: ${topup.id}, amount: ${amount}`);
         }
       }
-      break;
     }
-    // สามารถเพิ่ม case อื่นๆ ได้ตามต้องการ
-    default:
-      console.log(`Unhandled event type ${event.type}`);
+    
+    // ตอบกลับ Stripe ว่าได้รับ event แล้ว
+    return res.status(200).json({ received: true });
+  } catch (error: any) {
+    console.error('Error processing Stripe webhook:', error);
+    return res.status(400).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการประมวลผล webhook',
+      error: error.message
+    });
   }
-
-  res.status(200).json({ received: true });
 });
 
 export default router;

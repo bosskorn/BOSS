@@ -91,6 +91,8 @@ const TopUpPage: React.FC = () => {
   const [paymentStep, setPaymentStep] = useState(1);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [referenceId, setReferenceId] = useState<string>('');
+  const [stripeSessionId, setStripeSessionId] = useState<string>('');
+  const [stripeCheckoutUrl, setStripeCheckoutUrl] = useState<string>('');
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -271,6 +273,109 @@ const TopUpPage: React.FC = () => {
     }
   };
 
+  // ชำระเงินด้วยบัตรเครดิต/เดบิต ผ่าน Stripe
+  const handleStripePayment = async (amount: number) => {
+    try {
+      setProcessing(true);
+      
+      // สร้าง Stripe Checkout Session
+      const result = await stripeService.createCheckoutSession(amount);
+      
+      if (result.success && result.url) {
+        // เก็บ sessionId ไว้ใช้สำหรับตรวจสอบสถานะการชำระเงินภายหลัง
+        setStripeSessionId(result.sessionId || '');
+        setStripeCheckoutUrl(result.url);
+        
+        // เปิดหน้า Stripe Checkout ในหน้าต่างใหม่
+        window.open(result.url, '_blank');
+        
+        // ไปยังขั้นตอนการรอตรวจสอบการชำระเงิน
+        setPaymentStep(2);
+      } else {
+        throw new Error(result.error || 'ไม่สามารถสร้าง Checkout Session ได้');
+      }
+    } catch (error: any) {
+      console.error('เกิดข้อผิดพลาดในการสร้าง Stripe Checkout Session:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error.message || 'ไม่สามารถเชื่อมต่อกับระบบชำระเงินได้ กรุณาลองใหม่อีกครั้ง',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+  
+  // ตรวจสอบสถานะการชำระเงินผ่าน Stripe
+  const checkStripePaymentStatus = async () => {
+    try {
+      setProcessing(true);
+      
+      if (!stripeSessionId) {
+        throw new Error('ไม่พบข้อมูล Session การชำระเงิน');
+      }
+      
+      // ตรวจสอบสถานะกับ API
+      const result = await stripeService.getCheckoutSession(stripeSessionId);
+      
+      if (result.success) {
+        // ถ้าชำระเงินสำเร็จแล้ว
+        if (result.session && result.session.payment_status === 'paid') {
+          toast({
+            title: 'เติมเงินสำเร็จ',
+            description: 'ยอดเงินได้ถูกเพิ่มเข้าบัญชีของคุณเรียบร้อยแล้ว',
+          });
+          
+          // อัพเดตข้อมูลผู้ใช้ถ้ามี
+          if (result.topup && result.topup.user) {
+            setUser(result.topup.user);
+          }
+          
+          // อัพเดตประวัติการเติมเงิน
+          try {
+            const historyResponse = await axios.get('/api/topups/history', { withCredentials: true });
+            if (historyResponse.data && historyResponse.data.success) {
+              const formattedHistory = historyResponse.data.data.map((item: any) => ({
+                id: item.id,
+                amount: parseFloat(item.amount),
+                method: item.method === 'prompt_pay' ? 'PromptPay' : 
+                         item.method === 'credit_card' ? 'บัตรเครดิต' : 'โอนเงิน',
+                status: item.status,
+                createdAt: item.createdAt,
+                reference: item.referenceId
+              }));
+              
+              setHistory(formattedHistory);
+            }
+          } catch (error) {
+            console.error('ไม่สามารถดึงประวัติการเติมเงินได้:', error);
+          }
+          
+          // ไปยังขั้นตอนเสร็จสิ้น
+          setPaymentStep(3);
+        } else {
+          // ยังไม่ได้ชำระเงิน
+          toast({
+            title: 'ยังไม่พบการชำระเงิน',
+            description: 'กรุณาทำรายการชำระเงินในหน้าต่าง Stripe Checkout หรือลองตรวจสอบอีกครั้งในภายหลัง',
+            variant: 'destructive',
+          });
+        }
+      } else {
+        throw new Error(result.error || 'ไม่สามารถตรวจสอบสถานะการชำระเงินได้');
+      }
+    } catch (error: any) {
+      console.error('เกิดข้อผิดพลาดในการตรวจสอบสถานะ Stripe Checkout:', error);
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: error.message || 'ไม่สามารถตรวจสอบสถานะการชำระเงินได้ กรุณาลองใหม่อีกครั้ง',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   // ยกเลิกการเติมเงิน
   const cancelTopUp = async () => {
     try {
@@ -287,6 +392,8 @@ const TopUpPage: React.FC = () => {
       setPaymentStep(1);
       setQrCodeUrl(null);
       setReferenceId('');
+      setStripeSessionId('');
+      setStripeCheckoutUrl('');
       
       // แจ้งเตือนผู้ใช้
       toast({
@@ -299,6 +406,8 @@ const TopUpPage: React.FC = () => {
       setPaymentStep(1);
       setQrCodeUrl(null);
       setReferenceId('');
+      setStripeSessionId('');
+      setStripeCheckoutUrl('');
     } finally {
       setProcessing(false);
     }
@@ -309,6 +418,8 @@ const TopUpPage: React.FC = () => {
     setPaymentStep(1);
     setQrCodeUrl(null);
     setReferenceId('');
+    setStripeSessionId('');
+    setStripeCheckoutUrl('');
     form.reset({ amount: '100' });
   };
 
@@ -567,7 +678,15 @@ const TopUpPage: React.FC = () => {
                   <CardContent>
                     {paymentStep === 1 && (
                       <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          const data = form.getValues();
+                          if (form.formState.isValid) {
+                            handleStripePayment(parseFloat(data.amount));
+                          } else {
+                            form.trigger();
+                          }
+                        }} className="space-y-6">
                           <FormField
                             control={form.control}
                             name="amount"
@@ -599,7 +718,7 @@ const TopUpPage: React.FC = () => {
                           <div className="flex justify-end">
                             <Button type="submit" disabled={processing} className="bg-purple-600 hover:bg-purple-700">
                               {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                              ดำเนินการ
+                              ดำเนินการชำระเงิน
                             </Button>
                           </div>
                         </form>
@@ -609,47 +728,65 @@ const TopUpPage: React.FC = () => {
                     {paymentStep === 2 && (
                       <div className="space-y-6">
                         <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
-                          <h3 className="font-medium text-lg mb-4">กรุณาชำระเงินด้วยบัตรเครดิต/เดบิต</h3>
+                          <h3 className="font-medium text-lg mb-4">โปรดทำรายการชำระเงินใน Stripe Checkout</h3>
                           
                           <div className="bg-white p-5 rounded-lg mb-4">
-                            {/* ที่นี่จะใช้ Stripe Elements สำหรับฟอร์มบัตรเครดิต */}
-                            <div className="border rounded-lg p-4 mb-4">
-                              <div className="flex justify-between mb-2">
-                                <span className="text-sm text-gray-500">Stripe Payment Form</span>
-                                <CreditCard className="h-5 w-5 text-gray-400" />
-                              </div>
-                              <div className="h-10 bg-gray-100 rounded mb-2"></div>
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="h-10 bg-gray-100 rounded"></div>
-                                <div className="h-10 bg-gray-100 rounded"></div>
+                            <div className="mb-4 border border-blue-100 bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
+                              <div className="flex items-start">
+                                <div className="mr-2 mt-1 flex-shrink-0">
+                                  <ExternalLink className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <p className="font-medium mb-1">หน้าต่าง Stripe Checkout ได้เปิดขึ้นแล้ว</p>
+                                  <p>หากหน้าต่างไม่เปิดขึ้นโดยอัตโนมัติ คุณสามารถคลิกปุ่ม "ไปยังหน้าชำระเงิน" ด้านล่าง</p>
+                                </div>
                               </div>
                             </div>
                             
+                            <div className="flex justify-center mb-4">
+                              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                                <CreditCard className="h-8 w-8 text-purple-600" />
+                              </div>
+                            </div>
+                            
+                            <div className="text-sm text-gray-600 mb-2 font-medium">
+                              กรุณาดำเนินการในหน้าต่าง Stripe เพื่อชำระเงิน
+                            </div>
                             <div className="text-sm text-gray-600 mb-2">
                               จำนวนเงิน: <span className="font-medium text-black dark:text-white">฿{form.getValues().amount}</span>
                             </div>
-                            <div className="text-xs text-gray-500">
-                              รหัสอ้างอิง: {referenceId}
+                            <div className="text-xs text-gray-500 mb-4">
+                              หลังจากชำระเงินเสร็จสิ้น กด "ตรวจสอบสถานะ" เพื่อยืนยันการชำระเงิน
                             </div>
                           </div>
                           
-                          <Button 
-                            onClick={checkPaymentStatus}
-                            disabled={processing}
-                            className="bg-purple-600 hover:bg-purple-700 w-full"
-                          >
-                            {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            ชำระเงิน
-                          </Button>
+                          {stripeCheckoutUrl && (
+                            <Button 
+                              onClick={() => window.open(stripeCheckoutUrl, '_blank')}
+                              className="bg-purple-600 hover:bg-purple-700 w-full"
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              ไปยังหน้าชำระเงิน
+                            </Button>
+                          )}
                           
-                          <Button
-                            variant="outline"
-                            onClick={cancelTopUp}
-                            disabled={processing}
-                            className="mt-2 w-full"
-                          >
-                            ยกเลิกการชำระเงิน
-                          </Button>
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={cancelTopUp}
+                              disabled={processing}
+                            >
+                              ยกเลิก
+                            </Button>
+                            <Button
+                              onClick={checkStripePaymentStatus}
+                              disabled={processing}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              ตรวจสอบสถานะ
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
