@@ -526,21 +526,34 @@ const FlashExpressLabelNew: React.FC = () => {
     
     // สร้างบาร์โค้ดเมื่อหน้าโหลดเสร็จ
     printWindow.onload = function() {
-      const barcodeElement = printWindow.document.getElementById('barcode');
-      if (barcodeElement) {
-        JsBarcode(barcodeElement, finalTrackingNumber, {
-          format: "CODE128",
-          width: 2,
-          height: 40,
-          displayValue: false,
-          margin: 0
-        });
+      try {
+        const barcodeElement = printWindow.document.getElementById('barcode');
+        if (barcodeElement) {
+          console.log('กำลังสร้างบาร์โค้ดสำหรับเลขพัสดุ:', finalTrackingNumber);
+          JsBarcode(barcodeElement, finalTrackingNumber, {
+            format: "CODE128",
+            width: 2,
+            height: 40,
+            displayValue: false,
+            margin: 0
+          });
+          
+          // ตั้งค่าให้รอการแสดงบาร์โค้ดก่อนพิมพ์อัตโนมัติ
+          setTimeout(() => {
+            printWindow.print();
+          }, 800);
+        } else {
+          console.error('ไม่พบ element สำหรับบาร์โค้ด');
+          printWindow.document.body.innerHTML += '<div style="color: red; padding: 20px;">ไม่พบ element สำหรับบาร์โค้ด</div>';
+        }
+      } catch (error) {
+        console.error('เกิดข้อผิดพลาดในการสร้างบาร์โค้ด:', error);
+        printWindow.document.body.innerHTML += '<div style="color: red; padding: 20px;">เกิดข้อผิดพลาดในการสร้างบาร์โค้ด: ' + error.message + '</div>';
+        // พิมพ์แม้จะเกิดข้อผิดพลาด
+        setTimeout(() => {
+          printWindow.print();
+        }, 800);
       }
-      
-      // ตั้งค่าให้รอการแสดงบาร์โค้ดก่อนพิมพ์อัตโนมัติ
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
     };
   };
 

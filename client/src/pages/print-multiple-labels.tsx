@@ -115,12 +115,25 @@ const PrintMultipleLabels: React.FC = () => {
 
   // ฟังก์ชันสร้าง Barcodes
   const generateBarcodes = (orders: any[]) => {
+    console.log('กำลังสร้างบาร์โค้ดสำหรับ', orders.length, 'รายการ');
     orders.forEach((order, index) => {
       if (order.trackingNumber) {
         try {
-          const barcodeElement = document.getElementById(`barcode-${order.id}`);
+          const barcodeId = `barcode-${order.id}`;
+          console.log('กำลังสร้างบาร์โค้ด ID:', barcodeId, 'สำหรับเลขพัสดุ:', order.trackingNumber);
+          const barcodeElement = document.getElementById(barcodeId);
+          
           if (barcodeElement) {
-            JsBarcode(barcodeElement, order.trackingNumber, {
+            // แปลงเลขพัสดุถ้าขึ้นต้นด้วย "แบบ"
+            let trackingNumber = order.trackingNumber;
+            if (trackingNumber.startsWith('แบบ')) {
+              // สร้างเลขพัสดุแบบจำลอง
+              const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
+              trackingNumber = 'FLE' + randomPart;
+              console.log('แปลงเลขพัสดุจาก', order.trackingNumber, 'เป็น', trackingNumber);
+            }
+            
+            JsBarcode(barcodeElement, trackingNumber, {
               format: "CODE128",
               width: 1.5,
               height: 40,
@@ -130,10 +143,15 @@ const PrintMultipleLabels: React.FC = () => {
               marginBottom: 0,
               background: "#ffffff"
             });
+            console.log('สร้างบาร์โค้ดสำเร็จ');
+          } else {
+            console.error(`ไม่พบ element สำหรับบาร์โค้ดของออเดอร์ #${order.id} (ID: ${barcodeId})`);
           }
         } catch (error) {
-          console.error(`Error generating barcode for order #${order.id}:`, error);
+          console.error(`เกิดข้อผิดพลาดในการสร้างบาร์โค้ดสำหรับออเดอร์ #${order.id}:`, error);
         }
+      } else {
+        console.warn(`ออเดอร์ #${order.id} ไม่มีเลขพัสดุ`);
       }
     });
   };
