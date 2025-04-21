@@ -127,22 +127,39 @@ const PrintMultipleLabels: React.FC = () => {
             // แปลงเลขพัสดุถ้าขึ้นต้นด้วย "แบบ"
             let trackingNumber = order.trackingNumber;
             if (trackingNumber.startsWith('แบบ')) {
-              // สร้างเลขพัสดุแบบจำลอง
-              const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
-              trackingNumber = 'FLE' + randomPart;
+              // สร้างเลขพัสดุแบบจำลองที่คงที่ (ไม่ใช้สุ่ม) เพื่อให้ได้ผลลัพธ์เดิมทุกครั้ง
+              const hash = order.id.toString() + order.orderNumber;
+              const stableId = Array.from(hash).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+              const stableString = 'FLE' + stableId.toString().padStart(8, '0');
+              trackingNumber = stableString.substring(0, 12);
               console.log('แปลงเลขพัสดุจาก', order.trackingNumber, 'เป็น', trackingNumber);
             }
             
-            JsBarcode(barcodeElement, trackingNumber, {
-              format: "CODE128",
-              width: 1.5,
-              height: 40,
-              displayValue: true,
-              fontSize: 12,
-              marginTop: 10,
-              marginBottom: 0,
-              background: "#ffffff"
-            });
+            // ตรวจสอบความถูกต้องเลขพัสดุก่อนสร้างบาร์โค้ด
+            try {
+              if (!trackingNumber || trackingNumber.trim() === '') {
+                throw new Error('เลขพัสดุว่างเปล่า');
+              }
+              
+              JsBarcode(barcodeElement, trackingNumber, {
+                format: "CODE128",
+                width: 1.5,
+                height: 40,
+                displayValue: true,
+                fontSize: 12,
+                marginTop: 10,
+                marginBottom: 0,
+                background: "#ffffff"
+              });
+            } catch (barcodeError) {
+              console.error('ไม่สามารถสร้างบาร์โค้ดได้:', barcodeError);
+              // ใส่ข้อความแทนบาร์โค้ดที่ไม่สามารถสร้างได้
+              barcodeElement.insertAdjacentHTML('afterend', 
+                `<div style="color:red; text-align:center; border:1px solid red; padding:10px; margin:10px 0;">
+                  ไม่สามารถสร้างบาร์โค้ดสำหรับเลขพัสดุ: ${trackingNumber}
+                </div>`
+              );
+            }
             console.log('สร้างบาร์โค้ดสำเร็จ');
           } else {
             console.error(`ไม่พบ element สำหรับบาร์โค้ดของออเดอร์ #${order.id} (ID: ${barcodeId})`);

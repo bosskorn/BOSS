@@ -529,26 +529,57 @@ const FlashExpressLabelNew: React.FC = () => {
       try {
         const barcodeElement = printWindow.document.getElementById('barcode');
         if (barcodeElement) {
-          console.log('กำลังสร้างบาร์โค้ดสำหรับเลขพัสดุ:', finalTrackingNumber);
-          JsBarcode(barcodeElement, finalTrackingNumber, {
-            format: "CODE128",
-            width: 2,
-            height: 40,
-            displayValue: false,
-            margin: 0
-          });
+          // ตรวจสอบและแปลงเลขพัสดุถ้าขึ้นต้นด้วย "แบบ"
+          let barcodeText = finalTrackingNumber;
+          if (barcodeText.startsWith('แบบ')) {
+            // สร้างเลขพัสดุแบบจำลองที่คงที่โดยใช้ ID และเลขออเดอร์
+            const hash = orderID + recipientName;
+            const stableId = Array.from(hash).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            const stableString = 'FLE' + stableId.toString().padStart(8, '0');
+            barcodeText = stableString.substring(0, 12);
+            console.log('แปลงเลขพัสดุจาก', finalTrackingNumber, 'เป็น', barcodeText);
+          }
+
+          console.log('กำลังสร้างบาร์โค้ดสำหรับเลขพัสดุ:', barcodeText);
           
-          // ตั้งค่าให้รอการแสดงบาร์โค้ดก่อนพิมพ์อัตโนมัติ
-          setTimeout(() => {
-            printWindow.print();
-          }, 800);
+          try {
+            JsBarcode(barcodeElement, barcodeText, {
+              format: "CODE128",
+              width: 2,
+              height: 40,
+              displayValue: false,
+              margin: 0
+            });
+            
+            // ตั้งค่าให้รอการแสดงบาร์โค้ดก่อนพิมพ์อัตโนมัติ
+            setTimeout(() => {
+              printWindow.print();
+            }, 800);
+          } catch (barcodeError) {
+            console.error('ไม่สามารถสร้างบาร์โค้ดได้:', barcodeError);
+            printWindow.document.body.innerHTML += `<div style="color: red; padding: 20px;">
+              <p>ไม่สามารถสร้างบาร์โค้ดได้ (${barcodeText})</p>
+              <p>กรุณาลองตรวจสอบรูปแบบเลขพัสดุ</p>
+            </div>`;
+            
+            // พิมพ์แม้จะเกิดข้อผิดพลาด
+            setTimeout(() => {
+              printWindow.print();
+            }, 800);
+          }
         } else {
           console.error('ไม่พบ element สำหรับบาร์โค้ด');
           printWindow.document.body.innerHTML += '<div style="color: red; padding: 20px;">ไม่พบ element สำหรับบาร์โค้ด</div>';
+          
+          // ตั้งค่าให้รอการแสดงข้อความข้อผิดพลาดก่อนพิมพ์อัตโนมัติ
+          setTimeout(() => {
+            printWindow.print();
+          }, 800);
         }
-      } catch (error) {
-        console.error('เกิดข้อผิดพลาดในการสร้างบาร์โค้ด:', error);
-        printWindow.document.body.innerHTML += '<div style="color: red; padding: 20px;">เกิดข้อผิดพลาดในการสร้างบาร์โค้ด: ' + error.message + '</div>';
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'ไม่ทราบสาเหตุ';
+        console.error('เกิดข้อผิดพลาดในการสร้างบาร์โค้ด:', err);
+        printWindow.document.body.innerHTML += '<div style="color: red; padding: 20px;">เกิดข้อผิดพลาดในการสร้างบาร์โค้ด: ' + errorMessage + '</div>';
         // พิมพ์แม้จะเกิดข้อผิดพลาด
         setTimeout(() => {
           printWindow.print();
