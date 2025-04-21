@@ -477,7 +477,7 @@ const FlashExpressLabelNew: React.FC = () => {
             </div>
           </div>
           
-          <div class="address-section">
+          <div class="address-section" style="font-size: 9px;">
             <strong>จาก</strong> ${senderName} ${senderPhone}<br>
             ${senderAddress}
           </div>
