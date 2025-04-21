@@ -115,16 +115,58 @@ const FlashExpressLabelNew: React.FC = () => {
         setCodAmount(orderData.paymentMethod === 'cod' || orderData.paymentMethod === 'cash_on_delivery' ? 
           (orderData.totalAmount || '0.00') : '0.00');
         
-        // ข้อมูลของผู้รับ - ใช้ทั้ง customerName และ customer.name เพื่อความแน่ใจ
-        const cusName = orderData.customerName || (orderData.customer?.name) || 'ไม่ระบุชื่อผู้รับ';
-        const cusPhone = (orderData.customer?.phone) || '';
-        const cusAddress = (orderData.customer?.address) || 'ไม่ระบุที่อยู่ผู้รับ';
+        // ข้อมูลของผู้รับ - ต้องทำ API request เพิ่มเติมเพื่อดึงข้อมูลลูกค้า
+        console.log('ข้อมูลลูกค้าจากออเดอร์:', orderData);
+        let cusName = orderData.customerName || 'ไม่ระบุชื่อผู้รับ';
+        let cusPhone = '';
+        let cusAddress = 'ไม่ระบุที่อยู่ผู้รับ';
+        
+        // ถ้ามี customerId ให้ดึงข้อมูลเพิ่มเติม
+        if (orderData.customerId) {
+          try {
+            const customerResponse = await fetch(`/api/customers/${orderData.customerId}`, {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : '',
+              },
+              credentials: 'include'
+            });
+            
+            if (customerResponse.ok) {
+              const customerData = await customerResponse.json();
+              if (customerData.success && customerData.customer) {
+                console.log('ดึงข้อมูลลูกค้าสำเร็จ:', customerData.customer);
+                const customer = customerData.customer;
+                cusName = customer.name || cusName;
+                cusPhone = customer.phone || '';
+                
+                // ประกอบที่อยู่จากส่วนประกอบต่างๆ
+                const addressParts = [];
+                if (customer.address) addressParts.push(customer.address);
+                if (customer.addressNumber) addressParts.push(`เลขที่ ${customer.addressNumber}`);
+                if (customer.road) addressParts.push(`ถนน${customer.road}`);
+                if (customer.subDistrict) addressParts.push(`แขวง/ตำบล ${customer.subDistrict}`);
+                if (customer.district) addressParts.push(`เขต/อำเภอ ${customer.district}`);
+                if (customer.province) addressParts.push(`${customer.province}`);
+                if (customer.postalCode) addressParts.push(`${customer.postalCode}`);
+                
+                if (addressParts.length > 0) {
+                  cusAddress = addressParts.join(' ');
+                }
+              }
+            } else {
+              console.error('ไม่สามารถดึงข้อมูลลูกค้า:', customerResponse.status);
+            }
+          } catch (customerError) {
+            console.error('เกิดข้อผิดพลาดในการดึงข้อมูลลูกค้า:', customerError);
+          }
+        }
         
         setRecipientName(cusName);
         setRecipientPhone(cusPhone);
         setRecipientAddress(cusAddress);
         
-        console.log('ข้อมูลผู้รับ:', { cusName, cusPhone, cusAddress });
+        console.log('ข้อมูลผู้รับที่จะใช้พิมพ์:', { cusName, cusPhone, cusAddress });
         
         // ดึงตำบล/อำเภอจากที่อยู่ (แบบพื้นฐาน)
         const addressParts = cusAddress.split(' ');
