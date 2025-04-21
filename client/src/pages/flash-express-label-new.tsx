@@ -5,12 +5,11 @@ import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 /**
- * หน้าสำหรับพิมพ์ลาเบล Flash Express
- * ลาเบลถูกออกแบบตามตัวอย่างที่ผู้ใช้แนบมา (HTML ใหม่)
+ * หน้าสำหรับพิมพ์ลาเบล Flash Express (หรือ เสี่ยวไป๋ เอ็กเพรส)
  * เมื่อโหลดหน้านี้จะพิมพ์ลาเบลทันทีโดยอัตโนมัติ
  */
 const FlashExpressLabelNew: React.FC = () => {
-  const [trackingNumber, setTrackingNumber] = useState('THT64141T9NYG7Z');
+  const [trackingNumber, setTrackingNumber] = useState('');
   const [sortingCode, setSortingCode] = useState('SS1');
   const [senderName, setSenderName] = useState('BLUEDASH LOGISTICS');
   const [senderPhone, setSenderPhone] = useState('02-123-4567');
@@ -27,13 +26,12 @@ const FlashExpressLabelNew: React.FC = () => {
   const [district, setDistrict] = useState('');
   const [shippingDate, setShippingDate] = useState('');
   const [estimatedDate, setEstimatedDate] = useState('');
-  const [cashless, setCashless] = useState(false);
   const [pickupPackage, setPickupPackage] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [dataReady, setDataReady] = useState(false);
   const [order, setOrder] = useState<any>(null);
   
-  // Reference สำหรับใช้ในการสร้างบาร์โค้ด
+  // Reference สำหรับบาร์โค้ด
   const barcodeRef = useRef(null);
   
   // ดึงข้อมูลออเดอร์จาก URL parameter และเรียกใช้ฟังก์ชันพิมพ์อัตโนมัติ
@@ -380,7 +378,7 @@ const FlashExpressLabelNew: React.FC = () => {
         </div>
         
         <div class="label-size-info">
-          ขนาดใบลาเบล: 100x150mm (Flash Express)
+          ขนาดใบลาเบล: 100x150mm (เสี่ยวไป๋ เอ็กเพรส)
         </div>
         
         <div class="label-container">
