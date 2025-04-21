@@ -581,9 +581,18 @@ router.post('/', auth, async (req, res) => {
       }
     }
     
+    // ดึงข้อมูลผู้ใช้ล่าสุดหลังจากหักเครดิต
+    const updatedUser = await storage.getUser(req.user.id);
+    const currentBalance = updatedUser?.balance ? parseFloat(updatedUser.balance.toString()) : 0;
+    
     res.status(201).json({
       success: true,
-      order
+      order,
+      creditInfo: {
+        orderFee: 25, // ค่าธรรมเนียมต่อออเดอร์
+        currentBalance: currentBalance.toFixed(2)
+      },
+      message: `สร้างออเดอร์สำเร็จ โดยหักค่าธรรมเนียม 25฿ จากเครดิตของคุณ ยอดคงเหลือ ${currentBalance.toFixed(2)} บาท`
     });
   } catch (error) {
     console.error('Error creating order:', error);
