@@ -119,37 +119,103 @@ router.get('/check/:referenceId', auth, async (req: Request, res: Response) => {
       });
     }
 
-    // จำลองการตรวจสอบสถานะการชำระเงิน (ในระบบจริงควรตรวจสอบกับ API ของผู้ให้บริการชำระเงิน)
-    // ในตัวอย่างนี้จะอัพเดตสถานะเป็น completed ทันทีเพื่อการทดสอบ
+    // ตรวจสอบสถานะการชำระเงินกับ Stripe API
     if (topup.status === 'pending') {
-      // อัพเดตสถานะเป็น completed
-      const updatedTopup = await storage.updateTopUp(topup.id, {
-        status: 'completed'
-      });
-      
-      // อัพเดตยอดเงินของผู้ใช้
-      const user = await storage.getUser(req.user!.id);
-      if (user) {
-        // Convert balance to number for calculation, default to 0 if null
-        const currentBalance = user.balance ? parseFloat(user.balance.toString()) : 0;
-        const topupAmount = parseFloat(topup.amount.toString());
-        const newBalance = currentBalance + topupAmount;
-        
-        // ใช้ db.update โดยตรงเพื่อแก้ปัญหา TypeScript
-        await db.update(users)
-          .set({ balance: newBalance.toString(), updatedAt: new Date() })
-          .where(eq(users.id, user.id));
+      // ตรวจสอบว่ามี stripeSessionId หรือไม่
+      if (topup.stripeSessionId) {
+        try {
+          // นำเข้า Stripe
+          const Stripe = require('stripe');
+          // สร้าง Stripe instance
+          if (!process.env.STRIPE_SECRET_KEY) {
+            throw new Error('STRIPE_SECRET_KEY is not defined in environment variables');
+          }
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+            apiVersion: '2023-10-16' as any,
+          });
+          
+          // ตรวจสอบสถานะการชำระเงินจริงกับ Stripe API
+          let paymentMethod = '';
+          let paymentStatus = 'unknown';
+          
+          try {
+            // ลองตรวจสอบเป็น Payment Intent ก่อน (สำหรับ PromptPay)
+            const paymentIntent = await stripe.paymentIntents.retrieve(topup.stripeSessionId);
+            console.log("Payment Intent Status (PromptPay):", paymentIntent.status);
+            paymentMethod = 'payment_intent';
+            paymentStatus = paymentIntent.status;
+            
+            // หมายเหตุ: ในกรณี Stripe อาจเป็น 'succeeded', 'requires_payment_method', 'requires_confirmation', etc.
+            if (paymentIntent.status === 'succeeded') {
+            // อัพเดตสถานะเป็น completed
+            const updatedTopup = await storage.updateTopUp(topup.id, {
+              status: 'completed'
+            });
+            
+            // อัพเดตยอดเงินของผู้ใช้
+            const user = await storage.getUser(req.user!.id);
+            if (user) {
+              // Convert balance to number for calculation, default to 0 if null
+              const currentBalance = user.balance ? parseFloat(user.balance.toString()) : 0;
+              const topupAmount = parseFloat(topup.amount.toString());
+              const newBalance = currentBalance + topupAmount;
+              
+              // ใช้ db.update โดยตรงเพื่อแก้ปัญหา TypeScript
+              await db.update(users)
+                .set({ balance: newBalance.toString(), updatedAt: new Date() })
+                .where(eq(users.id, user.id));
+            }
+            
+            // ดึงข้อมูลผู้ใช้ที่อัพเดตแล้ว
+            const updatedUser = await storage.getUser(req.user!.id);
+            
+            res.json({
+              success: true,
+              message: 'ชำระเงินสำเร็จ',
+              data: {
+                topup: updatedTopup,
+                user: updatedUser
+              }
+            });
+          } else {
+            // ยังไม่มีการชำระเงิน
+            res.json({
+              success: true,
+              message: 'กำลังรอการชำระเงิน',
+              data: {
+                topup,
+                paymentStatus: paymentIntent.status
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error checking Stripe payment status:', error);
+          res.status(500).json({
+            success: false,
+            message: 'เกิดข้อผิดพลาดในการตรวจสอบสถานะการชำระเงิน',
+            error: error.message
+          });
+        }
+      } else {
+        // ไม่พบข้อมูล Stripe Session
+        res.json({
+          success: true,
+          message: 'กำลังรอการชำระเงิน (ไม่พบข้อมูลการชำระเงิน)',
+          data: {
+            topup
+          }
+        });
       }
-      
-      // ดึงข้อมูลผู้ใช้ที่อัพเดตแล้ว
-      const updatedUser = await storage.getUser(req.user!.id);
+    } else if (topup.status === 'completed') {
+      // กรณีชำระเงินสำเร็จแล้ว
+      const user = await storage.getUser(req.user!.id);
       
       res.json({
         success: true,
         message: 'ชำระเงินสำเร็จ',
         data: {
-          topup: updatedTopup,
-          user: updatedUser
+          topup,
+          user
         }
       });
     } else {
