@@ -153,15 +153,19 @@ const TikTokStyleLabelPage = () => {
       padding: 5px 10px;
       border-bottom: 1px solid #000;
       font-size: 12px;
+      position: relative;
+    }
+    
+    .sender-info {
+      padding-right: 100px; /* เว้นพื้นที่ด้านขวาสำหรับ sender QR Code */
     }
     
     .recipient-info {
       padding-right: 100px; /* เว้นพื้นที่ด้านขวาสำหรับ QR Code */
       min-height: 85px;
-      position: relative;
     }
     
-    .recipient-address {
+    .recipient-address, .sender-address {
       max-width: calc(100% - 90px); /* ลดความกว้างด้านขวาสำหรับ QR Code */
       word-break: break-word;
     }
@@ -658,7 +662,7 @@ const TikTokStyleLabelPage = () => {
                 {/* แสดงข้อมูลผู้ส่ง */}
                 <div className="sender-info">
                   <div className="sender-info-header">จาก JSB Candy (+66)0836087712</div>
-                  <div>24 ซอยรามคำแหงมาเก็ต 008 แขวงวังทองหลาง, บางกะปิ, กรุงเทพ 10160</div>
+                  <div className="sender-address">24 ซอยรามคำแหงมาเก็ต 008 แขวงวังทองหลาง, บางกะปิ, กรุงเทพ 10160</div>
                 </div>
                 
                 {/* แสดงข้อมูลผู้รับ */}
@@ -690,8 +694,7 @@ const TikTokStyleLabelPage = () => {
                   </div>
                 </div>
                 
-                {/* แสดงส่วน PICKUP */}
-                <div className="pickup-delivery">PICK-UP</div>
+                {/* ลบ PICKUP ตามที่ต้องการ */}
                 
                 {/* แสดงข้อความแนวตั้งด้านข้าง */}
                 <div className="vertical-text-left">{order.displayTrackingNumber}</div>
