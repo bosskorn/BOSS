@@ -454,8 +454,6 @@ const FlashExpressLabelNew: React.FC = () => {
             <div class="sender-info">
               <strong>ถึง</strong> ${recipientName || 'ไม่ระบุชื่อผู้รับ'} ${recipientPhone ? recipientPhone : ''}<br>
               ${recipientAddress || 'ไม่ระบุที่อยู่'}
-              ${recipientDistrict ? `<br>${recipientDistrict}` : ''}
-              ${recipientProvince ? `<br>${recipientProvince} ${recipientPostcode || ''}` : ''}
             </div>
             <div class="qr-code">
               <img class="qr-image" src="https://chart.googleapis.com/chart?cht=qr&chl=${finalTrackingNumber}&chs=200x200&choe=UTF-8" alt="QR Code">
@@ -636,8 +634,9 @@ const FlashExpressLabelNew: React.FC = () => {
                 
                 <div className="mb-4">
                   <p className="text-gray-500 text-sm">ผู้รับ:</p>
-                  <p className="font-medium">{recipientName}</p>
-                  <p className="text-sm text-gray-600">{recipientAddress}</p>
+                  <p className="font-medium">{recipientName || 'ไม่ระบุชื่อผู้รับ'}</p>
+                  <p className="text-sm text-gray-600">{recipientAddress || 'ไม่ระบุที่อยู่'}</p>
+                  {recipientPhone && <p className="text-sm text-gray-600">โทร: {recipientPhone}</p>}
                 </div>
                 
                 {(codAmount && parseFloat(codAmount) > 0) && (
