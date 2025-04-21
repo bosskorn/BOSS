@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import Layout from '@/components/Layout';
-import { Loader2, Search, Filter, ChevronDown, ChevronUp, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square, Tag } from 'lucide-react';
+import { Loader2, Search, Filter, ChevronDown, ChevronUp, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square, Tag, Clock, AlertCircle, CornerUpLeft, CircleDollarSign, Slash, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -733,47 +733,155 @@ const OrderList: React.FC = () => {
               </div>
               
               <div className="w-full overflow-x-auto hide-scrollbar pb-2">
-                <TabsList className="bg-gray-50 p-1 rounded-lg h-auto flex-nowrap">
-                  <TabsTrigger value="all" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
-                    ทั้งหมด
-                  </TabsTrigger>
-                  <TabsTrigger value="pending" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 inline-block bg-yellow-400 rounded-full"></span>
-                      รอดำเนินการ
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="processing" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 inline-block bg-blue-400 rounded-full"></span>
-                      กำลังดำเนินการ
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="shipped" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 inline-block bg-green-400 rounded-full"></span>
-                      จัดส่งแล้ว
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="flash-express" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 inline-block bg-orange-500 rounded-full"></span>
-                      Flash Express
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="jt-express" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 inline-block bg-red-500 rounded-full"></span>
-                      J&T Express
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="xiaobai-express" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 inline-block bg-green-500 rounded-full"></span>
-                      เสี่ยวไป๋ เอ็กเพรส
-                    </div>
-                  </TabsTrigger>
-                </TabsList>
+                <div className="flex flex-nowrap border-b border-gray-200 py-1">
+                  <TabsList className="bg-transparent h-auto flex-nowrap border-0 min-w-max">
+                    <TabsTrigger 
+                      value="all" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Package className="h-4 w-4" />
+                        <span>ทั้งหมด</span>
+                        <span className="ml-1 bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                          {orders.length}
+                        </span>
+                      </div>
+                    </TabsTrigger>
+
+                    <TabsTrigger 
+                      value="pending" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-yellow-500 data-[state=active]:text-yellow-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-4 w-4 text-yellow-500" />
+                        <span>รอเข้ารับ</span>
+                        <span className="ml-1 bg-yellow-100 text-yellow-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                          {orders.filter(o => o.status === 'pending').length}
+                        </span>
+                      </div>
+                    </TabsTrigger>
+
+                    <TabsTrigger 
+                      value="processing" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Truck className="h-4 w-4 text-blue-500" />
+                        <span>พัสดุเข้าระบบ</span>
+                        <span className="ml-1 bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                          {orders.filter(o => o.status === 'processing').length}
+                        </span>
+                      </div>
+                    </TabsTrigger>
+
+                    <TabsTrigger 
+                      value="in-transit" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Truck className="h-4 w-4 text-orange-500" />
+                        <span>ระหว่างขนส่ง</span>
+                        <span className="ml-1 bg-orange-100 text-orange-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                          {orders.filter(o => o.status === 'shipped').length}
+                        </span>
+                      </div>
+                    </TabsTrigger>
+
+                    <TabsTrigger 
+                      value="delivered" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span>จัดส่งสำเร็จ</span>
+                        <span className="ml-1 bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                          {orders.filter(o => o.status === 'delivered').length}
+                        </span>
+                      </div>
+                    </TabsTrigger>
+
+                    <TabsTrigger 
+                      value="issues" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:text-red-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                        <span>พัสดุมีปัญหา</span>
+                        <span className="ml-1 bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                          0
+                        </span>
+                      </div>
+                    </TabsTrigger>
+
+                    <TabsTrigger 
+                      value="returns" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:text-red-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <CornerUpLeft className="h-4 w-4 text-red-500" />
+                        <span>พัสดุตีกลับ</span>
+                        <span className="ml-1 bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                          0
+                        </span>
+                      </div>
+                    </TabsTrigger>
+
+                    <TabsTrigger 
+                      value="payments" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <CircleDollarSign className="h-4 w-4 text-green-500" />
+                        <span>ชำระเงินสำเร็จ</span>
+                        <span className="ml-1 bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                          {orders.filter(o => o.paymentStatus === 'paid').length}
+                        </span>
+                      </div>
+                    </TabsTrigger>
+
+                    <TabsTrigger 
+                      value="cancelled" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:text-red-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Slash className="h-4 w-4 text-red-500" />
+                        <span>ยกเลิก</span>
+                        <span className="ml-1 bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                          {orders.filter(o => o.status === 'cancelled').length}
+                        </span>
+                      </div>
+                    </TabsTrigger>
+
+                    <TabsTrigger 
+                      value="archived" 
+                      className="px-4 py-2.5 text-sm font-medium rounded-none border-b-2 border-transparent data-[state=active]:border-gray-500 data-[state=active]:text-gray-700 data-[state=active]:bg-transparent hover:bg-gray-50"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Folder className="h-4 w-4 text-gray-500" />
+                        <span>รายการเก่า</span>
+                      </div>
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+
+                <div className="bg-white px-4 pt-4 flex flex-wrap gap-1.5">
+                  <div className="px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 text-xs font-medium border border-orange-200 flex items-center gap-1">
+                    <span className="w-2 h-2 inline-block bg-orange-500 rounded-full"></span>
+                    Flash Express
+                  </div>
+                  <div className="px-3 py-1.5 rounded-full bg-red-50 text-red-700 text-xs font-medium border border-red-200 flex items-center gap-1">
+                    <span className="w-2 h-2 inline-block bg-red-500 rounded-full"></span>
+                    J&T Express
+                  </div>
+                  <div className="px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-medium border border-green-200 flex items-center gap-1">
+                    <span className="w-2 h-2 inline-block bg-green-500 rounded-full"></span>
+                    เสี่ยวไป๋ เอ็กเพรส
+                  </div>
+                  <div className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200 flex items-center gap-1">
+                    <span className="w-2 h-2 inline-block bg-blue-500 rounded-full"></span>
+                    ไปรษณีย์ไทย
+                  </div>
+                </div>
               </div>
             </div>
             
