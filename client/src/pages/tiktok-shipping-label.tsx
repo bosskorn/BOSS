@@ -167,7 +167,7 @@ const TikTokShippingLabel: React.FC = () => {
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>ลาเบลการจัดส่ง</title>
+        <title>ลาเบลการจัดส่ง - ${orderId}</title>
         <style>
           @page {
             size: 100mm 150mm;
@@ -176,7 +176,7 @@ const TikTokShippingLabel: React.FC = () => {
           body {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Kanit', 'Sarabun', Arial, sans-serif;
           }
           .label-container {
             width: 100mm;
@@ -203,6 +203,18 @@ const TikTokShippingLabel: React.FC = () => {
             height: 40px;
             width: 95%;
             margin: 0 auto;
+          }
+          .barcode-element-container {
+            width: 100%;
+            height: 40px;
+            margin: 0 auto;
+          }
+          .tracking-number {
+            font-size: 14px;
+            text-align: center;
+            margin-top: 3px;
+            font-family: monospace;
+            letter-spacing: 1px;
           }
           .info-section {
             display: flex;
@@ -313,6 +325,20 @@ const TikTokShippingLabel: React.FC = () => {
           td {
             padding: 2px;
           }
+          .print-button {
+            text-align: center;
+            margin: 20px 0;
+          }
+          .print-button button {
+            padding: 10px 20px;
+            background: #0078D7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Kanit', 'Sarabun', Arial, sans-serif;
+          }
           @media print {
             body { margin: 0; }
             .print-button { display: none; }
@@ -320,6 +346,10 @@ const TikTokShippingLabel: React.FC = () => {
         </style>
       </head>
       <body>
+        <div class="print-button">
+          <button onclick="window.print();">พิมพ์ลาเบล</button>
+        </div>
+
         <div class="label-container">
           <div class="header">
             <div>TikTok Shop</div>
@@ -328,7 +358,10 @@ const TikTokShippingLabel: React.FC = () => {
           </div>
 
           <div class="barcode-section">
-            <svg id="barcode"></svg>
+            <div class="barcode-element-container">
+              <svg class="barcode-element" id="barcode"></svg>
+            </div>
+            <div class="tracking-number">${trackingNumber}</div>
           </div>
 
           <div class="info-section">
@@ -347,8 +380,8 @@ const TikTokShippingLabel: React.FC = () => {
 
           <div class="recipient-section">
             <div class="recipient-info">
-              <strong>ถึง</strong> ${recipientName} ${recipientPhone}<br>
-              ${recipientAddress}
+              <strong>ถึง</strong> ${recipientName || 'ไม่ระบุ'} ${recipientPhone || 'ไม่ระบุ'}<br>
+              ${recipientAddress || 'ไม่ระบุ'}
             </div>
             <div class="qr-code">
               <div id="qrcode"></div>
@@ -402,34 +435,39 @@ const TikTokShippingLabel: React.FC = () => {
           </div>
         </div>
 
-        <script type="text/javascript">
-          // สร้าง QR Code
-          const qr = new QRCode(document.getElementById("qrcode"), {
-            text: "${trackingNumber}",
-            width: 80,
-            height: 80
-          });
-
-          // สร้างบาร์โค้ด
-          JsBarcode("#barcode", "${trackingNumber}", {
-            format: "CODE128",
-            lineColor: "#000",
-            width: 1.3,
-            height: 45,
-            displayValue: false,
-            margin: 0
-          });
-
-          // พิมพ์อัตโนมัติหลังจากโหลดเสร็จ
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-            }, 500);
-          };
-        </script>
-
         <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+        <script type="text/javascript">
+          // ฟังก์ชันสร้างบาร์โค้ด
+          window.onload = function() {
+            try {
+              // สร้างบาร์โค้ด
+              JsBarcode("#barcode", "${trackingNumber}", {
+                format: "CODE128",
+                lineColor: "#000",
+                width: 1.3,
+                height: 40,
+                displayValue: false,
+                margin: 0
+              });
+              
+              // สร้าง QR Code
+              new QRCode(document.getElementById("qrcode"), {
+                text: "${trackingNumber}",
+                width: 80,
+                height: 80
+              });
+              
+              // พิมพ์อัตโนมัติหลังจากโหลดเสร็จและสร้างบาร์โค้ดเสร็จ
+              setTimeout(function() {
+                window.print();
+              }, 800);
+            } catch(error) {
+              console.error("Error generating barcode:", error);
+              alert("เกิดข้อผิดพลาดในการสร้างบาร์โค้ด: " + error.message);
+            }
+          };
+        </script>
       </body>
       </html>
     `);
