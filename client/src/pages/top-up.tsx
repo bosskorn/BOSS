@@ -41,9 +41,11 @@ import {
   ChevronsUp,
   Clock,
   CheckCircle2,
-  Users
+  Users,
+  ExternalLink
 } from 'lucide-react';
 import { useLocation } from 'wouter';
+import stripeService from '@/services/stripe-service';
 
 // สร้าง schema สำหรับการตรวจสอบฟอร์มเติมเงิน
 const topUpSchema = z.object({

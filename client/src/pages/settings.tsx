@@ -340,14 +340,14 @@ const SettingsPage: React.FC = () => {
         // อัพเดตข้อมูลผู้ใช้ในสถานะ
         setUserProfile({
           ...userProfile!,
-          fullname: profileData.fullname,
-          email: profileData.email,
-          phone: profileData.phone,
-          address: profileData.address,
-          province: profileData.province,
-          district: profileData.district,
-          subdistrict: profileData.subdistrict,
-          zipcode: profileData.zipcode,
+          fullname: profileData.fullname || null,
+          email: profileData.email || null,
+          phone: profileData.phone || null,
+          address: profileData.address || null,
+          province: profileData.province || null,
+          district: profileData.district || null,
+          subdistrict: profileData.subdistrict || null,
+          zipcode: profileData.zipcode || null,
         });
       } else {
         toast({
