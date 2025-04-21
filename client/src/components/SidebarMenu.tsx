@@ -94,8 +94,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
               <i className="fa-solid fa-user text-2xl"></i>
             </div>
             <div>
-              <p className="font-medium">{userData?.name || 'ผู้ใช้'}</p>
-              <p className="text-sm opacity-80">{userData?.role || 'ผู้ดูแลระบบ'}</p>
+              <p className="font-medium">{userData?.fullname || userData?.username || 'ผู้ใช้'}</p>
+              <p className="text-sm opacity-80">{userData?.role === 'admin' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งาน'}</p>
             </div>
           </div>
           
