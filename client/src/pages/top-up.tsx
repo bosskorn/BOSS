@@ -181,7 +181,7 @@ const TopUpPage: React.FC = () => {
       const method = 'prompt_pay';
       
       const response = await axios.post('/api/topups/create', {
-        amount: parseFloat(data.amount),
+        amount: data.amount, // ส่งเป็น string ตามที่ schema ต้องการ
         method: method
       }, { withCredentials: true });
       
