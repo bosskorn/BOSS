@@ -1,43 +1,157 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import JsBarcode from 'jsbarcode';
+import { toast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 /**
  * หน้าสำหรับพิมพ์ลาเบล Flash Express
  * ลาเบลถูกออกแบบตามตัวอย่างที่ผู้ใช้แนบมา (HTML ใหม่)
+ * เมื่อโหลดหน้านี้จะพิมพ์ลาเบลทันทีโดยอัตโนมัติ
  */
 const FlashExpressLabelNew: React.FC = () => {
   const [trackingNumber, setTrackingNumber] = useState('THT64141T9NYG7Z');
   const [sortingCode, setSortingCode] = useState('SS1');
-  const [senderName, setSenderName] = useState('JSB Candy');
-  const [senderPhone, setSenderPhone] = useState('(+66)0836087712');
-  const [senderAddress, setSenderAddress] = useState('24 ซอยนาคนิวาส ซอย 8 แขวงลาดพร้าว เขตลาดพร้าว กรุงเทพ 10160');
-  const [recipientName, setRecipientName] = useState('สิริรัตน์ ดำเกิด');
-  const [recipientPhone, setRecipientPhone] = useState('(+66)09******25');
-  const [recipientAddress, setRecipientAddress] = useState('ร้านสามสุข 101/3 ม.1 ตำบลสิชล อ.สิชล จ.นครศรีธรรมราช, สิชล, นครศรีธรรมราช, 80120');
-  const [weight, setWeight] = useState('4.000');
-  const [orderID, setOrderID] = useState('5785159668395229951');
+  const [senderName, setSenderName] = useState('BLUEDASH LOGISTICS');
+  const [senderPhone, setSenderPhone] = useState('02-123-4567');
+  const [senderAddress, setSenderAddress] = useState('เลขที่ 888 อาคารมณียาเซ็นเตอร์ ถนนพระราม 4 แขวงลุมพินี เขตปทุมวัน กรุงเทพฯ 10330');
+  const [recipientName, setRecipientName] = useState('');
+  const [recipientPhone, setRecipientPhone] = useState('');
+  const [recipientAddress, setRecipientAddress] = useState('');
+  const [weight, setWeight] = useState('1.000');
+  const [orderID, setOrderID] = useState('');
   const [serviceType, setServiceType] = useState('Standard');
-  const [codAmount, setCodAmount] = useState('840.00');
-  const [warehouseCode, setWarehouseCode] = useState('21S-38041-02');
-  const [customerCode, setCustomerCode] = useState('2TPY_BDC-หน');
-  const [district, setDistrict] = useState('พะยอม');
-  const [shippingDate, setShippingDate] = useState('21/04/2025 23:39');
-  const [estimatedDate, setEstimatedDate] = useState('23/04/2025');
+  const [codAmount, setCodAmount] = useState('0.00');
+  const [warehouseCode, setWarehouseCode] = useState('BL-1234');
+  const [customerCode, setCustomerCode] = useState('BLUEDASH');
+  const [district, setDistrict] = useState('');
+  const [shippingDate, setShippingDate] = useState('');
+  const [estimatedDate, setEstimatedDate] = useState('');
   const [cashless, setCashless] = useState(false);
   const [pickupPackage, setPickupPackage] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataReady, setDataReady] = useState(false);
+  const [order, setOrder] = useState<any>(null);
   
   // Reference สำหรับใช้ในการสร้างบาร์โค้ด
   const barcodeRef = useRef(null);
   
+  // ดึงข้อมูลออเดอร์จาก URL parameter และเรียกใช้ฟังก์ชันพิมพ์อัตโนมัติ
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const orderId = params.get('order');
+        
+        if (!orderId) {
+          toast({
+            title: 'ไม่พบรหัสออเดอร์',
+            description: 'กรุณาระบุรหัสออเดอร์ที่ต้องการพิมพ์ลาเบล',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log('พิมพ์ลาเบลสำหรับออเดอร์:', orderId);
+        
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`/api/orders/${orderId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`ไม่สามารถดึงข้อมูลออเดอร์ (${response.status})`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || !data.order) {
+          throw new Error('ไม่พบข้อมูลออเดอร์');
+        }
+        
+        const orderData = data.order;
+        console.log('พิมพ์ลาเบลสำหรับออเดอร์:', orderData);
+        setOrder(orderData);
+        
+        // ตรวจสอบเลขพัสดุ
+        if (!orderData.trackingNumber) {
+          toast({
+            title: 'ไม่พบเลขพัสดุ',
+            description: 'ออเดอร์นี้ยังไม่มีเลขพัสดุ กรุณาสร้างเลขพัสดุก่อนพิมพ์ลาเบล',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        // กำหนดค่าต่างๆ จากข้อมูลออเดอร์
+        setTrackingNumber(orderData.trackingNumber);
+        setOrderID(orderData.orderNumber || '');
+        setCodAmount(orderData.paymentMethod === 'cod' || orderData.paymentMethod === 'cash_on_delivery' ? 
+          (orderData.totalAmount || '0.00') : '0.00');
+        
+        // ข้อมูลของผู้รับ
+        if (orderData.customer) {
+          setRecipientName(orderData.customerName || orderData.customer.name || '');
+          setRecipientPhone(orderData.customer.phone || '');
+          setRecipientAddress(orderData.customer.address || '');
+          
+          // ดึงตำบล/อำเภอจากที่อยู่ (แบบพื้นฐาน)
+          const addressParts = (orderData.customer.address || '').split(' ');
+          if (addressParts.length > 0) {
+            const possibleDistrict = addressParts.find((part: string) => 
+              part.includes('อ.') || part.includes('อำเภอ') || part.includes('เขต')
+            );
+            if (possibleDistrict) {
+              setDistrict(possibleDistrict.replace('อ.', '').replace('อำเภอ', '').replace('เขต', ''));
+            }
+          }
+        }
+        
+        // กำหนดวันที่
+        const today = new Date();
+        setShippingDate(today.toLocaleString('th-TH', { 
+          day: '2-digit', month: '2-digit', year: 'numeric', 
+          hour: '2-digit', minute: '2-digit'
+        }));
+        
+        // วันที่คาดว่าจะถึง (เพิ่ม 2 วัน)
+        const estimatedDelivery = new Date(today);
+        estimatedDelivery.setDate(today.getDate() + 2);
+        setEstimatedDate(estimatedDelivery.toLocaleDateString('th-TH', {
+          day: '2-digit', month: '2-digit', year: 'numeric'
+        }));
+        
+        setDataReady(true);
+        setIsLoading(false);
+        
+        // พิมพ์ทันทีเมื่อได้ข้อมูลครบ
+        setTimeout(() => {
+          printLabel();
+        }, 500);
+        
+      } catch (error) {
+        console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error);
+        toast({
+          title: 'เกิดข้อผิดพลาด',
+          description: error instanceof Error ? error.message : 'ไม่สามารถดึงข้อมูลออเดอร์ได้',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+      }
+    };
+    
+    fetchOrderData();
+  }, []);
+  
   // สร้างบาร์โค้ดเมื่อ trackingNumber เปลี่ยนแปลง
   useEffect(() => {
-    if (barcodeRef.current) {
+    if (barcodeRef.current && trackingNumber) {
       JsBarcode(barcodeRef.current, trackingNumber, {
         format: "CODE128",
         width: 2,
@@ -237,7 +351,7 @@ const FlashExpressLabelNew: React.FC = () => {
           }
           .print-button button { 
             padding: 10px 20px; 
-            background: #ff9900;
+            background: #0066cc;
             color: white; 
             border: none; 
             border-radius: 5px; 
@@ -246,7 +360,7 @@ const FlashExpressLabelNew: React.FC = () => {
             font-size: 14px;
           }
           .print-button button:hover {
-            background: #e68a00;
+            background: #0055aa;
           }
           .label-size-info { 
             text-align: center; 
@@ -271,8 +385,8 @@ const FlashExpressLabelNew: React.FC = () => {
         
         <div class="label-container">
           <div class="header">
-            <div>TikTok Shop</div>
-            <div>FLASH</div>
+            <div>BLUEDASH</div>
+            <div>เสี่ยวไป๋ เอ็กเพรส</div>
             <div>${serviceType}</div>
           </div>
           
@@ -349,16 +463,6 @@ const FlashExpressLabelNew: React.FC = () => {
               <div class="product-qty">จำนวน</div>
               <div class="product-total">ราคา</div>
             </div>
-            <div class="product-item">
-              <div class="product-name">เค้กช็อคโกแลต Red Velvet</div>
-              <div class="product-qty">2</div>
-              <div class="product-total">590</div>
-            </div>
-            <div class="product-item">
-              <div class="product-name">คุกกี้เนยสด</div>
-              <div class="product-qty">1</div>
-              <div class="product-total">250</div>
-            </div>
             <div class="product-summary">
               <div>รวมทั้งสิ้น:</div>
               <div>${codAmount} บาท</div>
@@ -393,254 +497,76 @@ const FlashExpressLabelNew: React.FC = () => {
   };
 
   return (
-    <Layout>
-      <div className="container mx-auto p-4">
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <h1 className="text-2xl font-bold mb-4">พิมพ์ใบลาเบล Flash Express (แบบใหม่)</h1>
-            <p className="text-gray-600 mb-6">กรอกข้อมูลด้านล่างเพื่อสร้างใบลาเบลขนส่ง Flash Express ตามรูปแบบใหม่</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h2 className="text-lg font-semibold mb-4">ข้อมูลการจัดส่ง</h2>
-                
-                <div className="mb-4">
-                  <Label htmlFor="tracking-number">เลขพัสดุ</Label>
-                  <Input 
-                    id="tracking-number" 
-                    value={trackingNumber} 
-                    onChange={(e) => setTrackingNumber(e.target.value)}
-                    placeholder="เลขพัสดุ"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <Label htmlFor="warehouse-code">รหัสคลังสินค้า</Label>
-                  <Input 
-                    id="warehouse-code" 
-                    value={warehouseCode} 
-                    onChange={(e) => setWarehouseCode(e.target.value)}
-                    placeholder="รหัสคลังสินค้า"
-                    className="mt-1"
-                  />
-                </div>
-                
+    <div className="overflow-hidden h-screen w-screen p-0 m-0">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
+          <h2 className="text-xl font-medium">กำลังโหลดข้อมูลสำหรับพิมพ์ลาเบล...</h2>
+          <p className="text-gray-500 mt-2">ระบบจะพิมพ์ลาเบลโดยอัตโนมัติเมื่อโหลดเสร็จ</p>
+        </div>
+      ) : !dataReady ? (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md">
+            <h2 className="text-xl font-bold text-red-600 mb-4">เกิดข้อผิดพลาด</h2>
+            <p className="text-gray-700 mb-4">ไม่สามารถดึงข้อมูลออเดอร์หรือออเดอร์ไม่มีเลขพัสดุ</p>
+            <p className="text-gray-600 mb-6">กรุณาตรวจสอบว่ารหัสออเดอร์ถูกต้องและมีการสร้างเลขพัสดุแล้ว</p>
+            <Button 
+              onClick={() => window.close()} 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              ปิดหน้านี้
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="min-h-screen bg-white flex items-center justify-center p-4 print-content">
+          <div className="w-full max-w-lg">
+            <div className="hidden print:block print:mb-0">
+              {/* พื้นที่ว่างไว้สำหรับการพิมพ์ผ่าน printLabel() เท่านั้น */}
+            </div>
+            <div className="print:hidden">
+              <h1 className="text-2xl font-bold mb-4 text-center">ลาเบลพร้อมสำหรับการพิมพ์</h1>
+              <p className="text-gray-600 mb-6 text-center">หน้าต่างพิมพ์ควรเปิดขึ้นโดยอัตโนมัติ หากไม่เปิดให้กดปุ่มพิมพ์ด้านล่าง</p>
+              
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <Label htmlFor="sorting-code">รหัสคัดแยก</Label>
-                    <Input 
-                      id="sorting-code" 
-                      value={sortingCode} 
-                      onChange={(e) => setSortingCode(e.target.value)}
-                      placeholder="รหัสคัดแยก"
-                      className="mt-1"
-                    />
+                    <p className="text-gray-500 text-sm">เลขพัสดุ:</p>
+                    <p className="font-medium">{trackingNumber}</p>
                   </div>
                   <div>
-                    <Label htmlFor="customer-code">รหัสลูกค้า</Label>
-                    <Input 
-                      id="customer-code" 
-                      value={customerCode} 
-                      onChange={(e) => setCustomerCode(e.target.value)}
-                      placeholder="รหัสลูกค้า"
-                      className="mt-1"
-                    />
+                    <p className="text-gray-500 text-sm">ออเดอร์:</p>
+                    <p className="font-medium">{orderID}</p>
                   </div>
                 </div>
                 
                 <div className="mb-4">
-                  <Label htmlFor="district">เขต/อำเภอ</Label>
-                  <Input 
-                    id="district" 
-                    value={district} 
-                    onChange={(e) => setDistrict(e.target.value)}
-                    placeholder="เขต/อำเภอ"
-                    className="mt-1"
-                  />
+                  <p className="text-gray-500 text-sm">ผู้รับ:</p>
+                  <p className="font-medium">{recipientName}</p>
+                  <p className="text-sm text-gray-600">{recipientAddress}</p>
                 </div>
                 
-                <div className="mb-4">
-                  <Label htmlFor="order-id">รหัสออร์เดอร์</Label>
-                  <Input 
-                    id="order-id" 
-                    value={orderID} 
-                    onChange={(e) => setOrderID(e.target.value)}
-                    placeholder="รหัสออร์เดอร์"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="mb-4">
-                    <Label htmlFor="service-type">ประเภทบริการ</Label>
-                    <Select value={serviceType} onValueChange={setServiceType}>
-                      <SelectTrigger id="service-type" className="mt-1">
-                        <SelectValue placeholder="เลือกประเภทบริการ" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Standard">Standard</SelectItem>
-                        <SelectItem value="Express">Express</SelectItem>
-                        <SelectItem value="Same Day">Same Day</SelectItem>
-                      </SelectContent>
-                    </Select>
+                {(codAmount && parseFloat(codAmount) > 0) && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mb-4">
+                    <p className="text-yellow-700 text-sm">COD Amount:</p>
+                    <p className="font-medium text-yellow-800">{codAmount} บาท</p>
                   </div>
-                  
-                  <div className="mb-4">
-                    <Label htmlFor="weight">น้ำหนัก (กก.)</Label>
-                    <Input 
-                      id="weight" 
-                      value={weight} 
-                      onChange={(e) => setWeight(e.target.value)}
-                      placeholder="น้ำหนัก (กก.)"
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-                
-                <div className="mb-4">
-                  <Label htmlFor="cod-amount">จำนวนเงิน COD (บาท)</Label>
-                  <Input 
-                    id="cod-amount" 
-                    value={codAmount} 
-                    onChange={(e) => setCodAmount(e.target.value)}
-                    placeholder="จำนวนเงิน COD"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <Label htmlFor="shipping-date">วันที่จัดส่ง</Label>
-                  <Input 
-                    id="shipping-date" 
-                    value={shippingDate} 
-                    onChange={(e) => setShippingDate(e.target.value)}
-                    placeholder="วันที่จัดส่ง"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <Label htmlFor="estimated-date">วันที่คาดว่าจะถึง</Label>
-                  <Input 
-                    id="estimated-date" 
-                    value={estimatedDate} 
-                    onChange={(e) => setEstimatedDate(e.target.value)}
-                    placeholder="วันที่คาดว่าจะถึง"
-                    className="mt-1"
-                  />
-                </div>
+                )}
               </div>
               
-              <div>
-                <h2 className="text-lg font-semibold mb-4">ข้อมูลผู้ส่งและผู้รับ</h2>
-                
-                <div className="mb-4">
-                  <Label htmlFor="sender-name">ชื่อผู้ส่ง</Label>
-                  <Input 
-                    id="sender-name" 
-                    value={senderName} 
-                    onChange={(e) => setSenderName(e.target.value)}
-                    placeholder="ชื่อผู้ส่ง"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <Label htmlFor="sender-phone">เบอร์โทรผู้ส่ง</Label>
-                  <Input 
-                    id="sender-phone" 
-                    value={senderPhone} 
-                    onChange={(e) => setSenderPhone(e.target.value)}
-                    placeholder="เบอร์โทรผู้ส่ง"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <Label htmlFor="sender-address">ที่อยู่ผู้ส่ง</Label>
-                  <Input 
-                    id="sender-address" 
-                    value={senderAddress} 
-                    onChange={(e) => setSenderAddress(e.target.value)}
-                    placeholder="ที่อยู่ผู้ส่ง"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <Label htmlFor="recipient-name">ชื่อผู้รับ</Label>
-                  <Input 
-                    id="recipient-name" 
-                    value={recipientName} 
-                    onChange={(e) => setRecipientName(e.target.value)}
-                    placeholder="ชื่อผู้รับ"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <Label htmlFor="recipient-phone">เบอร์โทรผู้รับ</Label>
-                  <Input 
-                    id="recipient-phone" 
-                    value={recipientPhone} 
-                    onChange={(e) => setRecipientPhone(e.target.value)}
-                    placeholder="เบอร์โทรผู้รับ"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="mb-4">
-                  <Label htmlFor="recipient-address">ที่อยู่ผู้รับ</Label>
-                  <Input 
-                    id="recipient-address" 
-                    value={recipientAddress} 
-                    onChange={(e) => setRecipientAddress(e.target.value)}
-                    placeholder="ที่อยู่ผู้รับ"
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="flex flex-col gap-2 mb-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="cash-less"
-                      checked={cashless}
-                      onChange={(e) => setCashless(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    <Label htmlFor="cash-less" className="text-sm font-normal">การชำระเงินแบบ Cashless</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="pickup-package"
-                      checked={pickupPackage}
-                      onChange={(e) => setPickupPackage(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    <Label htmlFor="pickup-package" className="text-sm font-normal">รับพัสดุที่บ้าน (PICK-UP)</Label>
-                  </div>
-                </div>
-                
-                <div className="mt-6">
-                  <svg ref={barcodeRef} className="w-full h-16 mb-2"></svg>
-                  <div className="text-center text-gray-700 mb-4">{trackingNumber}</div>
-                  <Button 
-                    onClick={printLabel} 
-                    className="w-full bg-orange-500 hover:bg-orange-600 font-semibold"
-                  >
-                    พิมพ์ใบลาเบล
-                  </Button>
-                </div>
+              <div className="flex justify-center">
+                <Button 
+                  onClick={printLabel} 
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  พิมพ์ลาเบล
+                </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </Layout>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
