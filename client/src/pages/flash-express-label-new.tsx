@@ -330,7 +330,7 @@ const FlashExpressLabelNew: React.FC = () => {
             background-color: black;
             color: white;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 24px;
             text-align: center;
             display: flex;
             justify-content: center;
