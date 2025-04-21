@@ -390,7 +390,7 @@ const PrintMultipleLabels: React.FC = () => {
       </div>
 
       {/* CSS สำหรับพิมพ์ */}
-      <style jsx global>{`
+      <style>{`
         @media print {
           body {
             margin: 0;

@@ -62,6 +62,7 @@ function Router() {
       <Route path="/flash-express-label-new" component={FlashExpressLabelNew} />
       <Route path="/tiktok-flash-label" component={TikTokFlashLabel} />
       <Route path="/tiktok-shipping-label" component={TikTokShippingLabel} />
+      <Route path="/print-multiple-labels" component={PrintMultipleLabels} />
 
 
       {/* Protected routes - require authentication */}
