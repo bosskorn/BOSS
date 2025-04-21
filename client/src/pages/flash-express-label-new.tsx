@@ -79,6 +79,22 @@ const FlashExpressLabelNew = () => {
       padding: 5px 10px;
       border-bottom: 1px solid #000;
       font-size: 12px;
+      position: relative;
+    }
+    
+    .dropoff-info {
+      position: absolute;
+      bottom: -18px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      background-color: #ffefdd;
+      color: #FF6600;
+      font-size: 10px;
+      padding: 2px 5px;
+      font-weight: 500;
+      border-bottom: 1px solid #FF6600;
+      z-index: 1;
     }
     
     .tiktok-logo, .flash-logo, .service-type {
@@ -678,6 +694,7 @@ const FlashExpressLabelNew = () => {
                   <div className="service-type">
                     Standard
                   </div>
+                  <div className="dropoff-info">กรณี DROPOFF ใช้เบอร์นี้ในการแสกนส่งพัสดุ 0829327325</div>
                 </div>
                 
                 {/* แสดงบาร์โค้ด */}
