@@ -252,7 +252,9 @@ export const insertShippingMethodSchema = createInsertSchema(shippingMethods);
 export const insertDiscountSchema = createInsertSchema(discounts);
 export const insertOrderItemSchema = createInsertSchema(orderItems);
 export const insertOrderSchema = createInsertSchema(orders);
-export const insertTopupSchema = createInsertSchema(topups);
+export const insertTopupSchema = createInsertSchema(topups).omit({ 
+  referenceId: true 
+});
 
 // สร้าง types จาก schemas
 export type InsertUser = z.infer<typeof insertUserSchema>;

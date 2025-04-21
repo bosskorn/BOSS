@@ -18,14 +18,12 @@ router.post('/create', auth, async (req: Request, res: Response) => {
       userId: req.user?.id,
     });
 
-    // สร้างรหัสอ้างอิงถ้าไม่มีการส่งมา
-    if (!validatedData.referenceId) {
-      const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 12);
-      const random = Math.floor(Math.random() * 1000).toString().padStart(4, '0');
-      const prefix = validatedData.method === 'prompt_pay' ? 'PP' : 
-                   validatedData.method === 'credit_card' ? 'CC' : 'BT';
-      validatedData.referenceId = `${prefix}${timestamp}${random}`;
-    }
+    // สร้างรหัสอ้างอิงทุกครั้ง
+    const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 12);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(4, '0');
+    const prefix = validatedData.method === 'prompt_pay' ? 'PP' : 
+                validatedData.method === 'credit_card' ? 'CC' : 'BT';
+    const referenceId = `${prefix}${timestamp}${random}`;
 
     // สร้าง QR Code URL สำหรับ PromptPay (จำลอง)
     if (validatedData.method === 'prompt_pay' && !validatedData.qrCodeUrl) {
@@ -34,7 +32,10 @@ router.post('/create', auth, async (req: Request, res: Response) => {
     }
 
     // สร้างรายการเติมเงินในฐานข้อมูล
-    const topup = await storage.createTopup(validatedData);
+    const topup = await storage.createTopUp({
+      ...validatedData,
+      referenceId: referenceId
+    });
 
     res.status(201).json({
       success: true,
@@ -98,7 +99,7 @@ router.get('/check/:referenceId', auth, async (req: Request, res: Response) => {
     // ในตัวอย่างนี้จะอัพเดตสถานะเป็น completed ทันทีเพื่อการทดสอบ
     if (topup.status === 'pending') {
       // อัพเดตสถานะเป็น completed
-      const updatedTopup = await storage.updateTopup(topup.id, {
+      const updatedTopup = await storage.updateTopUp(topup.id, {
         status: 'completed'
       });
       
@@ -179,7 +180,7 @@ router.put('/cancel/:id', auth, async (req: Request, res: Response) => {
     }
     
     // อัพเดตสถานะเป็น failed
-    const updatedTopup = await storage.updateTopup(topup.id, {
+    const updatedTopup = await storage.updateTopUp(topup.id, {
       status: 'failed',
       notes: 'ยกเลิกโดยผู้ใช้'
     });
