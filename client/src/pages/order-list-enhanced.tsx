@@ -105,8 +105,37 @@ const OrderList: React.FC = () => {
       
       if (data.success) {
         console.log("ข้อมูลออเดอร์อยู่ใน data field:", data.data.length, "รายการ");
-        setOrders(data.data);
-        setFilteredOrders(data.data);
+        
+        // เพิ่มการตรวจสอบและตั้งค่าข้อมูลบริษัทขนส่งตามรหัสนำหน้าเลขพัสดุ
+        const ordersWithCarrier = data.data.map(order => {
+          let carrier = 'unknown';
+          
+          if (order.trackingNumber) {
+            // ตรวจสอบรหัสนำหน้าของเลขพัสดุ
+            if (order.trackingNumber.startsWith('FLE')) {
+              console.log(`ตรวจสอบ order #${order.id} ${order.orderNumber}: ${order.trackingNumber}, shippingMethod: ${order.shippingMethod || 'ไม่ระบุ'}`);
+              console.log(`✓ Matched Order #${order.id}: ${order.trackingNumber} by prefix FLE`);
+              carrier = 'flash-express';
+            } else if (order.trackingNumber.startsWith('JT')) {
+              console.log(`✓ Matched Order #${order.id}: ${order.trackingNumber} by prefix JT`);
+              carrier = 'jt-express';
+            } else if (order.trackingNumber.startsWith('XB')) {
+              console.log(`✓ Matched Order #${order.id}: ${order.trackingNumber} by prefix XB`);
+              carrier = 'xiaobai-express';
+            }
+          }
+          
+          return {
+            ...order,
+            carrier
+          };
+        });
+        
+        setOrders(ordersWithCarrier);
+        setFilteredOrders(ordersWithCarrier);
+        
+        // ดึงข้อมูลวิธีการจัดส่งเพื่อใช้ในตัวกรอง
+        fetchShippingMethods();
       } else {
         throw new Error(data.message || 'ไม่สามารถดึงข้อมูลคำสั่งซื้อได้');
       }
@@ -201,7 +230,11 @@ const OrderList: React.FC = () => {
     } else if (activeTab === 'cancelled') {
       result = result.filter(order => order.status === 'cancelled');
     } else if (activeTab === 'flash-express') {
-      result = filterFlashExpressOrders();
+      result = result.filter(order => order.trackingNumber?.startsWith('FLE'));
+    } else if (activeTab === 'jt-express') {
+      result = result.filter(order => order.trackingNumber?.startsWith('JT'));
+    } else if (activeTab === 'xiaobai-express') {
+      result = result.filter(order => order.trackingNumber?.startsWith('XB'));
     }
     
     // กรองตามคำค้นหา
@@ -223,20 +256,20 @@ const OrderList: React.FC = () => {
     if (shippingMethodFilter !== 'all') {
       if (shippingMethodFilter === 'flash-express') {
         result = result.filter(order => order.trackingNumber?.startsWith('FLE'));
-      } else if (shippingMethodFilter === 'xiaobaix') {
+      } else if (shippingMethodFilter === 'xiaobai-express') {
         result = result.filter(order => 
           order.shippingMethod?.includes('เสี่ยวไป๋') || 
-          order.trackingNumber?.startsWith('XBX')
+          order.trackingNumber?.startsWith('XB')
         );
       } else if (shippingMethodFilter === 'thailand-post') {
         result = result.filter(order => 
           order.shippingMethod?.includes('ไปรษณีย์ไทย') || 
           order.trackingNumber?.startsWith('TH')
         );
-      } else if (shippingMethodFilter === 'jnt') {
+      } else if (shippingMethodFilter === 'jt-express') {
         result = result.filter(order => 
           order.shippingMethod?.includes('J&T') || 
-          order.trackingNumber?.startsWith('JNT')
+          order.trackingNumber?.startsWith('JT')
         );
       } else if (shippingMethodFilter === 'none') {
         result = result.filter(order => !order.trackingNumber);
@@ -691,6 +724,12 @@ const OrderList: React.FC = () => {
                 </TabsTrigger>
                 <TabsTrigger value="flash-express" className="data-[state=active]:bg-white">
                   Flash Express
+                </TabsTrigger>
+                <TabsTrigger value="jt-express" className="data-[state=active]:bg-white">
+                  J&T Express
+                </TabsTrigger>
+                <TabsTrigger value="xiaobai-express" className="data-[state=active]:bg-white">
+                  เสี่ยวไป๋ เอ็กเพรส
                 </TabsTrigger>
               </TabsList>
               
