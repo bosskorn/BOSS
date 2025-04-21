@@ -70,22 +70,22 @@ const JntExpressLabel = () => {
     
     .shipping-label-container {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 0; /* ลดช่องว่างระหว่างลาเบล */
       justify-content: flex-start;
     }
     
     .shipping-label {
       width: 380px;
-      height: 550px; /* ลดความสูงลาเบลลง */
+      height: 530px; /* ลดความสูงลาเบลลงอีก */
       border: 1px solid #ccc;
       padding: 0;
       position: relative;
       box-sizing: border-box;
-      page-break-after: always;
+      page-break-after: auto; /* เปลี่ยนเป็น auto เพื่อไม่ให้ขึ้นหน้าใหม่ทุกลาเบล */
       background-color: white;
       overflow: hidden;
-      margin-bottom: 1px; /* ลดระยะห่างระหว่างลาเบล */
+      margin-bottom: 0; /* ลดระยะห่างระหว่างลาเบลให้เป็น 0 */
     }
     
     .label-header {
@@ -196,7 +196,7 @@ const JntExpressLabel = () => {
     
     .recipient-info {
       padding-right: 20px; /* ลดพื้นที่ด้านขวาเพราะเราใช้ float-right สำหรับ QR Code แล้ว */
-      min-height: 70px; /* ลดความสูงส่วนข้อมูลผู้รับ */
+      min-height: 60px; /* ลดความสูงส่วนข้อมูลผู้รับลงอีก */
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -278,13 +278,13 @@ const JntExpressLabel = () => {
     
     .product-details {
       border-bottom: 1px solid #000;
-      padding: 8px 10px;
-      font-size: 11px;
+      padding: 5px 10px;
+      font-size: 10px;
     }
     
     .product-title {
       font-weight: 500;
-      margin-bottom: 5px;
+      margin-bottom: 3px;
     }
     
     .product-list {
