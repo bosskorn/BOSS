@@ -1376,12 +1376,12 @@ const OrderList: React.FC = () => {
       <Dialog open={shippingDialogOpen} onOpenChange={setShippingDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>เลือกบริษัทขนส่ง</DialogTitle>
+            <DialogTitle>เลือกประเภทใบลาเบล</DialogTitle>
             <DialogDescription>
-              เลือกบริษัทขนส่งเพื่อสร้างเลขพัสดุสำหรับออเดอร์นี้
+              เลือกประเภทลาเบลตามบริษัทขนส่ง
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-3 py-3 max-h-[60vh] overflow-y-auto">
+          <div className="flex flex-col gap-3 py-3">
             {/* ส่วนแสดงเมื่อกำลังโหลดข้อมูล */}
             {dbShippingMethods.length === 0 && (
               <div className="text-center py-4">
@@ -1392,36 +1392,59 @@ const OrderList: React.FC = () => {
               </div>
             )}
             
-            {/* ตัวเลือกขนส่ง - ตัดคำให้กระชับขึ้น */}
-            {/* Xiaobai Express */}
+            {/* แบบมาตรฐาน */}
             <div 
-              className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Xiaobai Express' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-              onClick={() => setSelectedShippingMethod('Xiaobai Express')}
+              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
+              onClick={() => setSelectedShippingMethod('แบบมาตรฐาน')}
             >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">Xiaobai Express</h3>
-                  <p className="text-sm text-gray-500">จัดส่งภายใน 1-2 วัน • ฿45.00</p>
-                </div>
-                <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                  <Truck className="h-5 w-5 text-blue-500" />
-                </div>
+              <div>
+                <h3 className="font-medium">แบบมาตรฐาน</h3>
+                <p className="text-sm text-gray-500">รูปแบบทั่วไป ใช้ได้กับทุกบริษัทขนส่ง</p>
+              </div>
+              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-100 text-gray-400">
+                <ChevronUp className="h-5 w-5 rotate-90" />
               </div>
             </div>
             
-            {/* Thailand Post */}
+            {/* Flash Express */}
             <div 
-              className={`p-3 rounded-lg border-2 cursor-pointer ${selectedShippingMethod === 'Thailand Post' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-              onClick={() => setSelectedShippingMethod('Thailand Post')}
+              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
+              onClick={() => setSelectedShippingMethod('Flash Express')}
             >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">Thailand Post</h3>
-                  <p className="text-sm text-gray-500">จัดส่งภายใน 2-3 วัน • ฿35.00</p>
-                </div>
-                <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                  <Truck className="h-5 w-5 text-red-500" />
-                </div>
+              <div>
+                <h3 className="font-medium">Flash Express</h3>
+                <p className="text-sm text-gray-500">รูปแบบสำหรับ Flash Express</p>
+              </div>
+              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-orange-100 text-orange-400">
+                <ChevronRight className="h-5 w-5" />
+              </div>
+            </div>
+            
+            {/* J&T Express */}
+            <div 
+              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
+              onClick={() => setSelectedShippingMethod('J&T Express')}
+            >
+              <div>
+                <h3 className="font-medium">J&T Express</h3>
+                <p className="text-sm text-gray-500">รูปแบบสำหรับ J&T Express</p>
+              </div>
+              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-red-100 text-red-400">
+                <ChevronRight className="h-5 w-5" />
+              </div>
+            </div>
+            
+            {/* TikTok Shop */}
+            <div 
+              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
+              onClick={() => setSelectedShippingMethod('TikTok Shop')}
+            >
+              <div>
+                <h3 className="font-medium">TikTok Shop</h3>
+                <p className="text-sm text-gray-500">รูปแบบสำหรับผู้ขาย TikTok Shop</p>
+              </div>
+              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-100 text-gray-400">
+                <ChevronRight className="h-5 w-5" />
               </div>
             </div>
           </div>
@@ -1437,8 +1460,7 @@ const OrderList: React.FC = () => {
               className="bg-blue-600 hover:bg-blue-700"
               disabled={!selectedShippingMethod}
             >
-              <Check className="h-4 w-4 mr-2" />
-              สร้างเลขพัสดุ
+              พิมพ์ลาเบล
             </Button>
           </DialogFooter>
         </DialogContent>
