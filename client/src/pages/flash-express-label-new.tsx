@@ -31,17 +31,17 @@ const FlashExpressLabelNew: React.FC = () => {
   const [dataReady, setDataReady] = useState(false);
   const [order, setOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<Array<{productName: string, quantity: number, price: number}>>([]);
-  
+
   // Reference สำหรับบาร์โค้ด
   const barcodeRef = useRef(null);
-  
+
   // ดึงข้อมูลออเดอร์จาก URL parameter และเรียกใช้ฟังก์ชันพิมพ์อัตโนมัติ
   useEffect(() => {
     const fetchOrderData = async () => {
       try {
         const params = new URLSearchParams(window.location.search);
         const orderId = params.get('order');
-        
+
         if (!orderId) {
           toast({
             title: 'ไม่พบรหัสออเดอร์',
@@ -51,9 +51,9 @@ const FlashExpressLabelNew: React.FC = () => {
           setIsLoading(false);
           return;
         }
-        
+
         console.log('พิมพ์ลาเบลสำหรับออเดอร์:', orderId);
-        
+
         const token = localStorage.getItem('auth_token');
         const response = await fetch(`/api/orders/${orderId}`, {
           headers: {
@@ -62,21 +62,21 @@ const FlashExpressLabelNew: React.FC = () => {
           },
           credentials: 'include'
         });
-        
+
         if (!response.ok) {
           throw new Error(`ไม่สามารถดึงข้อมูลออเดอร์ (${response.status})`);
         }
-        
+
         const data = await response.json();
-        
+
         if (!data.success || !data.order) {
           throw new Error('ไม่พบข้อมูลออเดอร์');
         }
-        
+
         const orderData = data.order;
         console.log('พิมพ์ลาเบลสำหรับออเดอร์:', orderData);
         setOrder(orderData);
-        
+
         // ตรวจสอบ items ในออเดอร์
         if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
           console.log('พบรายการสินค้า:', orderData.items);
@@ -88,7 +88,7 @@ const FlashExpressLabelNew: React.FC = () => {
         } else {
           console.log('ไม่พบรายการสินค้าในออเดอร์');
         }
-        
+
         // ตรวจสอบเลขพัสดุ
         if (!orderData.trackingNumber) {
           toast({
@@ -99,7 +99,7 @@ const FlashExpressLabelNew: React.FC = () => {
           setIsLoading(false);
           return;
         }
-        
+
         // แปลงเลขพัสดุถ้าขึ้นต้นด้วย "แบบ" ให้ใช้รูปแบบเสี่ยวไป๋ เอ็กเพรส แทน
         let trackingNo = orderData.trackingNumber;
         if (trackingNo.startsWith('แบบ')) {
@@ -108,7 +108,7 @@ const FlashExpressLabelNew: React.FC = () => {
           trackingNo = 'FLE' + randomPart;
           console.log('แปลงเลขพัสดุจาก', orderData.trackingNumber, 'เป็น', trackingNo);
         }
-        
+
         // กำหนดค่าต่างๆ จากข้อมูลออเดอร์
         setTrackingNumber(trackingNo);
         setOrderID(orderData.orderNumber || '');
@@ -116,13 +116,13 @@ const FlashExpressLabelNew: React.FC = () => {
         const totalAmountValue = orderData.totalAmount || '17980.00';
         setCodAmount(orderData.paymentMethod === 'cod' || orderData.paymentMethod === 'cash_on_delivery' ? 
           totalAmountValue : '0.00');
-        
+
         // ข้อมูลของผู้รับ - ต้องทำ API request เพิ่มเติมเพื่อดึงข้อมูลลูกค้า
         console.log('ข้อมูลลูกค้าจากออเดอร์:', orderData);
         let cusName = orderData.customerName || 'ไม่ระบุชื่อผู้รับ';
         let cusPhone = '';
         let cusAddress = 'ไม่ระบุที่อยู่ผู้รับ';
-        
+
         // ถ้ามี customerId ให้ดึงข้อมูลเพิ่มเติม
         if (orderData.customerId) {
           try {
@@ -133,7 +133,7 @@ const FlashExpressLabelNew: React.FC = () => {
               },
               credentials: 'include'
             });
-            
+
             if (customerResponse.ok) {
               const customerData = await customerResponse.json();
               if (customerData.success && customerData.customer) {
@@ -141,7 +141,7 @@ const FlashExpressLabelNew: React.FC = () => {
                 const customer = customerData.customer;
                 cusName = customer.name || cusName;
                 cusPhone = customer.phone || '';
-                
+
                 // ประกอบที่อยู่จากส่วนประกอบต่างๆ
                 const addressParts = [];
                 if (customer.address) addressParts.push(customer.address);
@@ -151,7 +151,7 @@ const FlashExpressLabelNew: React.FC = () => {
                 if (customer.district) addressParts.push(`เขต/อำเภอ ${customer.district}`);
                 if (customer.province) addressParts.push(`${customer.province}`);
                 if (customer.postalCode) addressParts.push(`${customer.postalCode}`);
-                
+
                 if (addressParts.length > 0) {
                   cusAddress = addressParts.join(' ');
                 }
@@ -163,13 +163,13 @@ const FlashExpressLabelNew: React.FC = () => {
             console.error('เกิดข้อผิดพลาดในการดึงข้อมูลลูกค้า:', customerError);
           }
         }
-        
+
         setRecipientName(cusName);
         setRecipientPhone(cusPhone);
         setRecipientAddress(cusAddress);
-        
+
         console.log('ข้อมูลผู้รับที่จะใช้พิมพ์:', { cusName, cusPhone, cusAddress });
-        
+
         // ดึงตำบล/อำเภอจากที่อยู่ (แบบพื้นฐาน)
         const addressParts = cusAddress.split(' ');
         if (addressParts.length > 0) {
@@ -180,27 +180,27 @@ const FlashExpressLabelNew: React.FC = () => {
             setDistrict(possibleDistrict.replace('อ.', '').replace('อำเภอ', '').replace('เขต', ''));
           }
         }
-        
+
         // กำหนดวันที่
         const today = new Date();
         setShippingDate(today.toLocaleString('th-TH', { 
           day: '2-digit', month: '2-digit', year: 'numeric', 
           hour: '2-digit', minute: '2-digit'
         }));
-        
+
         // วันที่คาดว่าจะถึง (เพิ่ม 2 วัน)
         const estimatedDelivery = new Date(today);
         estimatedDelivery.setDate(today.getDate() + 2);
         setEstimatedDate(estimatedDelivery.toLocaleDateString('th-TH', {
           day: '2-digit', month: '2-digit', year: 'numeric'
         }));
-        
+
         setDataReady(true);
         setIsLoading(false);
-        
+
         // ยกเลิกการพิมพ์อัตโนมัติเพื่อให้ผู้ใช้กดพิมพ์เองแทน
         console.log('ข้อมูลพร้อมสำหรับการพิมพ์ เลขพัสดุ:', trackingNo);
-        
+
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error);
         toast({
@@ -211,10 +211,10 @@ const FlashExpressLabelNew: React.FC = () => {
         setIsLoading(false);
       }
     };
-    
+
     fetchOrderData();
   }, []);
-  
+
   // สร้างบาร์โค้ดเมื่อ trackingNumber เปลี่ยนแปลง
   useEffect(() => {
     if (barcodeRef.current && trackingNumber) {
@@ -227,21 +227,21 @@ const FlashExpressLabelNew: React.FC = () => {
       });
     }
   }, [trackingNumber]);
-  
+
   // ฟังก์ชันสำหรับพิมพ์ลาเบล
   const printLabel = (overrideTrackingNumber?: string) => {
     // ใช้เลขพัสดุที่ส่งเข้ามาหรือใช้จาก state ถ้าไม่ได้ส่งเข้ามา
     const finalTrackingNumber = overrideTrackingNumber || trackingNumber;
-    
+
     console.log('กำลังพิมพ์ลาเบลสำหรับเลขพัสดุ:', finalTrackingNumber);
-    
+
     // เปิดหน้าต่างใหม่สำหรับการพิมพ์
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       alert('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ โปรดตรวจสอบว่าไม่ได้ถูกบล็อกป๊อปอัพ');
       return;
     }
-    
+
     // เขียน HTML สำหรับการพิมพ์
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -251,7 +251,7 @@ const FlashExpressLabelNew: React.FC = () => {
         <title>ลาเบลการจัดส่ง</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap');
-          
+
           body {
             margin: 0;
             padding: 0;
@@ -449,23 +449,23 @@ const FlashExpressLabelNew: React.FC = () => {
         <div class="print-button">
           <button onclick="window.print();">พิมพ์ใบลาเบล</button>
         </div>
-        
+
         <div class="label-size-info">
           ขนาดใบลาเบล: 100x150mm (เสี่ยวไป๋ เอ็กเพรส)
         </div>
-        
+
         <div class="label-container">
           <div class="header">
             <div>BLUEDASH</div>
             <div>เสี่ยวไป๋ เอ็กเพรส</div>
             <div>${serviceType}</div>
           </div>
-          
+
           <div class="barcode-section">
             <svg id="barcode" width="250" height="40"></svg>
             <div class="barcode-number">${finalTrackingNumber}</div>
           </div>
-          
+
           <div class="info-section">
             <div class="order-id">${warehouseCode}</div>
             <div class="shipping-type">
@@ -474,22 +474,21 @@ const FlashExpressLabelNew: React.FC = () => {
               ${district}
             </div>
           </div>
-          
+
           <div class="address-section">
             <strong>จาก</strong> ${senderName} ${senderPhone}<br>
             ${senderAddress}
           </div>
-          
+
           <div class="qr-section">
             <div class="sender-info">
-              <strong>ถึง</strong> สมศรี ใจดี ${recipientPhone ? ' โทร: ' + recipientPhone : ''}<br>
-              57/3 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ 10310
+              <strong>ถึง</strong> ${recipientName} ${recipientPhone ? ' โทร: ' + recipientPhone : ''}<br>
+              ${recipientAddress}
             </div>
-            <div class="qr-code" style="display: flex; align-items: center; justify-content: center;">
-              <strong>QR Code</strong>
+            <div class="qr-code" id="qrcode" style="display: flex; align-items: center; justify-content: center;">
             </div>
           </div>
-          
+
           <div class="cod-section">
             <div class="cod-label">COD</div>
             <div class="weight-info">
@@ -502,7 +501,7 @@ const FlashExpressLabelNew: React.FC = () => {
               </table>
             </div>
           </div>
-          
+
           <div class="footer">
             <div class="order-details">
               <table>
@@ -526,7 +525,7 @@ const FlashExpressLabelNew: React.FC = () => {
             </div>
             <div class="pickup-label">${pickupPackage ? 'PICK-UP' : 'SELF-DROP'}</div>
           </div>
-          
+
           <!-- ส่วนรายการสินค้า -->
           <div class="product-section">
             <div class="product-header">
@@ -550,10 +549,10 @@ const FlashExpressLabelNew: React.FC = () => {
       </body>
       </html>
     `);
-    
+
     // สร้างบาร์โค้ดในหน้าพิมพ์
     printWindow.document.close();
-    
+
     // สร้างบาร์โค้ดเมื่อหน้าโหลดเสร็จ
     printWindow.onload = function() {
       try {
@@ -571,7 +570,7 @@ const FlashExpressLabelNew: React.FC = () => {
           }
 
           console.log('กำลังสร้างบาร์โค้ดสำหรับเลขพัสดุ:', barcodeText);
-          
+
           try {
             JsBarcode(barcodeElement, barcodeText, {
               format: "CODE128",
@@ -580,10 +579,10 @@ const FlashExpressLabelNew: React.FC = () => {
               displayValue: false,
               margin: 0
             });
-            
+
             // ตั้งค่าให้รอการแสดงบาร์โค้ดก่อนพิมพ์อัตโนมัติ
             setTimeout(() => {
-              printWindow.print();
+              window.print();
             }, 800);
           } catch (barcodeError) {
             console.error('ไม่สามารถสร้างบาร์โค้ดได้:', barcodeError);
@@ -591,19 +590,19 @@ const FlashExpressLabelNew: React.FC = () => {
               <p>ไม่สามารถสร้างบาร์โค้ดได้ (${barcodeText})</p>
               <p>กรุณาลองตรวจสอบรูปแบบเลขพัสดุ</p>
             </div>`;
-            
+
             // พิมพ์แม้จะเกิดข้อผิดพลาด
             setTimeout(() => {
-              printWindow.print();
+              window.print();
             }, 800);
           }
         } else {
           console.error('ไม่พบ element สำหรับบาร์โค้ด');
           printWindow.document.body.innerHTML += '<div style="color: red; padding: 20px;">ไม่พบ element สำหรับบาร์โค้ด</div>';
-          
+
           // ตั้งค่าให้รอการแสดงข้อความข้อผิดพลาดก่อนพิมพ์อัตโนมัติ
           setTimeout(() => {
-            printWindow.print();
+            window.print();
           }, 800);
         }
       } catch (err) {
@@ -612,7 +611,7 @@ const FlashExpressLabelNew: React.FC = () => {
         printWindow.document.body.innerHTML += '<div style="color: red; padding: 20px;">เกิดข้อผิดพลาดในการสร้างบาร์โค้ด: ' + errorMessage + '</div>';
         // พิมพ์แม้จะเกิดข้อผิดพลาด
         setTimeout(() => {
-          printWindow.print();
+          window.print();
         }, 800);
       }
     };
@@ -649,7 +648,7 @@ const FlashExpressLabelNew: React.FC = () => {
             <div className="print:hidden">
               <h1 className="text-2xl font-bold mb-4 text-center">ลาเบลพร้อมสำหรับการพิมพ์</h1>
               <p className="text-gray-600 mb-6 text-center">หน้าต่างพิมพ์ควรเปิดขึ้นโดยอัตโนมัติ หากไม่เปิดให้กดปุ่มพิมพ์ด้านล่าง</p>
-              
+
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
@@ -661,14 +660,14 @@ const FlashExpressLabelNew: React.FC = () => {
                     <p className="font-medium">{orderID}</p>
                   </div>
                 </div>
-                
+
                 <div className="mb-4">
                   <p className="text-gray-500 text-sm">ผู้รับ:</p>
                   <p className="font-medium">{recipientName || 'ไม่ระบุชื่อผู้รับ'}</p>
                   <p className="text-sm text-gray-600">{recipientAddress || 'ไม่ระบุที่อยู่'}</p>
                   {recipientPhone && <p className="text-sm text-gray-600">โทร: {recipientPhone}</p>}
                 </div>
-                
+
                 {(codAmount && parseFloat(codAmount) > 0) && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mb-4">
                     <p className="text-yellow-700 text-sm">COD Amount:</p>
@@ -676,7 +675,7 @@ const FlashExpressLabelNew: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex justify-center">
                 <Button 
                   onClick={() => printLabel()} 
