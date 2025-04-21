@@ -1241,16 +1241,16 @@ const OrderList: React.FC = () => {
                   
                   switch(selectedLabelType) {
                     case 'flash':
-                      labelUrl = `/print-multiple-labels?orders=${orderIds}&type=flash`;
+                      labelUrl = `/print-multiple-labels-fixed?orders=${orderIds}&type=flash`;
                       break;
                     case 'jt':
-                      labelUrl = `/print-multiple-labels?orders=${orderIds}&type=jt`;
+                      labelUrl = `/print-multiple-labels-fixed?orders=${orderIds}&type=jt`;
                       break;
                     case 'tiktok':
-                      labelUrl = `/print-multiple-labels?orders=${orderIds}&type=tiktok`;
+                      labelUrl = `/print-multiple-labels-fixed?orders=${orderIds}&type=tiktok`;
                       break;
                     default:
-                      labelUrl = `/print-multiple-labels?orders=${orderIds}&type=standard`;
+                      labelUrl = `/print-multiple-labels-fixed?orders=${orderIds}&type=standard`;
                   }
                   
                   // เปิดหน้าพิมพ์ในแท็บใหม่
@@ -1306,7 +1306,7 @@ const OrderList: React.FC = () => {
                   let labelUrl = '';
                   switch(selectedLabelType) {
                     case 'flash':
-                      labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
+                      labelUrl = `/flash-express-label?order=${orderToPrint.id}`;
                       break;
                     case 'jt':
                       labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
