@@ -99,45 +99,44 @@ const TopUpPage: React.FC = () => {
     },
   });
 
-  // ดึงข้อมูลผู้ใช้
+  // ดึงข้อมูลผู้ใช้และประวัติการเติมเงิน
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchUserData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/user', {
+        // ดึงข้อมูลผู้ใช้
+        const userResponse = await axios.get('/api/user', {
           withCredentials: true
         });
 
-        if (response.data && response.data.success) {
-          setUser(response.data.user);
+        if (userResponse.data && userResponse.data.success) {
+          setUser(userResponse.data.user);
           
-          // ดึงประวัติการเติมเงิน (จำลองข้อมูล)
-          setHistory([
-            {
-              id: 1,
-              amount: 500,
-              method: 'PromptPay',
-              status: 'completed',
-              createdAt: '2025-04-18T12:30:00Z',
-              reference: 'PP25041812300001',
-            },
-            {
-              id: 2,
-              amount: 1000,
-              method: 'บัตรเครดิต',
-              status: 'completed',
-              createdAt: '2025-04-15T09:45:00Z',
-              reference: 'CC25041509450001',
-            },
-            {
-              id: 3,
-              amount: 300,
-              method: 'PromptPay',
-              status: 'pending',
-              createdAt: '2025-04-19T08:15:00Z',
-              reference: 'PP25041908150001',
+          // ดึงประวัติการเติมเงินจาก API
+          try {
+            const historyResponse = await axios.get('/api/topups/history', {
+              withCredentials: true
+            });
+            
+            if (historyResponse.data && historyResponse.data.success) {
+              // แปลงข้อมูลให้ตรงกับ interface TopUpHistory
+              const formattedHistory = historyResponse.data.data.map((item: any) => ({
+                id: item.id,
+                amount: parseFloat(item.amount),
+                method: item.method === 'prompt_pay' ? 'PromptPay' : 
+                         item.method === 'credit_card' ? 'บัตรเครดิต' : 'โอนเงิน',
+                status: item.status,
+                createdAt: item.createdAt,
+                reference: item.referenceId
+              }));
+              
+              setHistory(formattedHistory);
             }
-          ]);
+          } catch (historyError) {
+            console.error('ไม่สามารถดึงประวัติการเติมเงินได้:', historyError);
+            // ไม่แจ้งเตือนผู้ใช้กรณีนี้ เพื่อให้สามารถใช้งานหน้าอื่นๆได้
+            setHistory([]);
+          }
         } else {
           toast({
             title: 'ไม่สามารถดึงข้อมูลผู้ใช้ได้',
@@ -159,7 +158,7 @@ const TopUpPage: React.FC = () => {
       }
     };
 
-    fetchUserProfile();
+    fetchUserData();
   }, [toast, setLocation]);
 
   // ดำเนินการเติมเงิน
@@ -167,31 +166,27 @@ const TopUpPage: React.FC = () => {
     try {
       setProcessing(true);
       
-      // สร้างรหัสอ้างอิงการชำระเงิน
-      const newReference = `PP${new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 12)}${Math.floor(Math.random() * 1000).toString().padStart(4, '0')}`;
-      setReferenceId(newReference);
+      // ส่งข้อมูลไปยัง API เพื่อสร้างรายการเติมเงิน
+      const method = activeTab === 'promptpay' ? 'prompt_pay' : 'credit_card';
       
-      // จำลองการสร้าง QR Code (ในระบบจริงจะดึงจาก API)
-      setTimeout(() => {
-        // URL รูปภาพเป็นเพียงตัวอย่าง ในการใช้งานจริงควรใช้ URL จริงจาก API
-        setQrCodeUrl('https://promptpay.io/0891234567/' + data.amount);
+      const response = await axios.post('/api/topups/create', {
+        amount: parseFloat(data.amount),
+        method: method
+      }, { withCredentials: true });
+      
+      if (response.data && response.data.success) {
+        // ดึงข้อมูลจาก API response
+        const topupData = response.data.data;
+        
+        // เก็บค่า reference และ QR Code URL
+        setReferenceId(topupData.referenceId);
+        setQrCodeUrl(topupData.qrCodeUrl);
+        
+        // ไปยังขั้นตอนการชำระเงิน
         setPaymentStep(2);
-        setProcessing(false);
-      }, 1500);
-      
-      // ในระบบจริงจะต้องส่งข้อมูลไปยัง API
-      // const response = await axios.post('/api/topup/create', {
-      //   amount: parseFloat(data.amount),
-      //   method: activeTab
-      // }, { withCredentials: true });
-      
-      // if (response.data && response.data.success) {
-      //   setReferenceId(response.data.reference);
-      //   setQrCodeUrl(response.data.qrCodeUrl);
-      //   setPaymentStep(2);
-      // } else {
-      //   throw new Error('ไม่สามารถสร้างรายการเติมเงินได้');
-      // }
+      } else {
+        throw new Error('ไม่สามารถสร้างรายการเติมเงินได้');
+      }
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการสร้างรายการเติมเงิน:', error);
       toast({
@@ -209,58 +204,59 @@ const TopUpPage: React.FC = () => {
     try {
       setProcessing(true);
       
-      // จำลองการตรวจสอบสถานะ (ในระบบจริงจะดึงจาก API)
-      setTimeout(() => {
-        // สมมติว่าชำระเงินสำเร็จ
-        toast({
-          title: 'เติมเงินสำเร็จ',
-          description: `เติมเงินจำนวน ${form.getValues().amount} บาท เข้าบัญชีเรียบร้อยแล้ว`,
-        });
+      // ส่งข้อมูลไปยัง API เพื่อตรวจสอบสถานะ
+      const response = await axios.get(`/api/topups/check/${referenceId}`, { 
+        withCredentials: true 
+      });
+      
+      if (response.data && response.data.success) {
+        const responseData = response.data;
         
-        // อัพเดตยอดเงินคงเหลือ (จำลอง)
-        if (user) {
-          const newBalance = (parseFloat(user.balance) + parseFloat(form.getValues().amount)).toString();
-          setUser({
-            ...user,
-            balance: newBalance
+        // ถ้าส่งข้อความกลับมาแสดงว่าชำระเงินสำเร็จ
+        if (responseData.message === 'ชำระเงินสำเร็จ') {
+          toast({
+            title: 'เติมเงินสำเร็จ',
+            description: `เติมเงินเข้าบัญชีเรียบร้อยแล้ว`,
+          });
+          
+          // อัพเดตข้อมูลผู้ใช้และประวัติ
+          if (responseData.data && responseData.data.user) {
+            setUser(responseData.data.user);
+          }
+          
+          // อัพเดตประวัติการเติมเงิน (ดึงข้อมูลใหม่)
+          try {
+            const historyResponse = await axios.get('/api/topups/history', { withCredentials: true });
+            if (historyResponse.data && historyResponse.data.success) {
+              const formattedHistory = historyResponse.data.data.map((item: any) => ({
+                id: item.id,
+                amount: parseFloat(item.amount),
+                method: item.method === 'prompt_pay' ? 'PromptPay' : 
+                         item.method === 'credit_card' ? 'บัตรเครดิต' : 'โอนเงิน',
+                status: item.status,
+                createdAt: item.createdAt,
+                reference: item.referenceId
+              }));
+              
+              setHistory(formattedHistory);
+            }
+          } catch (historyError) {
+            console.error('ไม่สามารถดึงประวัติการเติมเงินได้:', historyError);
+          }
+          
+          // ไปยังขั้นตอนเสร็จสิ้น
+          setPaymentStep(3);
+        } else {
+          // ยังไม่มีการชำระเงิน
+          toast({
+            title: 'ยังไม่พบการชำระเงิน',
+            description: 'กรุณารอสักครู่แล้วลองตรวจสอบอีกครั้ง หรือติดต่อฝ่ายสนับสนุน',
+            variant: 'destructive',
           });
         }
-        
-        // เพิ่มรายการในประวัติ
-        const newHistoryItem: TopUpHistory = {
-          id: Date.now(),
-          amount: parseFloat(form.getValues().amount),
-          method: activeTab === 'promptpay' ? 'PromptPay' : 'บัตรเครดิต',
-          status: 'completed',
-          createdAt: new Date().toISOString(),
-          reference: referenceId
-        };
-        
-        setHistory(prev => [newHistoryItem, ...prev]);
-        setPaymentStep(3);
-        setProcessing(false);
-      }, 2000);
-      
-      // ในระบบจริงจะต้องส่งข้อมูลไปยัง API
-      // const response = await axios.get(`/api/topup/check/${referenceId}`, { 
-      //   withCredentials: true 
-      // });
-      
-      // if (response.data && response.data.success) {
-      //   toast({
-      //     title: 'เติมเงินสำเร็จ',
-      //     description: `เติมเงินจำนวน ${response.data.amount} บาท เข้าบัญชีเรียบร้อยแล้ว`,
-      //   });
-      //   setUser(response.data.user);
-      //   setHistory(response.data.history);
-      //   setPaymentStep(3);
-      // } else {
-      //   toast({
-      //     title: 'ยังไม่พบการชำระเงิน',
-      //     description: 'กรุณารอสักครู่แล้วลองตรวจสอบอีกครั้ง หรือติดต่อฝ่ายสนับสนุน',
-      //     variant: 'destructive',
-      //   });
-      // }
+      } else {
+        throw new Error('ไม่สามารถตรวจสอบสถานะการชำระเงินได้');
+      }
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการตรวจสอบสถานะการชำระเงิน:', error);
       toast({
@@ -274,14 +270,36 @@ const TopUpPage: React.FC = () => {
   };
 
   // ยกเลิกการเติมเงิน
-  const cancelTopUp = () => {
-    setPaymentStep(1);
-    setQrCodeUrl(null);
-    setReferenceId('');
-    toast({
-      title: 'ยกเลิกรายการเติมเงิน',
-      description: 'คุณได้ยกเลิกรายการเติมเงินเรียบร้อยแล้ว',
-    });
+  const cancelTopUp = async () => {
+    try {
+      if (referenceId) {
+        setProcessing(true);
+        
+        // ส่งคำขอไปยัง API เพื่อยกเลิกรายการ
+        await axios.put(`/api/topups/cancel/${referenceId}`, {}, { 
+          withCredentials: true 
+        });
+      }
+      
+      // รีเซ็ตค่าต่างๆ
+      setPaymentStep(1);
+      setQrCodeUrl(null);
+      setReferenceId('');
+      
+      // แจ้งเตือนผู้ใช้
+      toast({
+        title: 'ยกเลิกรายการเติมเงิน',
+        description: 'คุณได้ยกเลิกรายการเติมเงินเรียบร้อยแล้ว',
+      });
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการยกเลิกรายการเติมเงิน:', error);
+      // ยังคงรีเซ็ตค่าต่างๆ ถึงแม้จะเกิดข้อผิดพลาด
+      setPaymentStep(1);
+      setQrCodeUrl(null);
+      setReferenceId('');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   // เริ่มเติมเงินใหม่
