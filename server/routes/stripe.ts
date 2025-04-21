@@ -8,7 +8,7 @@ import { fromZodError } from 'zod-validation-error';
 // สร้าง Stripe instance
 let stripe: Stripe;
 try {
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  let stripeKey = process.env.STRIPE_SECRET_KEY;
   
   if (!stripeKey) {
     if (process.env.NODE_ENV === 'production') {
