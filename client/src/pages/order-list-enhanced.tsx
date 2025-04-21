@@ -708,51 +708,122 @@ const OrderList: React.FC = () => {
         {/* ส่วนแถบแท็บและตัวกรอง */}
         <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
           <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange}>
-            <div className="flex flex-col sm:flex-row justify-between border-b border-gray-200 p-4">
-              <TabsList className="rounded-md mb-4 sm:mb-0 bg-gray-100">
-                <TabsTrigger value="all" className="data-[state=active]:bg-white">
-                  ทั้งหมด
-                </TabsTrigger>
-                <TabsTrigger value="pending" className="data-[state=active]:bg-white">
-                  รอดำเนินการ
-                </TabsTrigger>
-                <TabsTrigger value="processing" className="data-[state=active]:bg-white">
-                  กำลังดำเนินการ
-                </TabsTrigger>
-                <TabsTrigger value="shipped" className="data-[state=active]:bg-white">
-                  จัดส่งแล้ว
-                </TabsTrigger>
-                <TabsTrigger value="flash-express" className="data-[state=active]:bg-white">
-                  Flash Express
-                </TabsTrigger>
-                <TabsTrigger value="jt-express" className="data-[state=active]:bg-white">
-                  J&T Express
-                </TabsTrigger>
-                <TabsTrigger value="xiaobai-express" className="data-[state=active]:bg-white">
-                  เสี่ยวไป๋ เอ็กเพรส
-                </TabsTrigger>
-              </TabsList>
+            <div className="px-4 pt-4 pb-2 border-b border-gray-200">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">รายการคำสั่งซื้อทั้งหมด</h2>
+                  <p className="text-sm text-gray-500 mt-1">จัดการคำสั่งซื้อและการจัดส่งพัสดุ ({filteredOrders.length} รายการ)</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="border-blue-300 text-blue-700 hover:bg-blue-50 h-9"
+                    onClick={() => fetchOrders()}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    รีเฟรช
+                  </Button>
+                  <Link href="/create-order-tabs">
+                    <Button className="bg-blue-600 hover:bg-blue-700 h-9">
+                      <FileText className="h-4 w-4 mr-2" />
+                      สร้างออเดอร์ใหม่
+                    </Button>
+                  </Link>
+                </div>
+              </div>
               
-              <div className="flex space-x-2">
-                <div className="relative w-full sm:w-72">
+              <div className="w-full overflow-x-auto hide-scrollbar pb-2">
+                <TabsList className="bg-gray-50 p-1 rounded-lg h-auto flex-nowrap">
+                  <TabsTrigger value="all" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
+                    ทั้งหมด
+                  </TabsTrigger>
+                  <TabsTrigger value="pending" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 inline-block bg-yellow-400 rounded-full"></span>
+                      รอดำเนินการ
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger value="processing" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 inline-block bg-blue-400 rounded-full"></span>
+                      กำลังดำเนินการ
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger value="shipped" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 inline-block bg-green-400 rounded-full"></span>
+                      จัดส่งแล้ว
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger value="flash-express" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 inline-block bg-orange-500 rounded-full"></span>
+                      Flash Express
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger value="jt-express" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 inline-block bg-red-500 rounded-full"></span>
+                      J&T Express
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger value="xiaobai-express" className="px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 inline-block bg-green-500 rounded-full"></span>
+                      เสี่ยวไป๋ เอ็กเพรส
+                    </div>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex space-x-2 w-full md:w-auto">
+                <div className="relative w-full md:w-80">
                   <Search className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input 
                     placeholder="ค้นหาเลขออเดอร์, ชื่อลูกค้า, เลขพัสดุ..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 text-sm h-9"
+                    className="pl-9 text-sm h-10 bg-white border-gray-300 focus-visible:ring-blue-500"
                   />
                 </div>
                 <Button 
                   variant="outline" 
-                  size="sm" 
-                  className={`px-3 py-0 h-9 text-xs ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : ''}`}
+                  size="default" 
+                  className={`h-10 gap-1.5 ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : 'border-gray-300'}`}
                   onClick={() => setShowFilters(!showFilters)}
                 >
-                  <Filter className="h-3.5 w-3.5 mr-1" />
-                  กรอง
+                  <Filter className="h-4 w-4" />
+                  <span className="font-medium">กรอง</span>
                 </Button>
               </div>
+              
+              {selectedOrders.length > 0 && (
+                <div className="hidden md:flex items-center gap-2 ml-2">
+                  <span className="text-sm text-blue-700 font-medium bg-blue-50 px-3 py-1 rounded-md">
+                    เลือก {selectedOrders.length} รายการ
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-10 border-blue-300 text-blue-700 hover:bg-blue-50"
+                    onClick={handleCreateMultipleTracking}
+                  >
+                    <Tag className="h-4 w-4 mr-1.5" />
+                    สร้างเลขพัสดุ
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-10 border-blue-300 text-blue-700 hover:bg-blue-50"
+                    onClick={handlePrintMultiple}
+                  >
+                    <Printer className="h-4 w-4 mr-1.5" />
+                    พิมพ์ลาเบล
+                  </Button>
+                </div>
+              )}
             </div>
             
             {/* ตารางแสดงข้อมูล */}
