@@ -210,6 +210,7 @@ export const topups = pgTable("topups", {
   qrCodeUrl: text("qr_code_url"),
   receiptUrl: text("receipt_url"),
   notes: text("notes"),
+  stripeSessionId: text("stripe_session_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   userId: integer("user_id").notNull().references(() => users.id),
