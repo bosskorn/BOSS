@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
  * หน้าสำหรับพิมพ์ลาเบล Flash Express (หรือ เสี่ยวไป๋ เอ็กเพรส)
  * เมื่อโหลดหน้านี้จะพิมพ์ลาเบลทันทีโดยอัตโนมัติ
  */
-const FlashExpressLabelNew: React.FC = () => {
+const FlashExpressLabelNew = () => {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [sortingCode, setSortingCode] = useState('SS1');
   const [senderName, setSenderName] = useState('BLUEDASH LOGISTICS');
@@ -35,6 +35,10 @@ const FlashExpressLabelNew: React.FC = () => {
   // Reference สำหรับบาร์โค้ด
   const barcodeRef = useRef(null);
   
+  // State สำหรับเก็บข้อมูลหลายออเดอร์
+  const [multipleOrders, setMultipleOrders] = useState<any[]>([]);
+  const [currentOrderIndex, setCurrentOrderIndex] = useState(0);
+
   // ดึงข้อมูลออเดอร์จาก URL parameter และเรียกใช้ฟังก์ชันพิมพ์อัตโนมัติ
   useEffect(() => {
     const fetchOrderData = async () => {
@@ -47,49 +51,66 @@ const FlashExpressLabelNew: React.FC = () => {
         if (ordersParam) {
           const orderIds = ordersParam.split(',');
           if (orderIds.length > 0) {
-            // ใช้ออเดอร์แรกสำหรับตัวอย่างในการแสดงผล
-            const firstOrderId = orderIds[0];
-            console.log('พิมพ์ลาเบลสำหรับหลายออเดอร์ (แสดงออเดอร์แรก):', firstOrderId);
+            console.log('พิมพ์ลาเบลสำหรับหลายออเดอร์:', orderIds);
             
-            // ดึงข้อมูลออเดอร์แรก
+            // ดึงข้อมูลทุกออเดอร์
             const token = localStorage.getItem('auth_token');
-            const response = await fetch(`/api/orders/${firstOrderId}`, {
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : '',
-              },
-              credentials: 'include'
-            });
+            const allOrders = [];
             
-            if (!response.ok) {
-              throw new Error(`ไม่สามารถดึงข้อมูลออเดอร์ (${response.status})`);
-            }
-            
-            const data = await response.json();
-            
-            if (!data.success || !data.order) {
-              throw new Error('ไม่พบข้อมูลออเดอร์');
-            }
-            
-            const orderData = data.order;
-            console.log('พิมพ์ลาเบลสำหรับออเดอร์:', orderData);
-            setOrder(orderData);
-            
-            // สร้างรายการพิมพ์สำหรับทุกออเดอร์
-            setTimeout(() => {
-              orderIds.forEach((id, index) => {
-                // ถ้าเป็นออเดอร์แรก ให้พิมพ์ทันที
-                if (index === 0) {
-                  printLabel();
-                } else {
-                  // สำหรับออเดอร์ถัดไป เปิดหน้าต่างใหม่
-                  const newWindow = window.open(`/flash-express-label-new?order=${id}`, '_blank');
-                  if (newWindow) {
-                    newWindow.focus();
+            for (const id of orderIds) {
+              try {
+                const response = await fetch(`/api/orders/${id}`, {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                  },
+                  credentials: 'include'
+                });
+                
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.success && data.order) {
+                    // ดึงข้อมูลลูกค้าสำหรับแต่ละออเดอร์
+                    if (data.order.customerId) {
+                      try {
+                        const customerResponse = await fetch(`/api/customers/${data.order.customerId}`, {
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token ? `Bearer ${token}` : '',
+                          },
+                          credentials: 'include'
+                        });
+                        
+                        if (customerResponse.ok) {
+                          const customerData = await customerResponse.json();
+                          if (customerData.success && customerData.customer) {
+                            data.order.customer = customerData.customer;
+                          }
+                        }
+                      } catch (error) {
+                        console.error('Error fetching customer data:', error);
+                      }
+                    }
+                    
+                    allOrders.push(data.order);
                   }
                 }
-              });
-            }, 1000);
+              } catch (error) {
+                console.error(`Error fetching order ${id}:`, error);
+              }
+            }
+            
+            console.log('ดึงข้อมูลออเดอร์ทั้งหมดสำเร็จ:', allOrders.length, 'รายการ');
+            
+            // บันทึกข้อมูลทุกออเดอร์
+            setMultipleOrders(allOrders);
+            
+            // เลือกออเดอร์แรกเพื่อแสดงผล
+            if (allOrders.length > 0) {
+              setOrder(allOrders[0]);
+              setDataReady(true);
+              setIsLoading(false);
+            }
             
             return;
           }
@@ -282,19 +303,353 @@ const FlashExpressLabelNew: React.FC = () => {
     }
   }, [trackingNumber]);
   
-  // ฟังก์ชันสำหรับพิมพ์ลาเบล
-  const printLabel = (overrideTrackingNumber?: string) => {
-    // ใช้เลขพัสดุที่ส่งเข้ามาหรือใช้จาก state ถ้าไม่ได้ส่งเข้ามา
-    const finalTrackingNumber = overrideTrackingNumber || trackingNumber;
-    
-    console.log('กำลังพิมพ์ลาเบลสำหรับเลขพัสดุ:', finalTrackingNumber);
-    
-    // เปิดหน้าต่างใหม่สำหรับการพิมพ์
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ โปรดตรวจสอบว่าไม่ได้ถูกบล็อกป๊อปอัพ');
-      return;
+  /**
+   * ฟังก์ชันสำหรับเตรียมข้อมูลออเดอร์แต่ละรายการ
+   */
+  const prepareOrderData = (orderData: any) => {
+    // แปลงเลขพัสดุถ้าขึ้นต้นด้วย "แบบ" ให้ใช้รูปแบบเสี่ยวไป๋ เอ็กเพรส แทน
+    let trackingNo = orderData.trackingNumber;
+    if (trackingNo && trackingNo.startsWith('แบบ')) {
+      // สร้างเลขพัสดุแบบจำลองถ้าเป็นแบบเริ่มต้น
+      const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
+      trackingNo = 'FLE' + randomPart;
     }
+    
+    // ข้อมูลพื้นฐาน
+    const totalAmountValue = orderData.totalAmount || '0.00';
+    const isCOD = orderData.paymentMethod === 'cod' || orderData.paymentMethod === 'cash_on_delivery';
+    const codAmount = isCOD ? totalAmountValue : '0.00';
+    
+    // ข้อมูลลูกค้า
+    let cusName = orderData.customerName || 'ไม่ระบุชื่อผู้รับ';
+    let cusPhone = '';
+    let cusAddress = 'ไม่ระบุที่อยู่ผู้รับ';
+    
+    // ถ้ามีข้อมูลลูกค้าเพิ่มเติม
+    if (orderData.customer) {
+      const customer = orderData.customer;
+      cusName = customer.name || cusName;
+      cusPhone = customer.phone || '';
+      
+      // ประกอบที่อยู่
+      const addressParts = [];
+      if (customer.address) addressParts.push(customer.address);
+      if (customer.addressNumber) addressParts.push(`เลขที่ ${customer.addressNumber}`);
+      if (customer.road) addressParts.push(`ถนน${customer.road}`);
+      if (customer.subDistrict) addressParts.push(`แขวง/ตำบล ${customer.subDistrict}`);
+      if (customer.district) addressParts.push(`เขต/อำเภอ ${customer.district}`);
+      if (customer.province) addressParts.push(`${customer.province}`);
+      if (customer.postalCode) addressParts.push(`${customer.postalCode}`);
+      
+      if (addressParts.length > 0) {
+        cusAddress = addressParts.join(' ');
+      }
+    }
+    
+    // สร้างวันที่
+    const today = new Date();
+    const shippingDateText = today.toLocaleString('th-TH', { 
+      day: '2-digit', month: '2-digit', year: 'numeric', 
+      hour: '2-digit', minute: '2-digit'
+    });
+    
+    // วันที่คาดว่าจะถึง (เพิ่ม 2 วัน)
+    const estimatedDelivery = new Date(today);
+    estimatedDelivery.setDate(today.getDate() + 2);
+    const estimatedDateText = estimatedDelivery.toLocaleDateString('th-TH', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+    
+    // หาเขต/อำเภอ จากที่อยู่
+    let district = '';
+    const addressParts = cusAddress.split(' ');
+    const possibleDistrict = addressParts.find((part: string) => 
+      part.includes('อ.') || part.includes('อำเภอ') || part.includes('เขต')
+    );
+    if (possibleDistrict) {
+      district = possibleDistrict.replace('อ.', '').replace('อำเภอ', '').replace('เขต', '');
+    }
+    
+    return {
+      trackingNumber: trackingNo,
+      orderNumber: orderData.orderNumber || '',
+      codAmount,
+      recipientName: cusName,
+      recipientPhone: cusPhone,
+      recipientAddress: cusAddress,
+      shippingDate: shippingDateText,
+      estimatedDate: estimatedDateText,
+      district
+    };
+  };
+  
+  // ฟังก์ชันสำหรับพิมพ์ลาเบล
+  const printLabel = () => {
+    // ตรวจสอบว่าเป็นการพิมพ์หลายรายการหรือไม่
+    if (multipleOrders.length > 1) {
+      // สร้างสไตล์สำหรับการพิมพ์หลายลาเบล
+      const labelContainerCSS = `
+        .label-container {
+          width: 100mm;
+          height: 150mm;
+          border: 1px dashed #000;
+          position: relative;
+          box-sizing: border-box;
+          page-break-after: always;
+          margin: 10px auto;
+          background-color: white;
+        }
+      `;
+      
+      // สร้าง HTML สำหรับแต่ละลาเบล
+      let labelsHTML = '';
+      multipleOrders.forEach((order, index) => {
+        const orderData = prepareOrderData(order);
+        const isCOD = parseFloat(orderData.codAmount) > 0;
+        
+        labelsHTML += `
+          <div class="label-container">
+            <div class="header">
+              <div>วันที่: ${orderData.shippingDate}</div>
+              <div>${orderData.district || ''} (${sortingCode})</div>
+            </div>
+            <div class="barcode-section">
+              <svg id="barcode-${index}" class="barcode"></svg>
+              <script>
+                JsBarcode("#barcode-${index}", "${orderData.trackingNumber}", {
+                  format: "CODE128",
+                  width: 2,
+                  height: 50,
+                  displayValue: false,
+                  margin: 0
+                });
+              </script>
+              <div class="barcode-number">${orderData.trackingNumber}</div>
+            </div>
+            <div class="info-section">
+              <div class="order-id">${orderData.orderNumber}</div>
+              <div class="shipping-type">
+                <div>บริการ: ${serviceType}</div>
+                <div>น้ำหนัก: ${weight} kg</div>
+              </div>
+            </div>
+            <div class="address-section">
+              <div><strong>ผู้รับ: ${orderData.recipientName}</strong></div>
+              <div>โทร: ${orderData.recipientPhone}</div>
+              <div>${orderData.recipientAddress}</div>
+            </div>
+            <div class="qr-section">
+              <div class="sender-info">
+                <div><strong>ผู้ส่ง: ${senderName}</strong></div>
+                <div>โทร: ${senderPhone}</div>
+                <div>${senderAddress}</div>
+              </div>
+              <div class="qr-code">
+                <div id="qrcode-${index}" class="qr-image"></div>
+                <script>
+                  new QRCode(document.getElementById("qrcode-${index}"), {
+                    text: "${orderData.trackingNumber}",
+                    width: 80,
+                    height: 80
+                  });
+                </script>
+              </div>
+            </div>
+            ${isCOD ? `
+              <div class="cod-section">
+                <div class="cod-label">เก็บเงินปลายทาง</div>
+                <div class="cod-amount">฿ ${parseFloat(orderData.codAmount).toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+              </div>
+            ` : ''}
+            <div class="footer">
+              <div class="estimated-date">
+                <div>คาดว่าจะถึงวันที่:</div>
+                <div>${orderData.estimatedDate}</div>
+              </div>
+              <div class="warehouse-info">
+                <div>รหัสลูกค้า: ${customerCode}</div>
+                <div>รหัสคลัง: ${warehouseCode}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      // สร้างหน้าต่างการพิมพ์พร้อมแสดงลาเบลทุกรายการ
+      document.body.innerHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>ลาเบลการจัดส่งหลายรายการ</title>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap');
+            
+            body {
+              margin: 0;
+              padding: 0;
+              font-family: 'Kanit', sans-serif;
+              background-color: #f5f5f5;
+            }
+            ${labelContainerCSS}
+            .header {
+              display: flex;
+              justify-content: space-between;
+              border-bottom: 1px solid #000;
+              padding: 5px;
+              font-size: 12px;
+            }
+            .barcode-section {
+              text-align: center;
+              padding: 5px 0;
+              border-bottom: 1px solid #000;
+            }
+            .barcode {
+              height: 40px;
+              width: 90%;
+              margin: 0 auto;
+            }
+            .barcode-number {
+              font-size: 10px;
+              margin-top: 2px;
+            }
+            .info-section {
+              display: flex;
+              border-bottom: 1px solid #000;
+            }
+            .order-id {
+              font-size: 18px;
+              font-weight: bold;
+              padding: 10px;
+              width: 60%;
+              text-align: center;
+              border-right: 1px solid #000;
+            }
+            .shipping-type {
+              width: 40%;
+              padding: 5px;
+              font-size: 12px;
+              text-align: center;
+            }
+            .address-section {
+              border-bottom: 1px solid #000;
+              padding: 5px;
+              font-size: 11px;
+            }
+            .qr-section {
+              display: flex;
+              border-bottom: 1px solid #000;
+            }
+            .sender-info {
+              width: 60%;
+              padding: 5px;
+              font-size: 11px;
+              border-right: 1px solid #000;
+            }
+            .qr-code {
+              width: 40%;
+              padding: 5px;
+              text-align: center;
+            }
+            .qr-image {
+              width: 80%;
+              height: auto;
+            }
+            .cod-section {
+              display: flex;
+              border-bottom: 1px solid #000;
+            }
+            .cod-label {
+              width: 40%;
+              background-color: #000;
+              color: #fff;
+              font-size: 22px;
+              font-weight: bold;
+              padding: 10px;
+              text-align: center;
+              border-right: 1px solid #000;
+            }
+            .cod-amount {
+              width: 60%;
+              font-size: 22px;
+              font-weight: bold;
+              padding: 10px;
+              text-align: center;
+              color: #000;
+            }
+            .footer {
+              display: flex;
+              padding: 5px;
+              font-size: 10px;
+            }
+            .estimated-date {
+              width: 50%;
+              font-weight: bold;
+            }
+            .warehouse-info {
+              width: 50%;
+              text-align: right;
+            }
+            @media print {
+              body {
+                background-color: white;
+              }
+            }
+            .print-controls {
+              position: fixed;
+              top: 10px;
+              right: 10px;
+              background: white;
+              padding: 10px;
+              border: 1px solid #ccc;
+              border-radius: 5px;
+              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              z-index: 1000;
+              display: flex;
+              flex-direction: column;
+              gap: 5px;
+            }
+            .print-controls button {
+              padding: 8px 16px;
+              background-color: #1a73e8;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-family: 'Kanit', sans-serif;
+            }
+            .print-controls button:hover {
+              background-color: #0d62ca;
+            }
+            @media print {
+              .print-controls {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-controls">
+            <button onclick="window.print()">พิมพ์ลาเบลทั้งหมด</button>
+            <button onclick="history.back()">กลับไปหน้าที่แล้ว</button>
+          </div>
+          ${labelsHTML}
+        </body>
+        </html>
+      `;
+      
+      // เรียกการพิมพ์ด้วย setTimeout เพื่อให้แน่ใจว่า QR code และ Barcode ถูกสร้างเสร็จแล้ว
+      setTimeout(() => {
+        window.print();
+      }, 500);
+      
+    } else {
+      // กรณีพิมพ์ลาเบลเดียว ใช้ window.print() ปกติ
+      window.print();
+    }
+  };
     
     // เขียน HTML สำหรับการพิมพ์
     printWindow.document.write(`
@@ -690,6 +1045,7 @@ const FlashExpressLabelNew: React.FC = () => {
     };
   };
 
+  // แสดงผลบนหน้าเว็บ
   return (
     <div className="overflow-hidden h-screen w-screen p-0 m-0">
       {isLoading ? (
@@ -722,32 +1078,40 @@ const FlashExpressLabelNew: React.FC = () => {
               <h1 className="text-2xl font-bold mb-4 text-center">ลาเบลพร้อมสำหรับการพิมพ์</h1>
               <p className="text-gray-600 mb-6 text-center">หน้าต่างพิมพ์ควรเปิดขึ้นโดยอัตโนมัติ หากไม่เปิดให้กดปุ่มพิมพ์ด้านล่าง</p>
               
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-gray-500 text-sm">เลขพัสดุ:</p>
-                    <p className="font-medium">{trackingNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 text-sm">ออเดอร์:</p>
-                    <p className="font-medium">{orderID}</p>
-                  </div>
+              {multipleOrders.length > 1 ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <h3 className="font-medium text-blue-800 mb-2">กำลังพิมพ์หลายลาเบล</h3>
+                  <p className="text-blue-700 mb-2">จำนวนลาเบลทั้งหมด: {multipleOrders.length} รายการ</p>
+                  <p className="text-sm text-blue-600">ลาเบลทั้งหมดจะถูกจัดเรียงบนหน้าเดียวกัน กดปุ่ม "พิมพ์ลาเบล" เพื่อพิมพ์ทั้งหมด</p>
                 </div>
-                
-                <div className="mb-4">
-                  <p className="text-gray-500 text-sm">ผู้รับ:</p>
-                  <p className="font-medium">{recipientName || 'ไม่ระบุชื่อผู้รับ'}</p>
-                  <p className="text-sm text-gray-600">{recipientAddress || 'ไม่ระบุที่อยู่'}</p>
-                  {recipientPhone && <p className="text-sm text-gray-600">โทร: {recipientPhone}</p>}
-                </div>
-                
-                {(codAmount && parseFloat(codAmount) > 0) && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mb-4">
-                    <p className="text-yellow-700 text-sm">COD Amount:</p>
-                    <p className="font-medium text-yellow-800">{codAmount} บาท</p>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-gray-500 text-sm">เลขพัสดุ:</p>
+                      <p className="font-medium">{trackingNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-sm">ออเดอร์:</p>
+                      <p className="font-medium">{orderID}</p>
+                    </div>
                   </div>
-                )}
-              </div>
+                  
+                  <div className="mb-4">
+                    <p className="text-gray-500 text-sm">ผู้รับ:</p>
+                    <p className="font-medium">{recipientName || 'ไม่ระบุชื่อผู้รับ'}</p>
+                    <p className="text-sm text-gray-600">{recipientAddress || 'ไม่ระบุที่อยู่'}</p>
+                    {recipientPhone && <p className="text-sm text-gray-600">โทร: {recipientPhone}</p>}
+                  </div>
+                  
+                  {(codAmount && parseFloat(codAmount) > 0) && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mb-4">
+                      <p className="text-yellow-700 text-sm">COD Amount:</p>
+                      <p className="font-medium text-yellow-800">{codAmount} บาท</p>
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div className="flex justify-center">
                 <Button 

@@ -1,607 +1,340 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { Printer, Loader2, ChevronLeft, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toast } from '@/hooks/use-toast';
-import JsBarcode from 'jsbarcode';
+import { Loader2 } from 'lucide-react';
 
-// สำหรับพิมพ์ลาเบลหลายรายการพร้อมกัน
-const PrintMultipleLabels: React.FC = () => {
-  const [location, setLocation] = useLocation();
-  const [orders, setOrders] = useState<any[]>([]);
+/**
+ * หน้าสำหรับพิมพ์ลาเบลหลายรายการในหน้าเดียว
+ * ใช้ query parameter orders=id1,id2,id3,... เพื่อระบุรายการที่ต้องการพิมพ์
+ */
+const PrintMultipleLabels = () => {
+  // State สำหรับเก็บข้อมูล
   const [isLoading, setIsLoading] = useState(true);
-  const [labelType, setLabelType] = useState('standard'); // หรือ 'flash', 'jt', 'tiktok'
+  const [ordersData, setOrdersData] = useState<any[]>([]);
+  const [sortingCode] = useState('SS1');
+  const [senderName] = useState('BLUEDASH LOGISTICS');
+  const [senderPhone] = useState('02-123-4567');
+  const [senderAddress] = useState('เลขที่ 888 อาคารมณียาเซ็นเตอร์ ถนนพระราม 4 แขวงลุมพินี เขตปทุมวัน กรุงเทพฯ 10330');
+  const [serviceType] = useState('Standard');
+  const [weight] = useState('1.000');
+  const [warehouseCode] = useState('BL-1234');
+  const [customerCode] = useState('BLUEDASH');
 
+  // ดึงข้อมูลออเดอร์จาก URL parameter
   useEffect(() => {
-    // ดึงพารามิเตอร์จาก URL
-    const params = new URLSearchParams(window.location.search);
-    const orderIdsParam = params.get('orders');
-    const orderIds = orderIdsParam ? orderIdsParam.split(',').filter(id => id && id.trim() !== '') : [];
-    const type = params.get('type') || 'standard';
-    
-    setLabelType(type);
-    
-    console.log('Received orderIds:', orderIds);
-    
-    if (!orderIdsParam || orderIds.length === 0) {
-      toast({
-        title: 'ไม่พบรายการที่ต้องการพิมพ์',
-        description: 'กรุณาเลือกรายการที่ต้องการพิมพ์ลาเบล',
-        variant: 'destructive',
-      });
-      setIsLoading(false);
-      return;
-    }
-    
-    // ดึงข้อมูลออเดอร์ทั้งหมด
-    fetchOrders(orderIds);
-  }, []);
-
-  // ฟังก์ชันดึงข้อมูลออเดอร์
-  const fetchOrders = async (orderIds: string[]) => {
-    setIsLoading(true);
-    try {
-      // แน่ใจว่ามี token ที่ถูกต้อง
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        console.error('ไม่พบ auth token ในระบบ');
+    const fetchOrderData = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const ordersParam = params.get('orders');
+        
+        if (!ordersParam) {
+          toast({
+            title: 'ไม่พบรายการที่ต้องการพิมพ์',
+            description: 'กรุณาระบุรายการที่ต้องการพิมพ์ผ่าน URL parameter orders',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        const orderIds = ordersParam.split(',');
+        if (orderIds.length === 0) {
+          toast({
+            title: 'ไม่พบรายการที่ต้องการพิมพ์',
+            description: 'กรุณาระบุรายการที่ต้องการพิมพ์อย่างน้อย 1 รายการ',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log('พิมพ์ลาเบลสำหรับออเดอร์:', orderIds);
+        
+        // ดึงข้อมูลทุกออเดอร์
+        const token = localStorage.getItem('auth_token');
+        const allOrders = [];
+        
+        for (const id of orderIds) {
+          try {
+            const response = await fetch(`/api/orders/${id}`, {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : '',
+              },
+              credentials: 'include'
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success && data.order) {
+                // ดึงข้อมูลลูกค้าสำหรับแต่ละออเดอร์
+                if (data.order.customerId) {
+                  try {
+                    const customerResponse = await fetch(`/api/customers/${data.order.customerId}`, {
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? `Bearer ${token}` : '',
+                      },
+                      credentials: 'include'
+                    });
+                    
+                    if (customerResponse.ok) {
+                      const customerData = await customerResponse.json();
+                      if (customerData.success && customerData.customer) {
+                        data.order.customer = customerData.customer;
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Error fetching customer data:', error);
+                  }
+                }
+                
+                // แปลงเลขพัสดุถ้าขึ้นต้นด้วย "แบบ" ให้ใช้รูปแบบเสี่ยวไป๋ เอ็กเพรส แทน
+                if (data.order.trackingNumber && data.order.trackingNumber.startsWith('แบบ')) {
+                  // สร้างเลขพัสดุแบบจำลองถ้าเป็นแบบเริ่มต้น
+                  const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
+                  data.order.displayTrackingNumber = 'FLE' + randomPart;
+                } else {
+                  data.order.displayTrackingNumber = data.order.trackingNumber;
+                }
+                
+                // เพิ่มข้อมูลเพิ่มเติมที่จำเป็นสำหรับการพิมพ์
+                // กำหนดยอดเงิน COD จากข้อมูลออเดอร์
+                data.order.codAmount = (data.order.paymentMethod === 'cod' || data.order.paymentMethod === 'cash_on_delivery') 
+                  ? data.order.totalAmount : '0.00';
+                
+                // ข้อมูลลูกค้า
+                let cusName = data.order.customerName || 'ไม่ระบุชื่อผู้รับ';
+                let cusPhone = '';
+                let cusAddress = 'ไม่ระบุที่อยู่ผู้รับ';
+                
+                // ถ้ามีข้อมูลลูกค้าเพิ่มเติม
+                if (data.order.customer) {
+                  const customer = data.order.customer;
+                  cusName = customer.name || cusName;
+                  cusPhone = customer.phone || '';
+                  
+                  // ประกอบที่อยู่
+                  const addressParts = [];
+                  if (customer.address) addressParts.push(customer.address);
+                  if (customer.addressNumber) addressParts.push(`เลขที่ ${customer.addressNumber}`);
+                  if (customer.road) addressParts.push(`ถนน${customer.road}`);
+                  if (customer.subDistrict) addressParts.push(`แขวง/ตำบล ${customer.subDistrict}`);
+                  if (customer.district) addressParts.push(`เขต/อำเภอ ${customer.district}`);
+                  if (customer.province) addressParts.push(`${customer.province}`);
+                  if (customer.postalCode) addressParts.push(`${customer.postalCode}`);
+                  
+                  if (addressParts.length > 0) {
+                    cusAddress = addressParts.join(' ');
+                  }
+                }
+                
+                data.order.recipientName = cusName;
+                data.order.recipientPhone = cusPhone;
+                data.order.recipientAddress = cusAddress;
+                
+                // หาเขต/อำเภอ จากที่อยู่
+                const addressParts = cusAddress.split(' ');
+                const possibleDistrict = addressParts.find((part: string) => 
+                  part.includes('อ.') || part.includes('อำเภอ') || part.includes('เขต')
+                );
+                
+                if (possibleDistrict) {
+                  data.order.district = possibleDistrict.replace('อ.', '').replace('อำเภอ', '').replace('เขต', '');
+                } else {
+                  data.order.district = '';
+                }
+                
+                // สร้างวันที่
+                const today = new Date();
+                data.order.shippingDate = today.toLocaleString('th-TH', { 
+                  day: '2-digit', month: '2-digit', year: 'numeric', 
+                  hour: '2-digit', minute: '2-digit'
+                });
+                
+                // วันที่คาดว่าจะถึง (เพิ่ม 2 วัน)
+                const estimatedDelivery = new Date(today);
+                estimatedDelivery.setDate(today.getDate() + 2);
+                data.order.estimatedDate = estimatedDelivery.toLocaleDateString('th-TH', {
+                  day: '2-digit', month: '2-digit', year: 'numeric'
+                });
+                
+                // เพิ่มเข้าในรายการ
+                allOrders.push(data.order);
+              }
+            }
+          } catch (error) {
+            console.error(`Error fetching order ${id}:`, error);
+          }
+        }
+        
+        if (allOrders.length === 0) {
+          toast({
+            title: 'ไม่พบข้อมูลออเดอร์',
+            description: 'ไม่สามารถดึงข้อมูลออเดอร์ที่ต้องการพิมพ์ได้',
+            variant: 'destructive',
+          });
+        } else {
+          console.log('ดึงข้อมูลออเดอร์ทั้งหมดสำเร็จ:', allOrders.length, 'รายการ');
+          setOrdersData(allOrders);
+          
+          // เมื่อข้อมูลพร้อม ให้เตรียมพิมพ์อัตโนมัติ
+          setTimeout(() => {
+            printLabels();
+          }, 1000);
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error);
         toast({
-          title: 'ไม่ได้เข้าสู่ระบบ',
-          description: 'กรุณาเข้าสู่ระบบก่อนใช้งานฟีเจอร์นี้',
+          title: 'เกิดข้อผิดพลาด',
+          description: error instanceof Error ? error.message : 'ไม่สามารถดึงข้อมูลออเดอร์ได้',
           variant: 'destructive',
         });
         setIsLoading(false);
-        return;
       }
-      
-      // log สถานะก่อนดึงข้อมูล
-      console.log('Fetching orders with IDs:', orderIds);
-      
-      // สำหรับกรณีทดสอบในสภาพแวดล้อมที่ไม่มี authentication
-      // ใช้ข้อมูลจำลองเพื่อแสดงตัวอย่าง
-      const mockData = [
-        { 
-          id: 1144, 
-          orderNumber: "PD202504202542", 
-          customerId: 1128,
-          trackingNumber: "FLA6202167GB",
-          totalAmount: "17980.00",
-          paymentMethod: "bank_transfer",
-          status: "processing",
-          customerName: "สมศรี ใจดี",
-          customer: {
-            name: "สมศรี ใจดี",
-            address: "57/3 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ 10310",
-            phone: "099-999-9999"
-          }
-        }
-      ];
-      
-      // ถ้ามีปัญหาการเชื่อมต่อกับ API ให้ใช้ข้อมูลจำลอง
-      let validOrders = [];
-      try {
-        // ดึงข้อมูลออเดอร์ทุกรายการแบบ parallel
-        const orderPromises = orderIds.map(id => 
-          fetch(`/api/orders/${id}`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            credentials: 'include'
-          })
-          .then(res => {
-            if (!res.ok) {
-              console.error(`Failed to fetch order ${id}:`, res.status, res.statusText);
-              return { success: false, error: `Error ${res.status}: ${res.statusText}` };
-            }
-            return res.json();
-          })
-          .catch(err => {
-            console.error(`Error fetching order ${id}:`, err);
-            return { success: false, error: err.message };
-          })
-        );
-        
-        const results = await Promise.all(orderPromises);
-        console.log('API responses:', results);
-        
-        // กรองเฉพาะผลลัพธ์ที่สำเร็จ
-        validOrders = results
-          .filter(result => result.success && result.order)
-          .map(result => result.order);
-          
-        console.log('Valid orders from API:', validOrders);
-      } catch (apiError) {
-        console.error('Error fetching from API, using mock data instead:', apiError);
-      }
-      
-      // ถ้าไม่มีข้อมูลจาก API ให้ใช้ข้อมูลจำลอง
-      if (validOrders.length === 0) {
-        console.log('No valid orders from API, using mock data');
-        validOrders = mockData;
-      }
-      
-      console.log('Valid orders:', validOrders.length);
-      
-      if (validOrders.length === 0) {
-        toast({
-          title: 'ไม่พบข้อมูลออเดอร์',
-          description: 'ไม่สามารถดึงข้อมูลออเดอร์ที่เลือกได้ กรุณาตรวจสอบว่าออเดอร์มีเลขพัสดุและยังคงอยู่ในระบบ',
-          variant: 'destructive',
-        });
-      } else {
-        setOrders(validOrders);
-        
-        // สร้าง barcodes หลังจากดึงข้อมูลสำเร็จและ DOM สร้างเสร็จ
-        setTimeout(() => {
-          generateBarcodes(validOrders);
-          
-          // อัตโนมัติเปิดหน้าพิมพ์เมื่อโหลดข้อมูลเสร็จสมบูรณ์
-          setTimeout(() => {
-            handlePrint();
-          }, 500);
-        }, 200);
-      }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: error instanceof Error ? error.message : 'ไม่สามารถดึงข้อมูลออเดอร์ได้',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ฟังก์ชันสร้าง Barcodes
-  const generateBarcodes = (orders: any[]) => {
-    console.log('กำลังสร้างบาร์โค้ดสำหรับ', orders.length, 'รายการ');
-    orders.forEach((order, index) => {
-      if (order.trackingNumber) {
-        try {
-          const barcodeId = `barcode-${order.id}`;
-          console.log('กำลังสร้างบาร์โค้ด ID:', barcodeId, 'สำหรับเลขพัสดุ:', order.trackingNumber);
-          const barcodeElement = document.getElementById(barcodeId);
-          
-          if (barcodeElement) {
-            // แปลงเลขพัสดุถ้าขึ้นต้นด้วย "แบบ"
-            let trackingNumber = order.trackingNumber;
-            if (trackingNumber.startsWith('แบบ')) {
-              // สร้างเลขพัสดุแบบจำลองที่คงที่ (ไม่ใช้สุ่ม) เพื่อให้ได้ผลลัพธ์เดิมทุกครั้ง
-              // ใช้วิธีการแบบอื่นในการสร้าง stableId
-              const hash = order.id.toString() + order.orderNumber;
-              let stableId = 0;
-              // ใช้ for loop แทน reduce เพื่อหลีกเลี่ยงปัญหา TypeScript
-              for (let i = 0; i < hash.length; i++) {
-                stableId += hash.charCodeAt(i);
-              }
-              const stableString = 'FLE' + stableId.toString().padStart(8, '0');
-              trackingNumber = stableString.substring(0, 12);
-              console.log('แปลงเลขพัสดุจาก', order.trackingNumber, 'เป็น', trackingNumber);
-            }
-            
-            // ตรวจสอบความถูกต้องเลขพัสดุก่อนสร้างบาร์โค้ด
-            try {
-              if (!trackingNumber || trackingNumber.trim() === '') {
-                throw new Error('เลขพัสดุว่างเปล่า');
-              }
-              
-              JsBarcode(barcodeElement, trackingNumber, {
-                format: "CODE128",
-                width: 1.5,
-                height: 40,
-                displayValue: true,
-                fontSize: 12,
-                marginTop: 10,
-                marginBottom: 0,
-                background: "#ffffff"
-              });
-            } catch (barcodeError) {
-              console.error('ไม่สามารถสร้างบาร์โค้ดได้:', barcodeError);
-              // ใส่ข้อความแทนบาร์โค้ดที่ไม่สามารถสร้างได้
-              barcodeElement.insertAdjacentHTML('afterend', 
-                `<div style="color:red; text-align:center; border:1px solid red; padding:10px; margin:10px 0;">
-                  ไม่สามารถสร้างบาร์โค้ดสำหรับเลขพัสดุ: ${trackingNumber}
-                </div>`
-              );
-            }
-            console.log('สร้างบาร์โค้ดสำเร็จ');
-          } else {
-            console.error(`ไม่พบ element สำหรับบาร์โค้ดของออเดอร์ #${order.id} (ID: ${barcodeId})`);
-          }
-        } catch (error) {
-          console.error(`เกิดข้อผิดพลาดในการสร้างบาร์โค้ดสำหรับออเดอร์ #${order.id}:`, error);
-        }
-      } else {
-        console.warn(`ออเดอร์ #${order.id} ไม่มีเลขพัสดุ`);
-      }
-    });
-  };
-
-  // ฟังก์ชันพิมพ์เอกสาร
-  const handlePrint = () => {
+    };
+    
+    fetchOrderData();
+  }, []);
+  
+  // ฟังก์ชันพิมพ์ลาเบล
+  const printLabels = () => {
     window.print();
   };
-
-  // ฟังก์ชันย้อนกลับไปหน้ารายการออเดอร์
-  const goBack = () => {
-    setLocation('/orders-all');
-  };
-
-  // Helper function เพื่อจัดรูปแบบเงิน
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('th-TH', {
-      style: 'currency',
-      currency: 'THB',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
-
-  // ฟังก์ชันแปลงเลขพัสดุให้อยู่ในรูปแบบที่อ่านง่าย
-  const formatTrackingNumber = (trackingNumber: string) => {
-    // แบ่งเป็นกลุ่มๆ ละ 4 ตัวอักษร
-    return trackingNumber.replace(/(.{4})/g, '$1 ').trim();
-  };
-
-  // สร้าง CSS สำหรับแต่ละประเภทลาเบล
-  const getLabelStyle = () => {
-    if (labelType === 'flash') {
-      return 'flash-label';
-    } else if (labelType === 'jt') {
-      return 'jt-label';
-    } else if (labelType === 'tiktok') {
-      return 'tiktok-label';
-    } else {
-      return 'standard-label';
-    }
-  };
-
-  // ไม่มีออเดอร์
-  if (!isLoading && orders.length === 0) {
-    return (
-      <div className="container mx-auto p-6 max-w-4xl">
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>ไม่พบรายการที่ต้องการพิมพ์</AlertTitle>
-          <AlertDescription>
-            ไม่พบข้อมูลออเดอร์ที่ต้องการพิมพ์ลาเบล หรือออเดอร์อาจไม่มีเลขพัสดุ
-          </AlertDescription>
-        </Alert>
-        <Button onClick={goBack} variant="outline" className="mt-4">
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          กลับไปหน้ารายการออเดอร์
-        </Button>
-      </div>
-    );
-  }
-
-  // หน้ากำลังโหลด
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6 flex flex-col items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-        <h1 className="text-lg font-medium">กำลังโหลดข้อมูลสำหรับพิมพ์ลาเบล...</h1>
-      </div>
-    );
-  }
-
+  
+  // แสดงผลบนหน้าเว็บ
   return (
-    <div className="print-container">
-      {/* ปุ่มควบคุมสำหรับหน้าจอเท่านั้น ไม่แสดงตอนพิมพ์ */}
-      <div className="no-print container mx-auto py-4 px-6 max-w-7xl flex flex-col space-y-6">
-        <div className="flex justify-between items-center">
-          <Button onClick={goBack} variant="outline">
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            กลับไปหน้ารายการออเดอร์
-          </Button>
-          <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700">
-            <Printer className="h-4 w-4 mr-2" />
-            พิมพ์ ({orders.length} รายการ)
-          </Button>
+    <div className="overflow-hidden">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
+          <h2 className="text-xl font-medium">กำลังโหลดข้อมูลสำหรับพิมพ์ลาเบล...</h2>
+          <p className="text-gray-500 mt-2">ระบบจะพิมพ์ลาเบลโดยอัตโนมัติเมื่อโหลดเสร็จ</p>
         </div>
-        
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <h1 className="text-lg font-medium mb-2">รายการลาเบลที่จะพิมพ์ ({orders.length} รายการ)</h1>
-            <p className="text-sm text-gray-500 mb-4">
-              พิมพ์ลาเบลประเภท: {
-                labelType === 'flash' ? 'Flash Express' :
-                labelType === 'jt' ? 'J&T Express' :
-                labelType === 'tiktok' ? 'TikTok Shop' : 'แบบมาตรฐาน'
-              }
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* เนื้อหาส่วนที่จะพิมพ์ */}
-      <div className="print-content">
-        {orders.map((order, index) => (
-          <div 
-            key={order.id} 
-            className={`shipping-label ${getLabelStyle()}`}
-            style={{ pageBreakAfter: index < orders.length - 1 ? 'always' : 'auto' }}
-          >
-            {labelType === 'flash' && (
-              <div className="flash-express-label">
-                <div className="header">
-                  <div className="logo">Flash Express</div>
-                  <div className="tracking-number">{formatTrackingNumber(order.trackingNumber)}</div>
-                </div>
-                
-                <div className="barcode-container">
-                  <svg id={`barcode-${order.id}`}></svg>
-                </div>
-                
-                <div className="addresses">
-                  <div className="sender">
-                    <strong>ผู้ส่ง:</strong>
-                    <div>BLUEDASH LOGISTICS</div>
-                    <div>เลขที่ 888 อาคารมณียาเซ็นเตอร์ ถนนพระราม 4 แขวงลุมพินี เขตปทุมวัน กรุงเทพฯ 10330</div>
-                    <div>โทร: 02-123-4567</div>
-                  </div>
-                  
-                  <div className="recipient">
-                    <strong>ผู้รับ:</strong>
-                    <div>{order.customerName || (order.customer?.name) || 'ไม่ระบุ'}</div>
-                    <div>{order.customer?.address || 'ไม่ระบุที่อยู่'}</div>
-                    <div>{order.customer?.phone || 'ไม่ระบุเบอร์โทร'}</div>
-                  </div>
-                </div>
-                
-                <div className="footer">
-                  {order.paymentStatus === 'cod' || order.paymentMethod === 'cod' || order.paymentMethod === 'cash_on_delivery' ? (
-                    <div className="cod">
-                      <span>COD: {formatCurrency(parseFloat(order.totalAmount || '0'))}</span>
-                    </div>
-                  ) : (
-                    <div className="prepaid">ชำระเงินแล้ว</div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {labelType === 'jt' && (
-              <div className="jt-express-label">
-                <div className="header">
-                  <div className="logo">J&T Express</div>
-                  <div className="tracking-number">{formatTrackingNumber(order.trackingNumber)}</div>
-                </div>
-                
-                <div className="barcode-container">
-                  <svg id={`barcode-${order.id}`}></svg>
-                </div>
-                
-                <div className="addresses">
-                  <div className="sender">
-                    <strong>ผู้ส่ง:</strong>
-                    <div>BLUEDASH LOGISTICS</div>
-                    <div>เลขที่ 888 อาคารมณียาเซ็นเตอร์ ถนนพระราม 4 แขวงลุมพินี เขตปทุมวัน กรุงเทพฯ 10330</div>
-                    <div>โทร: 02-123-4567</div>
-                  </div>
-                  
-                  <div className="recipient">
-                    <strong>ผู้รับ:</strong>
-                    <div>{order.customerName || (order.customer?.name) || 'ไม่ระบุ'}</div>
-                    <div>{order.customer?.address || 'ไม่ระบุที่อยู่'}</div>
-                    <div>{order.customer?.phone || 'ไม่ระบุเบอร์โทร'}</div>
-                  </div>
-                </div>
-                
-                <div className="footer">
-                  {order.paymentStatus === 'cod' || order.paymentMethod === 'cod' || order.paymentMethod === 'cash_on_delivery' ? (
-                    <div className="cod">
-                      <span>COD: {formatCurrency(parseFloat(order.totalAmount || '0'))}</span>
-                    </div>
-                  ) : (
-                    <div className="prepaid">ชำระเงินแล้ว</div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {labelType === 'tiktok' && (
-              <div className="tiktok-shop-label">
-                <div className="header">
-                  <div className="logo">TikTok Shop</div>
-                  <div className="tracking-number">{formatTrackingNumber(order.trackingNumber)}</div>
-                </div>
-                
-                <div className="barcode-container">
-                  <svg id={`barcode-${order.id}`}></svg>
-                </div>
-                
-                <div className="order-number">
-                  <span>เลขออเดอร์: {order.orderNumber}</span>
-                </div>
-                
-                <div className="addresses">
-                  <div className="sender">
-                    <strong>ผู้ส่ง:</strong>
-                    <div>BLUEDASH LOGISTICS</div>
-                    <div>เลขที่ 888 อาคารมณียาเซ็นเตอร์ ถนนพระราม 4 แขวงลุมพินี เขตปทุมวัน กรุงเทพฯ 10330</div>
-                    <div>โทร: 02-123-4567</div>
-                  </div>
-                  
-                  <div className="recipient">
-                    <strong>ผู้รับ:</strong>
-                    <div>{order.customerName || (order.customer?.name) || 'ไม่ระบุ'}</div>
-                    <div>{order.customer?.address || 'ไม่ระบุที่อยู่'}</div>
-                    <div>{order.customer?.phone || 'ไม่ระบุเบอร์โทร'}</div>
-                  </div>
-                </div>
-                
-                <div className="footer">
-                  {order.paymentStatus === 'cod' || order.paymentMethod === 'cod' || order.paymentMethod === 'cash_on_delivery' ? (
-                    <div className="cod">
-                      <span>COD: {formatCurrency(parseFloat(order.totalAmount || '0'))}</span>
-                    </div>
-                  ) : (
-                    <div className="prepaid">ชำระเงินแล้ว</div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {labelType === 'standard' && (
-              <div className="standard-label">
-                <div className="header">
-                  <div className="logo">BLUEDASH</div>
-                  <div className="tracking-number">{formatTrackingNumber(order.trackingNumber)}</div>
-                </div>
-                
-                <div className="barcode-container">
-                  <svg id={`barcode-${order.id}`}></svg>
-                </div>
-                
-                <div className="order-info">
-                  <span>เลขออเดอร์: {order.orderNumber}</span>
-                </div>
-                
-                <div className="addresses">
-                  <div className="sender">
-                    <strong>ผู้ส่ง:</strong>
-                    <div>BLUEDASH LOGISTICS</div>
-                    <div>เลขที่ 888 อาคารมณียาเซ็นเตอร์ ถนนพระราม 4 แขวงลุมพินี เขตปทุมวัน กรุงเทพฯ 10330</div>
-                    <div>โทร: 02-123-4567</div>
-                  </div>
-                  
-                  <div className="recipient">
-                    <strong>ผู้รับ:</strong>
-                    <div>{order.customerName || (order.customer?.name) || 'ไม่ระบุ'}</div>
-                    <div>{order.customer?.address || 'ไม่ระบุที่อยู่'}</div>
-                    <div>{order.customer?.phone || 'ไม่ระบุเบอร์โทร'}</div>
-                  </div>
-                </div>
-                
-                <div className="footer">
-                  {order.paymentStatus === 'cod' || order.paymentMethod === 'cod' || order.paymentMethod === 'cash_on_delivery' ? (
-                    <div className="cod">
-                      <span>COD: {formatCurrency(parseFloat(order.totalAmount || '0'))}</span>
-                    </div>
-                  ) : (
-                    <div className="prepaid">ชำระเงินแล้ว</div>
-                  )}
-                </div>
-              </div>
-            )}
+      ) : ordersData.length === 0 ? (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md">
+            <h2 className="text-xl font-bold text-red-600 mb-4">ไม่พบข้อมูลออเดอร์</h2>
+            <p className="text-gray-700 mb-4">ไม่สามารถดึงข้อมูลออเดอร์ที่ต้องการพิมพ์ได้</p>
+            <p className="text-gray-600 mb-6">กรุณาตรวจสอบว่ารหัสออเดอร์ถูกต้องและมีการสร้างเลขพัสดุแล้ว</p>
+            <Button 
+              onClick={() => window.close()} 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              ปิดหน้านี้
+            </Button>
           </div>
-        ))}
-      </div>
-
-      {/* CSS สำหรับพิมพ์ */}
-      <style>{`
-        @media print {
-          body {
-            margin: 0;
-            padding: 0;
-            background: white;
-          }
+        </div>
+      ) : (
+        <div>
+          {/* ส่วนที่แสดงเฉพาะบนหน้าจอ ไม่พิมพ์ */}
+          <div className="print:hidden p-4">
+            <h1 className="text-2xl font-bold mb-4 text-center">ลาเบลพร้อมสำหรับการพิมพ์</h1>
+            <p className="text-gray-600 mb-6 text-center">
+              {ordersData.length > 1 
+                ? `กำลังพิมพ์ ${ordersData.length} ลาเบล ระบบจะพิมพ์ลาเบลโดยอัตโนมัติ`
+                : 'กำลังพิมพ์ 1 ลาเบล ระบบจะพิมพ์ลาเบลโดยอัตโนมัติ'}
+            </p>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h3 className="font-medium text-blue-800 mb-2">รายการลาเบลที่จะพิมพ์ ({ordersData.length})</h3>
+              <ul className="text-sm text-blue-700 list-disc ml-5 mb-3">
+                {ordersData.map((order, index) => (
+                  <li key={index} className="mb-1">
+                    <span className="text-gray-700">#{order.orderNumber || 'N/A'}</span>
+                    {' - '}
+                    <span className="font-medium">{order.recipientName}</span>
+                    {' - '}
+                    <span>{order.displayTrackingNumber}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex justify-center mt-4">
+                <Button 
+                  onClick={printLabels} 
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  พิมพ์ลาเบลทั้งหมด
+                </Button>
+              </div>
+            </div>
+          </div>
           
-          .no-print {
-            display: none !important;
-          }
-          
-          .print-content {
-            margin: 0;
-            padding: 0;
-          }
-          
-          .shipping-label {
-            page-break-inside: avoid;
-            padding: 10mm;
-            width: 100mm;
-            height: 100mm;
-            margin: 0 auto;
-            font-family: 'Kanit', sans-serif;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-          }
-          
-          .header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-          }
-          
-          .logo {
-            font-weight: bold;
-            font-size: 14px;
-          }
-          
-          .tracking-number {
-            font-weight: bold;
-            font-size: 14px;
-          }
-          
-          .barcode-container {
-            margin: 10px 0;
-            text-align: center;
-          }
-          
-          .addresses {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 10px 0;
-            font-size: 12px;
-          }
-          
-          .sender, .recipient {
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-          }
-          
-          .footer {
-            margin-top: 10px;
-            font-weight: bold;
-            font-size: 14px;
-          }
-          
-          .cod {
-            color: #e53e3e;
-          }
-          
-          .prepaid {
-            color: #38a169;
-          }
-          
-          /* เพิ่มสไตล์เฉพาะ */
-          .flash-express-label .header {
-            background-color: #fd5c63;
-            color: white;
-            padding: 5px;
-            border-radius: 4px;
-          }
-          
-          .jt-express-label .header {
-            background-color: #d10911;
-            color: white;
-            padding: 5px;
-            border-radius: 4px;
-          }
-          
-          .tiktok-shop-label .header {
-            background-color: #000;
-            color: white;
-            padding: 5px;
-            border-radius: 4px;
-          }
-          
-          .standard-label .header {
-            background-color: #3b82f6;
-            color: white;
-            padding: 5px;
-            border-radius: 4px;
-          }
-        }
-      `}</style>
+          {/* ส่วนที่จะพิมพ์ */}
+          <div className="hidden print:block w-full">
+            {ordersData.map((order, index) => (
+              <div 
+                key={index} 
+                className="w-[100mm] h-[150mm] border border-dashed border-gray-400 mx-auto my-4 p-2 relative page-break-after-always"
+              >
+                <div className="flex justify-between text-xs border-b border-gray-800 pb-1 mb-2">
+                  <div>วันที่: {order.shippingDate}</div>
+                  <div>{order.district || ''} ({sortingCode})</div>
+                </div>
+                
+                <div className="text-center border-b border-gray-800 py-2">
+                  <div className="text-xs mb-1 tracking-widest">{order.displayTrackingNumber}</div>
+                </div>
+                
+                <div className="flex border-b border-gray-800">
+                  <div className="w-2/3 p-2 border-r border-gray-800 text-center font-bold">
+                    {order.orderNumber || 'N/A'}
+                  </div>
+                  <div className="w-1/3 p-2 text-xs">
+                    <div>บริการ: {serviceType}</div>
+                    <div>น้ำหนัก: {weight} kg</div>
+                  </div>
+                </div>
+                
+                <div className="border-b border-gray-800 p-2 text-xs">
+                  <div className="font-bold">ผู้รับ: {order.recipientName}</div>
+                  <div>โทร: {order.recipientPhone}</div>
+                  <div>{order.recipientAddress}</div>
+                </div>
+                
+                <div className="flex border-b border-gray-800">
+                  <div className="w-2/3 p-2 text-xs border-r border-gray-800">
+                    <div className="font-bold">ผู้ส่ง: {senderName}</div>
+                    <div>โทร: {senderPhone}</div>
+                    <div>{senderAddress}</div>
+                  </div>
+                  <div className="w-1/3 p-2 flex items-center justify-center">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${order.displayTrackingNumber}`} 
+                      alt="QR Code" 
+                      className="w-16 h-16"
+                    />
+                  </div>
+                </div>
+                
+                {parseFloat(order.codAmount) > 0 && (
+                  <div className="flex border-b border-gray-800">
+                    <div className="w-2/5 bg-black text-white p-2 font-bold text-center border-r border-gray-800">
+                      เก็บเงินปลายทาง
+                    </div>
+                    <div className="w-3/5 p-2 text-center font-bold">
+                      ฿ {parseFloat(order.codAmount).toLocaleString('th-TH', {minimumFractionDigits: 2})}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex text-xs p-2">
+                  <div className="w-1/2">
+                    <div>คาดว่าจะถึงวันที่:</div>
+                    <div className="font-bold">{order.estimatedDate}</div>
+                  </div>
+                  <div className="w-1/2 text-right">
+                    <div>รหัสลูกค้า: {customerCode}</div>
+                    <div>รหัสคลัง: {warehouseCode}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
