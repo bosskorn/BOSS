@@ -196,22 +196,8 @@ const FlashExpressLabelNew: React.FC = () => {
         setDataReady(true);
         setIsLoading(false);
         
-        // พิมพ์ทันทีเมื่อได้ข้อมูลครบ
-        console.log('จะเริ่มการพิมพ์อัตโนมัติ เลขพัสดุ:', trackingNo);
-        
-        // เรียกฟังก์ชันพิมพ์หลังจากรอให้ state อัพเดทเสร็จ
-        // ที่นี่ state ยังไม่อัพเดท ให้ส่ง trackingNo โดยตรงไปที่ printLabel
-        setTimeout(() => {
-          if (trackingNo) {
-            printLabel(trackingNo);
-          } else {
-            toast({
-              title: 'ไม่สามารถพิมพ์ลาเบลได้',
-              description: 'เลขพัสดุไม่ถูกต้อง',
-              variant: 'destructive',
-            });
-          }
-        }, 500);
+        // ยกเลิกการพิมพ์อัตโนมัติเพื่อให้ผู้ใช้กดพิมพ์เองแทน
+        console.log('ข้อมูลพร้อมสำหรับการพิมพ์ เลขพัสดุ:', trackingNo);
         
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการดึงข้อมูล:', error);
