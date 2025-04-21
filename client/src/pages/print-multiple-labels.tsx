@@ -251,12 +251,37 @@ const PrintMultipleLabels = () => {
                   </li>
                 ))}
               </ul>
+              
+              <div className="bg-white border border-blue-100 rounded-lg p-4 mb-5">
+                <h3 className="text-lg font-medium text-blue-800 mb-2">ตัวอย่างลาเบล</h3>
+                <p className="text-gray-600 text-sm mb-3">
+                  จะพิมพ์ทั้งหมด {ordersData.length} ลาเบล ({ordersData.length} หน้า)
+                </p>
+                <div className="border rounded-lg h-28 overflow-auto">
+                  {ordersData.map((order, index) => (
+                    <div key={index} className="border-b p-2 flex items-center">
+                      <div className="w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center font-medium mr-2">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{order.recipientName}</p>
+                        <p className="text-xs text-gray-500 truncate">{order.recipientAddress}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-medium">{order.orderNumber || 'N/A'}</p>
+                        <p className="text-xs text-blue-600">{order.displayTrackingNumber}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
               <div className="flex justify-center mt-4">
                 <Button 
                   onClick={printLabels} 
                   className="bg-blue-600 hover:bg-blue-700"
                 >
-                  พิมพ์ลาเบลทั้งหมด
+                  พิมพ์ลาเบลทั้งหมด ({ordersData.length} หน้า)
                 </Button>
               </div>
             </div>
