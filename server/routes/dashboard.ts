@@ -1,9 +1,10 @@
 import express, { Request, Response } from 'express';
 import { storage } from '../storage';
 import { db } from '../db';
-import { eq, sql, desc, and, gte, lt } from 'drizzle-orm';
-import { orders, customers } from '@shared/schema';
-import { format, subDays, startOfDay, startOfMonth } from 'date-fns';
+import { eq, sql, desc, and, gte, lt, count } from 'drizzle-orm';
+import { orders, customers, users } from '@shared/schema';
+import { format, subDays, startOfDay, startOfMonth, endOfMonth } from 'date-fns';
+import { auth } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -13,8 +14,9 @@ const router = express.Router();
  * - ยอดขายเดือนนี้
  * - ยอดขายย้อนหลัง 7 วัน
  * - คำสั่งซื้อล่าสุด
+ * - สถิติการจัดส่ง
  */
-router.get('/summary', async (req: Request, res: Response) => {
+router.get('/summary', auth, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     
@@ -127,12 +129,53 @@ router.get('/summary', async (req: Request, res: Response) => {
       });
     }
     
+    // 5. สถิติเพิ่มเติม - ยอดคำสั่งซื้อทั้งหมด
+    const totalOrdersCount = await db.select({
+      count: count(orders.id)
+    })
+    .from(orders)
+    .where(eq(orders.userId, userId));
+    
+    // 6. จำนวนคำสั่งซื้อตามสถานะ
+    const orderStatusCounts = {};
+    
+    const statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    for (const status of statuses) {
+      const statusCount = await db.select({
+        count: count(orders.id)
+      })
+      .from(orders)
+      .where(and(
+        eq(orders.userId, userId),
+        eq(orders.status, status)
+      ));
+      
+      orderStatusCounts[status] = statusCount[0].count;
+    }
+    
+    // 7. ค่าจัดส่งทั้งหมดเดือนนี้
+    const shippingCosts = await db.select({
+      total: sql<number>`COALESCE(SUM(${orders.shippingCost}), 0)`.as('total')
+    })
+    .from(orders)
+    .where(
+      and(
+        eq(orders.userId, userId),
+        gte(orders.createdAt, monthStart)
+      )
+    );
+    
+    const monthShippingTotal = shippingCosts[0]?.total || 0;
+    
     // ส่งข้อมูลทั้งหมดกลับไป
     res.json({
       success: true,
       data: {
         todayTotal: Number(todayTotal),
         monthTotal: Number(monthTotal),
+        totalOrdersCount: totalOrdersCount[0].count,
+        orderStatusCounts,
+        monthShippingTotal: Number(monthShippingTotal),
         last7Days,
         latestOrders
       }

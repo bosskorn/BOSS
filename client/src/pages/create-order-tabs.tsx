@@ -1382,6 +1382,11 @@ const CreateOrderTabsPage: React.FC = () => {
             description: `ออเดอร์หมายเลข ${response.data.order.id || orderData.orderNumber} ถูกสร้างแล้ว`,
             variant: "default",
           });
+
+          // ดึงข้อมูลเครดิตที่หักไปและเครดิตคงเหลือ
+          const orderFee = response.data.creditInfo?.orderFee || 25;
+          const currentBalance = response.data.creditInfo?.currentBalance || "0.00";
+          const creditMessage = response.data.message || `หักค่าธรรมเนียม ${orderFee}฿ จากเครดิตของคุณ ยอดคงเหลือ ${currentBalance} บาท`;
           
           // แสดง dialog ยืนยันการสร้างออเดอร์สำเร็จ แทนการไปหน้าอื่นทันที
           setDialog({
@@ -1389,7 +1394,12 @@ const CreateOrderTabsPage: React.FC = () => {
             title: 'สร้างออเดอร์สำเร็จ ✓',
             description: 'ออเดอร์ของคุณได้ถูกบันทึกเรียบร้อยแล้ว สามารถพิมพ์ใบลาเบลได้จากหน้ารายการออเดอร์',
             orderNumber: response.data.order.id || orderData.orderNumber,
-            trackingNumber: orderData.trackingNumber
+            trackingNumber: orderData.trackingNumber,
+            creditInfo: {
+              orderFee: orderFee,
+              currentBalance: currentBalance
+            },
+            creditMessage: creditMessage
           });
           
           // เคลียร์ฟอร์ม
