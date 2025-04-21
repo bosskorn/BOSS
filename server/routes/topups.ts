@@ -6,6 +6,7 @@ import { insertTopupSchema, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import generatePayload from 'promptpay-qr';
 import crypto from 'crypto';
+import QRCode from 'qrcode';
 
 const router = Router();
 
@@ -39,14 +40,21 @@ router.post('/create', auth, async (req: Request, res: Response) => {
         // สร้าง payload สำหรับ QR Code PromptPay
         const payload = generatePayload(promptpayId, { amount });
         
-        // URL encode payload เพื่อส่งไปยัง QR Code generator
-        const encodedPayload = encodeURIComponent(payload);
+        // สร้าง QR Code โดยตรงด้วย qrcode library และแปลงเป็น data URL
+        const qrDataURL = await QRCode.toDataURL(payload, {
+          errorCorrectionLevel: 'H',
+          type: 'image/jpeg',
+          quality: 0.92,
+          margin: 1,
+          width: 250,
+        });
         
-        // ใช้บริการสร้าง QR Code แบบสาธารณะ พร้อมกับส่ง payload ที่ถูกต้อง
-        validatedData.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodedPayload}`;
+        // เก็บ data URL ลงในฐานข้อมูล
+        validatedData.qrCodeUrl = qrDataURL;
       } catch (error) {
         console.error('เกิดข้อผิดพลาดในการสร้าง PromptPay QR Code:', error);
-        validatedData.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=error`;
+        // สร้าง QR Code แบบข้อความผิดพลาด
+        validatedData.qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=error';
       }
     }
 
