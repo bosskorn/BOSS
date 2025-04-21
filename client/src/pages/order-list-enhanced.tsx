@@ -540,16 +540,15 @@ const OrderList: React.FC = () => {
     
     if (isPrintingMultiple) {
       // พิมพ์ลาเบลหลายรายการ
-      const selectedOrdersData = filteredOrders.filter(order => selectedOrders.includes(order.id));
+      const selectedOrdersData = filteredOrders.filter((order: Order) => selectedOrders.includes(order.id));
       // กรองเฉพาะออเดอร์ที่มีเลขพัสดุ
-      const ordersToPrint = selectedOrdersData.filter(order => order.trackingNumber);
+      const ordersToPrint = selectedOrdersData.filter((order: Order) => order.trackingNumber);
       
-      // สร้าง URL พร้อมพารามิเตอร์ขนาดและรายการออเดอร์
-      const orderIds = ordersToPrint.map(order => order.id).join(',');
-      const labelUrl = `/print-multiple-labels?orders=${orderIds}&size=${labelSize}`;
+      // เปิดไดอะล็อกเลือกประเภทลาเบล
+      setLabelTypeDialogOpen(true);
       
-      // เปิดหน้าพิมพ์ในแท็บใหม่
-      window.open(labelUrl, '_blank');
+      // การจัดการเมื่อกดพิมพ์ลาเบลจะอยู่ในไดอะล็อก labelTypeDialog แทน
+      // ซึ่งจะใช้ selectedLabelType เพื่อเลือกประเภทลาเบลที่ต้องการพิมพ์
     } else {
       // พิมพ์ลาเบลเดี่ยว
       if (!orderToPrint || !orderToPrint.id) return;
@@ -584,29 +583,7 @@ const OrderList: React.FC = () => {
     }
     printWindow.close();
     
-    // หาออเดอร์ที่ไม่มีเลขพัสดุ
-    const ordersWithoutTracking = selectedOrdersData.filter(order => !order.trackingNumber);
-    if (ordersWithoutTracking.length > 0) {
-      const orderNumbers = ordersWithoutTracking.map(o => o.orderNumber).join(', ');
-      toast({
-        title: 'ไม่สามารถพิมพ์ลาเบลบางรายการได้',
-        description: `ออเดอร์หมายเลข ${orderNumbers} ไม่มีเลขพัสดุ`,
-        variant: 'destructive',
-      });
-    }
-    
-    // กรองเฉพาะออเดอร์ที่มีเลขพัสดุ
-    const ordersToPrint = selectedOrdersData.filter(order => order.trackingNumber);
-    
-    if (ordersToPrint.length === 0) {
-      toast({
-        title: 'ไม่มีรายการที่สามารถพิมพ์ได้',
-        description: 'ออเดอร์ที่เลือกทั้งหมดไม่มีเลขพัสดุ',
-        variant: 'destructive',
-      });
-      printWindow.close();
-      return;
-    }
+    // กรองเฉพาะออเดอร์ที่มีเลขพัสดุ แต่จะไม่ใช้ในกรณีที่เราเลือกใช้รูปแบบการพิมพ์ไดอะล็อกชนิดใหม่
     
     // ตั้งค่า HTML และ CSS สำหรับการพิมพ์
     printWindow.document.write(`
@@ -644,22 +621,7 @@ const OrderList: React.FC = () => {
     // แสดงผลลัพธ์และทำการปิด dialog
     setPrintDialogOpen(false);
 
-    // อัพเดตสถานะการพิมพ์ในฐานข้อมูล
-    ordersToPrint.forEach(async (order) => {
-      try {
-        await fetch(`/api/orders/${order.id}/print-status`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
-          },
-          credentials: 'include',
-          body: JSON.stringify({ isPrinted: true })
-        });
-      } catch (error) {
-        console.error('Error updating print status:', error);
-      }
-    });
+    // อัพเดตสถานะการพิมพ์ในฐานข้อมูล สำหรับไฟล์เก่าที่ยังไม่ได้ใช้ไดอะล็อกแบบใหม่
 
     printWindow.document.close();
     printWindow.focus();
@@ -1325,19 +1287,19 @@ const OrderList: React.FC = () => {
             
             {/* TikTok Shop */}
             <div 
-              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
+              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedLabelType === 'tiktok' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
               onClick={() => setSelectedLabelType('tiktok')}
             >
-              <div>
-                <h3 className="font-medium">TikTok Shop</h3>
+              <div className="flex-1">
+                <h4 className="font-medium">TikTok Shop</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับผู้ขาย TikTok Shop</p>
               </div>
-              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-100 text-gray-400">
-                <ChevronUp className="h-5 w-5 rotate-90" />
+              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
+                {selectedLabelType === 'tiktok' && <Check className="h-3.5 w-3.5 text-primary" />}
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex space-x-2 justify-end">
             <Button 
               variant="outline" 
               onClick={() => setLabelTypeDialogOpen(false)}
@@ -1348,64 +1310,126 @@ const OrderList: React.FC = () => {
               onClick={() => {
                 setLabelTypeDialogOpen(false);
                 
-                // ตรวจสอบว่ามี order และ trackingNumber หรือไม่
-                if (!orderToPrint || !orderToPrint.trackingNumber) {
-                  toast({
-                    title: 'ไม่สามารถพิมพ์ลาเบลได้',
-                    description: 'ออเดอร์นี้ไม่มีเลขพัสดุ กรุณาสร้างเลขพัสดุก่อนพิมพ์ลาเบล',
-                    variant: 'destructive',
+                if (isPrintingMultiple) {
+                  // กรณีพิมพ์หลายรายการ
+                  const selectedOrdersData = filteredOrders.filter((order: Order) => selectedOrders.includes(order.id));
+                  // กรองเฉพาะออเดอร์ที่มีเลขพัสดุ
+                  const ordersToPrint = selectedOrdersData.filter((order: Order) => order.trackingNumber);
+                  
+                  if (ordersToPrint.length === 0) {
+                    toast({
+                      title: 'ไม่สามารถพิมพ์ลาเบลได้',
+                      description: 'ออเดอร์ที่เลือกไม่มีเลขพัสดุ กรุณาสร้างเลขพัสดุก่อนพิมพ์ลาเบล',
+                      variant: 'destructive',
+                    });
+                    return;
+                  }
+                  
+                  // สร้าง URL พร้อมพารามิเตอร์รายการออเดอร์
+                  const orderIds = ordersToPrint.map((order: Order) => order.id).join(',');
+                  let labelUrl = '';
+                  
+                  switch(selectedLabelType) {
+                    case 'standard':
+                      labelUrl = `/print-multiple-labels?orders=${orderIds}&type=standard`;
+                      break;
+                    case 'flash':
+                      labelUrl = `/print-multiple-labels?orders=${orderIds}&type=flash`;
+                      break;
+                    case 'jt':
+                      labelUrl = `/print-multiple-labels?orders=${orderIds}&type=jt`;
+                      break;
+                    case 'tiktok':
+                      labelUrl = `/print-multiple-labels?orders=${orderIds}&type=tiktok`;
+                      break;
+                    default:
+                      labelUrl = `/print-multiple-labels?orders=${orderIds}&type=standard`;
+                  }
+                  
+                  // เปิดหน้าพิมพ์ในแท็บใหม่
+                  window.open(labelUrl, '_blank');
+                  
+                  // อัพเดตสถานะการพิมพ์ในฐานข้อมูล
+                  ordersToPrint.forEach(async (order: Order) => {
+                    try {
+                      await fetch(`/api/orders/${order.id}/print-status`, {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ isPrinted: true })
+                      });
+                    } catch (error) {
+                      console.error('Error updating print status:', error);
+                    }
                   });
-                  return;
+                  
+                  // รีเซ็ตสถานะการพิมพ์หลายรายการ
+                  setIsPrintingMultiple(false);
+                  
+                } else {
+                  // กรณีพิมพ์รายการเดียว
+                  // ตรวจสอบว่ามี order และ trackingNumber หรือไม่
+                  if (!orderToPrint || !orderToPrint.trackingNumber) {
+                    toast({
+                      title: 'ไม่สามารถพิมพ์ลาเบลได้',
+                      description: 'ออเดอร์นี้ไม่มีเลขพัสดุ กรุณาสร้างเลขพัสดุก่อนพิมพ์ลาเบล',
+                      variant: 'destructive',
+                    });
+                    return;
+                  }
+                
+                  // ทำการอัพเดตสถานะการพิมพ์ในฐานข้อมูล
+                  fetch(`/api/orders/${orderToPrint.id}/print-status`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ isPrinted: true })
+                  });
+                  
+                  // เปิดลาเบลตามประเภทที่เลือก
+                  console.log(`กำลังเปิดลาเบลประเภท ${selectedLabelType} สำหรับออเดอร์ ${orderToPrint.id}`);
+                  
+                  // สร้าง URL สำหรับหน้าลาเบล
+                  let labelUrl = '';
+                  switch(selectedLabelType) {
+                    case 'standard':
+                      labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
+                      break;
+                    case 'flash':
+                      labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
+                      break;
+                    case 'jt':
+                      labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
+                      break;
+                    case 'tiktok':
+                      labelUrl = `/tiktok-shipping-label?order=${orderToPrint.id}`;
+                      break;
+                    default:
+                      labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
+                  }
+                  
+                  console.log("Opening URL:", labelUrl);
+                  
+                  // วิธีการเปิดแบบใหม่ไม่ใช้ window.open โดยตรง
+                  // สร้าง link element แล้วจำลองการคลิก
+                  const link = document.createElement('a');
+                  link.href = labelUrl;
+                  link.target = '_blank';
+                  link.rel = 'noopener noreferrer';
+                  document.body.appendChild(link);
+                  link.click();
+                  
+                  // ลบ link element หลังจากใช้งาน
+                  setTimeout(() => {
+                    document.body.removeChild(link);
+                  }, 100);
                 }
-                
-                // ทำการอัพเดตสถานะการพิมพ์ในฐานข้อมูล
-                fetch(`/api/orders/${orderToPrint.id}/print-status`, {
-                  method: 'PATCH',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
-                  },
-                  credentials: 'include',
-                  body: JSON.stringify({ isPrinted: true })
-                });
-                
-                // เปิดลาเบลตามประเภทที่เลือก
-                console.log(`กำลังเปิดลาเบลประเภท ${selectedLabelType} สำหรับออเดอร์ ${orderToPrint.id}`);
-                
-                // สร้าง URL สำหรับหน้าลาเบล
-                let labelUrl = '';
-                switch(selectedLabelType) {
-                  case 'standard':
-                    labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
-                    break;
-                  case 'flash':
-                    labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
-                    break;
-                  case 'jt':
-                    labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
-                    break;
-                  case 'tiktok':
-                    labelUrl = `/tiktok-shipping-label?order=${orderToPrint.id}`;
-                    break;
-                  default:
-                    labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
-                }
-                
-                console.log("Opening URL:", labelUrl);
-                
-                // วิธีการเปิดแบบใหม่ไม่ใช้ window.open โดยตรง
-                // สร้าง link element แล้วจำลองการคลิก
-                const link = document.createElement('a');
-                link.href = labelUrl;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-                document.body.appendChild(link);
-                link.click();
-                
-                // ลบ link element หลังจากใช้งาน
-                setTimeout(() => {
-                  document.body.removeChild(link);
-                }, 100);
               }}
               className="bg-blue-600 hover:bg-blue-700"
               disabled={!selectedLabelType}
