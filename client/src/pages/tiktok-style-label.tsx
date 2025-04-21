@@ -299,24 +299,7 @@ const TikTokStyleLabelPage = () => {
       height: 80px;
     }
     
-    .vertical-text-left, .vertical-text-right {
-      position: absolute;
-      font-size: 10px;
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-    }
-    
-    .vertical-text-left {
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%) rotate(180deg);
-    }
-    
-    .vertical-text-right {
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
-    }
+    /* ลบ CSS ของข้อความแนวตั้งออกตามที่ต้องการ */
     
     .dashed-cut-line {
       position: absolute;
@@ -766,9 +749,7 @@ const TikTokStyleLabelPage = () => {
                 
                 {/* ลบ PICKUP ตามที่ต้องการ */}
                 
-                {/* แสดงข้อความแนวตั้งด้านข้าง */}
-                <div className="vertical-text-left">{order.displayTrackingNumber}</div>
-                <div className="vertical-text-right">{order.displayTrackingNumber}</div>
+                {/* ลบข้อความแนวตั้งด้านข้างออกตามที่ต้องการ */}
                 
                 {/* แสดงเส้นตัดขอบล่าง */}
                 <div className="dashed-cut-line">
