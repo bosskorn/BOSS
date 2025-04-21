@@ -436,6 +436,26 @@ const OrderList: React.FC = () => {
     setShippingDialogOpen(true);
   };
   
+  // ฟังก์ชันสำหรับสร้างเลขพัสดุหลายรายการพร้อมกัน
+  const handleMultipleTracking = () => {
+    console.log("กำลังเปิด Dialog สร้างเลขพัสดุหลายรายการ", selectedOrders.length, "รายการ");
+    
+    if (selectedOrders.length === 0) {
+      toast({
+        title: 'ไม่มีรายการที่เลือก',
+        description: 'กรุณาเลือกรายการที่ต้องการสร้างเลขพัสดุ',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // เริ่มต้นค่าสำหรับวิธีการจัดส่งที่เลือก
+    setSelectedShippingMethod('แบบมาตรฐาน');
+    
+    // เปิดไดอะล็อกเลือกวิธีการจัดส่ง
+    setMultipleTrackingDialogOpen(true);
+  };
+  
   // ฟังก์ชันสร้างเลขพัสดุและอัพเดทสถานะออเดอร์
   const createTrackingNumber = async () => {
     if (!orderToCreateTracking) return;
@@ -1359,13 +1379,168 @@ const OrderList: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Dialog เลือกขนส่ง */}
+      {/* Dialog สำหรับสร้างเลขพัสดุหลายรายการ */}
+      <Dialog open={multipleTrackingDialogOpen} onOpenChange={setMultipleTrackingDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>สร้างเลขพัสดุหลายรายการ</DialogTitle>
+            <DialogDescription>
+              เลือกบริษัทขนส่งเพื่อสร้างเลขพัสดุสำหรับ {selectedOrders.length} รายการที่เลือก
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3 py-4">
+            {/* ส่วนแสดงเมื่อกำลังโหลดข้อมูล */}
+            {dbShippingMethods.length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-gray-500 mb-2">กำลังโหลดข้อมูลวิธีการจัดส่ง...</p>
+                <div className="flex justify-center">
+                  <RefreshCw className="h-5 w-5 animate-spin text-blue-500" />
+                </div>
+              </div>
+            )}
+            
+            {/* แบบมาตรฐาน */}
+            <div 
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'แบบมาตรฐาน' ? 'border-blue-600' : 'border-gray-200'}`}
+              onClick={() => setSelectedShippingMethod('แบบมาตรฐาน')}
+            >
+              <div>
+                <h4 className="font-medium">แบบมาตรฐาน</h4>
+                <p className="text-sm text-gray-500">รูปแบบทั่วไป ใช้ได้กับทุกบริษัทขนส่ง</p>
+              </div>
+              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedShippingMethod === 'แบบมาตรฐาน' ? 'border-blue-600' : 'border-gray-300'}`}>
+                {selectedShippingMethod === 'แบบมาตรฐาน' && (
+                  <div className="w-full h-full rounded-full bg-blue-600"></div>
+                )}
+              </div>
+            </div>
+            
+            {/* Xiaobai Express */}
+            <div 
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' ? 'border-blue-600' : 'border-gray-200'}`}
+              onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส')}
+            >
+              <div>
+                <h4 className="font-medium">Xiaobai Express</h4>
+                <p className="text-sm text-gray-500">บริการขนส่งเสี่ยวไป๋ เอ็กเพรส</p>
+              </div>
+              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' ? 'border-blue-600' : 'border-gray-300'}`}>
+                {selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' && (
+                  <div className="w-full h-full rounded-full bg-blue-600"></div>
+                )}
+              </div>
+            </div>
+            
+            {/* Thailand Post */}
+            <div 
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'ไปรษณีย์ไทย' ? 'border-blue-600' : 'border-gray-200'}`}
+              onClick={() => setSelectedShippingMethod('ไปรษณีย์ไทย')}
+            >
+              <div>
+                <h4 className="font-medium">ไปรษณีย์ไทย</h4>
+                <p className="text-sm text-gray-500">บริการขนส่งไปรษณีย์ไทย</p>
+              </div>
+              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedShippingMethod === 'ไปรษณีย์ไทย' ? 'border-blue-600' : 'border-gray-300'}`}>
+                {selectedShippingMethod === 'ไปรษณีย์ไทย' && (
+                  <div className="w-full h-full rounded-full bg-blue-600"></div>
+                )}
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex space-x-2 justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setMultipleTrackingDialogOpen(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button 
+              onClick={async () => {
+                setMultipleTrackingDialogOpen(false);
+                
+                if (selectedOrders.length === 0) {
+                  toast({
+                    title: 'ไม่สามารถสร้างเลขพัสดุได้',
+                    description: 'กรุณาเลือกรายการที่ต้องการสร้างเลขพัสดุ',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+                
+                // แสดงการโหลด
+                toast({
+                  title: 'กำลังสร้างเลขพัสดุ',
+                  description: `กำลังดำเนินการสำหรับ ${selectedOrders.length} รายการ...`,
+                });
+                
+                // สร้างเลขพัสดุสำหรับทุกออเดอร์ที่เลือก
+                let successCount = 0;
+                let failCount = 0;
+                
+                for (const orderId of selectedOrders) {
+                  try {
+                    const token = localStorage.getItem('auth_token');
+                    
+                    // เรียก API เพื่อสร้างเลขพัสดุ
+                    const response = await fetch(`/api/orders/${orderId}/tracking`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? `Bearer ${token}` : '',
+                      },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        shippingMethod: selectedShippingMethod
+                      })
+                    });
+                    
+                    if (response.ok) {
+                      successCount++;
+                    } else {
+                      failCount++;
+                    }
+                  } catch (error) {
+                    failCount++;
+                    console.error(`Error creating tracking for order ${orderId}:`, error);
+                  }
+                }
+                
+                // แสดงผลลัพธ์
+                if (successCount > 0) {
+                  toast({
+                    title: 'สร้างเลขพัสดุสำเร็จ',
+                    description: `สร้างเลขพัสดุสำเร็จ ${successCount} รายการ${failCount > 0 ? `, ล้มเหลว ${failCount} รายการ` : ''}`,
+                    variant: successCount > 0 ? 'default' : 'destructive',
+                  });
+                  
+                  // รีเฟรชข้อมูลเพื่อแสดงเลขพัสดุที่สร้างขึ้นใหม่
+                  fetchOrders();
+                } else {
+                  toast({
+                    title: 'ไม่สามารถสร้างเลขพัสดุได้',
+                    description: 'เกิดข้อผิดพลาดในการสร้างเลขพัสดุ โปรดลองอีกครั้ง',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+              variant="default"
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={!selectedShippingMethod}
+            >
+              <Truck className="h-4 w-4 mr-2" />
+              สร้างเลขพัสดุ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog เลือกขนส่ง (สำหรับสร้างเลขพัสดุรายการเดียว) */}
       <Dialog open={shippingDialogOpen} onOpenChange={setShippingDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>เลือกประเภทใบลาเบล</DialogTitle>
+            <DialogTitle>เลือกบริษัทขนส่ง</DialogTitle>
             <DialogDescription>
-              เลือกประเภทของใบลาเบลตามผู้ให้บริการขนส่ง
+              เลือกบริษัทขนส่งเพื่อสร้างเลขพัสดุ
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-3 py-4">
