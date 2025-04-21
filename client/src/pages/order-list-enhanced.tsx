@@ -2383,7 +2383,7 @@ const OrderList: React.FC = () => {
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="font-medium">ใบลาเบลขนาด 100x100mm</h3>
+                  <h3 className="font-medium">ใบลาเบลขนาด 100x150mm</h3>
                   <p className="text-sm text-gray-500">ขนาดมาตรฐาน เหมาะสำหรับพัสดุทั่วไป</p>
                 </div>
                 <div className="w-16 h-16 bg-white border border-gray-300 flex items-center justify-center rounded-md">
