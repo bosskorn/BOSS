@@ -599,10 +599,24 @@ const OrderList: React.FC = () => {
       <div className="flex flex-col space-y-6 p-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">คำสั่งซื้อทั้งหมด</h1>
-            <p className="text-sm text-gray-500">จัดการคำสั่งซื้อและการจัดส่งพัสดุ</p>
+            <h1 className="text-2xl font-semibold text-gray-900">รายการคำสั่งซื้อทั้งหมด</h1>
+            <p className="text-sm text-gray-500">จัดการคำสั่งซื้อและการจัดส่งพัสดุ ({orders.length} รายการ)</p>
           </div>
-          <div className="flex space-x-2 mt-4 sm:mt-0">
+          <div className="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-0">
+            <Button 
+              variant="outline" 
+              className="border-blue-300 text-blue-700 hover:bg-blue-50"
+              onClick={() => fetchOrders()}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              รีเฟรช
+            </Button>
+            <Link href="/bulk-order-import">
+              <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50">
+                <FileText className="h-4 w-4 mr-2" />
+                นำเข้าจากไฟล์
+              </Button>
+            </Link>
             <Link href="/create-order">
               <Button className="bg-blue-600 hover:bg-blue-700">
                 <FileText className="h-4 w-4 mr-2" />
