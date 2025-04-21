@@ -957,7 +957,7 @@ const OrderList: React.FC = () => {
                     <TableHead className="py-2 font-medium text-gray-500 w-10">
                       <Checkbox 
                         checked={selectedOrders.length > 0 && selectedOrders.length === filteredOrders.length} 
-                        indeterminate={selectedOrders.length > 0 && selectedOrders.length < filteredOrders.length}
+                        data-state={selectedOrders.length > 0 && selectedOrders.length < filteredOrders.length ? "indeterminate" : undefined}
                         onCheckedChange={() => toggleSelectAll()}
                       />
                     </TableHead>
