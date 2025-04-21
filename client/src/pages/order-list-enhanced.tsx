@@ -866,7 +866,6 @@ const OrderList: React.FC = () => {
 
     // บันทึกข้อมูลออเดอร์ที่จะพิมพ์และแสดงไดอะล็อก
     setOrderToPrint(order);
-    setSelectedLabelType('standard'); // ตั้งค่าเริ่มต้นเป็นลาเบลมาตรฐาน
     setLabelTypeDialogOpen(true);
   };
 
@@ -1355,15 +1354,6 @@ const OrderList: React.FC = () => {
               font-weight: bold; 
               color: #0078D7; 
             }
-            .tracking { 
-              font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; 
-              text-align: center; 
-              margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '2mm'}; 
-              padding: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'}; 
-              border: 1px solid #0078D7; 
-              border-radius: 3px; 
-              background-color: #f0f9ff;
-            }
             .flex-container {
               display: flex;
               ${labelSize === '100x75mm' ? 'margin-top: 2mm;' : ''}
@@ -1624,7 +1614,6 @@ const OrderList: React.FC = () => {
       const labelHeightPx = labelSize === '100x100mm' ? '378px' : '284px';
 
       // สร้าง HTML สำหรับใบลาเบล
-      ```javascript
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
@@ -1642,8 +1631,7 @@ const OrderList: React.FC = () => {
               background-color: #f5f5f5;
             }
             .barcode-line {
-              display: inline-block;
-              width: 1px;
+              display: inline-block;              width: 1px;
               height: 15px;
               background-color: #000;
               margin: 0 0.5px;
@@ -2379,7 +2367,7 @@ const OrderList: React.FC = () => {
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
             <div 
-              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-500 bgblue-50' : 'border-gray-200'}`}
               onClick={() => setLabelSize('100x100mm')}
             >
               <div className="flex justify-between items-center">
