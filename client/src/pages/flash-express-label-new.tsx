@@ -472,7 +472,7 @@ const FlashExpressLabelNew: React.FC = () => {
           <div class="header">
             <div>BLUEDASH</div>
             <div>เสี่ยวไป๋ เอ็กเพรส</div>
-            <div><!-- ข้อความในส่วน service type ถูกลบออกตามคำขอ --></div>
+            <div>แสตนดาร์ด</div>
           </div>
           
           <div class="barcode-section">
