@@ -3,7 +3,7 @@ import { storage } from '../storage';
 import { auth } from '../middleware/auth';
 import { createFlashExpressShipping } from '../services/flash-express';
 import { db } from '../db';
-import { users } from '@shared/schema';
+import { users, feeHistory } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 const router = Router();
@@ -334,6 +334,19 @@ router.post('/', auth, async (req, res) => {
           updatedAt: new Date()
         })
         .where(eq(users.id, req.user.id));
+      
+      // บันทึกประวัติการหักค่าธรรมเนียม
+      await db.insert(feeHistory)
+        .values({
+          userId: req.user.id,
+          orderId: order.id,
+          amount: ORDER_FEE.toString(),
+          balanceBefore: userBalance.toString(),
+          balanceAfter: newBalance.toString(),
+          description: `ค่าธรรมเนียมการสร้างออเดอร์ #${order.orderNumber}`,
+          feeType: 'order',
+          createdAt: new Date()
+        });
       
       console.log(`หักค่าธรรมเนียมออเดอร์ ${ORDER_FEE} บาท จากเครดิตผู้ใช้ ${req.user.username} เครดิตคงเหลือ ${newBalance.toFixed(2)} บาท`);
     } catch (error) {

@@ -18,6 +18,7 @@ import locationsRouter from "./routes/locations";
 import mockShippingRouter from "./routes/mock-shipping";
 import dashboardRouter from "./routes/dashboard";
 import stripeRouter from "./routes/stripe";
+import feeHistoryRouter from "./routes/fee-history";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // แสดงข้อมูลข้อมูลของทุกคำขอเพื่อแก้ไขปัญหา
@@ -51,6 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/mock-shipping", mockShippingRouter);
   app.use("/api/dashboard", dashboardRouter);
   app.use("/api/stripe", stripeRouter);
+  app.use("/api/fee-history", feeHistoryRouter);
 
   // ตรวจสอบสถานะ Flash Express API
   app.get("/api/flash-express/status", (req, res) => {
