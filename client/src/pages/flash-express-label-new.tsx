@@ -83,18 +83,15 @@ const FlashExpressLabelNew = () => {
     }
     
     .dropoff-info {
-      position: absolute;
-      bottom: -18px;
-      left: 0;
-      right: 0;
       text-align: center;
       background-color: #ffefdd;
       color: #FF6600;
-      font-size: 10px;
+      font-size: 11px;
       padding: 2px 5px;
-      font-weight: 500;
-      border-bottom: 1px solid #FF6600;
-      z-index: 1;
+      font-weight: bold;
+      border: 1px solid #FF6600;
+      border-radius: 3px;
+      margin-top: 3px;
     }
     
     .tiktok-logo, .flash-logo, .service-type {
@@ -152,11 +149,13 @@ const FlashExpressLabelNew = () => {
     
     .order-number {
       flex: 2;
-      padding: 10px;
-      font-size: 18px;
+      padding: 8px 10px;
+      font-size: 28px;
       font-weight: bold;
       text-align: center;
       border-right: 1px solid #000;
+      letter-spacing: 1px;
+      color: #FF6600;
     }
     
     .sorting-info {
@@ -694,7 +693,6 @@ const FlashExpressLabelNew = () => {
                   <div className="service-type">
                     Standard
                   </div>
-                  <div className="dropoff-info">กรณี DROPOFF ใช้เบอร์นี้ในการแสกนส่งพัสดุ 0829327325</div>
                 </div>
                 
                 {/* แสดงบาร์โค้ด */}
@@ -705,11 +703,11 @@ const FlashExpressLabelNew = () => {
                 
                 {/* แสดงเลขออเดอร์และรหัสการจัดส่ง */}
                 <div className="order-number-section">
-                  <div className="order-number">{order.sortingCode}</div>
+                  <div className="order-number">23B-21260-00</div>
                   <div className="sorting-info">
                     <div>SS1</div>
                     <div>FLE-BKK</div>
-                    <div>พร้อม</div>
+                    <div className="dropoff-info">กรณี DROPOFF ใช้เบอร์ 0829327325</div>
                   </div>
                 </div>
                 
