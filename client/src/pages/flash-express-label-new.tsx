@@ -93,16 +93,26 @@ const FlashExpressLabelNew = () => {
     }
     
     .tiktok-logo {
-      font-weight: bold;
-      text-align: left;
+      display: flex;
+      align-items: center;
       justify-content: flex-start;
-      color: #0066CC;
+    }
+    
+    .bluedash-logo-img {
+      max-height: 35px;
+      width: auto;
     }
     
     .flash-logo {
-      font-style: italic;
-      font-weight: bold;
-      color: #FF6600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .flash-logo-img {
+      max-width: 50px;
+      height: auto;
+      filter: invert(1); /* ทำให้โลโก้เป็นสีขาว (เนื่องจากพื้นหลังเป็นสีดำ) */
     }
     
     .service-type {
@@ -673,13 +683,13 @@ const FlashExpressLabelNew = () => {
                 {/* แสดงส่วนบนของลาเบล */}
                 <div className="label-header">
                   <div className="tiktok-logo">
-                    BLUEDASH
+                    <img src="https://via.placeholder.com/100x35/0066CC/FFFFFF?text=BLUEDASH" alt="BLUEDASH Logo" className="bluedash-logo-img" />
                   </div>
                   <div className="flash-logo">
-                    FLASH Express
+                    <img src="/attached_assets/flash-express-malaysia-1634103999.png" alt="Flash Express Logo" className="flash-logo-img" />
                   </div>
                   <div className="service-type">
-                    Standard
+                    <img src="https://via.placeholder.com/70x30/FFFFFF/FF6600?text=Standard" alt="Standard Service" className="service-type-img" />
                   </div>
                 </div>
                 
