@@ -39,6 +39,15 @@ const Dashboard: React.FC = () => {
   const [summaryData, setSummaryData] = useState<SummaryData>({
     todayTotal: 0,
     monthTotal: 0,
+    totalOrdersCount: 0,
+    orderStatusCounts: {
+      pending: 0,
+      processing: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0
+    },
+    monthShippingTotal: 0,
     last7Days: [],
     latestOrders: []
   });
@@ -80,6 +89,15 @@ const Dashboard: React.FC = () => {
         setSummaryData({
           todayTotal: dashboardData.todayTotal || 0,
           monthTotal: dashboardData.monthTotal || 0,
+          totalOrdersCount: dashboardData.totalOrdersCount || 0,
+          orderStatusCounts: dashboardData.orderStatusCounts || {
+            pending: 0,
+            processing: 0,
+            shipped: 0,
+            delivered: 0,
+            cancelled: 0
+          },
+          monthShippingTotal: dashboardData.monthShippingTotal || 0,
           last7Days: dashboardData.last7Days || [],
           latestOrders: dashboardData.latestOrders || []
         });
@@ -99,6 +117,15 @@ const Dashboard: React.FC = () => {
           setSummaryData({
             todayTotal: 0,
             monthTotal: 0,
+            totalOrdersCount: 0,
+            orderStatusCounts: {
+              pending: 0,
+              processing: 0,
+              shipped: 0,
+              delivered: 0,
+              cancelled: 0
+            },
+            monthShippingTotal: 0,
             last7Days: Array(7).fill(0).map((_, i) => ({
               date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
               total: 0
@@ -246,10 +273,10 @@ const Dashboard: React.FC = () => {
                     คำสั่งซื้อทั้งหมด
                   </p>
                   <h3 className="text-2xl font-bold text-gray-800">
-                    {summaryData.latestOrders.length}
+                    {summaryData.totalOrdersCount}
                   </h3>
                   <p className="text-sm font-medium text-green-600 mt-1">
-                    {summaryData.latestOrders.filter(order => order.status === 'pending').length} รายการรอดำเนินการ
+                    {summaryData.orderStatusCounts.pending} รายการรอดำเนินการ
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">

@@ -168,6 +168,11 @@ const CreateOrderTabsPage: React.FC = () => {
     description: string;
     orderNumber?: string;
     trackingNumber?: string;
+    creditInfo?: {
+      orderFee: number;
+      currentBalance: string;
+    };
+    creditMessage?: string;
   }>({
     open: false,
     title: '',
@@ -2401,6 +2406,28 @@ const CreateOrderTabsPage: React.FC = () => {
                 <p className="font-semibold">{dialog.trackingNumber}</p>
               </div>
             </div>
+            
+            {dialog.creditInfo && (
+              <div className="mt-4 border-t border-gray-200 pt-4">
+                <div className="flex items-center mb-2">
+                  <CreditCard className="w-4 h-4 text-blue-500 mr-1" />
+                  <p className="text-sm text-gray-500 font-medium">ข้อมูลเครดิต</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">ค่าธรรมเนียม:</p>
+                    <p className="font-semibold text-orange-600">-฿{dialog.creditInfo.orderFee}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">เครดิตคงเหลือ:</p>
+                    <p className="font-semibold text-green-600">฿{dialog.creditInfo.currentBalance}</p>
+                  </div>
+                </div>
+                {dialog.creditMessage && (
+                  <p className="text-xs text-gray-600 mt-2">{dialog.creditMessage}</p>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-2">
             <Button
