@@ -173,8 +173,13 @@ const PrintMultipleLabels: React.FC = () => {
             let trackingNumber = order.trackingNumber;
             if (trackingNumber.startsWith('แบบ')) {
               // สร้างเลขพัสดุแบบจำลองที่คงที่ (ไม่ใช้สุ่ม) เพื่อให้ได้ผลลัพธ์เดิมทุกครั้ง
+              // ใช้วิธีการแบบอื่นในการสร้าง stableId
               const hash = order.id.toString() + order.orderNumber;
-              const stableId = Array.from(hash).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+              let stableId = 0;
+              // ใช้ for loop แทน reduce เพื่อหลีกเลี่ยงปัญหา TypeScript
+              for (let i = 0; i < hash.length; i++) {
+                stableId += hash.charCodeAt(i);
+              }
               const stableString = 'FLE' + stableId.toString().padStart(8, '0');
               trackingNumber = stableString.substring(0, 12);
               console.log('แปลงเลขพัสดุจาก', order.trackingNumber, 'เป็น', trackingNumber);
