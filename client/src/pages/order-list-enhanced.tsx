@@ -1399,21 +1399,7 @@ const OrderList: React.FC = () => {
               </div>
             )}
             
-            {/* แบบมาตรฐาน */}
-            <div 
-              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'แบบมาตรฐาน' ? 'border-blue-600' : 'border-gray-200'}`}
-              onClick={() => setSelectedShippingMethod('แบบมาตรฐาน')}
-            >
-              <div>
-                <h4 className="font-medium">แบบมาตรฐาน</h4>
-                <p className="text-sm text-gray-500">รูปแบบทั่วไป ใช้ได้กับทุกบริษัทขนส่ง</p>
-              </div>
-              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedShippingMethod === 'แบบมาตรฐาน' ? 'border-blue-600' : 'border-gray-300'}`}>
-                {selectedShippingMethod === 'แบบมาตรฐาน' && (
-                  <div className="w-full h-full rounded-full bg-blue-600"></div>
-                )}
-              </div>
-            </div>
+
             
             {/* Xiaobai Express */}
             <div 
