@@ -21,6 +21,15 @@ interface DailySale {
 interface SummaryData {
   todayTotal: number;
   monthTotal: number;
+  totalOrdersCount: number;
+  orderStatusCounts: {
+    pending: number;
+    processing: number;
+    shipped: number;
+    delivered: number;
+    cancelled: number;
+  };
+  monthShippingTotal: number;
   last7Days: DailySale[];
   latestOrders: Order[];
 }
