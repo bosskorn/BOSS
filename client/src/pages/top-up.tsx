@@ -86,7 +86,7 @@ const TopUpPage: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [activeTab, setActiveTab] = useState('promptpay');
+  // เมื่อลบแท็บบัตรเครดิต/เดบิตออกไป ไม่จำเป็นต้องมี state activeTab อีกต่อไป
   const [history, setHistory] = useState<TopUpHistory[]>([]);
   const [paymentStep, setPaymentStep] = useState(1);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
