@@ -1421,8 +1421,8 @@ const OrderList: React.FC = () => {
               onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส')}
             >
               <div>
-                <h4 className="font-medium">Xiaobai Express</h4>
-                <p className="text-sm text-gray-500">บริการขนส่งเสี่ยวไป๋ เอ็กเพรส</p>
+                <h4 className="font-medium">เสี่ยวไป๋ เอ็กเพรส</h4>
+                <p className="text-sm text-gray-500">บริการขนส่งจำลอง</p>
               </div>
               <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' ? 'border-blue-600' : 'border-gray-300'}`}>
                 {selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' && (
@@ -1575,7 +1575,7 @@ const OrderList: React.FC = () => {
             >
               <div>
                 <h4 className="font-medium">เสี่ยวไป๋ เอ็กเพรส</h4>
-                <p className="text-sm text-gray-500">บริการขนส่งจำลอง Xiaobai Express</p>
+                <p className="text-sm text-gray-500">บริการขนส่งจำลอง</p>
               </div>
               <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' ? 'border-blue-600' : 'border-gray-300'}`}>
                 {selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
