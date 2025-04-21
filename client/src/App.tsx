@@ -44,6 +44,7 @@ import TikTokShippingLabelFixed from './pages/tiktok-shipping-label-fixed';
 import PrintMultipleLabels from './pages/print-multiple-labels';
 import PrintMultipleLabelsFixed from './pages/print-multiple-labels-fixed';
 import FlashExpressLabelFixed from './pages/flash-express-label-fixed';
+import JntExpressLabel from './pages/jnt-express-label';
 
 
 // รายงาน
@@ -67,6 +68,7 @@ function Router() {
       <Route path="/jt-express-label" component={JTExpressLabel} />
       <Route path="/flash-express-label" component={FlashExpressLabel} />
       <Route path="/flash-express-label-new" component={FlashExpressLabelNew} />
+      <Route path="/jnt-express-label" component={JntExpressLabel} />
       <Route path="/tiktok-flash-label" component={TikTokFlashLabel} />
       <Route path="/tiktok-shipping-label" component={TikTokShippingLabel} />
       <Route path="/tiktok-shipping-label-fixed" component={TikTokShippingLabelFixed} />
