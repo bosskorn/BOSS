@@ -155,6 +155,17 @@ const TikTokStyleLabelPage = () => {
       font-size: 12px;
     }
     
+    .recipient-info {
+      padding-right: 100px; /* เว้นพื้นที่ด้านขวาสำหรับ QR Code */
+      min-height: 85px;
+      position: relative;
+    }
+    
+    .recipient-address {
+      max-width: calc(100% - 90px); /* ลดความกว้างด้านขวาสำหรับ QR Code */
+      word-break: break-word;
+    }
+    
     .sender-info-header, .recipient-info-header {
       font-weight: 500;
       margin-bottom: 3px;
@@ -230,7 +241,7 @@ const TikTokStyleLabelPage = () => {
     .qr-code {
       position: absolute;
       right: 10px;
-      top: 215px;
+      top: 160px; /* ปรับตำแหน่งให้ขึ้นมาอยู่ในส่วนที่อยู่ผู้รับ */
       width: 85px;
       height: 85px;
     }
@@ -653,7 +664,7 @@ const TikTokStyleLabelPage = () => {
                 {/* แสดงข้อมูลผู้รับ */}
                 <div className="recipient-info">
                   <div className="recipient-info-header">ถึง {order.recipientName} ({order.recipientPhone})</div>
-                  <div>{order.recipientAddress}</div>
+                  <div className="recipient-address">{order.recipientAddress}</div>
                 </div>
                 
                 {/* แสดง QR Code */}
