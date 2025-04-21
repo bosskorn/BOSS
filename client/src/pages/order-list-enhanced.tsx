@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import { toast } from '@/hooks/use-toast';
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
@@ -409,7 +410,7 @@ const OrderList: React.FC = () => {
   };
   
   // ฟังก์ชันพิมพ์ใบลาเบลสำหรับรายการที่เลือก
-  // สำหรับฟังก์ชันพิมพ์ใบลาเบลแบบปกติ (เพื่อความเข้ากันได้)
+  // ฟังก์ชันพิมพ์ลาเบลแบบบัตเตอร์
   const handlePrintLabel = (order: Order) => {
     console.log("พิมพ์ลาเบลสำหรับออเดอร์:", order);
     
@@ -423,7 +424,7 @@ const OrderList: React.FC = () => {
       return;
     }
     
-    // บันทึกข้อมูลออเดอร์ที่จะพิมพ์และแสดงไดอะล็อก
+    // บันทึกข้อมูลออเดอร์ที่จะพิมพ์และเปิดไดอะล็อกเลือกประเภทลาเบลโดยตรง
     setOrderToPrint(order);
     setSelectedLabelType('standard'); // ตั้งค่าเริ่มต้นเป็นลาเบลมาตรฐาน
     setLabelTypeDialogOpen(true);
@@ -520,35 +521,52 @@ const OrderList: React.FC = () => {
       return;
     }
     
-    // ตั้งค่าเป็นการพิมพ์หลายรายการและเปิดไดอะล็อก
+    // ตั้งค่าเป็นการพิมพ์หลายรายการ
     setIsPrintingMultiple(true);
-    setPrintDialogOpen(true);
+    
+    // เปิดไดอะล็อกเลือกประเภทลาเบลโดยตรง (ข้ามการเลือกขนาด)
+    setLabelTypeDialogOpen(true);
   };
 
-  const printLabelWithSelectedSize = () => {
-    if (!labelSize) {
-      toast({
-        title: 'กรุณาเลือกขนาดลาเบล',
-        description: 'คุณต้องเลือกขนาดของลาเบลก่อนพิมพ์',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    // ปิด Dialog
-    setPrintDialogOpen(false);
+  // ฟังก์ชันสำหรับพิมพ์ลาเบลตามประเภทที่เลือก
+  const printLabelByType = () => {
+    // ปิดไดอะล็อกเลือกประเภทลาเบล
+    setLabelTypeDialogOpen(false);
     
     if (isPrintingMultiple) {
       // พิมพ์ลาเบลหลายรายการ
       const selectedOrdersData = filteredOrders.filter((order: Order) => selectedOrders.includes(order.id));
+      
       // กรองเฉพาะออเดอร์ที่มีเลขพัสดุ
       const ordersToPrint = selectedOrdersData.filter((order: Order) => order.trackingNumber);
       
-      // เปิดไดอะล็อกเลือกประเภทลาเบล
-      setLabelTypeDialogOpen(true);
+      if (ordersToPrint.length === 0) {
+        toast({
+          title: 'ไม่มีรายการที่พิมพ์ได้',
+          description: 'ไม่มีออเดอร์ที่มีเลขพัสดุในรายการที่เลือก',
+          variant: 'destructive',
+        });
+        return;
+      }
       
-      // การจัดการเมื่อกดพิมพ์ลาเบลจะอยู่ในไดอะล็อก labelTypeDialog แทน
-      // ซึ่งจะใช้ selectedLabelType เพื่อเลือกประเภทลาเบลที่ต้องการพิมพ์
+      // ดึง ID ของออเดอร์ที่จะพิมพ์
+      const orderIds = ordersToPrint.map((order: Order) => order.id).join(',');
+      
+      // เปิดหน้าพิมพ์ลาเบลหลายรายการในแท็บใหม่
+      window.open(`/print-multiple-labels?orders=${orderIds}&type=${selectedLabelType}`, '_blank');
+      
+      // อัพเดตออเดอร์ว่าได้พิมพ์แล้ว
+      ordersToPrint.forEach(async (order: Order) => {
+        fetch(`/api/orders/${order.id}/print-status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
+          },
+          credentials: 'include',
+          body: JSON.stringify({ isPrinted: true })
+        });
+      });
     } else {
       // พิมพ์ลาเบลเดี่ยว
       if (!orderToPrint || !orderToPrint.id) return;
@@ -564,68 +582,12 @@ const OrderList: React.FC = () => {
         body: JSON.stringify({ isPrinted: true })
       });
       
-      // เปิดหน้าพิมพ์ในแท็บใหม่
-      window.open(`/print-label-enhanced?order=${orderToPrint.id}&size=${labelSize}`, '_blank');
+      // เปิดหน้าพิมพ์ในแท็บใหม่ตามประเภทที่เลือก
+      window.open(`/print-label-enhanced?order=${orderToPrint.id}&type=${selectedLabelType}`, '_blank');
     }
     
     // รีเซ็ตสถานะการพิมพ์หลายรายการ
     setIsPrintingMultiple(false);
-    
-    // ตรวจสอบว่า printWindow ถูกเปิดหรือไม่
-    const printWindow = window.open('', '_blank', 'hidden=true');
-    if (!printWindow) {
-      toast({
-        title: 'ไม่สามารถเปิดหน้าต่างใหม่ได้',
-        description: 'โปรดอนุญาตให้เว็บไซต์เปิดหน้าต่างป๊อปอัพได้ในการตั้งค่าเบราว์เซอร์ของคุณ',
-        variant: 'destructive',
-      });
-      return;
-    }
-    printWindow.close();
-    
-    // กรองเฉพาะออเดอร์ที่มีเลขพัสดุ แต่จะไม่ใช้ในกรณีที่เราเลือกใช้รูปแบบการพิมพ์ไดอะล็อกชนิดใหม่
-    
-    // ตั้งค่า HTML และ CSS สำหรับการพิมพ์
-    printWindow.document.write(`
-      <html>
-      <head>
-        <title>พิมพ์ใบลาเบล - รายการที่เลือก</title>
-        <style>
-          @page {
-            margin: 0;
-          }
-          body { 
-            font-family: 'Kanit', sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            background-color: #f5f5f5;
-          }
-          .page {
-            background-color: white;
-            margin: 20px auto;
-            padding: 0;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-            page-break-after: always;
-          }
-          .label-container { 
-            box-sizing: border-box;
-            padding: 8mm;
-          }
-        </style>
-      </head>
-      <body>
-    `);
-
-    // แสดงผลลัพธ์และทำการปิด dialog
-    setPrintDialogOpen(false);
-
-    // อัพเดตสถานะการพิมพ์ในฐานข้อมูล สำหรับไฟล์เก่าที่ยังไม่ได้ใช้ไดอะล็อกแบบใหม่
-
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
   };
 
   // หากกำลังโหลดข้อมูล ให้แสดง loading spinner
@@ -1178,61 +1140,7 @@ const OrderList: React.FC = () => {
         </div>
       </div>
 
-      {/* Dialog สำหรับเลือกขนาดลาเบล */}
-      <Dialog open={printDialogOpen} onOpenChange={setPrintDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>เลือกขนาดใบลาเบล</DialogTitle>
-            <DialogDescription>
-              เลือกประเภทของใบลาเบลตามขนาดที่ต้องการพิมพ์
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 gap-4 py-4">
-            {/* ลาเบลขนาด 100x100mm */}
-            <div 
-              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-600' : 'border-gray-200'}`}
-              onClick={() => setLabelSize('100x100mm')}
-            >
-              <div>
-                <h4 className="font-medium">ใบลาเบลขนาด 100x100mm</h4>
-                <p className="text-sm text-gray-500">ขนาดมาตรฐาน เหมาะสำหรับพัสดุทั่วไป</p>
-              </div>
-              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
-                {labelSize === '100x100mm' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
-              </div>
-            </div>
-            
-            {/* ลาเบลขนาด 100x75mm */}
-            <div 
-              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${labelSize === '100x75mm' ? 'border-blue-600' : 'border-gray-200'}`}
-              onClick={() => setLabelSize('100x75mm')}
-            >
-              <div>
-                <h4 className="font-medium">ใบลาเบลขนาด 100x75mm</h4>
-                <p className="text-sm text-gray-500">ขนาดเล็กกว่า ประหยัดกระดาษ</p>
-              </div>
-              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
-                {labelSize === '100x75mm' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="flex space-x-2 justify-end">
-            <Button 
-              variant="outline" 
-              onClick={() => setPrintDialogOpen(false)}
-            >
-              ยกเลิก
-            </Button>
-            <Button 
-              onClick={printLabelWithSelectedSize}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              พิมพ์ลาเบล
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       {/* Dialog เลือกประเภทลาเบล */}
       <Dialog open={labelTypeDialogOpen} onOpenChange={setLabelTypeDialogOpen}>
