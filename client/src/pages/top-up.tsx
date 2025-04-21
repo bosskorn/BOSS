@@ -520,138 +520,126 @@ const TopUpPage: React.FC = () => {
   const renderTopUpStep = () => {
     switch (paymentStep) {
       case 1:
-        return (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>จำนวนเงิน (บาท)</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">฿</span>
-                        <Input {...field} className="pl-7" placeholder="100" />
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      จำนวนเงินขั้นต่ำ 20 บาท สูงสุด 50,000 บาท
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-between">
-                <Button 
-                  type="button" 
-                  onClick={() => handleStripePayment(parseFloat(form.getValues().amount))}
-                  disabled={processing}
-                  variant="outline"
-                  className="flex items-center"
-                >
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  เติมเงินด้วยบัตรเครดิต/เดบิต
-                </Button>
-                
-                <Button type="submit" disabled={processing} className="bg-blue-600 hover:bg-blue-700">
-                  {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  <QrCode className="mr-2 h-4 w-4" />
-                  เติมเงินด้วย PromptPay
-                </Button>
-              </div>
-            </form>
-          </Form>
-        );
+        // กรณีหน้าเริ่มต้นแสดงในหน้าหลักแล้ว
+        return null;
       
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900">
-              <h3 className="font-medium text-lg mb-4 text-center">สแกน QR Code เพื่อชำระเงิน</h3>
-              
-              <div className="flex justify-center mb-4">
-                {qrCodeUrl ? (
-                  <div className="bg-white p-4 rounded-lg">
-                    <div className="w-48 h-48 border-2 border-gray-300 rounded flex items-center justify-center overflow-hidden">
-                      <img 
-                        src={qrCodeUrl} 
-                        alt="QR Code สำหรับจ่ายเงิน" 
-                        width={160} 
-                        height={160} 
-                        className="object-contain"
-                      />
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-500 py-4 px-6 text-white">
+                <h3 className="font-bold text-xl flex items-center justify-center">
+                  <QrCode className="mr-2 h-5 w-5" />
+                  สแกน QR Code เพื่อชำระเงิน
+                </h3>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="flex justify-center">
+                  {qrCodeUrl ? (
+                    <div className="bg-white p-4 rounded-xl border-2 border-blue-100 shadow-md">
+                      <div className="w-64 h-64 flex items-center justify-center overflow-hidden">
+                        <img 
+                          src={qrCodeUrl} 
+                          alt="QR Code สำหรับจ่ายเงิน" 
+                          width={230} 
+                          height={230} 
+                          className="object-contain"
+                        />
+                      </div>
                     </div>
+                  ) : (
+                    <div className="w-64 h-64 border-2 border-blue-100 rounded-xl flex items-center justify-center bg-white shadow-md">
+                      <div className="flex flex-col items-center">
+                        <Loader2 className="h-16 w-16 animate-spin text-blue-600 mb-3" />
+                        <p className="text-gray-500">กำลังสร้าง QR Code...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-3 bg-blue-50 p-4 rounded-lg">
+                  <div className="flex justify-between items-center border-b border-blue-100 pb-2">
+                    <span className="text-gray-700 font-medium">จำนวนเงิน:</span>
+                    <span className="text-xl font-bold text-blue-700">฿{form.getValues().amount}</span>
                   </div>
-                ) : (
-                  <div className="w-48 h-48 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-white">
-                    <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+                  <div className="flex justify-between items-center border-b border-blue-100 pb-2">
+                    <span className="text-gray-700 font-medium">รหัสอ้างอิง:</span>
+                    <span className="font-mono text-gray-900">{referenceId}</span>
                   </div>
-                )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700 font-medium">เวลาที่เหลือ:</span>
+                    <span className="font-medium text-orange-600 flex items-center">
+                      <Clock className="w-4 h-4 mr-1" />
+                      {formatTime(countdown)} นาที
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col space-y-2">
+                  <p className="text-sm text-center text-gray-500 mb-2">
+                    เมื่อชำระเงินแล้ว กรุณากดปุ่มตรวจสอบสถานะเพื่อยืนยันการเติมเงิน
+                  </p>
+                  <Button
+                    onClick={checkPaymentStatus}
+                    disabled={processing}
+                    className="w-full py-6 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-lg shadow-md transition-all"
+                  >
+                    {processing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CheckCircle2 className="mr-2 h-5 w-5" />}
+                    <span className="text-lg">ตรวจสอบสถานะการชำระเงิน</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={cancelTopUp}
+                    disabled={processing}
+                    className="w-full border-2 border-gray-300 text-gray-700"
+                  >
+                    <span className="text-md">ยกเลิกการชำระเงิน</span>
+                  </Button>
+                </div>
               </div>
-              
-              <div className="space-y-2 text-center">
-                <p className="text-sm text-gray-600">
-                  จำนวนเงิน: <span className="font-medium text-black dark:text-white">฿{form.getValues().amount}</span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  รหัสอ้างอิง: <span className="font-medium text-black dark:text-white">{referenceId}</span>
-                </p>
-                <p className="text-sm text-gray-500">
-                  กรุณาชำระเงินภายใน <span className="font-medium text-orange-600">{formatTime(countdown)}</span> นาที
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex justify-between">
-              <Button
-                variant="outline"
-                onClick={cancelTopUp}
-                disabled={processing}
-              >
-                ยกเลิก
-              </Button>
-              <Button
-                onClick={checkPaymentStatus}
-                disabled={processing}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                ตรวจสอบสถานะการชำระเงิน
-              </Button>
             </div>
           </div>
         );
       
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="h-8 w-8 text-green-600" />
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+              <div className="bg-gradient-to-r from-green-600 to-green-500 py-4 px-6 text-white">
+                <h3 className="font-bold text-xl flex items-center justify-center">
+                  <CheckCircle2 className="mr-2 h-5 w-5" />
+                  การชำระเงินสำเร็จ
+                </h3>
               </div>
-              <h3 className="font-medium text-lg mb-2">เติมเงินสำเร็จ</h3>
-              <p className="text-gray-600 mb-4">
-                คุณได้เติมเงินจำนวน <span className="font-medium text-black dark:text-white">฿{form.getValues().amount}</span> เข้าบัญชีเรียบร้อยแล้ว
-              </p>
-              <div className="bg-white p-3 rounded-lg inline-block mb-4">
-                <p className="text-sm text-gray-600">
-                  ยอดเงินคงเหลือ: <span className="font-medium text-black dark:text-white">฿{user?.balance || '0'}</span>
-                </p>
-                <p className="text-xs text-gray-500">
-                  รหัสอ้างอิง: {referenceId}
-                </p>
+              <div className="p-6 space-y-6">
+                <div className="flex flex-col items-center justify-center py-4">
+                  <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                    <CheckCircle2 className="h-12 w-12 text-green-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">เติมเงินสำเร็จ!</h3>
+                  <p className="text-gray-600 text-center">
+                    คุณได้เติมเงินจำนวน <span className="font-bold text-blue-600">฿{form.getValues().amount}</span> เข้าบัญชีเรียบร้อยแล้ว
+                  </p>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-center border-b border-gray-200 pb-2 mb-2">
+                    <span className="text-gray-700">ยอดเงินคงเหลือ:</span>
+                    <span className="text-xl font-bold text-blue-600">฿{parseFloat(user?.balance || '0').toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">รหัสอ้างอิง:</span>
+                    <span className="font-mono text-sm text-gray-600">{referenceId}</span>
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={startNewTopUp}
+                  className="w-full py-6 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-lg shadow-md transition-all"
+                >
+                  <span className="text-lg">กลับสู่หน้าเติมเงิน</span>
+                </Button>
               </div>
-            </div>
-            
-            <div className="flex justify-center">
-              <Button
-                onClick={startNewTopUp}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                เติมเงินอีกครั้ง
-              </Button>
             </div>
           </div>
         );
@@ -673,100 +661,154 @@ const TopUpPage: React.FC = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto py-8 px-4 max-w-4xl font-kanit">
-        <h1 className="text-2xl font-bold mb-6 flex items-center">
-          <ChevronsUp className="mr-2 h-6 w-6 text-blue-600" />
-          เติมเงิน
-        </h1>
+      <div className="container mx-auto py-8 px-4 max-w-5xl font-kanit bg-gradient-to-b from-blue-50 to-white rounded-lg shadow-sm">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 border-b pb-6">
+          <div className="flex items-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 flex items-center justify-center shadow-lg">
+              <ChevronsUp className="h-8 w-8 text-white" />
+            </div>
+            <div className="ml-4">
+              <h1 className="text-3xl font-bold text-gray-800">เติมเงินเข้าระบบ</h1>
+              <p className="text-gray-500">เติมเงินเพื่อใช้บริการขนส่งได้อย่างต่อเนื่อง</p>
+            </div>
+          </div>
+          <div className="mt-4 md:mt-0 bg-white shadow-md rounded-lg p-4 border border-blue-100">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 font-medium">ยอดเงินปัจจุบัน</span>
+              <span className="text-2xl font-bold text-blue-600 ml-4">฿{parseFloat(user?.balance || '0').toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* ข้อมูลผู้ใช้ */}
-          <div className="md:col-span-1">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">ข้อมูลบัญชี</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center space-y-3">
-                  <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold">
-                    {user ? user.fullname.charAt(0) : '?'}
-                  </div>
-                  <div className="text-center">
-                    <h3 className="font-semibold text-lg">{user?.fullname || 'กำลังโหลด...'}</h3>
-                    <p className="text-gray-500 text-sm">{user?.username || ''}</p>
-                  </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* ส่วนข้อมูลผู้ใช้และตัวเลือกการเติมเงิน */}
+          <div className="lg:col-span-1 space-y-6">
+            <Card className="bg-white shadow-md border-0 overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-500 py-4 px-6 flex items-center">
+                <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-blue-600 text-2xl font-bold shadow-md">
+                  {user ? user.fullname.charAt(0) : '?'}
                 </div>
-                
-                <div className="mt-4 border-t pt-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-600">ยอดเงินคงเหลือ</span>
-                    <span className="text-xl font-bold text-blue-600">฿{parseFloat(user?.balance || '0').toLocaleString()}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded h-1.5 mb-4">
-                    <div className="bg-blue-600 h-1.5 rounded" style={{ width: '100%' }}></div>
-                  </div>
-                  <div className="text-xs text-gray-500 text-center">
-                    อัพเดตล่าสุด: {new Date().toLocaleString('th-TH')}
-                  </div>
+                <div className="ml-4 text-white">
+                  <h3 className="font-bold text-lg">{user?.fullname || 'กำลังโหลด...'}</h3>
+                  <p className="text-blue-100 text-sm">{user?.username || ''}</p>
+                </div>
+              </div>
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-lg font-semibold text-gray-700">จำนวนเงินที่ต้องการเติม</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-blue-600 text-lg font-bold">฿</span>
+                                <Input 
+                                  {...field} 
+                                  className="pl-8 py-6 text-lg font-medium border-2 border-blue-200 focus:border-blue-500 rounded-lg" 
+                                  placeholder="100" 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormDescription className="text-blue-600 font-medium">
+                              จำนวนเงินขั้นต่ำ 20 บาท สูงสุด 50,000 บาท
+                            </FormDescription>
+                            <FormMessage className="text-red-500" />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="space-y-3 pt-2">
+                        <p className="font-semibold text-gray-700 mb-2">เลือกวิธีการชำระเงิน</p>
+                        <Button 
+                          type="submit" 
+                          disabled={processing}
+                          className="w-full py-6 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-lg shadow-md transition-all"
+                        >
+                          {processing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <QrCode className="mr-2 h-5 w-5" />}
+                          <span className="text-lg">ชำระผ่าน PromptPay</span>
+                        </Button>
+                        
+                        <Button 
+                          type="button" 
+                          onClick={() => handleStripePayment(parseFloat(form.getValues().amount))}
+                          disabled={processing}
+                          variant="outline"
+                          className="w-full py-6 border-2 border-blue-300 text-blue-700 hover:bg-blue-50 rounded-lg shadow-sm transition-all"
+                        >
+                          {processing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CreditCard className="mr-2 h-5 w-5" />}
+                          <span className="text-lg">ชำระผ่านบัตรเครดิต / เดบิต</span>
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* ส่วนแสดงประวัติการเติมเงิน */}
-          <div className="md:col-span-3">
-            {/* ประวัติการเติมเงิน */}
-            <div>
-              <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <Receipt className="mr-2 h-5 w-5" />
-                ประวัติการเติมเงิน
-              </h2>
-              
-              {history.length === 0 ? (
-                <div className="text-center py-8 border rounded-lg bg-gray-50 dark:bg-gray-900">
-                  <Clock className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                  <h3 className="text-lg font-medium mb-1">ไม่พบประวัติการเติมเงิน</h3>
-                  <p className="text-gray-500">
-                    เมื่อคุณเติมเงินสำเร็จ รายการจะปรากฏที่นี่
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                    <thead className="bg-gray-50 dark:bg-gray-900">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนเงิน</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วิธีการ</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสอ้างอิง</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-950 divide-y divide-gray-200 dark:divide-gray-800">
-                      {history.map((item) => (
-                        <tr key={item.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(item.createdAt)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            ฿{item.amount.toLocaleString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {item.method}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {renderStatus(item.status)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {item.reference || '-'}
-                          </td>
+          <div className="lg:col-span-2">
+            <Card className="bg-white shadow-md border-0 h-full overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-500 py-4 px-6">
+                <h2 className="text-lg font-bold text-white flex items-center">
+                  <Receipt className="mr-2 h-5 w-5" />
+                  ประวัติการเติมเงิน
+                </h2>
+              </div>
+              <CardContent className="p-6">
+                {history.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                    <Clock className="h-16 w-16 text-blue-200 mb-4" />
+                    <h3 className="text-xl font-medium text-gray-700 mb-2">ไม่พบประวัติการเติมเงิน</h3>
+                    <p className="text-gray-500 text-center max-w-md">
+                      เมื่อคุณเติมเงินสำเร็จ รายการจะปรากฏที่นี่
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">วันที่</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนเงิน</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วิธีการ</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">รหัสอ้างอิง</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {history.map((item, index) => (
+                          <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {formatDate(item.createdAt)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-semibold text-gray-800">฿{item.amount.toLocaleString()}</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {item.method === 'prompt_pay' ? 'PromptPay' : 
+                                 item.method === 'credit_card' ? 'บัตรเครดิต/เดบิต' : 'โอนเงิน'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              {renderStatus(item.status)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                              {item.reference || '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
