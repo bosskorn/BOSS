@@ -45,7 +45,7 @@ import PrintMultipleLabels from './pages/print-multiple-labels';
 import PrintMultipleLabelsFixed from './pages/print-multiple-labels-fixed';
 import FlashExpressLabelFixed from './pages/flash-express-label-fixed';
 import JntExpressLabel from './pages/jnt-express-label';
-
+import FeeHistory from './pages/fee-history';
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -111,6 +111,7 @@ function Router() {
 
       {/* เติมเงิน - protected */}
       <ProtectedRoute path="/top-up" component={TopUp} />
+      <ProtectedRoute path="/fee-history" component={FeeHistory} />
 
       {/* การเคลม - protected */}
       <ProtectedRoute path="/claims-list" component={ClaimsList} />

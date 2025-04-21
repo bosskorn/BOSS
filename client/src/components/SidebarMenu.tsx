@@ -141,6 +141,20 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
               </Link>
             </li>
             
+            {/* เมนูประวัติค่าธรรมเนียม */}
+            <li>
+              <Link 
+                href="/fee-history"
+                className={`flex items-center px-4 py-2 text-sm hover:bg-blue-50 ${
+                  location === '/fee-history' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                }`}
+                onClick={onClose}
+              >
+                <i className={`fa-solid fa-history w-5 mr-3 ${location === '/fee-history' ? 'text-blue-600' : 'text-gray-500'}`}></i>
+                <span>ประวัติค่าธรรมเนียม</span>
+              </Link>
+            </li>
+            
             {/* เมนูออกจากระบบ */}
             <li>
               <Link 
