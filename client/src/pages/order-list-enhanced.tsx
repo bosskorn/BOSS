@@ -1350,7 +1350,7 @@ const OrderList: React.FC = () => {
                       labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
                       break;
                     case 'tiktok':
-                      labelUrl = `/tiktok-shipping-label?order=${orderToPrint.id}`;
+                      labelUrl = `/tiktok-shipping-label-fixed?order=${orderToPrint.id}`;
                       break;
                     default:
                       labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;

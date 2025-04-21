@@ -36,6 +36,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import TikTokFlashLabel from './pages/tiktok-flash-label';
 import TikTokShippingLabel from './pages/tiktok-shipping-label';
+import TikTokShippingLabelFixed from './pages/tiktok-shipping-label-fixed';
 import PrintMultipleLabels from './pages/print-multiple-labels';
 import PrintMultipleLabelsFixed from './pages/print-multiple-labels-fixed';
 import FlashExpressLabelFixed from './pages/flash-express-label-fixed';
@@ -64,6 +65,7 @@ function Router() {
       <Route path="/flash-express-label-new" component={FlashExpressLabelNew} />
       <Route path="/tiktok-flash-label" component={TikTokFlashLabel} />
       <Route path="/tiktok-shipping-label" component={TikTokShippingLabel} />
+      <Route path="/tiktok-shipping-label-fixed" component={TikTokShippingLabelFixed} />
       <Route path="/print-multiple-labels" component={PrintMultipleLabels} />
       <Route path="/print-multiple-labels-fixed" component={PrintMultipleLabelsFixed} />
       <Route path="/flash-express-label-fixed" component={FlashExpressLabelFixed} />

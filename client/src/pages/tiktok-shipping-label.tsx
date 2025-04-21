@@ -121,10 +121,7 @@ const TikTokShippingLabel: React.FC = () => {
   const barcodeRef = useRef<SVGSVGElement>(null);
 
   // สินค้าในคำสั่งซื้อ
-  const [products, setProducts] = useState([
-    { name: 'เค้กช็อคโกแลต Red Velvet', quantity: 2, price: 590 },
-    { name: 'คุกกี้เนยสด', quantity: 1, price: 250 },
-  ]);
+  const [products, setProducts] = useState<{name: string, quantity: number, price: number}[]>([]);
 
   // คำนวณยอดรวม
   const totalAmount = products.reduce((sum, product) => sum + product.price * product.quantity, 0);
