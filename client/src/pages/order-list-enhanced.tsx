@@ -1184,35 +1184,35 @@ const OrderList: React.FC = () => {
           <DialogHeader>
             <DialogTitle>เลือกขนาดใบลาเบล</DialogTitle>
             <DialogDescription>
-              เลือกขนาดของใบลาเบลที่คุณต้องการพิมพ์
+              เลือกประเภทของใบลาเบลตามขนาดที่ต้องการพิมพ์
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-4 py-4">
             {/* ลาเบลขนาด 100x100mm */}
             <div 
-              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setLabelSize('100x100mm')}
             >
-              <div className="flex-1">
+              <div>
                 <h4 className="font-medium">ใบลาเบลขนาด 100x100mm</h4>
                 <p className="text-sm text-gray-500">ขนาดมาตรฐาน เหมาะสำหรับพัสดุทั่วไป</p>
               </div>
-              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
-                {labelSize === '100x100mm' && <Check className="h-3.5 w-3.5 text-primary" />}
+              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
+                {labelSize === '100x100mm' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
               </div>
             </div>
             
             {/* ลาเบลขนาด 100x75mm */}
             <div 
-              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${labelSize === '100x75mm' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${labelSize === '100x75mm' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setLabelSize('100x75mm')}
             >
-              <div className="flex-1">
+              <div>
                 <h4 className="font-medium">ใบลาเบลขนาด 100x75mm</h4>
                 <p className="text-sm text-gray-500">ขนาดเล็กกว่า ประหยัดกระดาษ</p>
               </div>
-              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
-                {labelSize === '100x75mm' && <Check className="h-3.5 w-3.5 text-primary" />}
+              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
+                {labelSize === '100x75mm' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
               </div>
             </div>
           </div>
@@ -1228,7 +1228,7 @@ const OrderList: React.FC = () => {
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Printer className="h-4 w-4 mr-2" />
-              พิมพ์ใบลาเบล
+              พิมพ์ลาเบล
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1243,60 +1243,68 @@ const OrderList: React.FC = () => {
               เลือกประเภทลาเบลตามบริษัทขนส่ง
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 gap-4 py-4">
+          <div className="grid grid-cols-1 gap-3 py-4">
             {/* แบบมาตรฐาน */}
             <div 
-              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedLabelType === 'standard' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedLabelType === 'standard' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setSelectedLabelType('standard')}
             >
-              <div className="flex-1">
+              <div>
                 <h4 className="font-medium">แบบมาตรฐาน</h4>
                 <p className="text-sm text-gray-500">รูปแบบทั่วไป ใช้ได้กับทุกบริษัทขนส่ง</p>
               </div>
-              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
-                {selectedLabelType === 'standard' && <Check className="h-3.5 w-3.5 text-primary" />}
+              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'standard' ? 'border-blue-600' : 'border-gray-300'}`}>
+                {selectedLabelType === 'standard' && (
+                  <div className="w-full h-full rounded-full bg-blue-600"></div>
+                )}
               </div>
             </div>
             
             {/* Flash Express */}
             <div 
-              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedLabelType === 'flash' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedLabelType === 'flash' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setSelectedLabelType('flash')}
             >
-              <div className="flex-1">
+              <div>
                 <h4 className="font-medium">Flash Express</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับ Flash Express</p>
               </div>
-              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
-                {selectedLabelType === 'flash' && <Check className="h-3.5 w-3.5 text-primary" />}
+              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'flash' ? 'border-blue-600' : 'border-gray-300'}`}>
+                {selectedLabelType === 'flash' && (
+                  <div className="w-full h-full rounded-full bg-blue-600"></div>
+                )}
               </div>
             </div>
             
             {/* J&T Express */}
             <div 
-              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedLabelType === 'jt' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedLabelType === 'jt' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setSelectedLabelType('jt')}
             >
-              <div className="flex-1">
+              <div>
                 <h4 className="font-medium">J&T Express</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับ J&T Express</p>
               </div>
-              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
-                {selectedLabelType === 'jt' && <Check className="h-3.5 w-3.5 text-primary" />}
+              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'jt' ? 'border-blue-600' : 'border-gray-300'}`}>
+                {selectedLabelType === 'jt' && (
+                  <div className="w-full h-full rounded-full bg-blue-600"></div>
+                )}
               </div>
             </div>
             
             {/* TikTok Shop */}
             <div 
-              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedLabelType === 'tiktok' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedLabelType === 'tiktok' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setSelectedLabelType('tiktok')}
             >
-              <div className="flex-1">
+              <div>
                 <h4 className="font-medium">TikTok Shop</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับผู้ขาย TikTok Shop</p>
               </div>
-              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
-                {selectedLabelType === 'tiktok' && <Check className="h-3.5 w-3.5 text-primary" />}
+              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'tiktok' ? 'border-blue-600' : 'border-gray-300'}`}>
+                {selectedLabelType === 'tiktok' && (
+                  <div className="w-full h-full rounded-full bg-blue-600"></div>
+                )}
               </div>
             </div>
           </div>
@@ -1432,6 +1440,7 @@ const OrderList: React.FC = () => {
                   }, 100);
                 }
               }}
+              variant="default"
               className="bg-blue-600 hover:bg-blue-700"
               disabled={!selectedLabelType}
             >
@@ -1451,7 +1460,7 @@ const OrderList: React.FC = () => {
               เลือกประเภทของใบลาเบลตามผู้ให้บริการขนส่ง
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 gap-4 py-4">
+          <div className="grid grid-cols-1 gap-3 py-4">
             {/* ส่วนแสดงเมื่อกำลังโหลดข้อมูล */}
             {dbShippingMethods.length === 0 && (
               <div className="text-center py-4">
@@ -1464,57 +1473,57 @@ const OrderList: React.FC = () => {
             
             {/* แบบมาตรฐาน */}
             <div 
-              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'แบบมาตรฐาน' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'แบบมาตรฐาน' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setSelectedShippingMethod('แบบมาตรฐาน')}
             >
-              <div className="flex-1">
+              <div>
                 <h4 className="font-medium">แบบมาตรฐาน</h4>
                 <p className="text-sm text-gray-500">รูปแบบทั่วไป ใช้ได้กับทุกบริษัทขนส่ง</p>
               </div>
-              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
-                {selectedShippingMethod === 'แบบมาตรฐาน' && <Check className="h-3.5 w-3.5 text-primary" />}
+              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
+                {selectedShippingMethod === 'แบบมาตรฐาน' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
               </div>
             </div>
             
             {/* Flash Express */}
             <div 
-              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'Flash Express' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'Flash Express' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setSelectedShippingMethod('Flash Express')}
             >
-              <div className="flex-1">
+              <div>
                 <h4 className="font-medium">Flash Express</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับ Flash Express</p>
               </div>
-              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
-                {selectedShippingMethod === 'Flash Express' && <Check className="h-3.5 w-3.5 text-primary" />}
+              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
+                {selectedShippingMethod === 'Flash Express' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
               </div>
             </div>
             
             {/* J&T Express */}
             <div 
-              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'J&T Express' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'J&T Express' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setSelectedShippingMethod('J&T Express')}
             >
-              <div className="flex-1">
+              <div>
                 <h4 className="font-medium">J&T Express</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับ J&T Express</p>
               </div>
-              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
-                {selectedShippingMethod === 'J&T Express' && <Check className="h-3.5 w-3.5 text-primary" />}
+              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
+                {selectedShippingMethod === 'J&T Express' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
               </div>
             </div>
             
             {/* TikTok Shop */}
             <div 
-              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'TikTok Shop' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'TikTok Shop' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setSelectedShippingMethod('TikTok Shop')}
             >
-              <div className="flex-1">
+              <div>
                 <h4 className="font-medium">TikTok Shop</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับผู้ขาย TikTok Shop</p>
               </div>
-              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
-                {selectedShippingMethod === 'TikTok Shop' && <Check className="h-3.5 w-3.5 text-primary" />}
+              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
+                {selectedShippingMethod === 'TikTok Shop' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
               </div>
             </div>
           </div>
@@ -1526,8 +1535,9 @@ const OrderList: React.FC = () => {
               ยกเลิก
             </Button>
             <Button 
-              onClick={createTrackingNumber}
+              variant="default"
               className="bg-blue-600 hover:bg-blue-700"
+              onClick={createTrackingNumber}
               disabled={!selectedShippingMethod}
             >
               <Tag className="h-4 w-4 mr-1.5" />
