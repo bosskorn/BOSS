@@ -1248,6 +1248,10 @@ const OrderList: React.FC = () => {
                     case 'flash':
                       labelUrl = `/flash-express-label-new?orders=${orderIds}`;
                       console.log("พิมพ์ลาเบลสำหรับ:", orderIds);
+                      toast({
+                        title: 'กำลังเปิดหน้าพิมพ์ลาเบล',
+                        description: `กำลังเตรียมพิมพ์ลาเบลทั้งหมด ${ordersToPrint.length} รายการ`,
+                      });
                       break;
                     case 'jt':
                       labelUrl = `/jt-express-label?order=${orderIds.split(',')[0]}`;
