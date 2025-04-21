@@ -30,12 +30,18 @@ const TikTokShippingLabel: React.FC = () => {
     const orderParam = params.get('order');
     
     if (orderParam) {
-      loadOrderData(orderParam);
+      // เมื่อมีการเรียกโดยใช้ parameter order ให้โหลดข้อมูลและพิมพ์ลาเบลทันที
+      loadOrderData(orderParam).then(() => {
+        // เรียกฟังก์ชัน printLabel หลังจากโหลดข้อมูลเสร็จ
+        setTimeout(() => {
+          printLabel();
+        }, 1000); // รอ 1 วินาทีเพื่อให้ข้อมูลถูกโหลดเรียบร้อย
+      });
     }
   }, []);
   
-  // ฟังก์ชันโหลดข้อมูลออเดอร์
-  const loadOrderData = async (orderId: string) => {
+  // ฟังก์ชันโหลดข้อมูลออเดอร์ - ทำให้ return Promise เพื่อให้สามารถใช้ .then() ได้
+  const loadOrderData = async (orderId: string): Promise<boolean> => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
@@ -90,6 +96,9 @@ const TikTokShippingLabel: React.FC = () => {
             title: 'โหลดข้อมูลสำเร็จ',
             description: `โหลดข้อมูลออเดอร์ ${order.orderNumber} เรียบร้อยแล้ว`,
           });
+          
+          setIsLoading(false);
+          return true; // โหลดข้อมูลสำเร็จ
         }
       } else {
         throw new Error(data.message || 'ไม่สามารถโหลดข้อมูลออเดอร์ได้');
@@ -101,9 +110,12 @@ const TikTokShippingLabel: React.FC = () => {
         description: error instanceof Error ? error.message : 'ไม่สามารถโหลดข้อมูลออเดอร์ได้',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
+      return false; // โหลดข้อมูลไม่สำเร็จ
     }
+    
+    setIsLoading(false);
+    return false; // โหลดข้อมูลไม่สำเร็จ (กรณีอื่นๆ)
   };
 
   const barcodeRef = useRef<SVGSVGElement>(null);
