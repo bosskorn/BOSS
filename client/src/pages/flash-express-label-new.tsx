@@ -41,7 +41,61 @@ const FlashExpressLabelNew: React.FC = () => {
       try {
         const params = new URLSearchParams(window.location.search);
         const orderId = params.get('order');
+        const ordersParam = params.get('orders');
         
+        // ถ้ามีการส่งค่า orders มาแสดงว่าเป็นการพิมพ์หลายรายการ
+        if (ordersParam) {
+          const orderIds = ordersParam.split(',');
+          if (orderIds.length > 0) {
+            // ใช้ออเดอร์แรกสำหรับตัวอย่างในการแสดงผล
+            const firstOrderId = orderIds[0];
+            console.log('พิมพ์ลาเบลสำหรับหลายออเดอร์ (แสดงออเดอร์แรก):', firstOrderId);
+            
+            // ดึงข้อมูลออเดอร์แรก
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`/api/orders/${firstOrderId}`, {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : '',
+              },
+              credentials: 'include'
+            });
+            
+            if (!response.ok) {
+              throw new Error(`ไม่สามารถดึงข้อมูลออเดอร์ (${response.status})`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success || !data.order) {
+              throw new Error('ไม่พบข้อมูลออเดอร์');
+            }
+            
+            const orderData = data.order;
+            console.log('พิมพ์ลาเบลสำหรับออเดอร์:', orderData);
+            setOrder(orderData);
+            
+            // สร้างรายการพิมพ์สำหรับทุกออเดอร์
+            setTimeout(() => {
+              orderIds.forEach((id, index) => {
+                // ถ้าเป็นออเดอร์แรก ให้พิมพ์ทันที
+                if (index === 0) {
+                  printLabel();
+                } else {
+                  // สำหรับออเดอร์ถัดไป เปิดหน้าต่างใหม่
+                  const newWindow = window.open(`/flash-express-label-new?order=${id}`, '_blank');
+                  if (newWindow) {
+                    newWindow.focus();
+                  }
+                }
+              });
+            }, 1000);
+            
+            return;
+          }
+        }
+        
+        // กรณีพิมพ์ลาเบลเดียว
         if (!orderId) {
           toast({
             title: 'ไม่พบรหัสออเดอร์',

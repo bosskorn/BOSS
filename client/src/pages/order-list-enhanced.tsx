@@ -1241,7 +1241,7 @@ const OrderList: React.FC = () => {
                   
                   switch(selectedLabelType) {
                     case 'flash':
-                      labelUrl = `/flash-express-label-new?order=${orderIds.split(',')[0]}`;
+                      labelUrl = `/flash-express-label-new?orders=${orderIds}`;
                       break;
                     case 'jt':
                       labelUrl = `/jt-express-label?order=${orderIds.split(',')[0]}`;
