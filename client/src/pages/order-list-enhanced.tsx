@@ -1224,30 +1224,36 @@ const OrderList: React.FC = () => {
               เลือกขนาดของใบลาเบลที่คุณต้องการพิมพ์
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-3 py-3">
+          <div className="grid grid-cols-1 gap-4 py-4">
             {/* ลาเบลขนาด 100x100mm */}
-            <div className="flex items-center justify-between p-3 border border-blue-200 bg-blue-50 rounded-md cursor-pointer">
-              <div>
-                <h3 className="font-medium">ใบลาเบลขนาด 100x100mm</h3>
+            <div 
+              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              onClick={() => setLabelSize('100x100mm')}
+            >
+              <div className="flex-1">
+                <h4 className="font-medium">ใบลาเบลขนาด 100x100mm</h4>
                 <p className="text-sm text-gray-500">ขนาดมาตรฐาน เหมาะสำหรับพัสดุทั่วไป</p>
               </div>
-              <div className="w-10 h-10 bg-white rounded-md shadow flex items-center justify-center">
-                <div className="w-6 h-6 bg-blue-100"></div>
+              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
+                {labelSize === '100x100mm' && <Check className="h-3.5 w-3.5 text-primary" />}
               </div>
             </div>
             
             {/* ลาเบลขนาด 100x75mm */}
-            <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50">
-              <div>
-                <h3 className="font-medium">ใบลาเบลขนาด 100x75mm</h3>
+            <div 
+              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${labelSize === '100x75mm' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+              onClick={() => setLabelSize('100x75mm')}
+            >
+              <div className="flex-1">
+                <h4 className="font-medium">ใบลาเบลขนาด 100x75mm</h4>
                 <p className="text-sm text-gray-500">ขนาดเล็กกว่า ประหยัดกระดาษ</p>
               </div>
-              <div className="w-10 h-10 bg-white rounded-md shadow flex items-center justify-center">
-                <div className="w-6 h-4 bg-blue-100"></div>
+              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
+                {labelSize === '100x75mm' && <Check className="h-3.5 w-3.5 text-primary" />}
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex space-x-2 justify-end">
             <Button 
               variant="outline" 
               onClick={() => setPrintDialogOpen(false)}
@@ -1417,10 +1423,10 @@ const OrderList: React.FC = () => {
           <DialogHeader>
             <DialogTitle>เลือกประเภทใบลาเบล</DialogTitle>
             <DialogDescription>
-              เลือกประเภทลาเบลตามบริษัทขนส่ง
+              เลือกประเภทของใบลาเบลตามผู้ให้บริการขนส่ง
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-3 py-3">
+          <div className="grid grid-cols-1 gap-4 py-4">
             {/* ส่วนแสดงเมื่อกำลังโหลดข้อมูล */}
             {dbShippingMethods.length === 0 && (
               <div className="text-center py-4">
@@ -1433,61 +1439,61 @@ const OrderList: React.FC = () => {
             
             {/* แบบมาตรฐาน */}
             <div 
-              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
+              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'แบบมาตรฐาน' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
               onClick={() => setSelectedShippingMethod('แบบมาตรฐาน')}
             >
-              <div>
-                <h3 className="font-medium">แบบมาตรฐาน</h3>
+              <div className="flex-1">
+                <h4 className="font-medium">แบบมาตรฐาน</h4>
                 <p className="text-sm text-gray-500">รูปแบบทั่วไป ใช้ได้กับทุกบริษัทขนส่ง</p>
               </div>
-              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-100 text-gray-400">
-                <ChevronUp className="h-5 w-5 rotate-90" />
+              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
+                {selectedShippingMethod === 'แบบมาตรฐาน' && <Check className="h-3.5 w-3.5 text-primary" />}
               </div>
             </div>
             
             {/* Flash Express */}
             <div 
-              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
+              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'Flash Express' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
               onClick={() => setSelectedShippingMethod('Flash Express')}
             >
-              <div>
-                <h3 className="font-medium">Flash Express</h3>
+              <div className="flex-1">
+                <h4 className="font-medium">Flash Express</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับ Flash Express</p>
               </div>
-              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-orange-100 text-orange-400">
-                <ChevronUp className="h-5 w-5 rotate-90" />
+              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
+                {selectedShippingMethod === 'Flash Express' && <Check className="h-3.5 w-3.5 text-primary" />}
               </div>
             </div>
             
             {/* J&T Express */}
             <div 
-              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
+              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'J&T Express' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
               onClick={() => setSelectedShippingMethod('J&T Express')}
             >
-              <div>
-                <h3 className="font-medium">J&T Express</h3>
+              <div className="flex-1">
+                <h4 className="font-medium">J&T Express</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับ J&T Express</p>
               </div>
-              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-red-100 text-red-400">
-                <ChevronUp className="h-5 w-5 rotate-90" />
+              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
+                {selectedShippingMethod === 'J&T Express' && <Check className="h-3.5 w-3.5 text-primary" />}
               </div>
             </div>
             
             {/* TikTok Shop */}
             <div 
-              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
+              className={`flex items-center space-x-4 border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'TikTok Shop' ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
               onClick={() => setSelectedShippingMethod('TikTok Shop')}
             >
-              <div>
-                <h3 className="font-medium">TikTok Shop</h3>
+              <div className="flex-1">
+                <h4 className="font-medium">TikTok Shop</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับผู้ขาย TikTok Shop</p>
               </div>
-              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-100 text-gray-400">
-                <ChevronUp className="h-5 w-5 rotate-90" />
+              <div className="h-5 w-5 rounded-sm border flex items-center justify-center border-primary">
+                {selectedShippingMethod === 'TikTok Shop' && <Check className="h-3.5 w-3.5 text-primary" />}
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex space-x-2 justify-end">
             <Button 
               variant="outline" 
               onClick={() => setShippingDialogOpen(false)}
@@ -1499,7 +1505,8 @@ const OrderList: React.FC = () => {
               className="bg-blue-600 hover:bg-blue-700"
               disabled={!selectedShippingMethod}
             >
-              พิมพ์ลาเบล
+              <Tag className="h-4 w-4 mr-1.5" />
+              สร้างเลขพัสดุ
             </Button>
           </DialogFooter>
         </DialogContent>
