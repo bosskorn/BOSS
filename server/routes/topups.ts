@@ -4,6 +4,8 @@ import { storage } from '../storage';
 import { db } from '../db';
 import { insertTopupSchema, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import generatePayload from 'promptpay-qr';
+import crypto from 'crypto';
 
 const router = Router();
 
@@ -25,16 +27,26 @@ router.post('/create', auth, async (req: Request, res: Response) => {
                 validatedData.method === 'credit_card' ? 'CC' : 'BT';
     const referenceId = `${prefix}${timestamp}${random}`;
 
-    // สร้าง QR Code URL สำหรับ PromptPay (ของจริง)
+    // สร้าง QR Code สำหรับ PromptPay แบบใช้งานได้จริง
     if (validatedData.method === 'prompt_pay' && !validatedData.qrCodeUrl) {
-      // ใช้ API PromptPay QR Code Generator
-      // PromptPay ID เป็นเบอร์โทรศัพท์ เลขประจำตัวประชาชน หรือเลขทะเบียนนิติบุคคล
-      const promptpayId = "0891234567"; // แทนที่ด้วย PromptPay ID จริงของร้าน
-      const amount = parseFloat(validatedData.amount);
-      
-      // ใช้บริการสร้าง QR Code แบบสาธารณะ (ไม่ต้องใช้ API key)
-      // API นี้ยอมรับพารามิเตอร์: id (PromptPay ID) และ amount (จำนวนเงิน)
-      validatedData.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://promptpay.io/${promptpayId}/${amount}`;
+      try {
+        // ใช้ promptpay-qr library เพื่อสร้าง payload สำหรับ QR Code
+        // PromptPay ID เป็นเบอร์โทรศัพท์ เลขประจำตัวประชาชน หรือเลขทะเบียนนิติบุคคล
+        const promptpayId = "0891234567"; // แทนที่ด้วย PromptPay ID จริงของร้าน
+        const amount = parseFloat(validatedData.amount);
+        
+        // สร้าง payload สำหรับ QR Code PromptPay
+        const payload = generatePayload(promptpayId, { amount });
+        
+        // URL encode payload เพื่อส่งไปยัง QR Code generator
+        const encodedPayload = encodeURIComponent(payload);
+        
+        // ใช้บริการสร้าง QR Code แบบสาธารณะ พร้อมกับส่ง payload ที่ถูกต้อง
+        validatedData.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodedPayload}`;
+      } catch (error) {
+        console.error('เกิดข้อผิดพลาดในการสร้าง PromptPay QR Code:', error);
+        validatedData.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=error`;
+      }
     }
 
     // สร้างรายการเติมเงินในฐานข้อมูล
@@ -153,14 +165,14 @@ router.get('/check/:referenceId', auth, async (req: Request, res: Response) => {
 });
 
 /**
- * ยกเลิกรายการเติมเงิน
+ * ยกเลิกรายการเติมเงิน - รับ referenceId
  */
-router.put('/cancel/:id', auth, async (req: Request, res: Response) => {
+router.put('/cancel/:referenceId', auth, async (req: Request, res: Response) => {
   try {
-    const topupId = parseInt(req.params.id);
+    const { referenceId } = req.params;
     
-    // ดึงข้อมูลรายการเติมเงิน
-    const topup = await storage.getTopup(topupId);
+    // ดึงข้อมูลรายการเติมเงินโดยใช้ referenceId
+    const topup = await storage.getTopupByReferenceId(referenceId);
     
     if (!topup) {
       return res.status(404).json({
