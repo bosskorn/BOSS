@@ -1,5 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import React, { useState, useEffect } from 'react';
 import JsBarcode from 'jsbarcode';
 import { useToast } from '@/hooks/use-toast';
 
@@ -546,12 +545,17 @@ const TikTokShippingLabelFixed: React.FC = () => {
                 margin: 0
               });
               
-              // สร้าง QR Code
-              new QRCode(document.getElementById("qrcode"), {
-                text: "${trackingNumber || 'THT64141T9NYG7Z'}",
-                width: 80,
-                height: 80
-              });
+              // สร้าง QR Code โดยไม่ใช้ QRCode library แต่ใช้ URL ของ QR Code generator
+              const qrCodeElement = document.getElementById("qrcode");
+              if (qrCodeElement) {
+                const qrCodeUrl = "https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=" + 
+                  encodeURIComponent("${trackingNumber || 'THT64141T9NYG7Z'}");
+                const img = document.createElement("img");
+                img.src = qrCodeUrl;
+                img.width = 80;
+                img.height = 80;
+                qrCodeElement.appendChild(img);
+              }
               
               // พิมพ์อัตโนมัติหลังจากโหลดเสร็จและสร้างบาร์โค้ดเสร็จ
               setTimeout(function() {
