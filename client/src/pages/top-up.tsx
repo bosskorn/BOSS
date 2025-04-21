@@ -515,8 +515,14 @@ const TopUpPage: React.FC = () => {
               <div className="flex justify-center mb-4">
                 {qrCodeUrl ? (
                   <div className="bg-white p-4 rounded-lg">
-                    <div className="w-48 h-48 border-2 border-gray-300 rounded flex items-center justify-center">
-                      <QrCode size={160} className="text-purple-600" />
+                    <div className="w-48 h-48 border-2 border-gray-300 rounded flex items-center justify-center overflow-hidden">
+                      <img 
+                        src={qrCodeUrl} 
+                        alt="QR Code สำหรับจ่ายเงิน" 
+                        width={160} 
+                        height={160} 
+                        className="object-contain"
+                      />
                     </div>
                   </div>
                 ) : (

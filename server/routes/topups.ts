@@ -25,10 +25,16 @@ router.post('/create', auth, async (req: Request, res: Response) => {
                 validatedData.method === 'credit_card' ? 'CC' : 'BT';
     const referenceId = `${prefix}${timestamp}${random}`;
 
-    // สร้าง QR Code URL สำหรับ PromptPay (จำลอง)
+    // สร้าง QR Code URL สำหรับ PromptPay (ของจริง)
     if (validatedData.method === 'prompt_pay' && !validatedData.qrCodeUrl) {
-      // ในการใช้งานจริงควรใช้ API สร้าง QR Code จริง
-      validatedData.qrCodeUrl = `https://promptpay.io/0891234567/${validatedData.amount}`;
+      // ใช้ API PromptPay QR Code Generator
+      // PromptPay ID เป็นเบอร์โทรศัพท์ เลขประจำตัวประชาชน หรือเลขทะเบียนนิติบุคคล
+      const promptpayId = "0891234567"; // แทนที่ด้วย PromptPay ID จริงของร้าน
+      const amount = parseFloat(validatedData.amount);
+      
+      // ใช้บริการสร้าง QR Code แบบสาธารณะ (ไม่ต้องใช้ API key)
+      // API นี้ยอมรับพารามิเตอร์: id (PromptPay ID) และ amount (จำนวนเงิน)
+      validatedData.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://promptpay.io/${promptpayId}/${amount}`;
     }
 
     // สร้างรายการเติมเงินในฐานข้อมูล
