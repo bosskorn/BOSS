@@ -53,8 +53,8 @@ const topUpSchema = z.object({
     .refine(val => !isNaN(Number(val)), {
       message: "กรุณาระบุจำนวนเงินเป็นตัวเลข"
     })
-    .refine(val => Number(val) >= 100, {
-      message: "จำนวนเงินขั้นต่ำ 100 บาท"
+    .refine(val => Number(val) >= 20, {
+      message: "จำนวนเงินขั้นต่ำ 20 บาท"
     })
     .refine(val => Number(val) <= 50000, {
       message: "จำนวนเงินสูงสุด 50,000 บาท"
@@ -93,6 +93,8 @@ const TopUpPage: React.FC = () => {
   const [referenceId, setReferenceId] = useState<string>('');
   const [stripeSessionId, setStripeSessionId] = useState<string>('');
   const [stripeCheckoutUrl, setStripeCheckoutUrl] = useState<string>('');
+  const [countdown, setCountdown] = useState<number>(15 * 60); // 15 นาที เป็นวินาที
+  const [isTimerActive, setIsTimerActive] = useState<boolean>(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -434,6 +436,48 @@ const TopUpPage: React.FC = () => {
     }
   };
 
+  // อัพเดตการนับถอยหลัง
+  useEffect(() => {
+    // ตั้งเวลานับถอยหลังเมื่อแสดง QR code
+    if (paymentStep === 2) {
+      setCountdown(15 * 60); // 15 นาที
+      setIsTimerActive(true);
+    } else {
+      setIsTimerActive(false);
+    }
+  }, [paymentStep]);
+
+  // นับถอยหลัง
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    
+    if (isTimerActive && countdown > 0) {
+      timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+    } else if (countdown === 0 && isTimerActive) {
+      // เมื่อหมดเวลา
+      setIsTimerActive(false);
+      toast({
+        title: 'หมดเวลาชำระเงิน',
+        description: 'กรุณาสร้างรายการเติมเงินใหม่เพื่อดำเนินการต่อ',
+        variant: 'destructive',
+      });
+      cancelTopUp();
+    }
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [countdown, isTimerActive, toast]);
+
+  // แปลงวินาทีเป็นรูปแบบ นาที:วินาที
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  };
+
   // เริ่มเติมเงินใหม่
   const startNewTopUp = () => {
     setPaymentStep(1);
@@ -441,6 +485,7 @@ const TopUpPage: React.FC = () => {
     setReferenceId('');
     setStripeSessionId('');
     setStripeCheckoutUrl('');
+    setIsTimerActive(false);
     form.reset({ amount: '100' });
   };
 
@@ -503,7 +548,7 @@ const TopUpPage: React.FC = () => {
                       </div>
                     </FormControl>
                     <FormDescription>
-                      จำนวนเงินขั้นต่ำ 100 บาท สูงสุด 50,000 บาท
+                      จำนวนเงินขั้นต่ำ 20 บาท สูงสุด 50,000 บาท
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -554,7 +599,7 @@ const TopUpPage: React.FC = () => {
                   รหัสอ้างอิง: <span className="font-medium text-black dark:text-white">{referenceId}</span>
                 </p>
                 <p className="text-sm text-gray-500">
-                  กรุณาชำระเงินภายใน 15 นาที
+                  กรุณาชำระเงินภายใน <span className="font-medium text-orange-600">{formatTime(countdown)}</span> นาที
                 </p>
               </div>
             </div>
@@ -727,7 +772,7 @@ const TopUpPage: React.FC = () => {
                                   </div>
                                 </FormControl>
                                 <FormDescription>
-                                  จำนวนเงินขั้นต่ำ 100 บาท สูงสุด 50,000 บาท
+                                  จำนวนเงินขั้นต่ำ 20 บาท สูงสุด 50,000 บาท
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>
