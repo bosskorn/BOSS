@@ -781,7 +781,7 @@ const OrderList: React.FC = () => {
       const token =localStorage.getItem('auth_token');
 
       const response = await fetch(`/api/orders/${orderId}/print-status`, {
-        method: 'PATCH',
+        method: ''PATCH',
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
@@ -1354,6 +1354,15 @@ const OrderList: React.FC = () => {
               font-size: ${labelSize === '100x100mm' ? '22px' : '16px'}; 
               font-weight: bold; 
               color: #0078D7; 
+            }
+            .tracking { 
+              font-size: ${labelSize === '100x100mm' ? '14px' : '12px'}; 
+              text-align: center; 
+              margin-bottom: ${labelSize === '100x100mm' ? '3mm' : '2mm'}; 
+              padding: ${labelSize === '100x100mm' ? '2mm' : '1.5mm'}; 
+              border: 1px solid #0078D7; 
+              border-radius: 3px; 
+              background-color: #f0f9ff;
             }
             .flex-container {
               display: flex;
@@ -2369,7 +2378,7 @@ const OrderList: React.FC = () => {
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
             <div 
-              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-500 bg-50' : 'border-gray-200'}`}
+              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
               onClick={() => setLabelSize('100x100mm')}
             >
               <div className="flex justify-between items-center">
@@ -2692,11 +2701,27 @@ const OrderList: React.FC = () => {
                   body: JSON.stringify({ isPrinted: true })
                 });
 
-                // เปิดลาเบล TikTok เสมอ ไม่ว่าจะเลือกแบบไหน
-                console.log(`กำลังเปิดลาเบล TikTok สำหรับออเดอร์ ${orderToPrint.id}`);
+                // เปิดลาเบลตามประเภทที่เลือก
+                console.log(`กำลังเปิดลาเบลประเภท ${selectedLabelType} สำหรับออเดอร์ ${orderToPrint.id}`);
 
-                // สร้าง URL สำหรับหน้าลาเบล TikTok
-                const labelUrl = `/tiktok-shipping-label?order=${orderToPrint.id}`;
+                // สร้าง URL สำหรับหน้าลาเบล
+                let labelUrl = '';
+                switch(selectedLabelType) {
+                  case 'standard':
+                    labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
+                    break;
+                  case 'flash':
+                    labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
+                    break;
+                  case 'jt':
+                    labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
+                    break;
+                  case 'tiktok':
+                    labelUrl = `/tiktok-shipping-label?order=${orderToPrint.id}`;
+                    break;
+                  default:
+                    labelUrl = `/print-label-enhanced?order=${orderToPrint.id}`;
+                }
 
                 console.log("Opening URL:", labelUrl);
 
@@ -2715,6 +2740,7 @@ const OrderList: React.FC = () => {
                 }, 100);
               }}
               className="bg-blue-600 hover:bg-blue-700"
+              disabled={!selectedLabelType}
             >
               <Printer className="h-4 w-4 mr-2" />
               พิมพ์ลาเบล
