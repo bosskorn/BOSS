@@ -749,8 +749,14 @@ const FlashExpressLabelNew = () => {
                 
                 {/* แสดงข้อมูลผู้ส่ง */}
                 <div className="sender-info">
-                  <div className="sender-info-header">จาก BLUEDASH (+66)0632291123</div>
-                  <div className="sender-address">8/88 ถนนพหลโยธิน แขวงจตุจักร เขตจตุจักร กรุงเทพมหานคร 10900</div>
+                  <div className="sender-info-header">
+                    จาก {userProfile?.fullname || 'BLUEDASH'} {userProfile?.phone ? `(${userProfile.phone})` : ''}
+                  </div>
+                  <div className="sender-address">
+                    {userProfile ? 
+                      `${userProfile.address || ''} ${userProfile.subdistrict ? `แขวง/ตำบล ${userProfile.subdistrict}` : ''} ${userProfile.district ? `เขต/อำเภอ ${userProfile.district}` : ''} ${userProfile.province || ''} ${userProfile.zipcode || ''}` 
+                      : '8/88 ถนนพหลโยธิน แขวงจตุจักร เขตจตุจักร กรุงเทพมหานคร 10900'}
+                  </div>
                 </div>
                 
                 {/* แสดงข้อมูลผู้รับ */}
