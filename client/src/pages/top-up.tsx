@@ -546,10 +546,10 @@ const TopUpPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="text-center py-8">
                     <AlertCircle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">ขออภัย! ไม่สามารถใช้งานได้ในขณะนี้</h3>
+                    <h3 className="text-lg font-medium mb-2">รอการตั้งค่า Stripe API</h3>
                     <p className="text-gray-500 max-w-md mx-auto mb-4">
-                      ระบบการชำระเงินด้วยบัตรเครดิต/เดบิตอยู่ระหว่างการพัฒนา 
-                      กรุณาใช้วิธีการเติมเงินอื่น หรือลองใหม่ในภายหลัง
+                      ระบบกำลังรอการตั้งค่า Stripe API Key สำหรับการชำระเงิน
+                      กรุณาใช้วิธีการเติมเงินอื่น หรือติดต่อผู้ดูแลระบบเพื่อตั้งค่า API
                     </p>
                     <Button
                       variant="outline"

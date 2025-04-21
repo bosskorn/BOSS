@@ -6,7 +6,8 @@ interface SidebarMenuProps {
   isOpen: boolean;
   onClose: () => void;
   userData?: {
-    name: string;
+    username?: string;
+    fullname?: string;
     role: string;
     balance: number;
   };
