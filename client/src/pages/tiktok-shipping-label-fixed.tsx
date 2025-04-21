@@ -557,16 +557,33 @@ const TikTokShippingLabelFixed: React.FC = () => {
                 margin: 0
               });
               
-              // สร้าง QR Code โดยไม่ใช้ QRCode library แต่ใช้ URL ของ QR Code generator
+              // สร้าง QR Code โดยใช้ QRCode.js library ที่โหลดมาแล้ว
               const qrCodeElement = document.getElementById("qrcode");
               if (qrCodeElement) {
-                const qrCodeUrl = "https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=" + 
-                  encodeURIComponent("${trackingNumber || 'THT64141T9NYG7Z'}");
-                const img = document.createElement("img");
-                img.src = qrCodeUrl;
-                img.width = 80;
-                img.height = 80;
-                qrCodeElement.appendChild(img);
+                try {
+                  // ล้างข้อมูลเดิม
+                  qrCodeElement.innerHTML = '';
+                  
+                  // สร้าง QR Code แบบ inline ด้วย QRCode.js
+                  new QRCode(qrCodeElement, {
+                    text: "${trackingNumber || 'THT64141T9NYG7Z'}", 
+                    width: 80,
+                    height: 80,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                  });
+                } catch (error) {
+                  console.error('Error generating QR code with QRCode.js:', error);
+                  // ใช้ Google Chart API เป็น fallback ถ้า QRCode.js ไม่ทำงาน
+                  const qrCodeUrl = "https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=" + 
+                    encodeURIComponent("${trackingNumber || 'THT64141T9NYG7Z'}");
+                  const img = document.createElement("img");
+                  img.src = qrCodeUrl;
+                  img.width = 80;
+                  img.height = 80;
+                  qrCodeElement.appendChild(img);
+                }
               }
               
               // พิมพ์อัตโนมัติหลังจากโหลดเสร็จและสร้างบาร์โค้ดเสร็จ
