@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
+import stripeService from '@/services/stripe-service';
 import {
   Card,
   CardContent,
@@ -45,7 +46,6 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useLocation } from 'wouter';
-import stripeService from '@/services/stripe-service';
 
 // สร้าง schema สำหรับการตรวจสอบฟอร์มเติมเงิน
 const topUpSchema = z.object({
@@ -177,21 +177,14 @@ const TopUpPage: React.FC = () => {
         return; // ออกจากฟังก์ชันเพราะ handleStripePayment จะจัดการขั้นตอนที่เหลือ
       }
       
-      // กรณีเลือกชำระเงินด้วย PromptPay
-      const method = 'prompt_pay';
+      // กรณีเลือกชำระเงินด้วย PromptPay ผ่าน Stripe API
+      // ใช้ฟังก์ชัน createPromptPayQRCode จาก stripeService
+      const result = await stripeService.createPromptPayQRCode(parseFloat(data.amount));
       
-      const response = await axios.post('/api/topups/create', {
-        amount: data.amount, // ส่งเป็น string ตามที่ schema ต้องการ
-        method: method
-      }, { withCredentials: true });
-      
-      if (response.data && response.data.success) {
-        // ดึงข้อมูลจาก API response
-        const topupData = response.data.data;
-        
+      if (result.success && result.qrCodeUrl) {
         // เก็บค่า reference และ QR Code URL
-        setReferenceId(topupData.referenceId);
-        setQrCodeUrl(topupData.qrCodeUrl);
+        setReferenceId(result.topup?.referenceId || '');
+        setQrCodeUrl(result.qrCodeUrl);
         
         // ไปยังขั้นตอนการชำระเงิน
         setPaymentStep(2);
@@ -215,6 +208,10 @@ const TopUpPage: React.FC = () => {
     try {
       setProcessing(true);
       
+      if (!referenceId) {
+        throw new Error('ไม่พบข้อมูลอ้างอิงการชำระเงิน');
+      }
+      
       // ส่งข้อมูลไปยัง API เพื่อตรวจสอบสถานะ
       const response = await axios.get(`/api/topups/check/${referenceId}`, { 
         withCredentials: true 
@@ -236,28 +233,41 @@ const TopUpPage: React.FC = () => {
           }
           
           // อัพเดตประวัติการเติมเงิน (ดึงข้อมูลใหม่)
-          try {
-            const historyResponse = await axios.get('/api/topups/history', { withCredentials: true });
-            if (historyResponse.data && historyResponse.data.success) {
-              const formattedHistory = historyResponse.data.data.map((item: any) => ({
-                id: item.id,
-                amount: parseFloat(item.amount),
-                method: item.method === 'prompt_pay' ? 'PromptPay' : 
-                         item.method === 'credit_card' ? 'บัตรเครดิต' : 'โอนเงิน',
-                status: item.status,
-                createdAt: item.createdAt,
-                reference: item.referenceId
-              }));
-              
-              setHistory(formattedHistory);
-            }
-          } catch (historyError) {
-            console.error('ไม่สามารถดึงประวัติการเติมเงินได้:', historyError);
-          }
+          await refreshTopupHistory();
           
           // ไปยังขั้นตอนเสร็จสิ้น
           setPaymentStep(3);
         } else {
+          // ยังไม่มีการชำระเงิน - ใช้ Stripe API ตรวจสอบเพิ่มเติม
+          if (responseData.data?.stripeSessionId) {
+            // ถ้ามี Stripe Session ID ให้เช็คสถานะผ่าน Stripe โดยตรง
+            try {
+              const stripeResult = await stripeService.getCheckoutSession(responseData.data.stripeSessionId);
+              
+              if (stripeResult.success && stripeResult.session?.payment_status === 'paid') {
+                toast({
+                  title: 'เติมเงินสำเร็จ',
+                  description: `เติมเงินเข้าบัญชีเรียบร้อยแล้ว`,
+                });
+                
+                // อัพเดตข้อมูลผู้ใช้และประวัติ
+                if (stripeResult.topup?.user) {
+                  setUser(stripeResult.topup.user);
+                }
+                
+                // อัพเดตประวัติการเติมเงิน
+                await refreshTopupHistory();
+                
+                // ไปยังขั้นตอนเสร็จสิ้น
+                setPaymentStep(3);
+                return;
+              }
+            } catch (stripeError) {
+              console.error('เกิดข้อผิดพลาดในการตรวจสอบสถานะ Stripe:', stripeError);
+              // ไม่แจ้งเตือนผู้ใช้ เพื่อให้ฟังก์ชันทำงานต่อไปได้
+            }
+          }
+          
           // ยังไม่มีการชำระเงิน
           toast({
             title: 'ยังไม่พบการชำระเงิน',
@@ -339,24 +349,7 @@ const TopUpPage: React.FC = () => {
           }
           
           // อัพเดตประวัติการเติมเงิน
-          try {
-            const historyResponse = await axios.get('/api/topups/history', { withCredentials: true });
-            if (historyResponse.data && historyResponse.data.success) {
-              const formattedHistory = historyResponse.data.data.map((item: any) => ({
-                id: item.id,
-                amount: parseFloat(item.amount),
-                method: item.method === 'prompt_pay' ? 'PromptPay' : 
-                         item.method === 'credit_card' ? 'บัตรเครดิต' : 'โอนเงิน',
-                status: item.status,
-                createdAt: item.createdAt,
-                reference: item.referenceId
-              }));
-              
-              setHistory(formattedHistory);
-            }
-          } catch (error) {
-            console.error('ไม่สามารถดึงประวัติการเติมเงินได้:', error);
-          }
+          await refreshTopupHistory();
           
           // ไปยังขั้นตอนเสร็จสิ้น
           setPaymentStep(3);
@@ -417,6 +410,27 @@ const TopUpPage: React.FC = () => {
       setStripeCheckoutUrl('');
     } finally {
       setProcessing(false);
+    }
+  };
+
+  // อัพเดตประวัติการเติมเงิน
+  const refreshTopupHistory = async () => {
+    try {
+      const historyResponse = await axios.get('/api/topups/history', { withCredentials: true });
+      if (historyResponse.data && historyResponse.data.success) {
+        const formattedHistory = historyResponse.data.data.map((item: any) => ({
+          id: item.id,
+          amount: parseFloat(item.amount),
+          method: item.method === 'prompt_pay' ? 'PromptPay' : 
+                   item.method === 'credit_card' ? 'บัตรเครดิต' : 'โอนเงิน',
+          status: item.status,
+          createdAt: item.createdAt,
+          reference: item.referenceId
+        }));
+        setHistory(formattedHistory);
+      }
+    } catch (error) {
+      console.error('ไม่สามารถดึงประวัติการเติมเงินได้:', error);
     }
   };
 

@@ -229,4 +229,108 @@ router.post('/webhook', async (req, res) => {
   }
 });
 
+/**
+ * สร้าง PromptPay QR Code สำหรับการชำระเงิน
+ * POST /api/stripe/create-promptpay
+ */
+router.post('/create-promptpay', auth, async (req, res) => {
+  try {
+    // ตรวจสอบว่ามีการส่งข้อมูลที่ถูกต้องมาหรือไม่
+    const validation = createCheckoutSessionSchema.safeParse(req.body);
+    if (!validation.success) {
+      const errorMessage = fromZodError(validation.error).message;
+      return res.status(400).json({
+        success: false,
+        message: errorMessage
+      });
+    }
+
+    const { amount } = validation.data;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'กรุณาเข้าสู่ระบบก่อน'
+      });
+    }
+
+    // สร้างรายการเติมเงินในฐานข้อมูล
+    const referenceId = `PP${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const topup = await storage.createTopUp({
+      userId,
+      amount: amount.toString(),
+      method: 'prompt_pay',
+      status: 'pending',
+      referenceId,
+    });
+
+    try {
+      // สร้าง PaymentIntent สำหรับ PromptPay
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // แปลงเป็นสตางค์
+        currency: 'thb',
+        payment_method_types: ['promptpay'],
+        metadata: {
+          userId: userId.toString(),
+          topupId: topup.id.toString(),
+          referenceId,
+        },
+      });
+
+      // สร้าง Payment Method สำหรับ PromptPay
+      const paymentMethod = await stripe.paymentMethods.create({
+        type: 'promptpay',
+        billing_details: {
+          email: req.user?.email || undefined,
+          name: req.user?.fullname || undefined,
+        },
+      });
+
+      // ยืนยัน PaymentIntent ด้วย Payment Method
+      const confirmedPaymentIntent = await stripe.paymentIntents.confirm(
+        paymentIntent.id,
+        {
+          payment_method: paymentMethod.id,
+        }
+      );
+
+      // อัพเดตรายการเติมเงินด้วย paymentIntentId
+      await storage.updateTopUp(topup.id, {
+        stripeSessionId: paymentIntent.id,
+        qrCodeUrl: confirmedPaymentIntent.next_action?.promptpay_display_qr_code?.image_url_png,
+      });
+
+      // ส่งข้อมูลกลับไปยังผู้ใช้
+      return res.status(200).json({
+        success: true,
+        paymentIntentId: paymentIntent.id,
+        qrCodeUrl: confirmedPaymentIntent.next_action?.promptpay_display_qr_code?.image_url_png,
+        topup,
+      });
+    } catch (stripeError: any) {
+      console.error('Error creating Stripe PromptPay:', stripeError);
+      
+      // อัพเดตสถานะการเติมเงินเป็น failed
+      await storage.updateTopUp(topup.id, {
+        status: 'failed',
+        notes: `Stripe Error: ${stripeError.message}`,
+      });
+      
+      return res.status(500).json({
+        success: false,
+        message: 'เกิดข้อผิดพลาดในการสร้าง PromptPay QR Code',
+        error: stripeError.message
+      });
+    }
+  } catch (error: any) {
+    console.error('Error creating PromptPay QR Code:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการสร้าง PromptPay QR Code',
+      error: error.message
+    });
+  }
+});
+
 export default router;

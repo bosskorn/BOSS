@@ -5,6 +5,43 @@ import axios from 'axios';
  */
 const stripeService = {
   /**
+   * สร้าง PromptPay QR Code สำหรับการชำระเงิน
+   * @param amount จำนวนเงินที่ต้องการชำระ
+   * @returns ข้อมูล QR Code และรายการเติมเงิน
+   */
+  async createPromptPayQRCode(amount: number): Promise<{
+    success: boolean;
+    paymentIntentId?: string;
+    qrCodeUrl?: string;
+    topup?: any;
+    error?: string;
+  }> {
+    try {
+      const response = await axios.post('/api/stripe/create-promptpay', {
+        amount,
+      }, {
+        withCredentials: true,
+      });
+
+      if (response.data && response.data.success) {
+        return {
+          success: true,
+          paymentIntentId: response.data.paymentIntentId,
+          qrCodeUrl: response.data.qrCodeUrl,
+          topup: response.data.topup,
+        };
+      } else {
+        throw new Error('ไม่สามารถสร้าง PromptPay QR Code ได้');
+      }
+    } catch (error: any) {
+      console.error('Error creating PromptPay QR Code:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'เกิดข้อผิดพลาดในการสร้าง PromptPay QR Code',
+      };
+    }
+  },
+  /**
    * สร้าง Checkout Session สำหรับการชำระเงินด้วยบัตรเครดิต/เดบิต
    * @param amount จำนวนเงินที่ต้องการชำระ
    * @returns ข้อมูล session และ URL สำหรับการชำระเงิน
