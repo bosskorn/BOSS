@@ -1189,7 +1189,7 @@ const OrderList: React.FC = () => {
             >
               <div>
                 <h4 className="font-medium">เสี่ยวไป๋ เอ็กเพรส</h4>
-                <p className="text-sm text-gray-500">รูปแบบสำหรับขนส่งจำลอง Xiaobai Express</p>
+                <p className="text-sm text-gray-500">บริการขนส่งจำลอง</p>
               </div>
               <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'flash' ? 'border-blue-600' : 'border-gray-300'}`}>
                 {selectedLabelType === 'flash' && (
