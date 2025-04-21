@@ -82,17 +82,7 @@ const FlashExpressLabelNew = () => {
       position: relative;
     }
     
-    .dropoff-info {
-      text-align: center;
-      background-color: #ffefdd;
-      color: #FF6600;
-      font-size: 11px;
-      padding: 2px 5px;
-      font-weight: bold;
-      border: 1px solid #FF6600;
-      border-radius: 3px;
-      margin-top: 3px;
-    }
+    /* ลบสไตล์ dropoff-info ตามต้องการ */
     
     .tiktok-logo, .flash-logo, .service-type {
       flex: 1;
@@ -149,13 +139,11 @@ const FlashExpressLabelNew = () => {
     
     .order-number {
       flex: 2;
-      padding: 8px 10px;
-      font-size: 28px;
+      padding: 10px;
+      font-size: 18px;
       font-weight: bold;
       text-align: center;
       border-right: 1px solid #000;
-      letter-spacing: 1px;
-      color: #FF6600;
     }
     
     .sorting-info {
@@ -703,11 +691,11 @@ const FlashExpressLabelNew = () => {
                 
                 {/* แสดงเลขออเดอร์และรหัสการจัดส่ง */}
                 <div className="order-number-section">
-                  <div className="order-number">23B-21260-00</div>
+                  <div className="order-number">{order.sortingCode}</div>
                   <div className="sorting-info">
                     <div>SS1</div>
                     <div>FLE-BKK</div>
-                    <div className="dropoff-info">กรณี DROPOFF ใช้เบอร์ 0829327325</div>
+                    <div>พร้อม</div>
                   </div>
                 </div>
                 
