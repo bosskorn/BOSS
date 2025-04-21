@@ -1033,8 +1033,6 @@ const OrderList: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-1">
-
-                            
                             <Button 
                               variant="ghost" 
                               size="sm" 
