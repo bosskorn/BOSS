@@ -1188,14 +1188,14 @@ const OrderList: React.FC = () => {
               </div>
             </div>
             
-            {/* Flash Express */}
+            {/* เสี่ยวไป๋ เอ็กเพรส */}
             <div 
               className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedLabelType === 'flash' ? 'border-blue-600' : 'border-gray-200'}`}
               onClick={() => setSelectedLabelType('flash')}
             >
               <div>
-                <h4 className="font-medium">Flash Express</h4>
-                <p className="text-sm text-gray-500">รูปแบบสำหรับ Flash Express</p>
+                <h4 className="font-medium">เสี่ยวไป๋ เอ็กเพรส</h4>
+                <p className="text-sm text-gray-500">รูปแบบสำหรับขนส่งจำลอง Xiaobai Express</p>
               </div>
               <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedLabelType === 'flash' ? 'border-blue-600' : 'border-gray-300'}`}>
                 {selectedLabelType === 'flash' && (
@@ -1568,17 +1568,17 @@ const OrderList: React.FC = () => {
               </div>
             </div>
             
-            {/* Flash Express */}
+            {/* เสี่ยวไป๋ เอ็กเพรส */}
             <div 
-              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'Flash Express' ? 'border-blue-600' : 'border-gray-200'}`}
-              onClick={() => setSelectedShippingMethod('Flash Express')}
+              className={`flex items-center justify-between border rounded-md p-3 cursor-pointer ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' ? 'border-blue-600' : 'border-gray-200'}`}
+              onClick={() => setSelectedShippingMethod('เสี่ยวไป๋ เอ็กเพรส')}
             >
               <div>
-                <h4 className="font-medium">Flash Express</h4>
-                <p className="text-sm text-gray-500">รูปแบบสำหรับ Flash Express</p>
+                <h4 className="font-medium">เสี่ยวไป๋ เอ็กเพรส</h4>
+                <p className="text-sm text-gray-500">บริการขนส่งจำลอง Xiaobai Express</p>
               </div>
-              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
-                {selectedShippingMethod === 'Flash Express' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
+              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' ? 'border-blue-600' : 'border-gray-300'}`}>
+                {selectedShippingMethod === 'เสี่ยวไป๋ เอ็กเพรส' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
               </div>
             </div>
             
@@ -1589,9 +1589,9 @@ const OrderList: React.FC = () => {
             >
               <div>
                 <h4 className="font-medium">J&T Express</h4>
-                <p className="text-sm text-gray-500">รูปแบบสำหรับ J&T Express</p>
+                <p className="text-sm text-gray-500">บริการขนส่ง J&T Express</p>
               </div>
-              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
+              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedShippingMethod === 'J&T Express' ? 'border-blue-600' : 'border-gray-300'}`}>
                 {selectedShippingMethod === 'J&T Express' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
               </div>
             </div>
