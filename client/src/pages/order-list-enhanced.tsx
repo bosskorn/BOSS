@@ -781,7 +781,7 @@ const OrderList: React.FC = () => {
       const token =localStorage.getItem('auth_token');
 
       const response = await fetch(`/api/orders/${orderId}/print-status`, {
-        method: ''PATCH',
+        method: 'PATCH',
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
