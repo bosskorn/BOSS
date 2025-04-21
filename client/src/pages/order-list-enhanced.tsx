@@ -657,51 +657,7 @@ const OrderList: React.FC = () => {
           </div>
         </div>
         
-        {/* แสดงจำนวนรายการที่เลือก */}
-        {selectedOrders.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4 flex items-center justify-between">
-            <span className="text-sm text-blue-800">
-              เลือก {selectedOrders.length} รายการ
-            </span>
-            <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-xs py-1 h-8 border-blue-300 text-blue-700 hover:bg-blue-100"
-                onClick={handlePrintMultiple}
-              >
-                <Printer className="h-3.5 w-3.5 mr-1" />
-                พิมพ์ลาเบล
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-xs py-1 h-8 border-blue-300 text-blue-700 hover:bg-blue-100"
-                onClick={() => setMultipleTrackingDialogOpen(true)}
-              >
-                <Truck className="h-3.5 w-3.5 mr-1" />
-                สร้างเลขพัสดุ
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-xs py-1 h-8 border-red-300 text-red-700 hover:bg-red-100"
-                onClick={() => setBulkDeleteDialogOpen(true)}
-              >
-                <X className="h-3.5 w-3.5 mr-1" />
-                ลบรายการ
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-xs py-1 h-8"
-                onClick={clearAllSelections}
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-        )}
+
         
         {/* ส่วนแถบแท็บและตัวกรอง */}
         <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
@@ -1077,16 +1033,7 @@ const OrderList: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-1">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handlePrintLabel(order)}
-                              disabled={!order.trackingNumber}
-                              className="px-2 py-0 h-7 text-gray-700 hover:text-blue-700 hover:bg-blue-50"
-                              title="พิมพ์ลาเบล"
-                            >
-                              <Printer className="h-3.5 w-3.5" />
-                            </Button>
+
                             
                             <Button 
                               variant="ghost" 

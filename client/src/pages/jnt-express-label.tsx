@@ -262,7 +262,8 @@ const JntExpressLabel = () => {
     .dates-section {
       display: flex;
       border-bottom: 1px solid #000;
-      font-size: 10px;
+      font-size: 9px;
+      padding: 2px 0;
     }
     
     .order-date {
