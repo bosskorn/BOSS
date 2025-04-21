@@ -324,6 +324,18 @@ const FlashExpressLabelNew: React.FC = () => {
             font-size: 11px;
             border-right: 1px solid #000;
           }
+          .pickup-code {
+            width: 40%;
+            padding: 5px;
+            background-color: black;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
           .qr-code {
             width: 40%;
             padding: 5px;
@@ -484,6 +496,9 @@ const FlashExpressLabelNew: React.FC = () => {
             <div class="sender-info">
               <strong>ถึง</strong> สมศรี ใจดี ${recipientPhone ? ' โทร: ' + recipientPhone : ''}<br>
               57/3 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ 10310
+            </div>
+            <div class="pickup-code">
+              C05
             </div>
           </div>
           
