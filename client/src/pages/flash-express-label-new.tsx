@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import JsBarcode from 'jsbarcode';
 
+// ใช้โครงสร้างเดิมจาก TikTokStyleLabel แต่เปลี่ยนขนาดเป็น 100x150mm
 const FlashExpressLabelNew: React.FC = () => {
   const [ordersData, setOrdersData] = useState<any[]>([]);
   const [orderIds, setOrderIds] = useState<string[]>([]);
