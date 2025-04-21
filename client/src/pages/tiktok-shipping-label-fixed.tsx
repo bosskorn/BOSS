@@ -261,6 +261,11 @@ const TikTokShippingLabelFixed: React.FC = () => {
 
   // พิมพ์ลาเบล
   const printLabel = () => {
+    // กำหนดค่าเริ่มต้นให้กับสินค้า "คุกกี้เนยสด" ถ้าไม่มีสินค้า
+    if (products.length === 0) {
+      setProducts([{ name: 'คุกกี้เนยสด', quantity: 1, price: 250 }]);
+    }
+    
     // เปิดหน้าต่างใหม่สำหรับพิมพ์ลาเบล
     const printWindow = window.open('', '_blank');
 
@@ -581,6 +586,27 @@ const TikTokShippingLabelFixed: React.FC = () => {
     printWindow.document.close();
   };
 
+  // ตรวจสอบและโหลดข้อมูล TikTok เมื่อหน้าถูกโหลด
+  useEffect(() => {
+    // ตรวจสอบว่ามีข้อมูลสินค้าหรือไม่ ถ้าไม่มีให้ตั้งค่าเริ่มต้น
+    if (products.length === 0) {
+      setProducts([{ name: 'คุกกี้เนยสด', quantity: 1, price: 250 }]);
+    }
+    
+    // ตรวจสอบว่ามีข้อมูลผู้รับหรือไม่ ถ้าไม่มีให้ตั้งค่าเริ่มต้น
+    if (!recipientName) {
+      setRecipientName('สิริรัตน์ ดำเกิด');
+    }
+    
+    if (!recipientPhone) {
+      setRecipientPhone('(+66)9*******25');
+    }
+    
+    if (!recipientAddress) {
+      setRecipientAddress('ร้านสามสุข 101/3 ม.1 ตำบลสิชล อ.สิชล จ.นครศรีธรรมราช, สิชล, นครศรีธรรมราช, 80120');
+    }
+  }, [products, recipientName, recipientPhone, recipientAddress]);
+  
   // เนื่องจากเป็นหน้าที่แสดงลาเบลทันที จึงไม่ต้องมี UI ให้แสดง
   return (
     <div className="hidden">
