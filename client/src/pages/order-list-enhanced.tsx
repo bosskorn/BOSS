@@ -1258,6 +1258,17 @@ const OrderList: React.FC = () => {
                   
                   // สร้าง URL พร้อมพารามิเตอร์รายการออเดอร์
                   const orderIds = ordersToPrint.map((order: Order) => order.id).join(',');
+                  
+                  // ตรวจสอบให้แน่ใจว่ามี orderIds
+                  if (!orderIds || orderIds.length === 0) {
+                    toast({
+                      title: 'ไม่สามารถพิมพ์ลาเบลได้',
+                      description: 'ไม่พบรายการที่มีเลขพัสดุสำหรับพิมพ์',
+                      variant: 'destructive',
+                    });
+                    return;
+                  }
+                  
                   let labelUrl = '';
                   
                   switch(selectedLabelType) {

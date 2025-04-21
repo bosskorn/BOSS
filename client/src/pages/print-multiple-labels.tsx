@@ -19,12 +19,15 @@ const PrintMultipleLabels: React.FC = () => {
   useEffect(() => {
     // ดึงพารามิเตอร์จาก URL
     const params = new URLSearchParams(window.location.search);
-    const orderIds = params.get('orders')?.split(',') || [];
+    const orderIdsParam = params.get('orders');
+    const orderIds = orderIdsParam ? orderIdsParam.split(',').filter(id => id && id.trim() !== '') : [];
     const type = params.get('type') || 'standard';
     
     setLabelType(type);
     
-    if (orderIds.length === 0) {
+    console.log('Received orderIds:', orderIds);
+    
+    if (!orderIdsParam || orderIds.length === 0) {
       toast({
         title: 'ไม่พบรายการที่ต้องการพิมพ์',
         description: 'กรุณาเลือกรายการที่ต้องการพิมพ์ลาเบล',
@@ -44,6 +47,9 @@ const PrintMultipleLabels: React.FC = () => {
     try {
       const token = localStorage.getItem('auth_token');
       
+      // log สถานะก่อนดึงข้อมูล
+      console.log('Fetching orders with IDs:', orderIds);
+      
       // ดึงข้อมูลออเดอร์ทุกรายการแบบ parallel
       const orderPromises = orderIds.map(id => 
         fetch(`/api/orders/${id}`, {
@@ -52,20 +58,34 @@ const PrintMultipleLabels: React.FC = () => {
             'Authorization': token ? `Bearer ${token}` : '',
           },
           credentials: 'include'
-        }).then(res => res.json())
+        })
+        .then(res => {
+          if (!res.ok) {
+            console.error(`Failed to fetch order ${id}:`, res.status, res.statusText);
+            return { success: false, error: `Error ${res.status}: ${res.statusText}` };
+          }
+          return res.json();
+        })
+        .catch(err => {
+          console.error(`Error fetching order ${id}:`, err);
+          return { success: false, error: err.message };
+        })
       );
       
       const results = await Promise.all(orderPromises);
+      console.log('API responses:', results);
       
       // กรองเฉพาะผลลัพธ์ที่สำเร็จ
       const validOrders = results
         .filter(result => result.success && result.data)
         .map(result => result.data);
       
+      console.log('Valid orders:', validOrders.length);
+      
       if (validOrders.length === 0) {
         toast({
           title: 'ไม่พบข้อมูลออเดอร์',
-          description: 'ไม่สามารถดึงข้อมูลออเดอร์ที่เลือกได้',
+          description: 'ไม่สามารถดึงข้อมูลออเดอร์ที่เลือกได้ กรุณาตรวจสอบว่าออเดอร์มีเลขพัสดุและยังคงอยู่ในระบบ',
           variant: 'destructive',
         });
       } else {
