@@ -1241,13 +1241,13 @@ const OrderList: React.FC = () => {
                   
                   switch(selectedLabelType) {
                     case 'flash':
-                      labelUrl = `/print-multiple-labels-fixed?orders=${orderIds}&type=flash`;
+                      labelUrl = `/flash-express-label-new?order=${orderIds.split(',')[0]}`;
                       break;
                     case 'jt':
-                      labelUrl = `/print-multiple-labels-fixed?orders=${orderIds}&type=jt`;
+                      labelUrl = `/jt-express-label?order=${orderIds.split(',')[0]}`;
                       break;
                     case 'tiktok':
-                      labelUrl = `/print-multiple-labels-fixed?orders=${orderIds}&type=tiktok`;
+                      labelUrl = `/tiktok-shipping-label-fixed?order=${orderIds.split(',')[0]}`;
                       break;
                     default:
                       labelUrl = `/print-multiple-labels-fixed?orders=${orderIds}&type=standard`;
@@ -1306,7 +1306,7 @@ const OrderList: React.FC = () => {
                   let labelUrl = '';
                   switch(selectedLabelType) {
                     case 'flash':
-                      labelUrl = `/flash-express-label?order=${orderToPrint.id}`;
+                      labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
                       break;
                     case 'jt':
                       labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
