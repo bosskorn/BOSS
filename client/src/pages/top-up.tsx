@@ -170,8 +170,15 @@ const TopUpPage: React.FC = () => {
     try {
       setProcessing(true);
       
-      // ส่งข้อมูลไปยัง API เพื่อสร้างรายการเติมเงิน
-      const method = activeTab === 'promptpay' ? 'prompt_pay' : 'credit_card';
+      // ตรวจสอบวิธีการชำระเงินที่เลือก
+      if (activeTab === 'credit_card') {
+        // กรณีเลือกชำระเงินด้วยบัตรเครดิต/เดบิต
+        await handleStripePayment(parseFloat(data.amount));
+        return; // ออกจากฟังก์ชันเพราะ handleStripePayment จะจัดการขั้นตอนที่เหลือ
+      }
+      
+      // กรณีเลือกชำระเงินด้วย PromptPay
+      const method = 'prompt_pay';
       
       const response = await axios.post('/api/topups/create', {
         amount: parseFloat(data.amount),
