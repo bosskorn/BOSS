@@ -284,10 +284,10 @@ const TikTokStyleLabelPage = () => {
     
     .qr-code-container {
       position: absolute;
-      top: 0;
-      right: 0;
-      width: 90px;
-      height: 90px;
+      top: 8px;
+      right: 8px;
+      width: 65px;
+      height: 65px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -295,8 +295,10 @@ const TikTokStyleLabelPage = () => {
     }
     
     .qr-code {
-      width: 80px;
-      height: 80px;
+      width: 62px;
+      height: 62px;
+      object-fit: contain;
+      border: 1px solid #eee;
     }
     
     /* ลบ CSS ของข้อความแนวตั้งออกตามที่ต้องการ */
@@ -719,11 +721,11 @@ const TikTokStyleLabelPage = () => {
                 <div className="dates-section">
                   <div className="order-date">
                     <div>Order ID:</div>
-                    <div>57851596{Math.floor(Math.random() * 900000) + 100000}</div>
+                    <div>{order.orderNumber || order.id || '-'}</div>
                   </div>
                   <div className="shipping-date">
                     <div>Shipping Date:</div>
-                    <div>{order.currentDate} 23:34</div>
+                    <div>{order.shippingDate || order.currentDate}</div>
                   </div>
                 </div>
                 
