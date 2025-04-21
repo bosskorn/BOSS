@@ -1596,7 +1596,7 @@ const OrderList: React.FC = () => {
                 <h4 className="font-medium">TikTok Shop</h4>
                 <p className="text-sm text-gray-500">รูปแบบสำหรับผู้ขาย TikTok Shop</p>
               </div>
-              <div className="h-5 w-5 rounded-full p-0.5 border-2 border-gray-300">
+              <div className={`h-5 w-5 rounded-full border-2 p-0.5 ${selectedShippingMethod === 'TikTok Shop' ? 'border-blue-600' : 'border-gray-300'}`}>
                 {selectedShippingMethod === 'TikTok Shop' && <div className="w-full h-full rounded-full bg-blue-600"></div>}
               </div>
             </div>
