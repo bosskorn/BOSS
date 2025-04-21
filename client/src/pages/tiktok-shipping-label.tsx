@@ -687,7 +687,7 @@ const TikTokShippingLabel: React.FC = () => {
           <div className="w-[100mm] border border-dashed border-gray-400 p-2 bg-white">
             <div className="text-center text-xs text-gray-500 mb-2">ใบลาเบลขนาด 100x150mm ขนาดมาตรฐาน สำหรับ TikTok Shop</div>
 
-            <div className="relative" style={{ width: '100mm', height: '150mm', border: '1px solid #000' }}
+            <div className="relative" style={{ width: '100mm', height: '150mm', border: '1px solid #000' }}>
               <div className="flex justify-between border-b border-black p-1 text-xs">
                 <div>TikTok Shop</div>
                 <div>FLASH</div>
