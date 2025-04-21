@@ -216,6 +216,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
         </li>
         
         {/* Reports Dropdown */}
+        {/* ซ่อนเมนูรายงานตามต้องการ
         <li 
           className="menu-item dropdown"
           onMouseEnter={() => openDropdown('reports')}
@@ -260,6 +261,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             </li>
           </ul>
         </li>
+        */}
         
         {/* Account */}
         <li className="menu-item account-item">
