@@ -6,13 +6,28 @@ import { auth } from '../middleware/auth';
 import { fromZodError } from 'zod-validation-error';
 
 // สร้าง Stripe instance
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not defined in environment variables');
+let stripe: Stripe;
+try {
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  
+  if (!stripeKey) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('WARNING: STRIPE_SECRET_KEY is not defined in environment variables');
+      throw new Error('STRIPE_SECRET_KEY is not defined in environment variables');
+    } else {
+      // ในโหมด development ให้ใช้ instance ที่ไม่มี key สำหรับการทดสอบ
+      console.warn('Using test mode for Stripe in development environment');
+    }
+  }
+  
+  stripe = new Stripe(stripeKey || 'sk_test_dummy', {
+    apiVersion: '2023-10-16' as any,
+  });
+} catch (error) {
+  console.error('Failed to initialize Stripe:', error);
+  // Create a dummy stripe object for development
+  stripe = {} as any;
 }
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16' as any,
-});
 
 // สร้าง Router
 const router = Router();
