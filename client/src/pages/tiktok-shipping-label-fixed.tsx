@@ -55,13 +55,19 @@ const TikTokShippingLabelFixed: React.FC = () => {
   const loadOrderData = async (orderId: string): Promise<boolean> => {
     setIsLoading(true);
     try {
+      console.log("เริ่มต้นโหลดข้อมูลออเดอร์ ID:", orderId);
+      
       // มี token หรือไม่ก็ได้
       const token = localStorage.getItem('auth_token') || '';
+      console.log("มี token หรือไม่:", token ? "มี" : "ไม่มี");
       
       // ทดลองเรียกข้อมูลออเดอร์
       let orderResponse;
       try {
-        orderResponse = await fetch(`/api/orders/${orderId}`, {
+        const url = `/api/orders/${orderId}`;
+        console.log("เรียก API URL:", url);
+        
+        orderResponse = await fetch(url, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -69,6 +75,7 @@ const TikTokShippingLabelFixed: React.FC = () => {
           },
           credentials: 'include'
         });
+        console.log("ผลลัพธ์ API status:", orderResponse.status);
       } catch (error) {
         console.log('Failed to fetch order data, using default values', error);
       }
