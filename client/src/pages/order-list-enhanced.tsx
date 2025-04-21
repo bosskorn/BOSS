@@ -82,6 +82,7 @@ const OrderList: React.FC = () => {
   const [labelTypeDialogOpen, setLabelTypeDialogOpen] = useState(false);
   const [selectedLabelType, setSelectedLabelType] = useState('standard');
   const [showFilters, setShowFilters] = useState(false);
+  const [isPrintingMultiple, setIsPrintingMultiple] = useState(false);
 
   // ฟังก์ชันดึงข้อมูลคำสั่งซื้อจาก API
   const fetchOrders = async () => {
@@ -1170,34 +1171,26 @@ const OrderList: React.FC = () => {
               เลือกขนาดของใบลาเบลที่คุณต้องการพิมพ์
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-4 py-4">
-            <div 
-              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x100mm' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-              onClick={() => setLabelSize('100x100mm')}
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">ใบลาเบลขนาด 100x100mm</h3>
-                  <p className="text-sm text-gray-500">ขนาดมาตรฐาน เหมาะสำหรับพัสดุทั่วไป</p>
-                </div>
-                <div className="w-16 h-16 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                  <div className="w-10 h-10 bg-blue-100 rounded"></div>
-                </div>
+          <div className="flex flex-col gap-3 py-3">
+            {/* ลาเบลขนาด 100x100mm */}
+            <div className="flex items-center justify-between p-3 border border-blue-200 bg-blue-50 rounded-md cursor-pointer">
+              <div>
+                <h3 className="font-medium">ใบลาเบลขนาด 100x100mm</h3>
+                <p className="text-sm text-gray-500">ขนาดมาตรฐาน เหมาะสำหรับพัสดุทั่วไป</p>
+              </div>
+              <div className="w-10 h-10 bg-white rounded-md shadow flex items-center justify-center">
+                <div className="w-6 h-6 bg-blue-100"></div>
               </div>
             </div>
             
-            <div 
-              className={`p-4 rounded-lg border-2 cursor-pointer ${labelSize === '100x75mm' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-              onClick={() => setLabelSize('100x75mm')}
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">ใบลาเบลขนาด 100x75mm</h3>
-                  <p className="text-sm text-gray-500">ขนาดเล็กกว่า ประหยัดกระดาษ</p>
-                </div>
-                <div className="w-16 h-12 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                  <div className="w-10 h-7 bg-blue-100 rounded"></div>
-                </div>
+            {/* ลาเบลขนาด 100x75mm */}
+            <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50">
+              <div>
+                <h3 className="font-medium">ใบลาเบลขนาด 100x75mm</h3>
+                <p className="text-sm text-gray-500">ขนาดเล็กกว่า ประหยัดกระดาษ</p>
+              </div>
+              <div className="w-10 h-10 bg-white rounded-md shadow flex items-center justify-center">
+                <div className="w-6 h-4 bg-blue-100"></div>
               </div>
             </div>
           </div>
