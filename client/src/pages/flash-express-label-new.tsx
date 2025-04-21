@@ -525,9 +525,7 @@ const FlashExpressLabelNew: React.FC = () => {
             </div>
             <div class="pickup-label" style="padding: 5px; border-radius: 5px;">
               <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <span style="margin-bottom: 5px;">PICK-UP</span>
-                <span style="font-weight: bold; margin-bottom: 5px;">C05</span>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${finalTrackingNumber}" alt="QR Code" width="80" height="80" style="margin: 5px 0;">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${finalTrackingNumber}" alt="QR Code" width="80" height="80">
               </div>
             </div>
           </div>
