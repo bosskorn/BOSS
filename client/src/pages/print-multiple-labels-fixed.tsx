@@ -98,7 +98,7 @@ const PrintMultipleLabelsFixed: React.FC = () => {
             if (trackingNumber.startsWith('แบบ')) {
               // สร้างเลขพัสดุแบบจำลองที่คงที่ (ไม่ใช้สุ่ม) เพื่อให้ได้ผลลัพธ์เดิมทุกครั้ง
               const hash = order.id.toString() + order.orderNumber;
-              const stableId = Array.from(hash).reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+              const stableId = hash.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
               const stableString = 'FLE' + stableId.toString().padStart(8, '0');
               trackingNumber = stableString.substring(0, 12);
               console.log('แปลงเลขพัสดุจาก', order.trackingNumber, 'เป็น', trackingNumber);
@@ -123,8 +123,8 @@ const PrintMultipleLabelsFixed: React.FC = () => {
             } catch (barcodeError) {
               console.error('ไม่สามารถสร้างบาร์โค้ดได้:', barcodeError);
               // ใส่ข้อความแทนบาร์โค้ดที่ไม่สามารถสร้างได้
-              if (barcodeElement.parentNode) {
-                barcodeElement.parentNode.innerHTML += `
+              if (barcodeElement.parentElement) {
+                barcodeElement.parentElement.innerHTML += `
                   <div style="color:red; text-align:center; border:1px solid red; padding:10px; margin:10px 0;">
                     ไม่สามารถสร้างบาร์โค้ดสำหรับเลขพัสดุ: ${trackingNumber}
                   </div>

@@ -37,6 +37,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import TikTokFlashLabel from './pages/tiktok-flash-label';
 import TikTokShippingLabel from './pages/tiktok-shipping-label';
 import PrintMultipleLabels from './pages/print-multiple-labels';
+import PrintMultipleLabelsFixed from './pages/print-multiple-labels-fixed';
 
 
 // รายงาน
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/tiktok-flash-label" component={TikTokFlashLabel} />
       <Route path="/tiktok-shipping-label" component={TikTokShippingLabel} />
       <Route path="/print-multiple-labels" component={PrintMultipleLabels} />
+      <Route path="/print-multiple-labels-fixed" component={PrintMultipleLabelsFixed} />
 
 
       {/* Protected routes - require authentication */}
