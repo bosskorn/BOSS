@@ -167,14 +167,7 @@ const TopUpPage: React.FC = () => {
     try {
       setProcessing(true);
       
-      // ตรวจสอบวิธีการชำระเงินที่เลือก
-      if (activeTab === 'credit_card') {
-        // กรณีเลือกชำระเงินด้วยบัตรเครดิต/เดบิต
-        await handleStripePayment(parseFloat(data.amount));
-        return; // ออกจากฟังก์ชันเพราะ handleStripePayment จะจัดการขั้นตอนที่เหลือ
-      }
-      
-      // กรณีเลือกชำระเงินด้วย PromptPay ผ่าน Stripe API
+      // ใช้การชำระเงินด้วย PromptPay เป็นหลัก
       // ใช้ฟังก์ชัน createPromptPayQRCode จาก stripeService
       const result = await stripeService.createPromptPayQRCode(parseFloat(data.amount));
       
@@ -550,10 +543,22 @@ const TopUpPage: React.FC = () => {
                 )}
               />
 
-              <div className="flex justify-end">
-                <Button type="submit" disabled={processing} className="bg-purple-600 hover:bg-purple-700">
+              <div className="flex justify-between">
+                <Button 
+                  type="button" 
+                  onClick={() => handleStripePayment(parseFloat(form.getValues().amount))}
+                  disabled={processing}
+                  variant="outline"
+                  className="flex items-center"
+                >
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  เติมเงินด้วยบัตรเครดิต/เดบิต
+                </Button>
+                
+                <Button type="submit" disabled={processing} className="bg-blue-600 hover:bg-blue-700">
                   {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  ดำเนินการ
+                  <QrCode className="mr-2 h-4 w-4" />
+                  เติมเงินด้วย PromptPay
                 </Button>
               </div>
             </form>
@@ -683,7 +688,7 @@ const TopUpPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center space-y-3">
-                  <div className="w-20 h-20 rounded-full bg-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                  <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold">
                     {user ? user.fullname.charAt(0) : '?'}
                   </div>
                   <div className="text-center">
@@ -695,10 +700,10 @@ const TopUpPage: React.FC = () => {
                 <div className="mt-4 border-t pt-4">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-600">ยอดเงินคงเหลือ</span>
-                    <span className="text-xl font-bold text-purple-600">฿{parseFloat(user?.balance || '0').toLocaleString()}</span>
+                    <span className="text-xl font-bold text-blue-600">฿{parseFloat(user?.balance || '0').toLocaleString()}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded h-1.5 mb-4">
-                    <div className="bg-purple-600 h-1.5 rounded" style={{ width: '100%' }}></div>
+                    <div className="bg-blue-600 h-1.5 rounded" style={{ width: '100%' }}></div>
                   </div>
                   <div className="text-xs text-gray-500 text-center">
                     อัพเดตล่าสุด: {new Date().toLocaleString('th-TH')}
