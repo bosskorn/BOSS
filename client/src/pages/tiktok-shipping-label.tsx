@@ -48,6 +48,28 @@ const TikTokShippingLabel: React.FC = () => {
 
   // พิมพ์ลาเบล
   const printLabel = () => {
+    // ตรวจสอบว่ามีการอัพโหลดไฟล์หรือไม่
+    const labelFileInput = document.getElementById('labelFile') as HTMLInputElement;
+    const uploadedFile = labelFileInput?.files?.[0];
+    
+    if (uploadedFile) {
+      // หากมีการอัพโหลดไฟล์ ให้เปิดไฟล์นั้นเพื่อพิมพ์
+      const fileUrl = URL.createObjectURL(uploadedFile);
+      const printWindow = window.open(fileUrl, '_blank');
+      
+      if (!printWindow) {
+        alert('โปรดอนุญาตให้เปิดหน้าต่างป๊อปอัพเพื่อพิมพ์ลาเบล');
+        return;
+      }
+      
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+      
+      return;
+    }
+    
+    // หากไม่มีการอัพโหลดไฟล์ ให้สร้างลาเบลแบบเดิม
     const printWindow = window.open('', '_blank');
     
     if (!printWindow) {
@@ -496,6 +518,24 @@ const TikTokShippingLabel: React.FC = () => {
                     placeholder="ที่อยู่ผู้รับ"
                   />
                 </div>
+
+                <div className="mt-4 border-t pt-4">
+                  <Label htmlFor="labelFile">อัพโหลดไฟล์ลาเบล (ไฟล์ PDF หรือรูปภาพ)</Label>
+                  <Input
+                    id="labelFile"
+                    type="file"
+                    className="mt-2"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // สามารถเพิ่มโค้ดสำหรับจัดการไฟล์ที่อัพโหลดได้ตรงนี้
+                        console.log("ไฟล์ที่อัพโหลด:", file.name);
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">อัพโหลดไฟล์ลาเบลสำเร็จรูปแทนการสร้างลาเบลใหม่</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -587,7 +627,7 @@ const TikTokShippingLabel: React.FC = () => {
         
         <div className="mt-6 flex justify-center">
           <div className="w-[100mm] border border-dashed border-gray-400 p-2 bg-white">
-            <div className="text-center text-xs text-gray-500 mb-2">ตัวอย่างลาเบล</div>
+            <div className="text-center text-xs text-gray-500 mb-2">ใบลาเบลขนาด 100x150mm เหมาะสำหรับพัสดุทั่วไป</div>
             
             <div className="relative" style={{ width: '100mm', height: '150mm', border: '1px solid #000' }}>
               <div className="flex justify-between border-b border-black p-1 text-xs">
