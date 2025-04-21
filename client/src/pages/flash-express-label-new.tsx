@@ -87,8 +87,17 @@ const FlashExpressLabelNew: React.FC = () => {
           return;
         }
         
+        // แปลงเลขพัสดุถ้าขึ้นต้นด้วย "แบบ" ให้ใช้รูปแบบเสี่ยวไป๋ เอ็กเพรส แทน
+        let trackingNo = orderData.trackingNumber;
+        if (trackingNo.startsWith('แบบ')) {
+          // สร้างเลขพัสดุแบบจำลองถ้าเป็นแบบเริ่มต้น
+          const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
+          trackingNo = 'FLE' + randomPart;
+          console.log('แปลงเลขพัสดุจาก', orderData.trackingNumber, 'เป็น', trackingNo);
+        }
+        
         // กำหนดค่าต่างๆ จากข้อมูลออเดอร์
-        setTrackingNumber(orderData.trackingNumber);
+        setTrackingNumber(trackingNo);
         setOrderID(orderData.orderNumber || '');
         setCodAmount(orderData.paymentMethod === 'cod' || orderData.paymentMethod === 'cash_on_delivery' ? 
           (orderData.totalAmount || '0.00') : '0.00');
@@ -129,8 +138,20 @@ const FlashExpressLabelNew: React.FC = () => {
         setIsLoading(false);
         
         // พิมพ์ทันทีเมื่อได้ข้อมูลครบ
+        console.log('จะเริ่มการพิมพ์อัตโนมัติ เลขพัสดุ:', trackingNo);
+        
+        // เรียกฟังก์ชันพิมพ์หลังจากรอให้ state อัพเดทเสร็จ
+        // ที่นี่ state ยังไม่อัพเดท ให้ส่ง trackingNo โดยตรงไปที่ printLabel
         setTimeout(() => {
-          printLabel();
+          if (trackingNo) {
+            printLabel(trackingNo);
+          } else {
+            toast({
+              title: 'ไม่สามารถพิมพ์ลาเบลได้',
+              description: 'เลขพัสดุไม่ถูกต้อง',
+              variant: 'destructive',
+            });
+          }
         }, 500);
         
       } catch (error) {
@@ -161,7 +182,12 @@ const FlashExpressLabelNew: React.FC = () => {
   }, [trackingNumber]);
   
   // ฟังก์ชันสำหรับพิมพ์ลาเบล
-  const printLabel = () => {
+  const printLabel = (overrideTrackingNumber?: string) => {
+    // ใช้เลขพัสดุที่ส่งเข้ามาหรือใช้จาก state ถ้าไม่ได้ส่งเข้ามา
+    const finalTrackingNumber = overrideTrackingNumber || trackingNumber;
+    
+    console.log('กำลังพิมพ์ลาเบลสำหรับเลขพัสดุ:', finalTrackingNumber);
+    
     // เปิดหน้าต่างใหม่สำหรับการพิมพ์
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -390,7 +416,7 @@ const FlashExpressLabelNew: React.FC = () => {
           
           <div class="barcode-section">
             <svg id="barcode" width="250" height="40"></svg>
-            <div class="barcode-number">${trackingNumber}</div>
+            <div class="barcode-number">${finalTrackingNumber}</div>
           </div>
           
           <div class="info-section">
@@ -413,7 +439,7 @@ const FlashExpressLabelNew: React.FC = () => {
               ${recipientAddress}
             </div>
             <div class="qr-code">
-              <img class="qr-image" src="https://chart.googleapis.com/chart?cht=qr&chl=${trackingNumber}&chs=200x200&choe=UTF-8" alt="QR Code">
+              <img class="qr-image" src="https://chart.googleapis.com/chart?cht=qr&chl=${finalTrackingNumber}&chs=200x200&choe=UTF-8" alt="QR Code">
             </div>
           </div>
           
@@ -478,7 +504,7 @@ const FlashExpressLabelNew: React.FC = () => {
     printWindow.onload = function() {
       const barcodeElement = printWindow.document.getElementById('barcode');
       if (barcodeElement) {
-        JsBarcode(barcodeElement, trackingNumber, {
+        JsBarcode(barcodeElement, finalTrackingNumber, {
           format: "CODE128",
           width: 2,
           height: 40,
@@ -554,7 +580,7 @@ const FlashExpressLabelNew: React.FC = () => {
               
               <div className="flex justify-center">
                 <Button 
-                  onClick={printLabel} 
+                  onClick={() => printLabel()} 
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   พิมพ์ลาเบล
