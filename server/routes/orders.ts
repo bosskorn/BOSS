@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { storage } from '../storage';
 import { auth } from '../middleware/auth';
 import { createFlashExpressShipping } from '../services/flash-express';
+import { db } from '../db';
+import { users } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 const router = Router();
 
@@ -163,6 +166,37 @@ router.post('/', auth, async (req, res) => {
     
     console.log('Received order data:', JSON.stringify(orderData, null, 2));
     
+    // ตรวจสอบเครดิตของผู้ใช้ - ต้องมีเครดิตอย่างน้อย 25 บาทต่อออเดอร์
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
+      });
+    }
+    
+    // ดึงข้อมูลผู้ใช้เพื่อตรวจสอบเครดิต
+    const user = await storage.getUser(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบข้อมูลผู้ใช้'
+      });
+    }
+    
+    // ค่าธรรมเนียมต่อออเดอร์
+    const ORDER_FEE = 25; // 25 บาทต่อออเดอร์
+    
+    // แปลงเครดิตเป็นตัวเลข
+    const userBalance = user.balance ? parseFloat(user.balance.toString()) : 0;
+    
+    // ตรวจสอบว่าเครดิตเพียงพอหรือไม่
+    if (userBalance < ORDER_FEE) {
+      return res.status(400).json({
+        success: false,
+        message: `เครดิตไม่เพียงพอสำหรับการสร้างออเดอร์ (ต้องการ ${ORDER_FEE} บาท, คงเหลือ ${userBalance.toFixed(2)} บาท)`
+      });
+    }
+    
     // Generate order number if not provided
     if (!orderData.orderNumber) {
       // สร้างเลขออเดอร์ในรูปแบบ PD + ปีเดือนวัน + เลข 4 หลักสุดท้ายของ timestamp
@@ -284,6 +318,28 @@ router.post('/', auth, async (req, res) => {
     
     // Store order in database
     const order = await storage.createOrder(orderData);
+    
+    // หักค่าธรรมเนียมจากเครดิตของผู้ใช้ (25 บาทต่อออเดอร์)
+    try {
+      // ค่าธรรมเนียมต่อออเดอร์
+      const ORDER_FEE = 25; // 25 บาทต่อออเดอร์
+      
+      // คำนวณยอดเงินคงเหลือใหม่
+      const newBalance = userBalance - ORDER_FEE;
+      
+      // อัพเดตเครดิตในฐานข้อมูล
+      await db.update(users)
+        .set({ 
+          balance: newBalance.toString(),
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, req.user.id));
+      
+      console.log(`หักค่าธรรมเนียมออเดอร์ ${ORDER_FEE} บาท จากเครดิตผู้ใช้ ${req.user.username} เครดิตคงเหลือ ${newBalance.toFixed(2)} บาท`);
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการหักค่าธรรมเนียมออเดอร์:', error);
+      // ไม่ต้อง throw error ให้ดำเนินการต่อไป แต่บันทึก log ไว้
+    }
     
     // บันทึกข้อมูลรายการสินค้า (order items) ถ้ามี
     if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
