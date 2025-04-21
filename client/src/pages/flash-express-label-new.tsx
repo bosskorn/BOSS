@@ -96,6 +96,9 @@ const FlashExpressLabelNew = () => {
       display: flex;
       align-items: center;
       justify-content: flex-start;
+      font-size: 20px;
+      font-weight: bold;
+      color: #0066CC;
     }
     
     .bluedash-logo-img {
@@ -107,6 +110,9 @@ const FlashExpressLabelNew = () => {
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #FF6600;
     }
     
     .flash-logo-img {
@@ -118,6 +124,9 @@ const FlashExpressLabelNew = () => {
     .service-type {
       text-align: right;
       justify-content: flex-end;
+      font-size: 16px;
+      font-weight: 500;
+      color: #333;
     }
     
     .barcode-section {
@@ -683,13 +692,13 @@ const FlashExpressLabelNew = () => {
                 {/* แสดงส่วนบนของลาเบล */}
                 <div className="label-header">
                   <div className="tiktok-logo">
-                    <img src="https://via.placeholder.com/100x35/0066CC/FFFFFF?text=BLUEDASH" alt="BLUEDASH Logo" className="bluedash-logo-img" />
+                    BLUEDASH
                   </div>
                   <div className="flash-logo">
-                    <img src="/attached_assets/flash-express-malaysia-1634103999.png" alt="Flash Express Logo" className="flash-logo-img" />
+                    FLASH Express
                   </div>
                   <div className="service-type">
-                    <img src="https://via.placeholder.com/70x30/FFFFFF/FF6600?text=Standard" alt="Standard Service" className="service-type-img" />
+                    Standard
                   </div>
                 </div>
                 
