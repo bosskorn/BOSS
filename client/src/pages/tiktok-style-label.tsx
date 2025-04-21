@@ -158,11 +158,15 @@ const TikTokStyleLabelPage = () => {
     
     .sender-info {
       padding-right: 100px; /* เว้นพื้นที่ด้านขวาสำหรับ sender QR Code */
+      font-size: 10px; /* ปรับขนาดข้อความผู้ส่งให้เล็กลง */
     }
     
     .recipient-info {
-      padding-right: 100px; /* เว้นพื้นที่ด้านขวาสำหรับ QR Code */
+      padding-right: 20px; /* ลดพื้นที่ด้านขวาเพราะเราใช้ float-right สำหรับ QR Code แล้ว */
       min-height: 85px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     
     .recipient-address, .sender-address {
@@ -170,7 +174,13 @@ const TikTokStyleLabelPage = () => {
       word-break: break-word;
     }
     
-    .sender-info-header, .recipient-info-header {
+    .sender-info-header {
+      font-weight: 500;
+      margin-bottom: 2px;
+      font-size: 9px;
+    }
+    
+    .recipient-info-header {
       font-weight: 500;
       margin-bottom: 3px;
     }
@@ -242,12 +252,21 @@ const TikTokStyleLabelPage = () => {
       border: 1px solid #000;
     }
     
-    .qr-code {
+    .qr-code-container {
       position: absolute;
-      right: 10px;
-      top: 160px; /* ปรับตำแหน่งให้ขึ้นมาอยู่ในส่วนที่อยู่ผู้รับ */
-      width: 85px;
-      height: 85px;
+      top: 0;
+      right: 0;
+      width: 90px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+    
+    .qr-code {
+      width: 80px;
+      height: 80px;
     }
     
     .vertical-text-left, .vertical-text-right {
@@ -666,13 +685,14 @@ const TikTokStyleLabelPage = () => {
                 </div>
                 
                 {/* แสดงข้อมูลผู้รับ */}
+                {/* แสดงข้อมูลผู้รับพร้อม QR Code */}
                 <div className="recipient-info">
                   <div className="recipient-info-header">ถึง {order.recipientName} ({order.recipientPhone})</div>
                   <div className="recipient-address">{order.recipientAddress}</div>
+                  <div className="qr-code-container">
+                    <img src={getQRCodeUrl(order.displayTrackingNumber)} className="qr-code" alt="QR Code" />
+                  </div>
                 </div>
-                
-                {/* แสดง QR Code */}
-                <img src={getQRCodeUrl(order.displayTrackingNumber)} className="qr-code" alt="QR Code" />
                 
                 {/* แสดงส่วน COD (ถ้ามี) */}
                 {order.hasCOD && (
