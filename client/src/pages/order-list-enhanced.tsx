@@ -1247,6 +1247,7 @@ const OrderList: React.FC = () => {
                   switch(selectedLabelType) {
                     case 'flash':
                       labelUrl = `/flash-express-label-new?orders=${orderIds}`;
+                      console.log("พิมพ์ลาเบลสำหรับ:", orderIds);
                       break;
                     case 'jt':
                       labelUrl = `/jt-express-label?order=${orderIds.split(',')[0]}`;

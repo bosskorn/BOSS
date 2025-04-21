@@ -33,6 +33,7 @@ import JTExpressLabel from "@/pages/jt-express-label";
 import FlashExpressLabel from "@/pages/flash-express-label";
 import FlashExpressLabelNew from "@/pages/flash-express-label-new";
 import FlashExpressLabelSimple from "@/pages/flash-express-label-simple";
+import PrintLabelsFullPage from "@/pages/print-labels-full";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import TikTokFlashLabel from './pages/tiktok-flash-label';
@@ -63,7 +64,7 @@ function Router() {
       <Route path="/barcode-test-improved" component={BarcodeTestImproved} />
       <Route path="/jt-express-label" component={JTExpressLabel} />
       <Route path="/flash-express-label" component={FlashExpressLabel} />
-      <Route path="/flash-express-label-new" component={FlashExpressLabelSimple} />
+      <Route path="/flash-express-label-new" component={PrintLabelsFullPage} />
       <Route path="/tiktok-flash-label" component={TikTokFlashLabel} />
       <Route path="/tiktok-shipping-label" component={TikTokShippingLabel} />
       <Route path="/tiktok-shipping-label-fixed" component={TikTokShippingLabelFixed} />
