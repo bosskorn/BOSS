@@ -1228,67 +1228,60 @@ const OrderList: React.FC = () => {
               เลือกประเภทลาเบลตามบริษัทขนส่ง
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-3 py-4">
+          <div className="flex flex-col gap-3 py-3">
+            {/* แบบมาตรฐาน */}
             <div 
-              className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'standard' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
               onClick={() => setSelectedLabelType('standard')}
             >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">ลาเบลมาตรฐาน</h3>
-                  <p className="text-sm text-gray-500">รูปแบบทั่วไป ใช้ได้กับทุกบริษัทขนส่ง</p>
-                </div>
-                <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                  <Tag className="h-5 w-5 text-blue-500" />
-                </div>
+              <div>
+                <h3 className="font-medium">แบบมาตรฐาน</h3>
+                <p className="text-sm text-gray-500">รูปแบบทั่วไป ใช้ได้กับทุกบริษัทขนส่ง</p>
+              </div>
+              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-100 text-gray-400">
+                <ChevronUp className="h-5 w-5 rotate-90" />
               </div>
             </div>
             
-            {/* Flash Express Label */}
+            {/* Flash Express */}
             <div 
-              className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'flash' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
               onClick={() => setSelectedLabelType('flash')}
             >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">Flash Express</h3>
-                  <p className="text-sm text-gray-500">รูปแบบสำหรับ Flash Express</p>
-                </div>
-                <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                  <Tag className="h-5 w-5 text-orange-500" />
-                </div>
+              <div>
+                <h3 className="font-medium">Flash Express</h3>
+                <p className="text-sm text-gray-500">รูปแบบสำหรับ Flash Express</p>
+              </div>
+              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-orange-100 text-orange-400">
+                <ChevronUp className="h-5 w-5 rotate-90" />
               </div>
             </div>
             
-            {/* J&T Express Label */}
+            {/* J&T Express */}
             <div 
-              className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'jt' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
               onClick={() => setSelectedLabelType('jt')}
             >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">J&T Express</h3>
-                  <p className="text-sm text-gray-500">รูปแบบสำหรับ J&T Express</p>
-                </div>
-                <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                  <Tag className="h-5 w-5 text-red-500" />
-                </div>
+              <div>
+                <h3 className="font-medium">J&T Express</h3>
+                <p className="text-sm text-gray-500">รูปแบบสำหรับ J&T Express</p>
+              </div>
+              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-red-100 text-red-400">
+                <ChevronUp className="h-5 w-5 rotate-90" />
               </div>
             </div>
             
-            {/* TikTok Label */}
+            {/* TikTok Shop */}
             <div 
-              className={`p-3 rounded-lg border-2 cursor-pointer ${selectedLabelType === 'tiktok' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+              className="p-3 rounded border border-gray-200 cursor-pointer flex justify-between items-center hover:bg-gray-50"
               onClick={() => setSelectedLabelType('tiktok')}
             >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">TikTok Shop</h3>
-                  <p className="text-sm text-gray-500">รูปแบบสำหรับผู้ขาย TikTok Shop</p>
-                </div>
-                <div className="w-10 h-10 bg-white border border-gray-300 flex items-center justify-center rounded-md">
-                  <Tag className="h-5 w-5 text-black" />
-                </div>
+              <div>
+                <h3 className="font-medium">TikTok Shop</h3>
+                <p className="text-sm text-gray-500">รูปแบบสำหรับผู้ขาย TikTok Shop</p>
+              </div>
+              <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-100 text-gray-400">
+                <ChevronUp className="h-5 w-5 rotate-90" />
               </div>
             </div>
           </div>
