@@ -15,6 +15,7 @@ import CreateOrder from "@/pages/create-order";
 import CreateOrderTabs from "@/pages/create-order-tabs";
 import BulkOrderImport from "@/pages/bulk-order-import";
 import LogoDisplay from "@/pages/logo-display";
+import LogoShowcase from "@/pages/logo-showcase";
 import CategoryManagement from "@/pages/category-management";
 import ProductManagement from "@/pages/product-management";
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -60,6 +61,7 @@ function Router() {
       {/* Public routes */}
       <Route path="/auth" component={AuthPage} />
       <Route path="/logo" component={LogoDisplay} />
+      <Route path="/logo-showcase" component={LogoShowcase} />
       <Route path="/admin-register" component={AdminRegisterPage} />
       <Route path="/print-test" component={PrintTestSimple} />
       <Route path="/barcode-test" component={BarcodeTest} />
