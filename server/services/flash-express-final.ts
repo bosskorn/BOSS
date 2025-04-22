@@ -8,7 +8,7 @@ import crypto from 'crypto';
 
 // ข้อมูลการเชื่อมต่อกับ Flash Express API
 const FLASH_EXPRESS_API_URL = 'https://open-api-tra.flashexpress.com';
-const FLASH_EXPRESS_MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
+const FLASH_EXPRESS_MCH_ID = process.env.FLASH_EXPRESS_MERCHANT_ID; // เก็บในตัวแปร MCH_ID เพื่อป้องกันความสับสน
 const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
 // กำหนดค่า timeout สำหรับการเชื่อมต่อ API (เพิ่มขึ้นเป็น 15 วินาที)
@@ -46,11 +46,11 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
     // 1. แปลงทุกค่าเป็น string และกรองพารามิเตอร์
     const stringParams: Record<string, string> = {};
     Object.keys(params).forEach(key => {
-      // ข้ามฟิลด์ sign และ subItemTypes (จะเพิ่มหลังจากสร้างลายเซ็น)
-      if (key === 'sign' || key === 'subItemTypes') return;
+      // ข้ามฟิลด์ sign และ subItemTypes (จะเพิ่มหลังจากสร้างลายเซ็น) และ merchantId (ใช้ mchId แทน)
+      if (key === 'sign' || key === 'subItemTypes' || key === 'merchantId') return;
       
-      // ข้ามค่าที่เป็น null หรือ undefined
-      if (params[key] === null || params[key] === undefined) return;
+      // ข้ามค่าที่เป็น null, undefined หรือช่องว่าง
+      if (params[key] === null || params[key] === undefined || params[key] === '') return;
       
       // แปลงทุกค่าเป็น string
       stringParams[key] = String(params[key]);
@@ -126,7 +126,7 @@ export const createFlashExpressShipping = async (
 }> => {
   try {
     // ตรวจสอบข้อมูลที่จำเป็น
-    if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
+    if (!FLASH_EXPRESS_MCH_ID || !FLASH_EXPRESS_API_KEY) {
       throw new Error('Flash Express API credentials not configured');
     }
 
@@ -147,11 +147,11 @@ export const createFlashExpressShipping = async (
       // เตรียมข้อมูลสำหรับใช้ในการสร้างลายเซ็น ตามรูปแบบจาก Flash Express (พารามิเตอร์ที่จำเป็นเท่านั้น)
       // สำคัญ: ต้องแปลงทุกค่าเป็น string เพื่อให้ตรงกับการทดสอบที่สำเร็จ
       const requestParams: Record<string, any> = {
-        mchId: FLASH_EXPRESS_MERCHANT_ID,
+        mchId: FLASH_EXPRESS_MCH_ID,
         nonceStr: nonceStr,
         timestamp: timestamp, // เพิ่ม timestamp ในการคำนวณลายเซ็น
         outTradeNo: orderData.outTradeNo,
-        warehouseNo: `${FLASH_EXPRESS_MERCHANT_ID}_001`,
+        warehouseNo: `${FLASH_EXPRESS_MCH_ID}_001`,
         srcName: orderData.srcName,
         srcPhone: senderPhone.replace(/[-\s]/g, ''),
         srcProvinceName: orderData.srcProvinceName,
@@ -385,7 +385,7 @@ export const getFlashExpressShippingOptions = async (
 ) => {
   try {
     // ตรวจสอบข้อมูลที่จำเป็น
-    if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
+    if (!FLASH_EXPRESS_MCH_ID || !FLASH_EXPRESS_API_KEY) {
       console.log('ไม่พบ Flash Express API credentials');
       throw new Error('Flash Express API credentials not configured');
     }
@@ -403,10 +403,10 @@ export const getFlashExpressShippingOptions = async (
       // 2. สร้างพารามิเตอร์ตามที่ Flash Express API ต้องการ
       const timestamp = String(Math.floor(Date.now() / 1000));
       const requestParams: Record<string, string> = {
-        mchId: FLASH_EXPRESS_MERCHANT_ID,
+        mchId: FLASH_EXPRESS_MCH_ID,
         nonceStr: nonceStr,
         timestamp: timestamp, // เพิ่ม timestamp สำหรับใช้ในการคำนวณลายเซ็น
-        warehouseNo: `${FLASH_EXPRESS_MERCHANT_ID}_001`, // เพิ่ม warehouseNo ตามที่ระบุในตัวอย่าง
+        warehouseNo: `${FLASH_EXPRESS_MCH_ID}_001`, // เพิ่ม warehouseNo ตามที่ระบุในตัวอย่าง
         
         // ข้อมูลจากเอกสาร API - ฟิลด์ที่จำเป็นสำหรับผู้ส่ง
         srcProvinceName: fromAddress.province,
