@@ -294,12 +294,13 @@ export const createFlashExpressShipping = async (
       // 6. สร้าง URL-encoded payload สำหรับส่งไปยัง API
       const encodedPayload = new URLSearchParams(payload).toString();
 
-      // 7. ตั้งค่า Headers ตามรูปแบบของ Flash Express
+      // 7. ตั้งค่า Headers ตามรูปแบบของ Flash Express และเพิ่ม headers พิเศษ
       const headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json'
-        // ตัดการส่ง X-Flash-Signature, X-Flash-Timestamp, X-Flash-Nonce ออก
-        // เนื่องจากตัวอย่างจาก Flash Express ไม่ได้ใช้ headers เหล่านี้
+        'Accept': 'application/json',
+        'X-Flash-Signature': signature,
+        'X-Flash-Timestamp': timestamp,
+        'X-Flash-Nonce': nonceStr
       };
 
       console.log('URL ที่เรียก:', `${FLASH_EXPRESS_API_URL}/open/v3/orders`);
@@ -404,9 +405,11 @@ export const getFlashExpressShippingOptions = async (
       const nonceStr = generateNonceStr();
 
       // 2. สร้างพารามิเตอร์ตามที่ Flash Express API ต้องการ
+      const timestamp = String(Math.floor(Date.now() / 1000));
       const requestParams: Record<string, string> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
+        timestamp: timestamp, // เพิ่ม timestamp สำหรับใช้ในการคำนวณลายเซ็น
         warehouseNo: `${FLASH_EXPRESS_MERCHANT_ID}_001`, // เพิ่ม warehouseNo ตามที่ระบุในตัวอย่าง
         
         // ข้อมูลจากเอกสาร API - ฟิลด์ที่จำเป็นสำหรับผู้ส่ง
@@ -437,10 +440,13 @@ export const getFlashExpressShippingOptions = async (
       // 5. แปลงเป็นรูปแบบ application/x-www-form-urlencoded
       const encodedPayload = new URLSearchParams(requestParams).toString();
 
-      // 6. กำหนด Headers
+      // 6. กำหนด Headers และเพิ่ม headers พิเศษเพื่อความถูกต้อง
       const headers = {
         'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Flash-Signature': signature,
+        'X-Flash-Timestamp': timestamp,
+        'X-Flash-Nonce': nonceStr
       };
 
       console.log('🔍 รายละเอียดที่ส่งไป API:');
