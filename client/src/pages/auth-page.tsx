@@ -162,7 +162,7 @@ const AuthPage: React.FC = () => {
             {/* คุณสมบัติที่น่าสนใจ */}
             <div className="grid grid-cols-2 gap-5 text-left">
               <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-xl border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
-                <div className="bg-gradient-to-br from-purple-400 to-purple-600 p-2 rounded-lg inline-block mb-3">
+                <div className="bg-gradient-to-br from-blue-400 to-blue-600 p-2 rounded-lg inline-block mb-3">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
@@ -201,7 +201,7 @@ const AuthPage: React.FC = () => {
           
           {/* ไฮไลต์การเชื่อมต่อกับขนส่งชั้นนำ */}
           <div className="relative mt-4">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-700 rounded-xl blur-md opacity-60"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl blur-md opacity-60"></div>
             <div className="relative bg-white bg-opacity-15 backdrop-blur-md p-4 rounded-xl border border-white border-opacity-20">
               <div className="flex items-center mb-2">
                 <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-2 rounded-md mr-3">
@@ -211,7 +211,7 @@ const AuthPage: React.FC = () => {
                 </div>
                 <h3 className="text-white font-bold">การเชื่อมต่อระบบขนส่ง</h3>
               </div>
-              <p className="text-purple-100 text-sm">
+              <p className="text-blue-100 text-sm">
                 เชื่อมต่อกับขนส่งชั้นนำในประเทศไทย ให้คุณจัดการการขนส่งได้อย่างมีประสิทธิภาพสูงสุด
               </p>
             </div>
@@ -220,14 +220,14 @@ const AuthPage: React.FC = () => {
         
         {/* Footer */}
         <div className="absolute bottom-4 text-xs text-white text-opacity-50">
-          PurpleDash Logistics Management System • v1.5.0
+          ShipSync Logistics Management System • v1.5.0
         </div>
       </div>
     );
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       <div className="flex flex-col md:flex-row min-h-screen font-kanit">
         <div className="md:w-1/2 lg:w-5/12 p-4 md:p-8 flex items-center justify-center">
           <div className="w-full max-w-md">
@@ -302,7 +302,7 @@ const AuthPage: React.FC = () => {
                         />
                         <Button
                           type="submit"
-                          className="w-full bg-purple-600 hover:bg-purple-700"
+                          className="w-full bg-blue-600 hover:bg-blue-700"
                           disabled={loginMutation.isPending}
                         >
                           {loginMutation.isPending ? (
@@ -429,7 +429,7 @@ const AuthPage: React.FC = () => {
                         
                         <Button
                           type="submit"
-                          className="w-full bg-purple-600 hover:bg-purple-700"
+                          className="w-full bg-blue-600 hover:bg-blue-700"
                           disabled={registerMutation.isPending}
                         >
                           {registerMutation.isPending ? (

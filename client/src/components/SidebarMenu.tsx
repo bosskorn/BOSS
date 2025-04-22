@@ -100,7 +100,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
             </div>
           </div>
           
-          <p className="text-sm opacity-80 text-white mt-2 text-center">ระบบจัดการขนส่ง BLUEDASH</p>
+          <p className="text-sm opacity-80 text-white mt-2 text-center">ระบบจัดการขนส่ง ShipSync</p>
 
           <div className="mt-3 px-3 py-2 bg-white bg-opacity-10 rounded-md">
             <div className="flex justify-between items-center">
