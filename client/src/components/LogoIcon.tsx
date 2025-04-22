@@ -16,7 +16,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 40, className = '' }) => {
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* พื้นหลังวงกลม */}
-        <circle cx="30" cy="30" r="30" fill="#0056D6" />
+        <circle cx="30" cy="30" r="30" fill="#007E33" />
         
         {/* ตัวอักษร S */}
         <text 
@@ -25,7 +25,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 40, className = '' }) => {
           fontFamily="Arial, sans-serif" 
           fontWeight="900" 
           fontSize="24" 
-          fill="#FFDD00"
+          fill="#FFEE58"
         >
           S
         </text>
@@ -33,13 +33,13 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 40, className = '' }) => {
         {/* เอฟเฟคการซิงค์ (สัญลักษณ์การเชื่อมต่อ) */}
         <path 
           d="M42 24 L45 24 L45 21 L48 26 L45 31 L45 28 L42 28 Z" 
-          fill="#FFDD00" 
+          fill="#FFEE58" 
         />
         
         {/* เอฟเฟคการซิงค์อีกด้าน */}
         <path 
           d="M18 28 L15 28 L15 31 L12 26 L15 21 L15 24 L18 24 Z" 
-          fill="#FFDD00" 
+          fill="#FFEE58" 
         />
         
         {/* เส้นประด้านล่างตัวอักษร */}
