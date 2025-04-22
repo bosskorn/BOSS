@@ -160,6 +160,7 @@ export const createFlashExpressShipping = async (
       const requestParams: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
+        timestamp: timestamp,  // เพิ่ม timestamp ในการคำนวณลายเซ็น
         outTradeNo: orderData.outTradeNo,
         srcName: orderData.srcName,
         srcPhone: senderPhone.replace(/[-\s]/g, ''),
