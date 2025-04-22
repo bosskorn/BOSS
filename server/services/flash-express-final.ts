@@ -351,10 +351,10 @@ export const getFlashExpressShippingOptions = async (
       const nonceStr = generateNonceStr();
 
       // 2. เตรียมข้อมูลคำขอ (แปลงเป็น string ทั้งหมด)
+      // ลบ timestamp ออกจาก params ตามคำแนะนำจาก Flash Express
       const requestParams: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
-        timestamp: timestamp,
         fromPostalCode: fromAddress.zipcode,
         toPostalCode: toAddress.zipcode, 
         weight: String(Math.round(packageInfo.weight * 1000)), // แปลงจาก กก. เป็น กรัม
