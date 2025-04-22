@@ -42,8 +42,8 @@ export function setupAuth(app: Express) {
   
   // ตั้งค่า express-session
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "purpledash-secure-secret-key-2025",
-    name: "purpledash.sid", // ตั้งชื่อ cookie ให้เป็นเอกลักษณ์
+    secret: process.env.SESSION_SECRET || "shipsync-secure-secret-key-2025",
+    name: "shipsync.sid", // ตั้งชื่อ cookie ให้เป็นเอกลักษณ์
     resave: true, // ปรับเป็น true เพื่อแก้ปัญหา session ไม่ถูกบันทึก
     saveUninitialized: true, // ปรับเป็น true เพื่อแก้ปัญหา session ไม่ถูกบันทึก
     store: new PostgresSessionStore({ 
