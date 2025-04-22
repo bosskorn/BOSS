@@ -37,9 +37,10 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
   try {
     console.log('พารามิเตอร์ที่ได้รับเพื่อสร้างลายเซ็น:', JSON.stringify(params, null, 2));
 
-    // รายการฟิลด์ที่จะไม่นำมาใช้ในการคำนวณลายเซ็น - ปรับปรุงตามมาตรฐาน Flash Express
-    // timestamp ไม่ถูกรวมใน excludedFields เพื่อให้มั่นใจว่าจะถูกใช้ในการคำนวณลายเซ็นถ้ามี
-    const excludedFields = ['sign', 'subItemTypes', 'subParcel'];
+    // รายการฟิลด์ที่จะไม่นำมาใช้ในการคำนวณลายเซ็น
+    // กำหนดเฉพาะ 'sign' เป็นฟิลด์ที่ไม่ใช้ในการคำนวณลายเซ็น
+    // และให้ subItemTypes/subParcel ถูกจัดการแยกต่างหาก (ไม่ใส่ในข้อมูลเริ่มต้น แต่เพิ่มหลังจากคำนวณลายเซ็น)
+    const excludedFields = ['sign'];
 
     // สร้างอ็อบเจกต์ใหม่ที่ไม่มีฟิลด์ที่ถูกกันออก
     const signParams: Record<string, string> = {};
@@ -115,6 +116,7 @@ export const createFlashExpressShipping = async (
     dstDetailAddress: string;           // ที่อยู่โดยละเอียดของผู้รับ
     articleCategory: number;            // ประเภทสินค้า
     expressCategory: number;            // ประเภทการจัดส่ง
+    parcelKind?: number;                // ประเภทพัสดุ (1: ปกติ, 2: เอกสาร)
     weight: number;                     // น้ำหนัก (กรัม)
     width?: number;                     // ความกว้าง (เซนติเมตร)
     length?: number;                    // ความยาว (เซนติเมตร)
@@ -182,10 +184,20 @@ export const createFlashExpressShipping = async (
         codEnabled: orderData.codEnabled || 0
       };
       
-      // เตรียมข้อมูลสำหรับส่งไปยัง API (รวม expressCategory)
+      // เพิ่ม parcelKind ใน requestParams (สำคัญ: ต้องใช้ในการคำนวณลายเซ็น)
+      if (orderData.parcelKind) {
+        requestParams.parcelKind = orderData.parcelKind;
+      } else {
+        // ใช้ค่าเริ่มต้น 1 (พัสดุปกติ) หากไม่ได้ระบุ
+        requestParams.parcelKind = 1;
+      }
+
+      // เพิ่ม expressCategory เข้าไปในข้อมูลที่ใช้คำนวณลายเซ็น
+      requestParams.expressCategory = orderData.expressCategory;
+
+      // เตรียมข้อมูลสำหรับส่งไปยัง API (รวมทุกฟิลด์)
       const fullRequestParams: Record<string, any> = {
-        ...requestParams,  // ข้อมูลพื้นฐานเหมือนกับ requestParams
-        expressCategory: orderData.expressCategory  // เพิ่ม expressCategory ที่ไม่รวมในการคำนวณลายเซ็น
+        ...requestParams  // ข้อมูลพื้นฐานเหมือนกับ requestParams
       };
 
       // เพิ่มข้อมูลเพิ่มเติมถ้ามี - ทั้งใน requestParams และ fullRequestParams
@@ -247,15 +259,7 @@ export const createFlashExpressShipping = async (
         fullRequestParams.insureDeclareValue = String(orderData.insureDeclareValue);
       }
 
-      // 3. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก)
-      console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
-      const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
-
-      // 4. นำลายเซ็นที่คำนวณได้มาเพิ่มลงในข้อมูลที่จะส่ง
-      // สร้าง payload ใหม่โดยใช้ fullRequestParams เป็นพื้นฐาน
-      const payload: Record<string, any> = { ...fullRequestParams, sign: signature };
-
-      // 5. สร้างและเพิ่ม subItemTypes หลังจากคำนวณลายเซ็นแล้ว
+      // 3. เตรียม subItemTypes เป็น JSON string
       let subItemTypesJSON: string | undefined = undefined;
 
       if (orderData.subItemTypes) {
@@ -264,13 +268,6 @@ export const createFlashExpressShipping = async (
           subItemTypesJSON = orderData.subItemTypes;
         } else if (Array.isArray(orderData.subItemTypes) && orderData.subItemTypes.length > 0) {
           subItemTypesJSON = JSON.stringify(orderData.subItemTypes);
-        }
-        
-        // เพิ่ม subItemTypes เฉพาะหลังจากคำนวณลายเซ็นแล้วเท่านั้น
-        if (subItemTypesJSON) {
-          // เพิ่มเข้าไปในข้อมูลที่จะส่ง แต่ไม่ได้อยู่ในข้อมูลที่ใช้คำนวณลายเซ็น
-          payload.subItemTypes = subItemTypesJSON;
-          console.log('subItemTypes ที่ส่งไป:', subItemTypesJSON);
         }
       } else if (orderData.codEnabled === 1) {
         // จำเป็นต้องมี subItemTypes หากเป็น COD
@@ -281,10 +278,24 @@ export const createFlashExpressShipping = async (
           itemQuantity: 1
         }];
         subItemTypesJSON = JSON.stringify(defaultItem);
-        
-        // เพิ่มเข้าไปในข้อมูลที่จะส่ง แต่ไม่ได้อยู่ในข้อมูลที่ใช้คำนวณลายเซ็น
+      }
+      
+      // 4. ลบ subItemTypes ออกจาก requestParams เพื่อไม่ให้มีผลต่อการคำนวณลายเซ็น
+      if ('subItemTypes' in requestParams) {
+        delete requestParams.subItemTypes;
+      }
+
+      // 5. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode
+      console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
+      const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
+
+      // 6. สร้าง payload พร้อมลายเซ็น
+      const payload: Record<string, any> = { ...fullRequestParams, sign: signature };
+
+      // 7. เพิ่ม subItemTypes เข้าไปใน payload หลังจากคำนวณลายเซ็นแล้ว
+      if (subItemTypesJSON) {
         payload.subItemTypes = subItemTypesJSON;
-        console.log('subItemTypes ค่าเริ่มต้นที่ส่งไป (สำหรับ COD):', subItemTypesJSON);
+        console.log('subItemTypes ที่ส่งไป:', subItemTypesJSON);
       }
 
       // 6. สร้าง URL-encoded payload สำหรับส่งไปยัง API
