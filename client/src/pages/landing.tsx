@@ -90,7 +90,7 @@ const LandingPage: React.FC = () => {
               <div className="absolute -bottom-8 -left-8 w-64 h-64 bg-cyan-100 rounded-full opacity-50 filter blur-3xl"></div>
               <div className="relative bg-white p-4 rounded-xl shadow-xl">
                 <img 
-                  src="/assets/shipping-icon.png" 
+                  src="/assets/shipping-dashboard.png" 
                   alt="ShipSync Dashboard" 
                   className="rounded-lg shadow-md w-full"
                 />
