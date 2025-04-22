@@ -180,7 +180,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
         <div className="sticky bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <span className="text-blue-700 font-semibold">BLUE</span><span className="text-blue-500 font-semibold">DASH</span>
+              <span className="text-blue-700 font-semibold">Ship</span><span className="text-blue-500 font-semibold">Sync</span>
             </div>
             <span className="text-xs text-gray-500">v1.5.0</span>
           </div>

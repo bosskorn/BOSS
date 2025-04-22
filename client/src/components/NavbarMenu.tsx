@@ -91,7 +91,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
   };
 
   return (
-    <nav className="purpledash-navbar" ref={navbarRef}>
+    <nav className="shipsync-navbar" ref={navbarRef}>
       {/* Logo Section */}
       <div className="navbar-brand">
         <Link href="/" className="logo-link">
@@ -100,7 +100,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
               <i className="fas fa-bolt"></i>
             </div>
             <div className="logo-text">
-              <span className="logo-main">PURPLEDASH</span>
+              <span className="logo-main">SHIPSYNC</span>
               <span className="logo-sub">Delivery System</span>
             </div>
           </div>
