@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useRoute } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import LogoIcon from './LogoIcon';
 
 interface NavbarMenuProps {
   onToggleSidebar: () => void;
@@ -96,9 +97,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
       <div className="navbar-brand">
         <Link href="/" className="logo-link">
           <div className="logo-container">
-            <div className="logo-icon">
-              <i className="fa-solid fa-truck-fast mr-2 text-purple-600"></i>
-            </div>
+            <LogoIcon size={32} />
             <div className="logo-text ml-2">
               <span className="logo-main">ShipSync</span>
               <span className="logo-sub">Delivery System</span>

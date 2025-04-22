@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import NavbarMenu from './NavbarMenu';
 import SidebarMenu from './SidebarMenu';
+import LogoIcon from './LogoIcon';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
               <div className="flex items-center mb-2">
-                <i className="fa-solid fa-truck-fast mr-2 text-purple-600"></i>
+                <LogoIcon size={24} className="mr-2" />
                 <span className="text-purple-700 font-semibold">Ship</span>
                 <span className="text-yellow-500 font-semibold">Sync</span>
               </div>
