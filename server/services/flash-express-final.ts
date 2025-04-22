@@ -350,15 +350,28 @@ export const getFlashExpressShippingOptions = async (
       const timestamp = String(Math.floor(Date.now() / 1000));
       const nonceStr = generateNonceStr();
 
-      // 2. เตรียมข้อมูลคำขอ (แปลงเป็น string ทั้งหมด)
-      // ลบ timestamp ออกจาก params ตามคำแนะนำจาก Flash Express
+      // 2. เตรียมข้อมูลคำขอ (แปลงเป็น string ทั้งหมด) ตามคำแนะนำจาก Flash Express
       const requestParams: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
-        fromPostalCode: fromAddress.zipcode,
-        toPostalCode: toAddress.zipcode, 
+        // ข้อมูลต้นทาง
+        srcProvinceName: fromAddress.province,
+        srcCityName: fromAddress.district,
+        srcDistrictName: fromAddress.subdistrict,
+        srcPostalCode: fromAddress.zipcode,
+        // ข้อมูลปลายทาง
+        dstProvinceName: toAddress.province,
+        dstCityName: toAddress.district,
+        dstDistrictName: toAddress.subdistrict,
+        dstPostalCode: toAddress.zipcode,
+        // ข้อมูลพัสดุ
         weight: String(Math.round(packageInfo.weight * 1000)), // แปลงจาก กก. เป็น กรัม
       };
+      
+      // เพิ่มข้อมูลเพิ่มเติมถ้ามี
+      if (packageInfo.width) requestParams.width = String(packageInfo.width);
+      if (packageInfo.length) requestParams.length = String(packageInfo.length);
+      if (packageInfo.height) requestParams.height = String(packageInfo.height);
 
       // 3. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก)
       const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
@@ -384,7 +397,7 @@ export const getFlashExpressShippingOptions = async (
 
       // 7. ใช้ endpoint ที่ถูกต้องตามเอกสาร Flash Express
       const possibleEndpoints = [
-        '/open/v3/pricing'
+        '/open/v1/orders/estimate_rate'
       ];
 
       let response = null;
