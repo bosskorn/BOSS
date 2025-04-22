@@ -912,16 +912,27 @@ const OrderList: React.FC = () => {
                             });
                           });
                           
-                          // ทำการลบพร้อมกันทั้งหมด
+                          // จำนวนรายการที่จะลบ
+                          const deleteCount = selectedOrders.length;
+                          
+                          // ลบรายการจาก state ทันที (เพื่อ UI ตอบสนองเร็ว)
+                          const deletedOrderIds = [...selectedOrders];
+                          const updatedOrders = orders.filter(order => !deletedOrderIds.includes(order.id));
+                          const updatedFilteredOrders = filteredOrders.filter(order => !deletedOrderIds.includes(order.id));
+                          
+                          setOrders(updatedOrders);
+                          setFilteredOrders(updatedFilteredOrders);
+                          setSelectedOrders([]);
+                          
+                          // ทำการลบพร้อมกันทั้งหมดที่ backend
                           Promise.all(deletePromises)
                             .then(results => {
                               toast({
                                 title: 'ลบรายการสำเร็จ',
-                                description: `ลบรายการทั้งหมด ${selectedOrders.length} รายการเรียบร้อยแล้ว`,
+                                description: `ลบรายการทั้งหมด ${deleteCount} รายการเรียบร้อยแล้ว`,
                                 variant: 'default',
                               });
-                              // รีเฟรชข้อมูลและล้างการเลือก
-                              setSelectedOrders([]);
+                              // รีเฟรชข้อมูลอีกครั้งเพื่อความแน่ใจ
                               fetchOrders();
                             })
                             .catch(error => {
@@ -1113,6 +1124,13 @@ const OrderList: React.FC = () => {
                               title="ลบออเดอร์"
                               onClick={() => {
                                 if (confirm(`ต้องการลบออเดอร์ ${order.orderNumber} ใช่หรือไม่?`)) {
+                                  // ลบรายการจาก state ทันที (เพื่อ UI ตอบสนองเร็ว)
+                                  const updatedOrders = orders.filter(o => o.id !== order.id);
+                                  const updatedFilteredOrders = filteredOrders.filter(o => o.id !== order.id);
+                                  
+                                  setOrders(updatedOrders);
+                                  setFilteredOrders(updatedFilteredOrders);
+                                  
                                   // ส่งคำขอลบออเดอร์ไปยัง API
                                   const token = localStorage.getItem('auth_token');
                                   fetch(`/api/orders/${order.id}`, {
@@ -1136,7 +1154,7 @@ const OrderList: React.FC = () => {
                                         description: `ลบออเดอร์ ${order.orderNumber} เรียบร้อยแล้ว`,
                                         variant: 'default',
                                       });
-                                      // รีเฟรชข้อมูลเพื่อแสดงการเปลี่ยนแปลง
+                                      // รีเฟรชข้อมูลในกรณีที่มีปัญหา
                                       fetchOrders();
                                     } else {
                                       throw new Error(data.message || 'ไม่สามารถลบออเดอร์ได้');
