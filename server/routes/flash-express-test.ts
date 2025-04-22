@@ -164,6 +164,11 @@ router.get("/", async (req, res) => {
           button { background: #2563eb; color: white; border: none; padding: 10px 15px; 
                   border-radius: 5px; cursor: pointer; margin-top: 10px; }
           button:hover { background: #1d4ed8; }
+          .tracking-info { background: #dcfce7; padding: 15px; border-radius: 5px; margin-top: 20px; display: none; }
+          .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(0, 0, 0, 0.1); 
+                  border-radius: 50%; border-top-color: #2563eb; animation: spin 1s ease-in-out infinite; 
+                  margin-left: 10px; vertical-align: middle; }
+          @keyframes spin { to { transform: rotate(360deg); } }
         </style>
       </head>
       <body>
@@ -199,9 +204,66 @@ router.get("/", async (req, res) => {
           <h3>Response:</h3>
           <pre>${JSON.stringify(estimateRateResult, null, 2)}</pre>
         </div>
+
+        <div class="test-section">
+          <h2>Test 3: Create Shipping and Get Tracking Number</h2>
+          <p>ทดสอบสร้างการจัดส่งจริงและรับเลขพัสดุจาก Flash Express:</p>
+          <button id="createShippingBtn" onclick="testCreateShipping()">สร้างการจัดส่ง</button>
+          <span id="loadingSpinner" class="loading" style="display: none;"></span>
+          
+          <div id="trackingInfo" class="tracking-info">
+            <h3>ผลลัพธ์:</h3>
+            <div id="createShippingResult"></div>
+            
+            <h3 id="trackingNumberTitle" style="display: none;">เลขพัสดุที่ได้รับ:</h3>
+            <div id="trackingNumberDisplay" style="font-size: 24px; font-weight: bold; margin: 15px 0;"></div>
+          </div>
+        </div>
         
         <script>
-          // เพิ่มสคริปต์ที่นี่ถ้าต้องการ
+          async function testCreateShipping() {
+            const button = document.getElementById('createShippingBtn');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const trackingInfo = document.getElementById('trackingInfo');
+            const resultArea = document.getElementById('createShippingResult');
+            const trackingNumberTitle = document.getElementById('trackingNumberTitle');
+            const trackingNumberDisplay = document.getElementById('trackingNumberDisplay');
+            
+            // แสดงสถานะกำลังโหลด
+            button.disabled = true;
+            loadingSpinner.style.display = 'inline-block';
+            resultArea.innerHTML = 'กำลังดำเนินการ...';
+            trackingInfo.style.display = 'block';
+            
+            try {
+              const response = await fetch('/flash-express-test/create-shipping', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              const result = await response.json();
+              
+              // แสดงผลลัพธ์
+              resultArea.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+              
+              // แสดงเลขพัสดุถ้ามี
+              if (result.success && result.data && result.data.trackingNo) {
+                trackingNumberTitle.style.display = 'block';
+                trackingNumberDisplay.innerHTML = '<span style="color: #16a34a;">✅ ' + result.data.trackingNo + '</span>';
+              } else {
+                trackingNumberTitle.style.display = 'block';
+                trackingNumberDisplay.innerHTML = '<span style="color: #dc2626;">❌ ไม่สามารถดึงเลขพัสดุได้</span>';
+              }
+            } catch (error) {
+              resultArea.innerHTML = '<pre class="error">เกิดข้อผิดพลาด: ' + error.message + '</pre>';
+            } finally {
+              // ปิดสถานะโหลด
+              button.disabled = false;
+              loadingSpinner.style.display = 'none';
+            }
+          }
         </script>
       </body>
       </html>
