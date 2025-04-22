@@ -180,7 +180,7 @@ const ReportsByCourier: React.FC = () => {
   return (
     <Layout>
       <Helmet>
-        <title>รายงานตามขนส่ง - PURPLEDASH</title>
+        <title>รายงานตามขนส่ง - SHIPSYNC</title>
       </Helmet>
 
       <div className="space-y-6">

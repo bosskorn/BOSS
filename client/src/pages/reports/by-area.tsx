@@ -268,7 +268,7 @@ const ReportsByArea: React.FC = () => {
   return (
     <Layout>
       <Helmet>
-        <title>รายงานตามพื้นที่ - PURPLEDASH</title>
+        <title>รายงานตามพื้นที่ - SHIPSYNC</title>
       </Helmet>
 
       <div className="space-y-6">

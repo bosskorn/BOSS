@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
           <div className="flex justify-between items-center mb-16">
             <div className="flex items-center">
               <Logo size="medium" className="mr-2" />
-              <span className="text-2xl font-bold">PURPLEDASH</span>
+              <span className="text-2xl font-bold">SHIPSYNC</span>
             </div>
             <div className="space-x-4">
               <Link href="/auth">
@@ -84,7 +84,7 @@ const HomePage: React.FC = () => {
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold mb-4">คุณสมบัติหลักของระบบ</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            PURPLEDASH มีคุณสมบัติที่ครบถ้วนเพื่อให้การจัดการขนส่งของคุณเป็นเรื่องง่าย 
+            SHIPSYNC มีคุณสมบัติที่ครบถ้วนเพื่อให้การจัดการขนส่งของคุณเป็นเรื่องง่าย 
             ประหยัดเวลา และมีประสิทธิภาพสูงสุด
           </p>
         </div>
@@ -187,7 +187,7 @@ const HomePage: React.FC = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">พร้อมเริ่มใช้งานแล้วหรือยัง?</h2>
           <p className="text-lg text-purple-100 mb-8 max-w-2xl mx-auto">
-            เริ่มต้นใช้งาน PURPLEDASH ได้ฟรีวันนี้ และยกระดับการจัดการขนส่งของคุณ
+            เริ่มต้นใช้งาน SHIPSYNC ได้ฟรีวันนี้ และยกระดับการจัดการขนส่งของคุณ
             สู่มาตรฐานใหม่ที่ง่าย รวดเร็ว และมีประสิทธิภาพมากขึ้น
           </p>
           <div className="flex justify-center flex-wrap gap-4">

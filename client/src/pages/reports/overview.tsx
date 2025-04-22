@@ -132,7 +132,7 @@ const ReportsOverview: React.FC = () => {
   return (
     <Layout>
       <Helmet>
-        <title>ภาพรวมรายงาน - PURPLEDASH</title>
+        <title>ภาพรวมรายงาน - SHIPSYNC</title>
       </Helmet>
 
       <div className="space-y-6">

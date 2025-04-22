@@ -400,7 +400,7 @@ const ReportsReturns: React.FC = () => {
   return (
     <Layout>
       <Helmet>
-        <title>รายงานพัสดุตีกลับ - PURPLEDASH</title>
+        <title>รายงานพัสดุตีกลับ - SHIPSYNC</title>
       </Helmet>
 
       <div className="space-y-6">

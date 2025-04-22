@@ -312,7 +312,7 @@ const ReportsCOD: React.FC = () => {
   return (
     <Layout>
       <Helmet>
-        <title>รายงาน COD - PURPLEDASH</title>
+        <title>รายงาน COD - SHIPSYNC</title>
       </Helmet>
 
       <div className="space-y-6">
