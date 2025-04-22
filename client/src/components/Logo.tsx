@@ -88,19 +88,6 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
         >
           Sync
         </text>
-        
-        {/* สโลแกนภาษาไทย */}
-        <text 
-          x="130" 
-          y="38" 
-          fontFamily="Kanit, sans-serif" 
-          fontWeight="400" 
-          fontSize="9" 
-          fill="white"
-          textAnchor="middle"
-        >
-          ส่งพัสดุรวดเร็ว เชื่อถือได้
-        </text>
       </svg>
     </div>
   );
