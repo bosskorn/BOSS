@@ -296,6 +296,7 @@ router.post("/create-shipping", async (req, res) => {
     const orderData = {
       outTradeNo: orderNumber,
       merchantId,
+      warehouseNo: `${merchantId}_001`, // เพิ่ม warehouse number ตามรูปแบบที่ Flash Express ต้องการ
       srcName: "บริษัท ชิพซิงค์ จำกัด",
       srcPhone: "0829327325",
       srcProvinceName: "กรุงเทพมหานคร",
@@ -313,8 +314,9 @@ router.post("/create-shipping", async (req, res) => {
       articleCategory: 1,
       expressCategory: 1,
       weight: 1000,
-      insured: 0,
+      insured: 0,             // สำคัญ! ต้องกำหนดค่า insured เสมอตามที่ระบุในเอกสาร
       codEnabled: 0,
+      parcelKind: 1,          // เพิ่ม parcelKind (1: พัสดุปกติ, 2: เอกสาร)
       nonceStr,
       timestamp
     };
@@ -344,7 +346,7 @@ router.post("/create-shipping", async (req, res) => {
     console.log("subItemTypes ที่แนบ (หลังสร้างลายเซ็น):", subItemTypes);
     console.log("ข้อมูลที่ส่งไปยัง API:", finalOrderData);
     console.log("Headers:", {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
       "X-Flash-Signature": signature,
       "X-Flash-Timestamp": timestamp,
       "X-Flash-Nonce": nonceStr
@@ -355,8 +357,18 @@ router.post("/create-shipping", async (req, res) => {
     const apiUrl = "https://open-api-tra.flashexpress.com/open/v3/orders";
     console.log("API URL:", apiUrl);
     
-    // แปลง payload เป็น URL-encoded string ตามรูปแบบที่ต้องการของ Flash Express API
-    const encodedPayload = new URLSearchParams(finalOrderData as Record<string, string>).toString();
+    // แปลงและเตรียมข้อมูลให้เป็นรูปแบบที่ถูกต้องสำหรับ Flash Express API
+    const stringifiedData: Record<string, string> = {};
+    
+    // แปลงทุกฟิลด์เป็น string
+    Object.entries(finalOrderData).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        stringifiedData[key] = String(value);
+      }
+    });
+    
+    // สร้าง URL-encoded string
+    const encodedPayload = new URLSearchParams(stringifiedData).toString();
     console.log("ข้อมูลที่ส่งหลังแปลงเป็น URL-encoded:", encodedPayload);
     
     const response = await axios.post(
