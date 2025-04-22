@@ -350,19 +350,16 @@ export const getFlashExpressShippingOptions = async (
       const timestamp = String(Math.floor(Date.now() / 1000));
       const nonceStr = generateNonceStr();
 
-      // 2. เตรียมข้อมูลคำขอ (แปลงเป็น string ทั้งหมด) ตามคำแนะนำจาก Flash Express
+      // 2. เตรียมข้อมูลคำขอตามเอกสาร Flash Express
       const requestParams: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
-        // ข้อมูลต้นทาง
-        srcProvinceName: fromAddress.province,
-        srcCityName: fromAddress.district,
-        srcDistrictName: fromAddress.subdistrict,
+        // ข้อมูลต้นทาง (แค่ srcPostalCode ตามที่ API ยอมรับได้)
         srcPostalCode: fromAddress.zipcode,
-        // ข้อมูลปลายทาง
-        dstProvinceName: toAddress.province,
-        dstCityName: toAddress.district,
-        dstDistrictName: toAddress.subdistrict,
+        // ข้อมูลปลายทาง (ต้องระบุครบทุกฟิลด์ตามที่ API ต้องการ)
+        dstProvinceName: toAddress.province || 'กรุงเทพมหานคร',
+        dstCityName: toAddress.district || 'ลาดพร้าว',
+        dstDistrictName: toAddress.subdistrict || 'ลาดพร้าว',
         dstPostalCode: toAddress.zipcode,
         // ข้อมูลพัสดุ
         weight: String(Math.round(packageInfo.weight * 1000)), // แปลงจาก กก. เป็น กรัม
@@ -382,12 +379,9 @@ export const getFlashExpressShippingOptions = async (
       // 5. สร้าง URL-encoded payload สำหรับส่งไปยัง API
       const encodedPayload = new URLSearchParams(payload).toString();
 
-      // 6. ตั้งค่า Headers ที่ถูกต้อง
+      // 6. ตั้งค่า Headers ที่ถูกต้อง (เฉพาะที่จำเป็น ตามคำแนะนำจาก Flash Express)
       const headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Flash-Signature': signature,
-        'X-Flash-Timestamp': timestamp,
-        'X-Flash-Nonce': nonceStr,
         'Accept': 'application/json'
       };
 
