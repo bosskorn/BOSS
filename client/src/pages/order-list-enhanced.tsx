@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import Layout from '@/components/Layout';
-import { Loader2, Search, Filter, ChevronDown, ChevronUp, ChevronRight, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square, Tag, Clock, AlertCircle, CornerUpLeft, CircleDollarSign, Slash, Folder } from 'lucide-react';
+import { Loader2, Search, Filter, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square, Tag, Clock, AlertCircle, CornerUpLeft, CircleDollarSign, Slash, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
