@@ -11,6 +11,7 @@ import shippingRoutes from './shipping';
 import adminAuthRoutes from './admin-auth';
 import testRoutes from './test';
 import dashboardRoutes from './dashboard';
+import feeHistoryRoutes from './fee-history';
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.use('/locations', locationsRoutes);
 router.use('/shipping', shippingRoutes);
 router.use('/test', testRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/fee-history', feeHistoryRoutes);
 
 // Base API route
 router.get('/', (req, res) => {
