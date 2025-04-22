@@ -22,63 +22,76 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* สีพื้นหลัง */}
-        <rect width="240" height="80" rx="12" fill="white" />
+        {/* พื้นหลังโลโก้แบบไล่ระดับสี */}
+        <rect width="240" height="80" rx="12" fill="url(#blueGradient)" />
         
-        {/* เส้นประสานด้านล่าง (เส้นขนส่งน้ำเงิน) */}
+        {/* ไล่ระดับสี */}
+        <defs>
+          <linearGradient id="blueGradient" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stopColor="#2962FF" />
+            <stop offset="100%" stopColor="#0D47A1" />
+          </linearGradient>
+        </defs>
+
+        {/* คลื่นการเคลื่อนที่ (แทนการขนส่ง) */}
         <path 
           d="M20 50 C60 30, 120 70, 220 45" 
-          stroke="#1E88E5" 
+          stroke="rgba(255, 255, 255, 0.7)"
           strokeWidth="6" 
           strokeLinecap="round"
           strokeDasharray="1 7"
         />
         
-        {/* เส้นประสานด้านบน (เส้นขนส่งน้ำเงินเข้ม) */}
+        {/* เส้นทางการเคลื่อนที่ */}
         <path 
           d="M30 40 C80 20, 150 60, 210 30" 
-          stroke="#0D47A1" 
+          stroke="white" 
           strokeWidth="8" 
           strokeLinecap="round"
           strokeDasharray="2 4"
         />
         
-        {/* ตัวอักษรแนวเฉียง Ship */}
+        {/* ไอคอนกล่องพัสดุ */}
+        <rect x="15" y="28" width="22" height="22" rx="2" fill="white" />
+        <path d="M15 34 L37 34" stroke="#2962FF" strokeWidth="2" />
+        <path d="M26 28 L26 50" stroke="#2962FF" strokeWidth="2" />
+
+        {/* ตัวอักษร Ship */}
         <text 
-          x="45" 
-          y="42" 
+          x="50" 
+          y="48" 
           fontFamily="Arial, sans-serif" 
           fontWeight="800" 
           fontSize="28" 
-          fill="#1E88E5"
+          fill="white"
           transform="skewX(-10)"
         >
           Ship
         </text>
         
-        {/* ตัวอักษรแนวเฉียง Sync */}
+        {/* ตัวอักษร Sync */}
         <text 
-          x="115" 
-          y="42" 
+          x="120" 
+          y="48" 
           fontFamily="Arial, sans-serif" 
           fontWeight="900" 
           fontSize="28" 
-          fill="#0D47A1"
+          fill="white"
           transform="skewX(-10)"
         >
           Sync
         </text>
         
-        {/* สโลแกน */}
+        {/* สโลแกนภาษาไทย */}
         <text 
-          x="60" 
+          x="62" 
           y="65" 
           fontFamily="Kanit, sans-serif" 
           fontWeight="600" 
           fontSize="12" 
-          fill="#0D47A1"
+          fill="white"
         >
-          ส่งด่วน สะดวกรวดเร็ว
+          ส่งพัสดุรวดเร็ว ตรงเวลา
         </text>
       </svg>
     </div>
