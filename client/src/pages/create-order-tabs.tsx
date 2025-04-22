@@ -1377,8 +1377,10 @@ const CreateOrderTabsPage: React.FC = () => {
         
         console.log('ส่งข้อมูลไปยัง Flash Express API:', JSON.stringify(flashExpressData, null, 2));
         
-        // แก้ไขจาก apiRequest เป็น api.post (ใช้ axios interceptor ที่จัดการ token ไว้แล้ว)
-        const response = await api.post('/api/shipping/create', flashExpressData);
+        // เรียกใช้ endpoint ที่ถูกต้องตามที่กำหนดในไฟล์ server/routes/shipping-methods.ts
+        const response = await api.post('/api/shipping-methods/flash-express/shipping', {
+          orderData: flashExpressData
+        });
         console.log('Flash Express API response:', response.data);
         
         if (response.data.success && response.data.trackingNumber) {
