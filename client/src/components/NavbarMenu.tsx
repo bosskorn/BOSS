@@ -274,7 +274,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             className="menu-link"
           >
             <div className="flex items-center">
-              <i className="fas fa-user-circle text-purple-600 mr-1"></i>
+              <i className="fas fa-user-circle text-blue-600 mr-1"></i>
               <span className="menu-text">
                 {user ? 'บัญชีของฉัน' : 'บัญชี'}
               </span>
