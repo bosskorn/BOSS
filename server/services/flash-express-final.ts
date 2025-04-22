@@ -315,6 +315,7 @@ export const createFlashExpressShipping = async (
 
 /**
  * ดึงตัวเลือกการจัดส่งจาก Flash Express API
+ * ทำการเรียก API เพื่อคำนวณค่าจัดส่ง
  */
 export const getFlashExpressShippingOptions = async (
   fromAddress: {
@@ -339,100 +340,75 @@ export const getFlashExpressShippingOptions = async (
   try {
     // ตรวจสอบข้อมูลที่จำเป็น
     if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
+      console.log('ไม่พบ Flash Express API credentials');
       throw new Error('Flash Express API credentials not configured');
     }
 
-    console.log(`เริ่มดึงข้อมูลตัวเลือกการจัดส่งจาก Flash Express API: ${FLASH_EXPRESS_API_URL}`);
-    console.log(`ข้อมูลที่ส่ง: จาก ${fromAddress.province} ถึง ${toAddress.province}, น้ำหนัก ${packageInfo.weight} กก.`);
+    console.log(`========= Flash Express API (เริ่ม) =========`);
+    console.log(`ข้อมูลคำขอ:
+      - จาก: ${fromAddress.zipcode} (${fromAddress.province})
+      - ถึง: ${toAddress.zipcode} (${toAddress.province}, ${toAddress.district})
+      - น้ำหนัก: ${packageInfo.weight} กก.`);
 
     try {
       // 1. สร้างข้อมูลพื้นฐาน
-      const timestamp = String(Math.floor(Date.now() / 1000));
       const nonceStr = generateNonceStr();
 
-      // 2. เตรียมข้อมูลคำขอตามเอกสาร Flash Express
-      const requestParams: Record<string, any> = {
+      // 2. สร้างพารามิเตอร์ตามที่ API ต้องการ
+      const requestParams: Record<string, string> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
-        // ข้อมูลต้นทาง (แค่ srcPostalCode ตามที่ API ยอมรับได้)
+        
+        // ข้อมูลจากเอกสาร API - ฟิลด์ที่จำเป็น
         srcPostalCode: fromAddress.zipcode,
-        // ข้อมูลปลายทาง (ต้องระบุครบทุกฟิลด์ตามที่ API ต้องการ)
         dstProvinceName: toAddress.province || 'กรุงเทพมหานคร',
         dstCityName: toAddress.district || 'ลาดพร้าว',
-        dstDistrictName: toAddress.subdistrict || 'ลาดพร้าว',
         dstPostalCode: toAddress.zipcode,
-        // ข้อมูลพัสดุ
         weight: String(Math.round(packageInfo.weight * 1000)), // แปลงจาก กก. เป็น กรัม
       };
       
-      // เพิ่มข้อมูลเพิ่มเติมถ้ามี
-      if (packageInfo.width) requestParams.width = String(packageInfo.width);
-      if (packageInfo.length) requestParams.length = String(packageInfo.length);
-      if (packageInfo.height) requestParams.height = String(packageInfo.height);
+      // ข้อมูลเพิ่มเติม (ไม่บังคับ)
+      if (toAddress.subdistrict) requestParams.dstDistrictName = toAddress.subdistrict;
+      if (packageInfo.width) requestParams.width = String(Math.round(packageInfo.width));
+      if (packageInfo.length) requestParams.length = String(Math.round(packageInfo.length));
+      if (packageInfo.height) requestParams.height = String(Math.round(packageInfo.height));
 
-      // 3. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก)
-      const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
+      // 3. คำนวณลายเซ็น
+      const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY);
 
-      // 4. นำลายเซ็นมาเพิ่มเข้ากับข้อมูลคำขอ
-      const payload = { ...requestParams, sign: signature };
+      // 4. เพิ่มลายเซ็นเข้าไปในพารามิเตอร์
+      requestParams.sign = signature;
 
-      // 5. สร้าง URL-encoded payload สำหรับส่งไปยัง API
-      const encodedPayload = new URLSearchParams(payload).toString();
+      // 5. แปลงเป็นรูปแบบ application/x-www-form-urlencoded
+      const encodedPayload = new URLSearchParams(requestParams).toString();
 
-      // 6. ตั้งค่า Headers ที่ถูกต้อง (เฉพาะที่จำเป็น ตามคำแนะนำจาก Flash Express)
+      // 6. กำหนด Headers
       const headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
       };
 
-      console.log('Headers ที่ใช้:', JSON.stringify(headers, null, 2));
-      console.log('Payload ที่ส่งไป (ก่อน encode):', JSON.stringify(payload, null, 2));
-      console.log('Encoded payload ที่ส่งไป:', encodedPayload);
+      console.log('🔍 รายละเอียดที่ส่งไป API:');
+      console.log('URL:', `${FLASH_EXPRESS_API_URL}/open/v1/orders/estimate_rate`);
+      console.log('Headers:', JSON.stringify(headers, null, 2));
+      console.log('Payload (raw):', JSON.stringify(requestParams, null, 2));
+      console.log('Payload (encoded):', encodedPayload);
 
-      // 7. ใช้ endpoint ที่ถูกต้องตามเอกสาร Flash Express
-      const possibleEndpoints = [
-        '/open/v1/orders/estimate_rate'
-      ];
+      // 7. เรียกใช้ API
+      console.log('⏳ กำลังเรียก Flash Express API...');
+      const response = await axios.post(
+        `${FLASH_EXPRESS_API_URL}/open/v1/orders/estimate_rate`,
+        encodedPayload,
+        { headers, timeout: API_TIMEOUT }
+      );
 
-      let response = null;
-      let successEndpoint = '';
-
-      // ลองเรียกแต่ละ endpoint จนกว่าจะสำเร็จ
-      for (const endpoint of possibleEndpoints) {
-        try {
-          console.log(`ทดลองเรียก endpoint: ${endpoint}`);
-          response = await axios.post(
-            `${FLASH_EXPRESS_API_URL}${endpoint}`,
-            encodedPayload,
-            {
-              headers: headers,
-              timeout: API_TIMEOUT
-            }
-          );
-
-          // ถ้าไม่มี error แสดงว่าสำเร็จ
-          successEndpoint = endpoint;
-          console.log(`เรียก endpoint ${endpoint} สำเร็จ`);
-          break;
-        } catch (err: any) {
-          console.log(`เรียก endpoint ${endpoint} ล้มเหลว: ${err.message}`);
-          // ถ้าไม่ใช่ endpoint สุดท้าย ให้ลองต่อไป
-          if (endpoint !== possibleEndpoints[possibleEndpoints.length - 1]) {
-            continue;
-          }
-          // ถ้าเป็น endpoint สุดท้ายแล้ว ให้ throw error
-          throw err;
-        }
-      }
-
-      if (!response) {
-        throw new Error('ไม่สามารถเรียก Flash Express API ได้ ทุก endpoint ล้มเหลว');
-      }
-
-      console.log(`Flash Express API Response (${successEndpoint}):`, JSON.stringify(response.data, null, 2));
+      console.log('✅ เรียก API สำเร็จ! Status:', response.status);
+      console.log('📦 ข้อมูลที่ได้รับ:', JSON.stringify(response.data, null, 2));
 
       // 8. ตรวจสอบผลลัพธ์
-      if (response.data && response.data.code === 1) {
+      if (response.data && response.data.code === 1 && Array.isArray(response.data.data) && response.data.data.length > 0) {
+        console.log('✅ พบข้อมูลตัวเลือกการจัดส่ง', response.data.data.length, 'รายการ');
+        
         // แปลงข้อมูลให้อยู่ในรูปแบบที่ต้องการ
         const options = response.data.data.map((item: any, index: number) => ({
           id: index + 1,
@@ -444,59 +420,58 @@ export const getFlashExpressShippingOptions = async (
           logo: '/assets/flash-express.png'
         }));
 
+        console.log('========= Flash Express API (เสร็จสิ้น) =========');
         return options;
       } else {
-        // ใช้ข้อมูลตัวเลือกการจัดส่งเริ่มต้น
-        console.log('ไม่พบข้อมูลจาก API ใช้ข้อมูลเริ่มต้นแทน');
-        return [
-          {
-            id: 1,
-            name: 'Flash Express - ส่งด่วน',
-            price: 60,
-            deliveryTime: '1-2 วัน',
-            provider: 'Flash Express',
-            serviceId: 'FLASH-FAST',
-            logo: '/assets/flash-express.png'
-          },
-          {
-            id: 2,
-            name: 'Flash Express - ส่งธรรมดา',
-            price: 40,
-            deliveryTime: '2-3 วัน',
-            provider: 'Flash Express',
-            serviceId: 'FLASH-NORMAL',
-            logo: '/assets/flash-express.png'
-          }
-        ];
+        console.log('⚠️ ไม่พบข้อมูลตัวเลือกการจัดส่งในการตอบกลับ API');
+        console.log('⚠️ ใช้ข้อมูลตัวเลือกเริ่มต้นแทน');
+        console.log('========= Flash Express API (เสร็จสิ้น - ใช้ข้อมูลเริ่มต้น) =========');
+
+        return getDefaultFlashOptions();
       }
     } catch (apiError: any) {
-      console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API สำหรับการดึงตัวเลือกการจัดส่ง:', apiError);
+      console.error('❌ เกิดข้อผิดพลาดในการเรียก Flash Express API:', apiError.message);
 
-      // ใช้ข้อมูลตัวเลือกการจัดส่งเริ่มต้น
-      console.log('ใช้ข้อมูลตัวเลือกการจัดส่งเริ่มต้น');
-      return [
-        {
-          id: 1,
-          name: 'Flash Express - ส่งด่วน',
-          price: 60,
-          deliveryTime: '1-2 วัน',
-          provider: 'Flash Express',
-          serviceId: 'FLASH-FAST',
-          logo: '/assets/flash-express.png'
-        },
-        {
-          id: 2,
-          name: 'Flash Express - ส่งธรรมดา',
-          price: 40,
-          deliveryTime: '2-3 วัน',
-          provider: 'Flash Express',
-          serviceId: 'FLASH-NORMAL',
-          logo: '/assets/flash-express.png'
-        }
-      ];
+      if (apiError.response) {
+        console.error('❌ Response status:', apiError.response.status);
+        console.error('❌ Response data:', JSON.stringify(apiError.response.data, null, 2));
+      }
+
+      console.log('⚠️ ใช้ข้อมูลตัวเลือกเริ่มต้นแทน');
+      console.log('========= Flash Express API (เสร็จสิ้น - มีข้อผิดพลาด) =========');
+      
+      return getDefaultFlashOptions();
     }
   } catch (error: any) {
-    console.error('Error getting Flash Express shipping options:', error);
-    throw new Error(`ไม่สามารถเรียกข้อมูลจาก Flash Express API ได้: ${error.message}`);
+    console.error('❌ เกิดข้อผิดพลาดทั่วไปในการเรียก Flash Express API:', error.message);
+    console.log('========= Flash Express API (เสร็จสิ้น - มีข้อผิดพลาดทั่วไป) =========');
+    
+    return getDefaultFlashOptions();
   }
 };
+
+/**
+ * ฟังก์ชันสร้างตัวเลือกการจัดส่งเริ่มต้นสำหรับ Flash Express
+ */
+function getDefaultFlashOptions() {
+  return [
+    {
+      id: 1,
+      name: 'Flash Express - ส่งด่วน',
+      price: 60,
+      deliveryTime: '1-2 วัน',
+      provider: 'Flash Express',
+      serviceId: 'FLASH-FAST',
+      logo: '/assets/flash-express.png'
+    },
+    {
+      id: 2,
+      name: 'Flash Express - ส่งธรรมดา',
+      price: 40,
+      deliveryTime: '2-3 วัน',
+      provider: 'Flash Express',
+      serviceId: 'FLASH-NORMAL',
+      logo: '/assets/flash-express.png'
+    }
+  ];
+}
