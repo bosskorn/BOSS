@@ -915,6 +915,17 @@ const OrderList: React.FC = () => {
                           // จำนวนรายการที่จะลบ
                           const deleteCount = selectedOrders.length;
                           
+                          // สำรองข้อมูลเดิมก่อนลบ (ในกรณีที่ต้องการคืนสถานะ)
+                          const ordersBackup = [...orders];
+                          const filteredOrdersBackup = [...filteredOrders];
+                          const selectedOrdersBackup = [...selectedOrders];
+                          
+                          // แสดงข้อความกำลังดำเนินการ
+                          toast({
+                            title: 'กำลังดำเนินการ',
+                            description: `กำลังลบรายการที่เลือก ${deleteCount} รายการ`,
+                          });
+                          
                           // ลบรายการจาก state ทันที (เพื่อ UI ตอบสนองเร็ว)
                           const deletedOrderIds = [...selectedOrders];
                           const updatedOrders = orders.filter(order => !deletedOrderIds.includes(order.id));
@@ -927,12 +938,37 @@ const OrderList: React.FC = () => {
                           // ทำการลบพร้อมกันทั้งหมดที่ backend
                           Promise.all(deletePromises)
                             .then(results => {
-                              toast({
-                                title: 'ลบรายการสำเร็จ',
-                                description: `ลบรายการทั้งหมด ${deleteCount} รายการเรียบร้อยแล้ว`,
-                                variant: 'default',
-                              });
-                              // รีเฟรชข้อมูลอีกครั้งเพื่อความแน่ใจ
+                              // ตรวจสอบว่ามีรายการใดลบไม่ได้บ้าง
+                              const failedResults = results.filter(result => !result?.success);
+                              
+                              if (failedResults.length === 0) {
+                                // ทุกรายการลบสำเร็จ
+                                toast({
+                                  title: 'ลบรายการสำเร็จ',
+                                  description: `ลบรายการทั้งหมด ${deleteCount} รายการเรียบร้อยแล้ว`,
+                                  variant: 'default',
+                                });
+                              } else {
+                                // มีบางรายการลบไม่สำเร็จ แต่บางรายการลบได้
+                                const successCount = deleteCount - failedResults.length;
+                                
+                                if (successCount > 0) {
+                                  toast({
+                                    title: 'ลบรายการบางส่วนสำเร็จ',
+                                    description: `ลบได้ ${successCount} จาก ${deleteCount} รายการ มีบางรายการไม่สามารถลบได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่`,
+                                    variant: 'default',
+                                  });
+                                } else {
+                                  // ไม่มีรายการใดลบสำเร็จเลย
+                                  toast({
+                                    title: 'ไม่สามารถลบรายการได้',
+                                    description: 'ไม่สามารถลบรายการได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่',
+                                    variant: 'destructive',
+                                  });
+                                }
+                              }
+                              
+                              // รีเฟรชข้อมูลทุกกรณี
                               fetchOrders();
                             })
                             .catch(error => {
@@ -1133,6 +1169,15 @@ const OrderList: React.FC = () => {
                               title="ลบออเดอร์"
                               onClick={() => {
                                 if (confirm(`ต้องการลบออเดอร์ ${order.orderNumber} ใช่หรือไม่?`)) {
+                                  // สำรองข้อมูลเดิมไว้ก่อน
+                                  const orderBackup = {...order};
+                                  
+                                  // แสดงข้อความกำลังดำเนินการ
+                                  toast({
+                                    title: 'กำลังลบรายการ',
+                                    description: `กำลังลบออเดอร์ ${order.orderNumber}`,
+                                  });
+                                  
                                   // ลบรายการจาก state ทันที (เพื่อ UI ตอบสนองเร็ว)
                                   const updatedOrders = orders.filter(o => o.id !== order.id);
                                   const updatedFilteredOrders = filteredOrders.filter(o => o.id !== order.id);
@@ -1163,7 +1208,7 @@ const OrderList: React.FC = () => {
                                         description: `ลบออเดอร์ ${order.orderNumber} เรียบร้อยแล้ว`,
                                         variant: 'default',
                                       });
-                                      // รีเฟรชข้อมูลในกรณีที่มีปัญหา
+                                      // ให้แน่ใจว่าข้อมูลปัจจุบันในรายการตรงกับ backend
                                       fetchOrders();
                                     } else {
                                       throw new Error(data.message || 'ไม่สามารถลบออเดอร์ได้');
@@ -1185,6 +1230,9 @@ const OrderList: React.FC = () => {
                                         : errorMessage,
                                       variant: 'destructive',
                                     });
+                                    
+                                    // รีเฟรชข้อมูลเพื่อแสดงข้อมูลที่ถูกต้องตามฐานข้อมูล
+                                    fetchOrders();
                                   });
                                 }
                               }}
