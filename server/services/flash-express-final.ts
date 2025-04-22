@@ -37,16 +37,12 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
   try {
     console.log('พารามิเตอร์ที่ได้รับเพื่อสร้างลายเซ็น:', JSON.stringify(params, null, 2));
 
-    // รายการฟิลด์ที่จะไม่นำมาใช้ในการคำนวณลายเซ็น
-    // กำหนดเฉพาะ 'sign' และ 'subItemTypes' เป็นฟิลด์ที่ไม่ใช้ในการคำนวณลายเซ็น
-    const excludedFields = ['sign', 'subItemTypes'];
-
-    // สร้างอ็อบเจกต์ใหม่ที่ไม่มีฟิลด์ที่ถูกกันออก
-    const signParams: Record<string, string> = {};
+    // สร้างอ็อบเจกต์ใหม่ที่กรองฟิลด์ sign และ subItemTypes ออก และแปลงทุกค่าเป็น string
+    const filteredParams: Record<string, string> = {};
     
     for (const key in params) {
-      // ข้ามฟิลด์ที่อยู่ในรายการที่ไม่ต้องการคำนวณลายเซ็น
-      if (excludedFields.includes(key)) continue;
+      // ข้ามฟิลด์ sign และ subItemTypes
+      if (key === 'sign' || key === 'subItemTypes') continue;
 
       const value = params[key];
       
@@ -60,22 +56,17 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
       ) continue;
 
       // แปลงทุกค่าเป็น string ตามที่ Flash Express API ต้องการ
-      signParams[key] = String(value);
+      filteredParams[key] = String(value);
     }
 
     // เรียงลำดับคีย์ตามตัวอักษร (ASCII)
-    const sortedKeys = Object.keys(signParams).sort();
+    const sortedKeys = Object.keys(filteredParams).sort();
     
-    // สร้างสตริงสำหรับลายเซ็น - สำคัญมาก: ต้องไม่มีการ encode URL ในขั้นตอนนี้
-    const paramPairs = [];
-    for (const key of sortedKeys) {
-      paramPairs.push(`${key}=${signParams[key]}`);
-    }
-    
-    // รวมเป็นสตริงเดียว (stringA)
+    // สร้างสตริงสำหรับลายเซ็น
+    const paramPairs = sortedKeys.map(key => `${key}=${filteredParams[key]}`);
     const paramString = paramPairs.join('&');
     
-    // เพิ่ม API key แบบตรงๆ ไม่มีการ encode (stringSignTemp)
+    // เพิ่ม API key ที่ท้าย
     const stringToSign = `${paramString}&key=${apiKey}`;
 
     console.log('สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
