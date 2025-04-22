@@ -278,9 +278,18 @@ export const createFlashExpressShipping = async (
       delete requestParams.subItemTypes;
       delete fullRequestParams.subItemTypes;
 
-      // 4. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode
+      // 4. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก) - ใช้วิธีการเดียวกับไฟล์ทดสอบ
       console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
-      const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
+      
+      const stringToSign = Object.keys(requestParams)
+        .sort()
+        .map(key => `${key}=${requestParams[key]}`)
+        .join('&') + `&key=${FLASH_EXPRESS_API_KEY}`;
+      
+      console.log('stringToSign:', stringToSign);
+      
+      const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+      console.log('ลายเซ็นที่สร้าง:', signature);
 
       // 5. สร้าง payload พร้อมลายเซ็น
       const payload: Record<string, any> = { ...fullRequestParams, sign: signature };
@@ -431,8 +440,18 @@ export const getFlashExpressShippingOptions = async (
       if (packageInfo.length) requestParams.length = String(Math.round(packageInfo.length));
       if (packageInfo.height) requestParams.height = String(Math.round(packageInfo.height));
 
-      // 3. คำนวณลายเซ็น
-      const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY);
+      // 3. คำนวณลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก) - ใช้วิธีการเดียวกับไฟล์ทดสอบ
+      console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
+      
+      const stringToSign = Object.keys(requestParams)
+        .sort()
+        .map(key => `${key}=${requestParams[key]}`)
+        .join('&') + `&key=${FLASH_EXPRESS_API_KEY}`;
+      
+      console.log('stringToSign:', stringToSign);
+      
+      const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+      console.log('ลายเซ็นที่สร้าง:', signature);
 
       // 4. เพิ่มลายเซ็นเข้าไปในพารามิเตอร์
       requestParams.sign = signature;
