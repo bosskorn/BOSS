@@ -144,11 +144,11 @@ export const createFlashExpressShipping = async (
       const recipientPhone = orderData.dstPhone.replace(/[\s-]/g, '');
 
       // 2. เตรียมข้อมูลคำขอตามเอกสาร Flash Express
+      // สร้างชุดพารามิเตอร์พื้นฐานที่ใช้ในการคำนวณลายเซ็น
       const requestParams: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
         outTradeNo: orderData.outTradeNo,
-        expressCategory: orderData.expressCategory,
         srcName: orderData.srcName,
         srcPhone: senderPhone.replace(/[-\s]/g, ''),
         srcProvinceName: orderData.srcProvinceName,
@@ -166,19 +166,56 @@ export const createFlashExpressShipping = async (
         insured: orderData.insured || 0,
         codEnabled: orderData.codEnabled || 0
       };
+      
+      // สร้างชุดพารามิเตอร์เต็มที่จะส่งไปยัง API แยกต่างหากจากชุดที่ใช้คำนวณลายเซ็น
+      // ทำสำเนาแบบลึกของ requestParams เพื่อความปลอดภัย
+      const fullRequestParams: Record<string, any> = JSON.parse(JSON.stringify(requestParams));
+      
+      // เพิ่ม expressCategory ที่ไม่รวมในการคำนวณลายเซ็น
+      fullRequestParams.expressCategory = orderData.expressCategory;
 
-      // เพิ่มข้อมูลเพิ่มเติมถ้ามี
-      if (orderData.srcDistrictName) requestParams.srcDistrictName = orderData.srcDistrictName;
-      if (orderData.dstDistrictName) requestParams.dstDistrictName = orderData.dstDistrictName;
-      if (orderData.dstHomePhone) requestParams.dstHomePhone = orderData.dstHomePhone.replace(/[-\s]/g, '');
-      if (orderData.width) requestParams.width = orderData.width;
-      if (orderData.height) requestParams.height = orderData.height;
-      if (orderData.length) requestParams.length = orderData.length;
-      if (orderData.remark) requestParams.remark = orderData.remark;
+      // เพิ่มข้อมูลเพิ่มเติมถ้ามี - ทั้งใน requestParams และ fullRequestParams
+      if (orderData.srcDistrictName) {
+        requestParams.srcDistrictName = orderData.srcDistrictName;
+        fullRequestParams.srcDistrictName = orderData.srcDistrictName;
+      }
+      
+      if (orderData.dstDistrictName) {
+        requestParams.dstDistrictName = orderData.dstDistrictName;
+        fullRequestParams.dstDistrictName = orderData.dstDistrictName;
+      }
+      
+      if (orderData.dstHomePhone) {
+        const formattedHomePhone = orderData.dstHomePhone.replace(/[\s-]/g, '');
+        requestParams.dstHomePhone = formattedHomePhone;
+        fullRequestParams.dstHomePhone = formattedHomePhone;
+      }
+      
+      if (orderData.width) {
+        requestParams.width = String(orderData.width);
+        fullRequestParams.width = String(orderData.width);
+      }
+      
+      if (orderData.height) {
+        requestParams.height = String(orderData.height);
+        fullRequestParams.height = String(orderData.height);
+      }
+      
+      if (orderData.length) {
+        requestParams.length = String(orderData.length);
+        fullRequestParams.length = String(orderData.length);
+      }
+      
+      if (orderData.remark) {
+        requestParams.remark = orderData.remark;
+        fullRequestParams.remark = orderData.remark;
+      }
 
       // เพิ่มข้อมูล COD ถ้ามี
       if (orderData.codEnabled === 1 && orderData.codAmount) {
-        requestParams.codAmount = orderData.codAmount;
+        requestParams.codAmount = String(orderData.codAmount);
+        fullRequestParams.codAmount = String(orderData.codAmount);
+        
         // สร้าง subItemTypes อัตโนมัติถ้าไม่มี
         if (!orderData.subItemTypes || orderData.subItemTypes.length === 0) {
           orderData.subItemTypes = [{
@@ -192,35 +229,17 @@ export const createFlashExpressShipping = async (
 
       // เพิ่มข้อมูลประกันถ้ามี
       if (orderData.insured === 1 && orderData.insureDeclareValue) {
-        requestParams.insureDeclareValue = orderData.insureDeclareValue;
-      }
-
-      // เพิ่มข้อมูลเพิ่มเติมเฉพาะที่มี
-      if (orderData.srcDistrictName) requestParams.srcDistrictName = orderData.srcDistrictName;
-      if (orderData.dstDistrictName) requestParams.dstDistrictName = orderData.dstDistrictName;
-      if (orderData.dstHomePhone) requestParams.dstHomePhone = orderData.dstHomePhone.replace(/[\s-]/g, '');
-      if (orderData.width) requestParams.width = String(orderData.width);
-      if (orderData.height) requestParams.height = String(orderData.height);
-      if (orderData.length) requestParams.length = String(orderData.length);
-      if (orderData.remark) requestParams.remark = orderData.remark;
-
-      // เพิ่มข้อมูล COD ถ้ามี
-      if (orderData.codEnabled === 1 && orderData.codAmount) {
-        requestParams.codAmount = String(orderData.codAmount);
-      }
-
-      // เพิ่มข้อมูลประกันถ้ามี
-      if (orderData.insured === 1 && orderData.insureDeclareValue) {
         requestParams.insureDeclareValue = String(orderData.insureDeclareValue);
+        fullRequestParams.insureDeclareValue = String(orderData.insureDeclareValue);
       }
 
       // 3. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก)
       console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
       const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
 
-      // 4. นำลายเซ็นมาเพิ่มเข้ากับข้อมูลคำขอ
+      // 4. นำลายเซ็นมาเพิ่มเข้ากับข้อมูลคำขอเต็ม
       // กำหนด type ของ payload ให้รองรับ subItemTypes ที่เป็น string
-      const payload: Record<string, any> = { ...requestParams, sign: signature };
+      const payload: Record<string, any> = { ...fullRequestParams, sign: signature };
 
       // 5. สร้าง subItemTypes แยกต่างหาก (ต้องทำหลังจากสร้างลายเซ็นแล้ว)
       let subItemTypesJSON: string | undefined = undefined;
