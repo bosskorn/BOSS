@@ -350,13 +350,21 @@ router.post("/create-shipping", async (req, res) => {
       "X-Flash-Nonce": nonceStr
     });
     
-    // ส่งคำขอไปยัง Flash Express API
+    console.log("กำลังส่งคำขอไปยัง Flash Express API...");
+    // ส่งคำขอไปยัง Flash Express API - ตรวจสอบ URL อีกครั้ง
+    const apiUrl = "https://open-api-tra.flashexpress.com/open/v3/orders";
+    console.log("API URL:", apiUrl);
+    
+    // แปลง payload เป็น URL-encoded string ตามรูปแบบที่ต้องการของ Flash Express API
+    const encodedPayload = new URLSearchParams(finalOrderData as Record<string, string>).toString();
+    console.log("ข้อมูลที่ส่งหลังแปลงเป็น URL-encoded:", encodedPayload);
+    
     const response = await axios.post(
-      "https://open-api-tra.flashexpress.com/open/v3/orders",
-      finalOrderData,
+      apiUrl,
+      encodedPayload,
       {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded", // เปลี่ยนเป็น form-urlencoded
           "X-Flash-Signature": signature,
           "X-Flash-Timestamp": timestamp,
           "X-Flash-Nonce": nonceStr
@@ -373,22 +381,52 @@ router.post("/create-shipping", async (req, res) => {
         url: "https://open-api-tra.flashexpress.com/open/v3/orders",
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
           "X-Flash-Signature": signature,
           "X-Flash-Timestamp": timestamp,
           "X-Flash-Nonce": nonceStr
         },
-        data: finalOrderData
+        data: finalOrderData,
+        encodedData: encodedPayload
       }
     });
   } catch (error: any) {
     console.error("Error creating shipping:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      response: error.response?.data || "No response data",
-      stack: error.stack
-    });
+    
+    // เพิ่มการตรวจสอบและบันทึกข้อมูลเพิ่มเติมเพื่อการวิเคราะห์
+    if (error.response) {
+      // การตอบกลับจากเซิร์ฟเวอร์ด้วยสถานะไม่ใช่ 2xx
+      console.error("Response error data:", error.response.data);
+      console.error("Response error status:", error.response.status);
+      console.error("Response error headers:", error.response.headers);
+      
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        responseStatus: error.response.status,
+        responseData: 
+          typeof error.response.data === 'string' && error.response.data.includes('<html') 
+            ? "ได้รับ HTML แทนที่จะเป็น JSON (อาจเป็น URL ไม่ถูกต้องหรือปัญหาการเข้าถึง API)"
+            : error.response.data,
+        htmlReceived: typeof error.response.data === 'string' && error.response.data.includes('<html')
+      });
+    } else if (error.request) {
+      // การร้องขอถูกสร้างแต่ไม่ได้รับการตอบกลับ
+      console.error("No response received:", error.request);
+      res.status(500).json({
+        success: false,
+        error: "ไม่ได้รับการตอบกลับจาก Flash Express API",
+        request: "Request was made but no response was received"
+      });
+    } else {
+      // มีข้อผิดพลาดในการตั้งค่าคำขอ
+      console.error("Error details:", error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        stack: error.stack
+      });
+    }
   }
 });
 
