@@ -337,6 +337,19 @@ router.post("/create-shipping", async (req, res) => {
       subItemTypes: JSON.stringify(subItemTypes)
     };
     
+    console.log("=== การสร้างการจัดส่ง Flash Express ===");
+    console.log("URL:", "https://open-api-tra.flashexpress.com/open/v3/orders");
+    console.log("ข้อมูลที่ใช้สร้างลายเซ็น:", JSON.stringify(orderDataWithoutSubItems));
+    console.log("ลายเซ็นที่สร้าง:", signature);
+    console.log("subItemTypes ที่แนบ (หลังสร้างลายเซ็น):", JSON.stringify(subItemTypes));
+    console.log("ข้อมูลที่ส่งไปยัง API:", JSON.stringify(finalOrderData));
+    console.log("Headers:", JSON.stringify({
+      "Content-Type": "application/json",
+      "X-Flash-Signature": signature,
+      "X-Flash-Timestamp": timestamp,
+      "X-Flash-Nonce": nonceStr
+    }));
+    
     // ส่งคำขอไปยัง Flash Express API
     const response = await axios.post(
       "https://open-api-tra.flashexpress.com/open/v3/orders",
@@ -350,6 +363,8 @@ router.post("/create-shipping", async (req, res) => {
         }
       }
     );
+    
+    console.log("การตอบกลับจาก API:", JSON.stringify(response.data));
     
     res.json({
       success: true,
