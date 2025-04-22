@@ -259,40 +259,39 @@ export const createFlashExpressShipping = async (
         fullRequestParams.insureDeclareValue = String(orderData.insureDeclareValue);
       }
 
-      // 3. เตรียม subItemTypes เป็น JSON string
+      // 3. แยก subItemTypes ออกมาเพื่อจัดการแยกต่างหาก
       let subItemTypesJSON: string | undefined = undefined;
 
+      // สำรอง subItemTypes สำหรับใส่กลับหลังคำนวณลายเซ็น
       if (orderData.subItemTypes) {
-        // เตรียม subItemTypes ในรูปแบบ JSON string
         if (typeof orderData.subItemTypes === 'string') {
           subItemTypesJSON = orderData.subItemTypes;
         } else if (Array.isArray(orderData.subItemTypes) && orderData.subItemTypes.length > 0) {
           subItemTypesJSON = JSON.stringify(orderData.subItemTypes);
         }
       } else if (orderData.codEnabled === 1) {
-        // จำเป็นต้องมี subItemTypes หากเป็น COD
+        // สร้าง default subItemTypes สำหรับ COD
         const defaultItem = [{
-          itemName: 'สินค้าออเดอร์',
-          itemWeightSize: '1Kg',
+          itemName: `สินค้าออเดอร์ #${orderData.outTradeNo}`,
+          itemWeightSize: `${orderData.weight/1000}Kg`,
           itemColor: '-',
           itemQuantity: 1
         }];
         subItemTypesJSON = JSON.stringify(defaultItem);
       }
       
-      // 4. ลบ subItemTypes ออกจาก requestParams เพื่อไม่ให้มีผลต่อการคำนวณลายเซ็น
-      if ('subItemTypes' in requestParams) {
-        delete requestParams.subItemTypes;
-      }
+      // ลบ subItemTypes ออกจาก params ก่อนคำนวณลายเซ็น
+      delete requestParams.subItemTypes;
+      delete fullRequestParams.subItemTypes;
 
-      // 5. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode
+      // 4. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode
       console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
       const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
 
-      // 6. สร้าง payload พร้อมลายเซ็น
+      // 5. สร้าง payload พร้อมลายเซ็น
       const payload: Record<string, any> = { ...fullRequestParams, sign: signature };
 
-      // 7. เพิ่ม subItemTypes เข้าไปใน payload หลังจากคำนวณลายเซ็นแล้ว
+      // 6. เพิ่ม subItemTypes เข้าไปใน payload หลังจากคำนวณลายเซ็นแล้ว
       if (subItemTypesJSON) {
         payload.subItemTypes = subItemTypesJSON;
         console.log('subItemTypes ที่ส่งไป:', subItemTypesJSON);
