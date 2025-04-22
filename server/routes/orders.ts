@@ -659,6 +659,24 @@ router.delete('/:id', auth, async (req, res) => {
       });
     }
     
+    // ตรวจสอบว่ามีข้อมูลค่าธรรมเนียมหรือไม่ก่อนลบ
+    try {
+      // ตรวจสอบว่ามีข้อมูลในตาราง fee_history ที่เชื่อมกับออเดอร์นี้หรือไม่
+      const [feeHistoryRecord] = await db.select()
+        .from(feeHistory)
+        .where(eq(feeHistory.orderId, orderId));
+      
+      if (feeHistoryRecord) {
+        return res.status(400).json({
+          success: false,
+          message: 'ไม่สามารถลบรายการได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่'
+        });
+      }
+    } catch (feeCheckError) {
+      console.error('Error checking fee history:', feeCheckError);
+      // ดำเนินการต่อไปแม้จะไม่สามารถตรวจสอบได้
+    }
+    
     const result = await storage.deleteOrder(orderId);
     if (!result) {
       return res.status(404).json({
@@ -666,15 +684,24 @@ router.delete('/:id', auth, async (req, res) => {
         message: 'ไม่พบคำสั่งซื้อนี้'
       });
     }
+    
     res.json({
       success: true,
       message: 'ลบคำสั่งซื้อสำเร็จ'
     });
   } catch (error) {
     console.error(`Error deleting order ${req.params.id}:`, error);
+    // ตรวจสอบว่าเป็น foreign key error หรือไม่
+    const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการลบคำสั่งซื้อ';
+    const isForeignKeyError = errorMessage.includes('foreign key constraint') || 
+                             errorMessage.includes('fee_history') ||
+                             errorMessage.includes('referenced');
+    
     res.status(500).json({
       success: false,
-      message: 'เกิดข้อผิดพลาดในการลบคำสั่งซื้อ'
+      message: isForeignKeyError 
+        ? 'ไม่สามารถลบรายการได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่' 
+        : 'เกิดข้อผิดพลาดในการลบคำสั่งซื้อ'
     });
   }
 });
