@@ -1335,7 +1335,7 @@ const CreateOrderTabsPage: React.FC = () => {
         const flashExpressData = {
           outTradeNo: orderNumber,
           srcName: sender.name,
-          srcPhone: sender.phone, 
+          srcPhone: sender.phone.replace(/[- ]/g, ''), // ตรวจสอบให้แน่ใจว่าเบอร์โทรไม่มีขีดหรือช่องว่าง
           srcProvinceName: sender.address.province,
           srcCityName: sender.address.district,
           srcDistrictName: sender.address.subdistrict,
@@ -1362,17 +1362,17 @@ const CreateOrderTabsPage: React.FC = () => {
           height: shipmentDetails.dimensions.height,
           insured: 0, // ไม่ซื้อประกัน
           
-          // ข้อมูล COD
+          // ข้อมูล COD ต้องระบุเป็นจำนวนสตางค์ (บาท x 100)
           codEnabled: data.isCOD ? 1 : 0,
-          codAmount: data.isCOD && data.codAmount ? Math.round(data.codAmount * 100) : undefined,
+          codAmount: data.isCOD && data.codAmount ? Math.floor(data.codAmount * 100) : undefined,
           
-          // รายละเอียดสินค้า
-          subItemTypes: data.items.map(item => ({
+          // รายละเอียดสินค้า - ส่งเป็น JSON string ตามที่ Flash Express ต้องการ
+          subItemTypes: JSON.stringify(data.items.map(item => ({
             itemName: item.name,
             itemWeightSize: "กลาง",
             itemColor: "ขาว", // ต้องระบุสีตามที่ Flash Express API ต้องการ
             itemQuantity: item.quantity
-          }))
+          })))
         };
         
         console.log('ส่งข้อมูลไปยัง Flash Express API:', JSON.stringify(flashExpressData, null, 2));

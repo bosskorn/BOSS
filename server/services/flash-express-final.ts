@@ -224,10 +224,18 @@ export const createFlashExpressShipping = async (
       // 5. สร้าง subItemTypes แยกต่างหาก (ต้องทำหลังจากสร้างลายเซ็นแล้ว)
       let subItemTypesJSON: string | undefined = undefined;
 
-      if (orderData.subItemTypes && orderData.subItemTypes.length > 0) {
-        subItemTypesJSON = JSON.stringify(orderData.subItemTypes);
-        payload.subItemTypes = subItemTypesJSON;
-        console.log('subItemTypes ที่ส่งไป:', subItemTypesJSON);
+      if (orderData.subItemTypes) {
+        // ตรวจสอบว่า subItemTypes เป็น string อยู่แล้วหรือไม่
+        if (typeof orderData.subItemTypes === 'string') {
+          subItemTypesJSON = orderData.subItemTypes;
+        } else if (Array.isArray(orderData.subItemTypes) && orderData.subItemTypes.length > 0) {
+          subItemTypesJSON = JSON.stringify(orderData.subItemTypes);
+        }
+        
+        if (subItemTypesJSON) {
+          payload.subItemTypes = subItemTypesJSON;
+          console.log('subItemTypes ที่ส่งไป:', subItemTypesJSON);
+        }
       } else if (orderData.codEnabled === 1) {
         // จำเป็นต้องมี subItemTypes หากเป็น COD
         const defaultItem = [{
