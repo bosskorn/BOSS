@@ -1066,29 +1066,26 @@ const CreateOrderTabsPage: React.FC = () => {
     try {
       console.log("กำลังดึงข้อมูลตัวเลือกการจัดส่ง...");
       
+      // ตัวเลือก Flash Express (เพิ่มเข้ามาเป็นตัวเลือกจริง)
+      const flashExpressOptions = [
+        {
+          id: 'flash_express_fast',
+          name: 'Flash Express - ส่งด่วน',
+          price: 60,
+          deliveryTime: '1-2 วัน',
+          provider: 'Flash Express',
+          serviceId: 'FLASH-FAST',
+          logo: '/assets/flash-express.png',
+          icon: '⚡',
+          isPopular: true,
+          isCODAvailable: true,
+          maxCODAmount: 20000
+        }
+      ];
+      
       // สร้างตัวเลือกการจัดส่งเริ่มต้น (สำหรับกรณีเรียก API ไม่สำเร็จ)
       const defaultOptions = [
-        {
-          id: 'xiaobaix_express',
-          name: 'เสี่ยวไป๋ เอ็กเพรส - ด่วน (1 วัน)',
-          price: 60,
-          deliveryTime: '1 วัน',
-          provider: 'เสี่ยวไป๋ เอ็กเพรส',
-          serviceId: 'xiaobaix_express',
-          logo: '/assets/shipping-icon.png',
-          icon: '⚡',
-          isPopular: true
-        },
-        {
-          id: 'xiaobaix_normal',
-          name: 'เสี่ยวไป๋ เอ็กเพรส - ปกติ',
-          price: 40,
-          deliveryTime: '1-2 วัน',
-          provider: 'เสี่ยวไป๋ เอ็กเพรส',
-          serviceId: 'xiaobaix_normal',
-          logo: '/assets/shipping-icon.png',
-          icon: '🚚'
-        },
+        // เอา เสี่ยวไป๋ เอ็กเพรส ออกไป เนื่องจากเป็นบริการสมมติ
         {
           id: 'speedline_economy',
           name: 'SpeedLine - ประหยัด',
@@ -1097,7 +1094,9 @@ const CreateOrderTabsPage: React.FC = () => {
           provider: 'SpeedLine',
           serviceId: 'speedline_economy',
           logo: '/assets/shipping-icon.png',
-          icon: '🚚'
+          icon: '🚚',
+          isCODAvailable: true,
+          maxCODAmount: 15000
         },
         {
           id: 'thaistar_premium',
@@ -1107,20 +1106,78 @@ const CreateOrderTabsPage: React.FC = () => {
           provider: 'ThaiStar Delivery',
           serviceId: 'thaistar_premium',
           logo: '/assets/shipping-icon.png',
-          icon: '⭐'
+          icon: '⭐',
+          isCODAvailable: true,
+          maxCODAmount: 20000
         }
       ];
       
-      // พยายามดึงข้อมูลจากบริการขนส่งจำลอง
+      // พยายามดึงข้อมูลจาก API จริง
       try {
-        // สร้างข้อมูลที่อยู่สำหรับส่งไปยังบริการขนส่งจำลอง
+        // สร้างข้อมูลที่อยู่สำหรับส่งไปยัง API ของ Flash Express
+        const fromAddress = {
+          province: senderInfo?.province || 'กรุงเทพมหานคร',
+          district: senderInfo?.district || 'คลองเตย',
+          zipcode: senderInfo?.zipcode || '10110'
+        };
+        
+        const toAddress = {
+          province: form.getValues('province') || 'กรุงเทพมหานคร',
+          district: form.getValues('district') || 'พระนคร',
+          zipcode: form.getValues('zipcode') || '10200'
+        };
+        
+        // หากมีที่อยู่ปลายทางครบถ้วน ลองเรียกใช้ API ของ Flash Express
+        if (toAddress.province && toAddress.district && toAddress.zipcode) {
+          try {
+            console.log("กำลังเรียกใช้ Flash Express API เพื่อดึงข้อมูลค่าจัดส่ง...");
+            
+            // เรียกใช้ API ของ Flash Express
+            const response = await api.post('/api/shipping-methods/flash-express/rates', {
+              fromAddress,
+              toAddress,
+              weight: 1.0 // น้ำหนัก 1 กิโลกรัม
+            });
+            
+            if (response.data.success && response.data.shippingRates && response.data.shippingRates.length > 0) {
+              console.log("ดึงข้อมูลค่าจัดส่งจาก Flash Express สำเร็จ:", response.data.shippingRates);
+              
+              // แปลงรูปแบบข้อมูลจาก Flash Express ให้ตรงกับที่ใช้ในฟอร์ม
+              const flashExpressRates = response.data.shippingRates.map(rate => ({
+                id: `flash_express_${rate.serviceCode}`,
+                name: `Flash Express - ${rate.serviceName}`,
+                price: rate.totalFee,
+                deliveryTime: rate.estimateDeliveryTime,
+                provider: 'Flash Express',
+                serviceId: rate.serviceCode,
+                logo: '/assets/flash-express.png',
+                icon: '⚡',
+                isPopular: true,
+                isCODAvailable: true,
+                maxCODAmount: 20000
+              }));
+              
+              // ถ้ามีข้อมูลจาก Flash Express ให้ใช้ข้อมูลนั้น รวมกับตัวเลือกอื่นๆ
+              if (flashExpressRates.length > 0) {
+                // รวมข้อมูลจาก Flash Express กับตัวเลือกเริ่มต้นอื่นๆ
+                const allOptions = [...flashExpressRates, ...defaultOptions];
+                setShippingOptions(allOptions);
+                console.log("ใช้ข้อมูลค่าจัดส่งจาก Flash Express API และตัวเลือกเริ่มต้น");
+                return;
+              }
+            }
+          } catch (flashError) {
+            console.error("เกิดข้อผิดพลาดในการเรียก Flash Express API:", flashError);
+          }
+        }
+        
+        // หากไม่สามารถดึงข้อมูลจาก Flash Express API ได้ ลองดึงข้อมูลจากบริการจำลอง
         const address = {
           province: form.getValues('province') || 'กรุงเทพมหานคร',
           district: form.getValues('district') || 'พระนคร',
           zipcode: form.getValues('zipcode') || '10200'
         };
         
-        // เรียกใช้บริการขนส่งจำลอง
         const options = await getMockShippingOptions(address, 1);
         
         if (options && options.length > 0) {
@@ -1143,18 +1200,23 @@ const CreateOrderTabsPage: React.FC = () => {
             maxCODAmount: option.maxCODAmount
           }));
           
-          setShippingOptions(formattedOptions);
+          // รวมตัวเลือก Flash Express กับตัวเลือกจากบริการจำลอง
+          const allOptions = [...flashExpressOptions, ...formattedOptions];
+          setShippingOptions(allOptions);
+          console.log("ใช้ข้อมูลตัวเลือก Flash Express และตัวเลือกจากบริการจำลอง");
           return;
         } else {
-          console.log("ไม่พบข้อมูลตัวเลือกการจัดส่งจากบริการจำลอง ใช้ข้อมูลเริ่มต้นแทน");
+          console.log("ไม่พบข้อมูลตัวเลือกการจัดส่งจากบริการจำลอง ใช้ตัวเลือกเริ่มต้นแทน");
         }
       } catch (apiError) {
-        console.error("เกิดข้อผิดพลาดในการเรียกบริการขนส่งจำลอง:", apiError);
+        console.error("เกิดข้อผิดพลาดในการเรียกบริการจำลอง:", apiError);
         console.log("ใช้ข้อมูลเริ่มต้นแทน");
       }
       
-      // ถ้าเรียกบริการจำลองไม่สำเร็จหรือไม่มีข้อมูล ให้ใช้ข้อมูลเริ่มต้น
-      setShippingOptions(defaultOptions);
+      // ถ้าเรียกบริการจำลองไม่สำเร็จหรือไม่มีข้อมูล ให้ใช้ข้อมูลเริ่มต้นรวมกับ Flash Express
+      const allOptions = [...flashExpressOptions, ...defaultOptions];
+      setShippingOptions(allOptions);
+      console.log("ใช้ข้อมูลตัวเลือก Flash Express และตัวเลือกเริ่มต้น");
       
     } catch (error) {
       console.error('Error fetching shipping options:', error);
