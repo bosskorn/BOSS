@@ -959,9 +959,24 @@ const OrderList: React.FC = () => {
                               .then(data => {
                                 if (data.success) {
                                   successCount++;
+                                  console.log(`ลบรายการ ID: ${orderId} สำเร็จ`);
+                                  toast({
+                                    title: 'ลบรายการสำเร็จ',
+                                    description: `รายการ ID: ${orderId} ถูกลบเรียบร้อยแล้ว`,
+                                    variant: 'default'
+                                  });
                                 } else {
                                   failedCount++;
-                                  failedMessages.push(data.message || `ไม่สามารถลบรายการ ID: ${orderId}`);
+                                  const errorMsg = data.message || `ไม่สามารถลบรายการ ID: ${orderId}`;
+                                  console.log(`ไม่สามารถลบรายการ ID: ${orderId} - ${errorMsg}`);
+                                  failedMessages.push(errorMsg);
+                                  
+                                  // แสดงข้อความแจ้งเตือนสำหรับแต่ละรายการที่ลบไม่สำเร็จ
+                                  toast({
+                                    title: 'ลบรายการไม่สำเร็จ',
+                                    description: errorMsg,
+                                    variant: 'destructive',
+                                  });
                                 }
                                 // ดำเนินการกับรายการถัดไป
                                 processDeleteOne(index + 1);
@@ -971,6 +986,14 @@ const OrderList: React.FC = () => {
                                 const errorMessage = error instanceof Error ? error.message : `ไม่สามารถลบรายการ ID: ${orderId}`;
                                 failedMessages.push(errorMessage);
                                 console.error('Error deleting order:', error);
+                                
+                                // แสดงข้อความแจ้งเตือนสำหรับข้อผิดพลาดในการส่งคำขอ
+                                toast({
+                                  title: 'เกิดข้อผิดพลาดในการลบรายการ',
+                                  description: errorMessage,
+                                  variant: 'destructive',
+                                });
+                                
                                 // ดำเนินการกับรายการถัดไปแม้จะมีข้อผิดพลาด
                                 processDeleteOne(index + 1);
                               });
