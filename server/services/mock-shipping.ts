@@ -68,6 +68,8 @@ export interface MockRecipientInfo {
 
 // ผู้ให้บริการขนส่งแบบจำลอง
 const MOCK_SHIPPING_PROVIDERS = [
+  // ซ่อนบริการขนส่งจำลอง "เสี่ยวไป๋ เอ็กเพรส" เพื่อทดสอบขนส่งจริง
+  /*
   {
     id: 'xiaobaix', 
     name: 'เสี่ยวไป๋ เอ็กเพรส',
@@ -101,6 +103,7 @@ const MOCK_SHIPPING_PROVIDERS = [
       }
     ]
   },
+  */
   {
     id: 'speedline',
     name: 'SpeedLine',

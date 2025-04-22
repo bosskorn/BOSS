@@ -60,6 +60,7 @@ export interface IStorage {
   getOrdersByCustomerId(customerId: number): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(id: number, order: Partial<InsertOrder>): Promise<Order | undefined>;
+  deleteOrder(id: number): Promise<boolean>;
   
   // OrderItem operations
   getOrderItems(orderId: number): Promise<OrderItem[]>;
