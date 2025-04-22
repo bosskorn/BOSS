@@ -43,7 +43,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 40, className = '' }) => {
           strokeDasharray="2 2"
         />
         
-        {/* ตัวอักษร P */}
+        {/* ตัวอักษร S */}
         <text 
           x="24" 
           y="36" 
@@ -53,7 +53,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 40, className = '' }) => {
           fill="white"
           transform="skewX(-10)"
         >
-          P
+          S
         </text>
       </svg>
     </div>

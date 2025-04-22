@@ -115,7 +115,7 @@ const AuthPage: React.FC = () => {
   // สำหรับแสดง 3D model หรือข้อความต้อนรับในฝั่งขวา
   const renderWelcomeSection = () => {
     return (
-      <div className="h-full flex flex-col justify-center items-center text-center px-6 bg-gradient-to-r from-purple-900 via-purple-800 to-purple-700 relative overflow-hidden">
+      <div className="h-full flex flex-col justify-center items-center text-center px-6 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 relative overflow-hidden">
         {/* ลวดลายพื้นหลัง */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-full h-full">
@@ -136,16 +136,16 @@ const AuthPage: React.FC = () => {
         <div className="relative z-10 max-w-lg">
           <div className="mb-8">
             <div className="w-24 h-24 bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg border border-white border-opacity-20 transform rotate-12">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center transform -rotate-12 shadow-inner">
-                <span className="text-white text-3xl font-extrabold">PD</span>
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center transform -rotate-12 shadow-inner">
+                <span className="text-white text-3xl font-extrabold">SS</span>
               </div>
             </div>
             <h1 className="text-4xl font-bold text-white mb-2">
-              <span className="inline-block">PURPLE</span>
-              <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-white">DASH</span>
+              <span className="inline-block">Ship</span>
+              <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-white">Sync</span>
             </h1>
-            <p className="text-xl text-purple-200 font-medium italic">
-              ส่งด่วน ม่วงสะดุด!
+            <p className="text-xl text-blue-200 font-medium italic">
+              ส่งด่วน สะดวกรวดเร็ว
             </p>
           </div>
           
@@ -232,7 +232,7 @@ const AuthPage: React.FC = () => {
         <div className="md:w-1/2 lg:w-5/12 p-4 md:p-8 flex items-center justify-center">
           <div className="w-full max-w-md">
             <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">PURPLEDASH</h1>
+              <h1 className="text-3xl font-bold text-gray-900">SHIPSYNC</h1>
               <p className="text-gray-600">ระบบจัดการขนส่งอัจฉริยะ</p>
             </div>
             

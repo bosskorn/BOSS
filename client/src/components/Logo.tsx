@@ -43,7 +43,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           strokeDasharray="2 4"
         />
         
-        {/* ตัวอักษรแนวเฉียง BLUE */}
+        {/* ตัวอักษรแนวเฉียง Ship */}
         <text 
           x="45" 
           y="42" 
@@ -53,10 +53,10 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           fill="#1E88E5"
           transform="skewX(-10)"
         >
-          BLUE
+          Ship
         </text>
         
-        {/* ตัวอักษรแนวเฉียง DASH */}
+        {/* ตัวอักษรแนวเฉียง Sync */}
         <text 
           x="115" 
           y="42" 
@@ -66,7 +66,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           fill="#0D47A1"
           transform="skewX(-10)"
         >
-          DASH
+          Sync
         </text>
         
         {/* สโลแกน */}
