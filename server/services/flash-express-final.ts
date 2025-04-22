@@ -219,7 +219,8 @@ export const createFlashExpressShipping = async (
       const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
 
       // 4. นำลายเซ็นมาเพิ่มเข้ากับข้อมูลคำขอ
-      const payload = { ...requestParams, sign: signature };
+      // กำหนด type ของ payload ให้รองรับ subItemTypes ที่เป็น string
+      const payload: Record<string, any> = { ...requestParams, sign: signature };
 
       // 5. สร้าง subItemTypes แยกต่างหาก (ต้องทำหลังจากสร้างลายเซ็นแล้ว)
       let subItemTypesJSON: string | undefined = undefined;

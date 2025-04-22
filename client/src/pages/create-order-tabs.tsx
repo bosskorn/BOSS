@@ -1525,8 +1525,8 @@ const CreateOrderTabsPage: React.FC = () => {
     try {
       console.log('กำลังเรียกใช้ Flash Express API เพื่อสร้างเลขพัสดุ...');
       
-      // สร้างเลขออเดอร์
-      const orderNumber = `PD${Date.now()}`;
+      // สร้างเลขออเดอร์ (ใช้ SS เป็นคำนำหน้าตามตัวย่อของ ShipSync แทน PD ซึ่งเป็นของ PurpleDash)
+      const orderNumber = `SS${Date.now()}`;
       console.log('สร้างเลขออเดอร์:', orderNumber);
       
       // แก้ไขข้อมูลจังหวัดให้ถูกต้องตามรูปแบบที่ Flash Express ต้องการ
@@ -1606,9 +1606,10 @@ const CreateOrderTabsPage: React.FC = () => {
       console.log('ส่งข้อมูลไปยัง Flash Express API:', JSON.stringify(flashExpressData, null, 2));
       
       try {
-        // แก้ไขจาก apiRequest เป็น api.post (ใช้ axios interceptor ที่จัดการ token ไว้แล้ว)
-        // เพื่อให้ทำงานได้ถูกต้องบนอุปกรณ์ iPad
-        const response = await api.post('/api/shipping/create', flashExpressData);
+        // เรียกใช้ endpoint ที่ถูกต้องตามที่กำหนดในไฟล์ server/routes/shipping-methods.ts
+        const response = await api.post('/api/shipping-methods/flash-express/shipping', {
+          orderData: flashExpressData
+        });
         console.log('Flash Express API response:', response.data);
         
         if (response.data.success && response.data.trackingNumber) {
