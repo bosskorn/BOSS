@@ -5,8 +5,18 @@ import { insertShippingMethodSchema } from '@shared/schema';
 import { getFlashExpressShippingOptions as getFlashExpressShippingOptionsOriginal } from '../services/flash-express';
 import { 
   getFlashExpressShippingOptions, 
-  createFlashExpressShipping 
+  createFlashExpressShipping
 } from '../services/flash-express-final';
+
+// ฟังก์ชันสร้าง nonceStr (ทำซ้ำจาก flash-express-final.ts)
+function generateNonceStr(length = 16): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
 
 const router = Router();
 
@@ -171,8 +181,24 @@ router.post('/flash-express/shipping', auth, async (req, res) => {
     
     console.log('กำลังสร้างการจัดส่งกับ Flash Express API (แบบจริง):', JSON.stringify(orderData, null, 2));
     
+    // เพิ่ม timestamp และ nonceStr ถ้ายังไม่มี
+    const nonceStr = generateNonceStr();
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    
+    // สร้างข้อมูลใหม่พร้อมเพิ่ม timestamp และ nonceStr
+    const enrichedOrderData = {
+      ...orderData,
+      nonceStr: orderData.nonceStr || nonceStr,
+      timestamp: orderData.timestamp || timestamp
+    };
+    
+    console.log('เพิ่ม timestamp และ nonceStr:', JSON.stringify({
+      timestamp: enrichedOrderData.timestamp,
+      nonceStr: enrichedOrderData.nonceStr
+    }, null, 2));
+    
     // เรียกใช้ Flash Express API เพื่อสร้างการจัดส่ง
-    const result = await createFlashExpressShipping(orderData);
+    const result = await createFlashExpressShipping(enrichedOrderData);
     
     // ตรวจสอบผลลัพธ์
     if (result.success) {
@@ -191,12 +217,12 @@ router.post('/flash-express/shipping', auth, async (req, res) => {
         errorDetails: result.error
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating Flash Express shipping:', error);
     res.status(500).json({
       success: false,
       message: 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง',
-      error: error.message
+      error: error?.message || String(error)
     });
   }
 });

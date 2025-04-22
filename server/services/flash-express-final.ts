@@ -38,9 +38,8 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
     console.log('พารามิเตอร์ที่ได้รับเพื่อสร้างลายเซ็น:', JSON.stringify(params, null, 2));
 
     // รายการฟิลด์ที่จะไม่นำมาใช้ในการคำนวณลายเซ็น
-    // กำหนดเฉพาะ 'sign' เป็นฟิลด์ที่ไม่ใช้ในการคำนวณลายเซ็น
-    // และให้ subItemTypes/subParcel ถูกจัดการแยกต่างหาก (ไม่ใส่ในข้อมูลเริ่มต้น แต่เพิ่มหลังจากคำนวณลายเซ็น)
-    const excludedFields = ['sign'];
+    // กำหนดเฉพาะ 'sign' และ 'subItemTypes' เป็นฟิลด์ที่ไม่ใช้ในการคำนวณลายเซ็น
+    const excludedFields = ['sign', 'subItemTypes'];
 
     // สร้างอ็อบเจกต์ใหม่ที่ไม่มีฟิลด์ที่ถูกกันออก
     const signParams: Record<string, string> = {};
