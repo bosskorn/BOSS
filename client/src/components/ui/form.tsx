@@ -119,6 +119,7 @@ const FormControl = React.forwardRef<
           : `${formDescriptionId} ${formMessageId}`
       }
       aria-invalid={!!error}
+      className="bg-white" // เพิ่มพื้นหลังสีขาวเพื่อให้แน่ใจว่าไม่มีสีฟ้า
       {...props}
     />
   )
