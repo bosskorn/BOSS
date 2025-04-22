@@ -1356,6 +1356,7 @@ const CreateOrderTabsPage: React.FC = () => {
           // ข้อมูลพัสดุ
           articleCategory: 1, // ประเภทสินค้า (1: เสื้อผ้า/สิ่งทอ)
           expressCategory: 1, // ประเภทการจัดส่ง (1: ปกติ)
+          parcelKind: 1, // ประเภทพัสดุ (1: ปกติ) - สำคัญสำหรับการคำนวณลายเซ็น
           weight: 1500, // น้ำหนัก (กรัม)
           width: shipmentDetails.dimensions.width,
           length: shipmentDetails.dimensions.length,
