@@ -26,7 +26,7 @@ function generateNonceStr(length = 16): string {
 
 /**
  * สร้างลายเซ็นตามมาตรฐานของ Flash Express อย่างเคร่งครัด
- * อ้างอิงจากตัวอย่างในเอกสาร Flash Express
+ * ตรงตามโค้ดในไฟล์ทดสอบที่ทำงานได้
  * 
  * 1. จัดเรียงพารามิเตอร์ตามตัวอักษร (ASCII)
  * 2. เชื่อมต่อเป็นสตริงในรูปแบบ key1=value1&key2=value2
@@ -34,53 +34,32 @@ function generateNonceStr(length = 16): string {
  * 4. คำนวณค่า SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
  */
 function generateFlashSignature(params: Record<string, any>, apiKey: string): string {
-  try {
-    console.log('พารามิเตอร์ที่ได้รับเพื่อสร้างลายเซ็น:', JSON.stringify(params, null, 2));
-
-    // สร้างอ็อบเจกต์ใหม่ที่กรองฟิลด์ sign และ subItemTypes ออก และแปลงทุกค่าเป็น string
-    const filteredParams: Record<string, string> = {};
+  // 1. แปลงทุกค่าเป็น string (สำคัญมาก)
+  const stringParams: Record<string, string> = {};
+  Object.keys(params).forEach(key => {
+    // ข้ามฟิลด์ sign และ subItemTypes (เหมือนในไฟล์ทดสอบ)
+    if (key === 'sign' || key === 'subItemTypes') return;
     
-    for (const key in params) {
-      // ข้ามฟิลด์ sign และ subItemTypes
-      if (key === 'sign' || key === 'subItemTypes') continue;
+    // แปลงทุกค่าเป็น string และจัดการค่า null/undefined
+    stringParams[key] = String(params[key] || '');
+  });
 
-      const value = params[key];
-      
-      // ข้ามค่า null, undefined
-      if (value === null || value === undefined) continue;
-      
-      // ข้ามค่าว่างและ whitespace พิเศษ
-      if (
-        typeof value === 'string' &&
-        value.replace(/[\u0009-\u000D\u001C-\u001F]/g, '').trim() === ''
-      ) continue;
+  // 2. จัดเรียงคีย์ตามลำดับตัวอักษร ASCII
+  const sortedKeys = Object.keys(stringParams).sort();
 
-      // แปลงทุกค่าเป็น string ตามที่ Flash Express API ต้องการ
-      filteredParams[key] = String(value);
-    }
+  // 3. สร้างสตริงสำหรับลายเซ็น
+  const stringToSign = sortedKeys
+    .map(key => `${key}=${stringParams[key]}`)
+    .join('&') + `&key=${apiKey}`;
 
-    // เรียงลำดับคีย์ตามตัวอักษร (ASCII)
-    const sortedKeys = Object.keys(filteredParams).sort();
-    
-    // สร้างสตริงสำหรับลายเซ็น
-    const paramPairs = sortedKeys.map(key => `${key}=${filteredParams[key]}`);
-    const paramString = paramPairs.join('&');
-    
-    // เพิ่ม API key ที่ท้าย
-    const stringToSign = `${paramString}&key=${apiKey}`;
+  console.log('สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
 
-    console.log('สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
+  // 4. สร้าง SHA-256 hash และแปลงเป็นตัวพิมพ์ใหญ่
+  const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
 
-    // คำนวณลายเซ็น SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
-    const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
-
-    console.log('ลายเซ็นที่สร้าง:', signature);
-
-    return signature;
-  } catch (error) {
-    console.error('เกิดข้อผิดพลาดในการสร้างลายเซ็น:', error);
-    throw error;
-  }
+  console.log('ลายเซ็นที่สร้าง:', signature);
+  
+  return signature;
 }
 
 /**
@@ -278,17 +257,9 @@ export const createFlashExpressShipping = async (
       // ลบออกจาก requestParams ก่อนคำนวณลายเซ็น
       delete requestParams.subItemTypes;
 
-      // 4. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก) - ใช้วิธีการเดียวกับไฟล์ทดสอบ
+      // 4. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (ใช้ generateFlashSignature เหมือนในไฟล์ทดสอบ)
       console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
-      
-      const stringToSign = Object.keys(requestParams)
-        .sort()
-        .map(key => `${key}=${requestParams[key]}`)
-        .join('&') + `&key=${FLASH_EXPRESS_API_KEY}`;
-      
-      console.log('stringToSign:', stringToSign);
-      
-      const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+      const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
       console.log('ลายเซ็นที่สร้าง:', signature);
 
       // 5. สร้าง payload พร้อมลายเซ็น (สำคัญ: ใช้แค่ requestParams ไม่ใช่ fullRequestParams)
@@ -440,17 +411,9 @@ export const getFlashExpressShippingOptions = async (
       if (packageInfo.length) requestParams.length = String(Math.round(packageInfo.length));
       if (packageInfo.height) requestParams.height = String(Math.round(packageInfo.height));
 
-      // 3. คำนวณลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก) - ใช้วิธีการเดียวกับไฟล์ทดสอบ
+      // 3. คำนวณลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก) - ใช้ generateFlashSignature เหมือนในไฟล์ทดสอบ
       console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
-      
-      const stringToSign = Object.keys(requestParams)
-        .sort()
-        .map(key => `${key}=${requestParams[key]}`)
-        .join('&') + `&key=${FLASH_EXPRESS_API_KEY}`;
-      
-      console.log('stringToSign:', stringToSign);
-      
-      const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+      const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
       console.log('ลายเซ็นที่สร้าง:', signature);
 
       // 4. เพิ่มลายเซ็นเข้าไปในพารามิเตอร์
