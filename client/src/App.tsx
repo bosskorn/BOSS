@@ -48,6 +48,7 @@ import FlashExpressLabelFixed from './pages/flash-express-label-fixed';
 import JntExpressLabel from './pages/jnt-express-label';
 import FeeHistory from './pages/fee-history';
 import LandingPage from './pages/landing';
+import FlashExpressAPITest from './pages/flash-express-api-test';
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -79,6 +80,7 @@ function Router() {
       <Route path="/print-multiple-labels-fixed" component={PrintMultipleLabelsFixed} />
       <Route path="/flash-express-label-fixed" component={FlashExpressLabelFixed} />
       <Route path="/landing" component={LandingPage} />
+      <Route path="/flash-express-api-test" component={FlashExpressAPITest} />
 
 
       {/* Protected routes - require authentication */}
