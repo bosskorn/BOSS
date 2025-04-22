@@ -330,19 +330,47 @@ router.post("/create-shipping", async (req, res) => {
       }
     ];
     
-    // แปลง subItemTypes เป็นสตริง JSON หลังจากสร้างลายเซ็น
-    const orderDataWithoutSubItems = { ...orderData };
-    const signature = generateFlashSignature(orderDataWithoutSubItems, apiKey);
+    // สร้างชุดข้อมูลใหม่สำหรับใช้คำนวณลายเซ็นโดยเฉพาะ
+    const signatureParams: Record<string, any> = {
+      mchId: merchantId, // ใช้ mchId แทน merchantId ในการคำนวณลายเซ็น
+      outTradeNo: orderNumber,
+      warehouseNo: `${merchantId}_001`,
+      srcName: orderData.srcName,
+      srcPhone: orderData.srcPhone,
+      srcProvinceName: orderData.srcProvinceName,
+      srcCityName: orderData.srcCityName,
+      srcDistrictName: orderData.srcDistrictName,
+      srcPostalCode: orderData.srcPostalCode,
+      srcDetailAddress: orderData.srcDetailAddress,
+      dstName: orderData.dstName,
+      dstPhone: orderData.dstPhone,
+      dstProvinceName: orderData.dstProvinceName,
+      dstCityName: orderData.dstCityName,
+      dstDistrictName: orderData.dstDistrictName,
+      dstPostalCode: orderData.dstPostalCode,
+      dstDetailAddress: orderData.dstDetailAddress,
+      articleCategory: orderData.articleCategory,
+      expressCategory: orderData.expressCategory,
+      weight: orderData.weight,
+      insured: orderData.insured,
+      codEnabled: orderData.codEnabled,
+      parcelKind: orderData.parcelKind,
+      nonceStr: orderData.nonceStr,
+      timestamp: orderData.timestamp
+    };
+    
+    console.log("ข้อมูลที่ใช้สร้างลายเซ็นก่อนส่ง API:", JSON.stringify(signatureParams));
+    const signature = generateFlashSignature(signatureParams, apiKey);
     
     // เพิ่ม subItemTypes เข้าไปหลังจากสร้างลายเซ็นแล้ว
     const finalOrderData = {
-      ...orderDataWithoutSubItems,
+      ...orderData, // ใช้ orderData ที่มี mchId แทน orderDataWithoutSubItems
       subItemTypes: JSON.stringify(subItemTypes)
     };
     
     console.log("=== การสร้างการจัดส่ง Flash Express ===");
     console.log("URL:", "https://open-api-tra.flashexpress.com/open/v3/orders");
-    console.log("ข้อมูลที่ใช้สร้างลายเซ็น:", orderDataWithoutSubItems);
+    console.log("ข้อมูลที่ใช้สร้างลายเซ็น:", signatureParams);
     console.log("ลายเซ็นที่สร้าง:", signature);
     console.log("subItemTypes ที่แนบ (หลังสร้างลายเซ็น):", subItemTypes);
     console.log("ข้อมูลที่ส่งไปยัง API:", finalOrderData);
