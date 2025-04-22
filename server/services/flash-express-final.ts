@@ -37,8 +37,9 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
   try {
     console.log('พารามิเตอร์ที่ได้รับเพื่อสร้างลายเซ็น:', JSON.stringify(params, null, 2));
 
-    // รายการฟิลด์ที่จะไม่นำมาใช้ในการคำนวณลายเซ็น ตามเอกสาร Flash Express
-    const excludedFields = ['sign', 'subItemTypes', 'subParcel', 'expressCategory', 'timestamp'];
+    // รายการฟิลด์ที่จะไม่นำมาใช้ในการคำนวณลายเซ็น - ปรับปรุงตามมาตรฐาน Flash Express
+    // timestamp ไม่ถูกรวมใน excludedFields เพื่อให้มั่นใจว่าจะถูกใช้ในการคำนวณลายเซ็นถ้ามี
+    const excludedFields = ['sign', 'subItemTypes', 'subParcel'];
 
     // สร้างอ็อบเจกต์ใหม่ที่ไม่มีฟิลด์ที่ถูกกันออก
     const signParams: Record<string, string> = {};
@@ -62,20 +63,19 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
       signParams[key] = String(value);
     }
 
-    // เรียงลำดับคีย์ตามตัวอักษร
+    // เรียงลำดับคีย์ตามตัวอักษร (ASCII)
     const sortedKeys = Object.keys(signParams).sort();
     
-    // สร้างสตริงสำหรับลายเซ็น
+    // สร้างสตริงสำหรับลายเซ็น - สำคัญมาก: ต้องไม่มีการ encode URL ในขั้นตอนนี้
     const paramPairs = [];
     for (const key of sortedKeys) {
-      // ต้องไม่มีการ encode URL ในขั้นตอนนี้
       paramPairs.push(`${key}=${signParams[key]}`);
     }
     
-    // รวมเป็นสตริงเดียว
+    // รวมเป็นสตริงเดียว (stringA)
     const paramString = paramPairs.join('&');
     
-    // เพิ่ม API key แบบตรงๆ ไม่มีการ encode
+    // เพิ่ม API key แบบตรงๆ ไม่มีการ encode (stringSignTemp)
     const stringToSign = `${paramString}&key=${apiKey}`;
 
     console.log('สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
@@ -161,7 +161,7 @@ export const createFlashExpressShipping = async (
       const requestParams: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
-        // จากตัวอย่าง Flash Express API ไม่มี timestamp ในข้อมูลที่ใช้คำนวณลายเซ็น
+        timestamp: timestamp, // เพิ่ม timestamp ในการคำนวณลายเซ็น
         outTradeNo: orderData.outTradeNo,
         warehouseNo: `${FLASH_EXPRESS_MERCHANT_ID}_001`, // เพิ่ม warehouseNo ตามที่ระบุในตัวอย่าง
         srcName: orderData.srcName,
