@@ -37,38 +37,49 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
   try {
     console.log('พารามิเตอร์ที่ได้รับเพื่อสร้างลายเซ็น:', JSON.stringify(params, null, 2));
 
-    // คัดกรองพารามิเตอร์เฉพาะที่จะใช้ในการสร้างลายเซ็น
-    const filteredParams: Record<string, string> = {};
+    // รายการฟิลด์ที่จะไม่นำมาใช้ในการคำนวณลายเซ็น
+    const excludedFields = ['sign', 'subItemTypes', 'subParcel', 'expressCategory'];
+
+    // สร้างอ็อบเจกต์ใหม่ที่ไม่มีฟิลด์ที่ถูกกันออก
+    const signParams: Record<string, string> = {};
+    
     for (const key in params) {
-      // ข้ามฟิลด์ sign, subItemTypes, และ subParcel ตามเอกสาร Flash Express
-      if (key === 'sign' || key === 'subItemTypes' || key === 'subParcel') continue;
+      // ข้ามฟิลด์ที่อยู่ในรายการที่ไม่ต้องการ
+      if (excludedFields.includes(key)) continue;
 
       const value = params[key];
+      
+      // ข้ามค่า null, undefined
       if (value === null || value === undefined) continue;
-
-      // ข้ามค่าว่างและ whitespace พิเศษตามที่ Flash Express ระบุในเอกสาร
+      
+      // ข้ามค่าว่างและ whitespace พิเศษ
       if (
         typeof value === 'string' &&
         value.replace(/[\u0009-\u000D\u001C-\u001F]/g, '').trim() === ''
       ) continue;
 
-      // แปลงค่าเป็นสตริงทั้งหมด (สำคัญมาก)
-      filteredParams[key] = String(value);
+      // แปลงทุกค่าเป็น string
+      signParams[key] = String(value);
     }
 
-    // จัดเรียงพารามิเตอร์ตามตัวอักษร (ASCII)
-    const sortedKeys = Object.keys(filteredParams).sort();
-
-    // สร้างสตริงพารามิเตอร์แบบไม่มีการเข้ารหัส URL
-    const paramPairs = sortedKeys.map(key => `${key}=${filteredParams[key]}`);
+    // เรียงลำดับคีย์ตามตัวอักษร
+    const sortedKeys = Object.keys(signParams).sort();
+    
+    // สร้างสตริงสำหรับลายเซ็น
+    const paramPairs = [];
+    for (const key of sortedKeys) {
+      paramPairs.push(`${key}=${signParams[key]}`);
+    }
+    
+    // รวมเป็นสตริงเดียว
     const paramString = paramPairs.join('&');
-
-    // เพิ่ม API key ที่ท้ายสตริง
+    
+    // เพิ่ม API key
     const stringToSign = `${paramString}&key=${apiKey}`;
 
     console.log('สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
 
-    // คำนวณค่า SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
+    // คำนวณลายเซ็น SHA-256
     const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
 
     console.log('ลายเซ็นที่สร้าง:', signature);
