@@ -7,7 +7,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
 import api, { apiRequest } from '@/services/api';
 import { parseCustomerAndAddressData } from '@/utils/addressParser';
-import { getMockShippingOptions, createMockShipment } from '@/services/mock-shipping';
+// ไม่ใช้บริการขนส่งจำลองอีกต่อไป แต่ใช้ API จริง
+// import { getMockShippingOptions, createMockShipment } from '@/services/mock-shipping';
 import Layout from '@/components/Layout';
 import { 
   Card, 
@@ -1278,10 +1279,10 @@ const CreateOrderTabsPage: React.FC = () => {
     }
   };
   
-  // สร้างเลขพัสดุจากบริการขนส่งจำลอง
-  const createMockShippingService = async (data: CreateOrderFormValues) => {
+  // สร้างเลขพัสดุจากบริการขนส่งจริง (Flash Express)
+  const createRealShippingService = async (data: CreateOrderFormValues) => {
     try {
-      console.log('กำลังเรียกใช้บริการขนส่งจำลองเพื่อสร้างเลขพัสดุ...');
+      console.log('กำลังเรียกใช้บริการขนส่งจริงเพื่อสร้างเลขพัสดุ...');
       
       // สร้างเลขออเดอร์
       const orderNumber = `BD${Date.now()}`;
@@ -1435,11 +1436,11 @@ const CreateOrderTabsPage: React.FC = () => {
       // สร้างข้อมูลสำหรับส่งไปยังเซิร์ฟเวอร์
       const orderData = { ...data };
       
-      // เรียกใช้บริการขนส่งจำลองเพื่อสร้างเลขพัสดุ
+      // เรียกใช้บริการขนส่งจริงเพื่อสร้างเลขพัสดุ (Flash Express)
       let shippingInfo;
       try {
-        shippingInfo = await createMockShippingService(data);
-        console.log('ได้รับข้อมูลการจัดส่งจากบริการขนส่งจำลอง:', shippingInfo);
+        shippingInfo = await createRealShippingService(data);
+        console.log('ได้รับข้อมูลการจัดส่งจากบริการขนส่งจริง:', shippingInfo);
         
         // เพิ่มข้อมูลเลขพัสดุและรหัสการเรียงลำดับเข้าไปในออเดอร์
         orderData.orderNumber = shippingInfo.orderNumber;
