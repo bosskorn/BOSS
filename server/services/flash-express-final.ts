@@ -158,13 +158,13 @@ export const createFlashExpressShipping = async (
 
       // 2. เตรียมข้อมูลคำขอตามเอกสาร Flash Express
       
-      // เตรียมข้อมูลสำหรับใช้ในการสร้างลายเซ็น ตามรูปแบบจาก Flash Express
+      // เตรียมข้อมูลสำหรับใช้ในการสร้างลายเซ็น ตามรูปแบบจาก Flash Express (พารามิเตอร์ที่จำเป็นเท่านั้น)
       const requestParams: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
         timestamp: timestamp, // เพิ่ม timestamp ในการคำนวณลายเซ็น
         outTradeNo: orderData.outTradeNo,
-        warehouseNo: `${FLASH_EXPRESS_MERCHANT_ID}_001`, // เพิ่ม warehouseNo ตามที่ระบุในตัวอย่าง
+        warehouseNo: `${FLASH_EXPRESS_MERCHANT_ID}_001`,
         srcName: orderData.srcName,
         srcPhone: senderPhone.replace(/[-\s]/g, ''),
         srcProvinceName: orderData.srcProvinceName,
@@ -182,6 +182,9 @@ export const createFlashExpressShipping = async (
         insured: 0, // กำหนดค่าคงที่เสมอ
         codEnabled: orderData.codEnabled || 0
       };
+      
+      // ลบฟิลด์ที่ไม่ต้องใช้ในการคำนวณลายเซ็นออกทันที
+      delete requestParams.subItemTypes;
       
       // เพิ่ม parcelKind ใน requestParams (สำคัญ: ต้องใช้ในการคำนวณลายเซ็น)
       if (orderData.parcelKind) {

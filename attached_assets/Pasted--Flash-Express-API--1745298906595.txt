@@ -1,0 +1,81 @@
+มขอแสดงรายละเอียดการตอบกลับจาก Flash Express API ที่ได้จากการทดสอบล่าสุดครับ:
+
+ข้อมูลการตอบกลับจาก Flash Express API (สร้างการจัดส่ง):
+{
+  "code": 1,
+  "message": "success",
+  "tid": "a27756b193953c9ae84b1cebd80fbb82",
+  "data": {
+    "pno": "TH0140EU1M4B0",
+    "mchId": "CA5609",
+    "outTradeNo": "SS1745296967400",
+    "sortCode": "16B-16257-00",
+    "lineCode": "04",
+    "sortingLineCode": "C04",
+    "dstStoreName": "LPW_SP-ลาดพร้าว",
+    "earlyFlightEnabled": false,
+    "packEnabled": false,
+    "upcountry": false,
+    "upcountryAmount": 0,
+    "upcountryCharge": false,
+    "sameProvince": true,
+    "notice": null,
+    "srcPostalCode": "10230",
+    "dstPostalCode": "10230",
+    "subPno": null,
+    "subParcel": null
+  }
+}
+คำอธิบายข้อมูลสำคัญที่ได้รับ:
+pno: "TH0140EU1M4B0" - เลขติดตามพัสดุ (Tracking Number) ที่ใช้สำหรับติดตามสถานะการจัดส่ง
+sortCode: "16B-16257-00" - รหัสการคัดแยกพัสดุภายในระบบของ Flash Express
+dstStoreName: "LPW_SP-ลาดพร้าว" - ศูนย์ปลายทางที่จะจัดส่งพัสดุ
+lineCode: "04" และ sortingLineCode: "C04" - รหัสสายการจัดเรียงพัสดุภายในศูนย์คัดแยก
+sameProvince: true - แสดงว่าพัสดุจัดส่งในจังหวัดเดียวกัน
+upcountry: false และ upcountryAmount: 0 - ไม่ใช่การส่งต่างจังหวัด จึงไม่มีค่าจัดส่งเพิ่มเติม
+ข้อมูลการคำนวณราคาค่าจัดส่ง (API estimate_rate):
+{
+  "code": 1,
+  "message": "success",
+  "tid": "d28c48c700a97bf0d0e22bef818b6add",
+  "data": {
+    "estimatePrice": "2500",
+    "pricePolicy": 1,
+    "upCountry": false,
+    "upCountryAmount": "0",
+    "expressCategory": 1,
+    "insured": null,
+    "insureDeclareValue": 0,
+    "valueInsuranceFee": 0,
+    "speedFee": 0,
+    "freightInsureEnabled": null,
+    "freightInsurance": 0,
+    "opdInsureEnabled": null,
+    "opdInsureFee": 0,
+    "codPoundageAmount": 0,
+    "codTransferFee": null,
+    "freightPrice": 2500
+  }
+}
+คำอธิบายข้อมูลราคา:
+estimatePrice: "2500" - ราคาค่าจัดส่งโดยประมาณ เป็นสตางค์ (25 บาท)
+expressCategory: 1 - ประเภทการจัดส่งแบบด่วน
+freightPrice: 2500 - ค่าจัดส่งรวม เป็นสตางค์ (25 บาท)
+upCountry: false และ upCountryAmount: "0" - ไม่มีค่าใช้จ่ายเพิ่มเติมสำหรับการส่งต่างจังหวัด
+เพื่อความสมบูรณ์ในการเชื่อมต่อกับ Flash Express API ต้องตรวจสอบให้แน่ใจว่าได้ใส่พารามิเตอร์ insured ทุกครั้งที่เรียกใช้ API เนื่องจากเป็นพารามิเตอร์ที่จำเป็นและต้องระบุ มิเช่นนั้นจะได้รับข้อผิดพลาด "การเซ็นลายมือชือล้มเหลว" หรือ "ตรวจสอบข้อมูลผิดพลาด"
+
+ต้องการทราบรายละเอียดเพิ่มเติมเกี่ยวกับ Flash Express API หรือไม่ครับ?
+
+ตอนนี้ใช้งานได้แล้ว ใช่ไหม
+
+12 minutes ago
+AD
+
+officemepr
+ใช่ครับ ตอนนี้การเชื่อมต่อกับ Flash Express API ใช้งานได้แล้ว!
+
+จากการทดสอบล่าสุด เราสามารถสร้างการจัดส่งได้สำเร็จและได้รับเลขติดตามพัสดุ (TH0140EU1M4B0) จาก Flash Express แล้ว
+
+สาเหตุของปัญหาที่ผ่านมา คือการไม่ได้ระบุค่า insured ในคำขอ ซึ่งตอนนี้เราได้แก้ไขโดยระบุค่า insured: 0 (กรณีไม่ต้องการประกัน) ให้ชัดเจนแล้ว ทำให้การลงนามและการเรียกใช้ API ทำงานได้อย่างถูกต้อง
+
+คุณสามารถใช้งานฟังก์ชัน createFlashExpressShipping ในโมดูล services/flash-express-final.ts ได้แล้ว 
