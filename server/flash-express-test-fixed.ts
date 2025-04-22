@@ -7,7 +7,7 @@ import crypto from 'crypto';
 
 // ข้อมูลการเชื่อมต่อกับ Flash Express API
 const FLASH_EXPRESS_API_URL = 'https://open-api-tra.flashexpress.com';
-const FLASH_EXPRESS_MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
+const FLASH_EXPRESS_MCH_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
 // กำหนดค่า timeout สำหรับการเชื่อมต่อ API (เพิ่มขึ้นเป็น 15 วินาที)
@@ -28,362 +28,436 @@ function generateNonceStr(length = 16): string {
  * ฉบับที่ปรับปรุงตามข้อแนะนำล่าสุด
  */
 function generateFlashSignature(params: Record<string, any>, apiKey: string): string {
-  const filteredParams: Record<string, string> = {};
-
-  for (const key in params) {
-    if (key === 'sign' || key === 'subItemTypes') continue;
-
-    const value = params[key];
-    if (value === null || value === undefined) continue;
-
-    if (
-      typeof value === 'string' &&
-      value.replace(/[\u0009-\u000D\u001C-\u001F]/g, '').trim() === ''
-    ) continue;
-
-    filteredParams[key] = String(value);
-  }
-
-  const sortedKeys = Object.keys(filteredParams).sort();
-
-  const paramPairs = sortedKeys.map(key => `${key}=${filteredParams[key]}`);
-  const paramString = paramPairs.join('&');
-
-  const stringToSign = `${paramString}&key=${apiKey}`;
-  const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
-
-  return signature;
-}
-
-async function testGetShippingOptions() {
-  console.log('========= ทดสอบดึงตัวเลือกการจัดส่ง =========');
-  
   try {
-    // ตรวจสอบข้อมูลที่จำเป็น
-    if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
-      throw new Error('Flash Express API credentials not configured');
+    console.log('⚙️ เริ่มคำนวณลายเซ็น Flash Express API...');
+    console.log('⚙️ ข้อมูลเริ่มต้น:', JSON.stringify(params, null, 2));
+    
+    // 0. ตรวจสอบว่ามี API key หรือไม่
+    if (!apiKey) {
+      console.error('❌ ไม่พบ API Key สำหรับสร้างลายเซ็น');
+      throw new Error('API Key is required for signature generation');
     }
-    
-    // 1. สร้างข้อมูลพื้นฐาน
-    const timestamp = String(Math.floor(Date.now() / 1000));
-    const nonceStr = generateNonceStr();
-    
-    // 2. เตรียมข้อมูลคำขอ
-    const requestParams: Record<string, any> = {
-      mchId: FLASH_EXPRESS_MERCHANT_ID,
-      nonceStr: nonceStr,
-      timestamp: timestamp,
-      fromPostalCode: '10110',
-      toPostalCode: '10900',
-      weight: '1000' // 1 กิโลกรัม เป็นกรัม
-    };
-    
-    // 3. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก)
-    console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
-    const stringToSign = Object.keys(requestParams)
-      .sort()
-      .map(key => `${key}=${requestParams[key]}`)
-      .join('&') + `&key=${FLASH_EXPRESS_API_KEY}`;
-    
-    console.log('stringToSign:', stringToSign);
-    
+
+    // 1. แปลงทุกค่าเป็น string และกรองพารามิเตอร์
+    const stringParams: Record<string, string> = {};
+    Object.keys(params).forEach(key => {
+      // Flash Express API มีพารามิเตอร์ที่ต้องข้ามในการคำนวณลายเซ็น
+      const skipParams = [
+        'sign', 
+        'subItemTypes', 
+        'merchantId',  // ใช้ mchId แทน
+        'subParcel',   // ไม่รวมในการคำนวณลายเซ็น
+        'subParcelQuantity', // ไม่รวมในการคำนวณลายเซ็น
+        'remark'       // ไม่รวมในการคำนวณลายเซ็น
+      ];
+      
+      if (skipParams.includes(key)) return;
+      
+      // ข้ามค่าที่เป็น null, undefined หรือช่องว่าง
+      if (params[key] === null || params[key] === undefined || params[key] === '') return;
+      
+      // แปลงทุกค่าเป็น string
+      stringParams[key] = String(params[key]);
+    });
+
+    // 2. จัดเรียงคีย์ตามลำดับตัวอักษร ASCII
+    const sortedKeys = Object.keys(stringParams).sort();
+
+    // 3. สร้างสตริงสำหรับลายเซ็น
+    const stringToSign = sortedKeys
+      .map(key => `${key}=${stringParams[key]}`)
+      .join('&') + `&key=${apiKey}`;
+
+    console.log('🔑 สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
+
+    // 4. สร้าง SHA-256 hash และแปลงเป็นตัวพิมพ์ใหญ่
     const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
-    console.log('ลายเซ็นที่สร้าง:', signature);
+
+    console.log('🔒 ลายเซ็นที่สร้าง:', signature);
     
-    // 4. นำลายเซ็นมาเพิ่มเข้ากับข้อมูลคำขอ
-    const payload = { ...requestParams, sign: signature };
-    
-    // 5. สร้าง URL-encoded payload สำหรับส่งไปยัง API
-    const encodedPayload = new URLSearchParams(payload).toString();
-    
-    // 6. ตั้งค่า Headers ที่ถูกต้อง
-    const headers = {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Flash-Signature': signature,
-      'X-Flash-Timestamp': timestamp,
-      'X-Flash-Nonce': nonceStr,
-      'Accept': 'application/json'
-    };
-    
-    console.log('Headers ที่ใช้:', JSON.stringify(headers, null, 2));
-    console.log('Payload ที่ส่งไป (ก่อน encode):', JSON.stringify(payload, null, 2));
-    console.log('Encoded payload ที่ส่งไป:', encodedPayload);
-    
-    // 7. ทดลองใช้ URL หลายรูปแบบ
-    const possibleEndpoints = [
-      '/open/v3/pricing',
-      '/open/v2/pricing/calculate',
-      '/open/v3/orders/pricing', 
-      '/open/v2/orders/price'
-    ];
-    
-    let response = null;
-    let successEndpoint = '';
-    
-    // ลองเรียกแต่ละ endpoint จนกว่าจะสำเร็จ
-    for (const endpoint of possibleEndpoints) {
-      try {
-        console.log(`ทดลองเรียก endpoint: ${endpoint}`);
-        response = await axios.post(
-          `${FLASH_EXPRESS_API_URL}${endpoint}`,
-          encodedPayload,
-          {
-            headers: headers,
-            timeout: API_TIMEOUT
-          }
-        );
-        
-        // ถ้าไม่มี error แสดงว่าสำเร็จ
-        successEndpoint = endpoint;
-        console.log(`เรียก endpoint ${endpoint} สำเร็จ`);
-        break;
-      } catch (err: any) {
-        console.log(`เรียก endpoint ${endpoint} ล้มเหลว: ${err.message}`);
-        
-        // แสดงข้อมูลเพิ่มเติมหากมี response
-        if (err.response) {
-          console.error(`Response (${endpoint}):`, err.response.status, err.response.statusText);
-          console.error(`Data (${endpoint}):`, JSON.stringify(err.response.data, null, 2));
-        }
-        
-        // ถ้าไม่ใช่ endpoint สุดท้าย ให้ลองต่อไป
-        if (endpoint !== possibleEndpoints[possibleEndpoints.length - 1]) {
-          continue;
-        }
-        // ถ้าเป็น endpoint สุดท้ายแล้ว ให้ throw error
-        throw err;
-      }
-    }
-    
-    if (!response) {
-      throw new Error('ไม่สามารถเรียก Flash Express API ได้ ทุก endpoint ล้มเหลว');
-    }
-    
-    console.log(`Flash Express API Response (${successEndpoint}):`, JSON.stringify(response.data, null, 2));
-    
-    return response.data;
-  } catch (error: any) {
-    console.error('เกิดข้อผิดพลาดในการทดสอบ getShippingOptions:', error.message);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', JSON.stringify(error.response.data, null, 2));
-    }
-    return null;
+    return signature;
+  } catch (error) {
+    console.error('❌ เกิดข้อผิดพลาดในการสร้างลายเซ็น Flash Express:', error);
+    throw error;
   }
 }
 
-async function testCreateShipping() {
-  console.log('\n========= ทดสอบสร้างการจัดส่ง =========');
-  
+// ทดสอบดึงตัวเลือกการจัดส่ง
+async function testGetShippingOptions() {
   try {
-    // ตรวจสอบข้อมูลที่จำเป็น
-    if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
+    console.log('🧪 เริ่มทดสอบดึงตัวเลือกการจัดส่ง...');
+    
+    // ตรวจสอบการตั้งค่า API
+    if (!FLASH_EXPRESS_MCH_ID || !FLASH_EXPRESS_API_KEY) {
       throw new Error('Flash Express API credentials not configured');
     }
     
-    // 1. สร้างข้อมูลพื้นฐาน
-    const timestamp = String(Math.floor(Date.now() / 1000));
-    const nonceStr = generateNonceStr();
-    const orderNumber = `TEST${Date.now()}`;
-    
-    // 2. เตรียมข้อมูลคำขอ
-    const requestParams: Record<string, any> = {
-      mchId: FLASH_EXPRESS_MERCHANT_ID,
-      nonceStr: nonceStr,
-      timestamp: timestamp,
-      outTradeNo: orderNumber,
-      srcName: 'บริษัท เพอร์เพิลแดช จำกัด',
-      srcPhone: '0812345678',
-      srcProvinceName: 'กรุงเทพมหานคร',
-      srcCityName: 'คลองเตย',
-      srcPostalCode: '10110',
-      srcDetailAddress: '123 ถนนสุขุมวิท',
-      dstName: 'คุณทดสอบ ระบบ',
-      dstPhone: '0898765432',
-      dstProvinceName: 'กรุงเทพมหานคร',
-      dstCityName: 'จตุจักร',
-      dstPostalCode: '10900',
-      dstDetailAddress: '456 ถนนพหลโยธิน',
-      articleCategory: String(1),
-      expressCategory: String(1),
-      weight: String(1000),
-      width: String(10),
-      height: String(10),
-      length: String(10),
-      insured: String(0),
-      codEnabled: String(0),
-      srcDistrictName: 'คลองเตย',
-      dstDistrictName: 'จตุจักร'
+    // ข้อมูลที่ใช้ในการทดสอบ - ที่อยู่ต้นทาง
+    const fromAddress = {
+      province: 'กรุงเทพมหานคร',
+      district: 'ลาดพร้าว',
+      subdistrict: 'จรเข้บัว',
+      zipcode: '10230'
     };
     
-    // 3. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode
+    // ข้อมูลที่ใช้ในการทดสอบ - ที่อยู่ปลายทาง
+    const toAddress = {
+      province: 'เชียงใหม่',
+      district: 'เมืองเชียงใหม่',
+      subdistrict: 'ศรีภูมิ',
+      zipcode: '50200'
+    };
+    
+    // ข้อมูลพัสดุ
+    const packageInfo = {
+      weight: 1, // 1 กิโลกรัม
+      width: 20, // 20 ซม.
+      length: 30, // 30 ซม.
+      height: 15  // 15 ซม.
+    };
+    
+    // 1. สร้างข้อมูลพื้นฐาน
+    const nonceStr = generateNonceStr();
+    
+    // 2. สร้างพารามิเตอร์ตามที่ Flash Express API ต้องการ
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const requestParams: Record<string, string> = {
+      mchId: FLASH_EXPRESS_MCH_ID,
+      nonceStr: nonceStr,
+      timestamp: timestamp,
+      warehouseNo: `${FLASH_EXPRESS_MCH_ID}_001`,
+      
+      // ข้อมูลจากเอกสาร API - ฟิลด์ที่จำเป็นสำหรับผู้ส่ง
+      srcProvinceName: fromAddress.province,
+      srcCityName: fromAddress.district,
+      srcPostalCode: fromAddress.zipcode,
+      
+      // ข้อมูลของผู้รับ
+      dstProvinceName: toAddress.province,
+      dstCityName: toAddress.district,
+      dstPostalCode: toAddress.zipcode,
+      weight: String(Math.round(packageInfo.weight * 1000)), // แปลงจาก กก. เป็น กรัม
+    };
+    
+    // ข้อมูลเพิ่มเติม (ไม่บังคับ)
+    if (fromAddress.subdistrict) requestParams.srcDistrictName = fromAddress.subdistrict;
+    if (toAddress.subdistrict) requestParams.dstDistrictName = toAddress.subdistrict;
+    if (packageInfo.width) requestParams.width = String(Math.round(packageInfo.width));
+    if (packageInfo.length) requestParams.length = String(Math.round(packageInfo.length));
+    if (packageInfo.height) requestParams.height = String(Math.round(packageInfo.height));
+
+    // 3. คำนวณลายเซ็นจากข้อมูลที่ยังไม่ได้ encode
     console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
     const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
     console.log('ลายเซ็นที่สร้าง:', signature);
-    
-    // 4. นำลายเซ็นมาเพิ่มเข้ากับข้อมูลคำขอ
-    const payload = { ...requestParams, sign: signature };
-    
-    // 5. สร้าง subItemTypes แยกต่างหาก (ต้องทำหลังจากสร้างลายเซ็นแล้ว)
-    const defaultItem = [{
-      itemName: 'สินค้าทดสอบ',
-      itemWeightSize: '1Kg',
-      itemColor: '-',
-      itemQuantity: 1
-    }];
-    const subItemTypesJSON = JSON.stringify(defaultItem);
-    payload.subItemTypes = subItemTypesJSON;
-    console.log('subItemTypes ที่ส่งไป:', subItemTypesJSON);
-    
-    // 6. สร้าง URL-encoded payload สำหรับส่งไปยัง API
-    const encodedPayload = new URLSearchParams(payload).toString();
-    
-    // 7. ตั้งค่า Headers ที่ถูกต้อง
+
+    // 4. เพิ่มลายเซ็นเข้าไปในพารามิเตอร์
+    requestParams.sign = signature;
+
+    // 5. แปลงเป็นรูปแบบ application/x-www-form-urlencoded
+    const encodedPayload = new URLSearchParams(requestParams).toString();
+
+    // 6. กำหนด Headers
     const headers = {
+      'Accept': 'application/json',
       'Content-Type': 'application/x-www-form-urlencoded',
       'X-Flash-Signature': signature,
       'X-Flash-Timestamp': timestamp,
-      'X-Flash-Nonce': nonceStr,
-      'Accept': 'application/json'
+      'X-Flash-Nonce': nonceStr
+    };
+
+    console.log('🔍 รายละเอียดที่ส่งไป API:');
+    console.log('URL:', `${FLASH_EXPRESS_API_URL}/open/v1/orders/estimate_rate`);
+    console.log('Headers:', JSON.stringify(headers, null, 2));
+    console.log('Payload (encoded):', encodedPayload);
+
+    // 7. เรียกใช้ API
+    console.log('⏳ กำลังเรียก Flash Express API...');
+    try {
+      const response = await axios.post(
+        `${FLASH_EXPRESS_API_URL}/open/v1/orders/estimate_rate`,
+        encodedPayload,
+        { headers, timeout: API_TIMEOUT }
+      );
+
+      console.log('✅ เรียก API สำเร็จ! Status:', response.status);
+      console.log('📦 ข้อมูลที่ได้รับ:', JSON.stringify(response.data, null, 2));
+
+      return response.data;
+    } catch (apiError: any) {
+      console.error('❌ เกิดข้อผิดพลาดในการเรียก API:', apiError.message);
+
+      if (apiError.response) {
+        console.error('❌ Response status:', apiError.response.status);
+        console.error('❌ Response data:', JSON.stringify(apiError.response.data, null, 2));
+      }
+
+      throw apiError;
+    }
+  } catch (error: any) {
+    console.error('❌ เกิดข้อผิดพลาดในการทดสอบดึงตัวเลือกการจัดส่ง:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+// ทดสอบสร้างการจัดส่ง
+async function testCreateShipping() {
+  try {
+    console.log('🧪 เริ่มทดสอบสร้างการจัดส่ง...');
+    
+    // ตรวจสอบการตั้งค่า API
+    if (!FLASH_EXPRESS_MCH_ID || !FLASH_EXPRESS_API_KEY) {
+      throw new Error('Flash Express API credentials not configured');
+    }
+    
+    // สร้างเลขออเดอร์สุ่ม
+    const outTradeNo = `TEST${Date.now()}`;
+    
+    // ข้อมูลทดสอบ
+    const orderData = {
+      outTradeNo,
+      srcName: 'ผู้ส่งทดสอบ',
+      srcPhone: '0812345678',
+      srcProvinceName: 'กรุงเทพมหานคร',
+      srcCityName: 'ลาดพร้าว',
+      srcDistrictName: 'จรเข้บัว',
+      srcPostalCode: '10230',
+      srcDetailAddress: '123 ถนนลาดพร้าว ซอย 10',
+      dstName: 'ผู้รับทดสอบ',
+      dstPhone: '0823456789',
+      dstProvinceName: 'เชียงใหม่',
+      dstCityName: 'เมืองเชียงใหม่',
+      dstDistrictName: 'ศรีภูมิ',
+      dstPostalCode: '50200',
+      dstDetailAddress: '456 ถนนนิมมานเหมินทร์',
+      articleCategory: 1, // ประเภทสินค้าทั่วไป
+      expressCategory: 1, // บริการขนส่งปกติ
+      parcelKind: 1, // พัสดุปกติ
+      weight: 1000, // 1 กก. (หน่วยเป็นกรัม)
+      width: 20,
+      length: 30,
+      height: 15,
+      insured: 0, // ไม่ซื้อประกัน
+      codEnabled: 0, // ไม่ใช้ COD
+    };
+    
+    // แปลงเบอร์โทรให้เป็นรูปแบบที่ถูกต้อง (ลบช่องว่างและขีด)
+    const senderPhone = orderData.srcPhone.replace(/[\s-]/g, '');
+    const recipientPhone = orderData.dstPhone.replace(/[\s-]/g, '');
+    
+    // สร้างข้อมูลพื้นฐาน
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const nonceStr = generateNonceStr();
+    
+    // เตรียมข้อมูลสำหรับใช้ในการสร้างลายเซ็น
+    const requestParams: Record<string, any> = {
+      mchId: FLASH_EXPRESS_MCH_ID,
+      nonceStr: nonceStr,
+      timestamp: timestamp,
+      outTradeNo: orderData.outTradeNo,
+      warehouseNo: `${FLASH_EXPRESS_MCH_ID}_001`,
+      srcName: orderData.srcName,
+      srcPhone: senderPhone,
+      srcProvinceName: orderData.srcProvinceName,
+      srcCityName: orderData.srcCityName,
+      srcDistrictName: orderData.srcDistrictName,
+      srcPostalCode: orderData.srcPostalCode,
+      srcDetailAddress: orderData.srcDetailAddress,
+      dstName: orderData.dstName,
+      dstPhone: recipientPhone,
+      dstProvinceName: orderData.dstProvinceName,
+      dstCityName: orderData.dstCityName,
+      dstDistrictName: orderData.dstDistrictName,
+      dstPostalCode: orderData.dstPostalCode,
+      dstDetailAddress: orderData.dstDetailAddress,
+      articleCategory: String(orderData.articleCategory),
+      expressCategory: String(orderData.expressCategory),
+      parcelKind: String(orderData.parcelKind),
+      weight: String(orderData.weight),
+      width: String(orderData.width),
+      length: String(orderData.length),
+      height: String(orderData.height),
+      insured: String(orderData.insured),
+      codEnabled: String(orderData.codEnabled),
+      remark: 'ทดสอบการสร้างเลขพัสดุ', // จะไม่ถูกรวมในการคำนวณลายเซ็น
+    };
+    
+    // สร้างลายเซ็น - ใช้ฟังก์ชันที่ปรับปรุงใหม่
+    console.log('ข้อมูลที่ใช้สร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
+    const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
+    console.log('ลายเซ็นที่สร้าง:', signature);
+    
+    // เพิ่มลายเซ็นเข้าไปในพารามิเตอร์
+    requestParams.sign = signature;
+    
+    // แปลงเป็น URL-encoded string
+    const encodedPayload = new URLSearchParams(requestParams as Record<string, string>).toString();
+    
+    // ตั้งค่า headers
+    const headers = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+      'X-Flash-Signature': signature,
+      'X-Flash-Timestamp': timestamp,
+      'X-Flash-Nonce': nonceStr
     };
     
     console.log('URL ที่เรียก:', `${FLASH_EXPRESS_API_URL}/open/v3/orders`);
     console.log('Headers ที่ใช้:', JSON.stringify(headers, null, 2));
-    console.log('Payload ที่ส่งไป (ก่อน encode):', JSON.stringify(payload, null, 2));
     console.log('Encoded payload ที่ส่งไป:', encodedPayload);
     
-    // 8. เรียกใช้ API
-    const response = await axios.post(
-      `${FLASH_EXPRESS_API_URL}/open/v3/orders`,
-      encodedPayload,
-      {
-        headers: headers,
-        timeout: API_TIMEOUT
+    // เรียกใช้ API
+    try {
+      const response = await axios.post(
+        `${FLASH_EXPRESS_API_URL}/open/v3/orders`,
+        encodedPayload,
+        { headers, timeout: API_TIMEOUT }
+      );
+      
+      console.log('Flash Express API Response:', response.status);
+      console.log('Response data:', JSON.stringify(response.data, null, 2));
+      
+      // ตรวจสอบผลลัพธ์
+      if (response.data && response.data.code === 1) {
+        console.log('✅ สร้างเลขพัสดุสำเร็จ!');
+        console.log('📦 เลขพัสดุ:', response.data.data.pno);
+        console.log('🏷️ Sort Code:', response.data.data.sortCode);
+        
+        // ทดสอบติดตามสถานะหลังจากสร้างเลขพัสดุสำเร็จ
+        await testTrackingStatus(response.data.data.pno);
+        
+        return {
+          success: true,
+          trackingNumber: response.data.data.pno,
+          sortCode: response.data.data.sortCode
+        };
+      } else {
+        console.log('❌ การสร้างเลขพัสดุไม่สำเร็จ:', response.data);
+        return { success: false, error: response.data?.message || 'Unknown error' };
       }
-    );
-    
-    console.log("Flash Express API Response:", JSON.stringify(response.data, null, 2));
-    
-    if (response.data && response.data.code === 1) {
-      console.log('สร้างการจัดส่งสำเร็จ! เลขพัสดุ:', response.data.data.pno);
-      return response.data.data.pno; // ส่งคืนเลขติดตามพัสดุเพื่อใช้ในการทดสอบถัดไป
-    } else {
-      console.log('การตอบกลับไม่สำเร็จจาก Flash Express API:', response.data);
-      return null;
+    } catch (apiError: any) {
+      console.error('❌ เกิดข้อผิดพลาดในการเรียก API:', apiError.message);
+      
+      if (apiError.response) {
+        console.error('❌ Response status:', apiError.response.status);
+        console.error('❌ Response data:', JSON.stringify(apiError.response.data, null, 2));
+      }
+      
+      return { success: false, error: apiError.message };
     }
   } catch (error: any) {
-    console.error('เกิดข้อผิดพลาดในการทดสอบ createShipping:', error.message);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', JSON.stringify(error.response.data, null, 2));
-    }
-    return null;
+    console.error('❌ เกิดข้อผิดพลาดในการทดสอบสร้างการจัดส่ง:', error.message);
+    return { success: false, error: error.message };
   }
 }
 
+// ทดสอบติดตามสถานะ
 async function testTrackingStatus(trackingNumber: string) {
-  console.log('\n========= ทดสอบตรวจสอบสถานะพัสดุ =========');
-  
   try {
-    // ตรวจสอบข้อมูลที่จำเป็น
-    if (!FLASH_EXPRESS_MERCHANT_ID || !FLASH_EXPRESS_API_KEY) {
+    console.log(`🧪 เริ่มทดสอบติดตามสถานะพัสดุ ${trackingNumber}...`);
+    
+    // ตรวจสอบการตั้งค่า API
+    if (!FLASH_EXPRESS_MCH_ID || !FLASH_EXPRESS_API_KEY) {
       throw new Error('Flash Express API credentials not configured');
     }
     
-    if (!trackingNumber) {
-      throw new Error('ไม่มีเลขพัสดุสำหรับทดสอบ');
-    }
-    
-    // 1. สร้างข้อมูลพื้นฐาน
+    // สร้างข้อมูลพื้นฐาน
     const timestamp = String(Math.floor(Date.now() / 1000));
     const nonceStr = generateNonceStr();
     
-    // 2. เตรียมข้อมูลคำขอ
+    // เตรียมข้อมูลสำหรับใช้ในการสร้างลายเซ็น
     const requestParams: Record<string, any> = {
-      mchId: FLASH_EXPRESS_MERCHANT_ID,
+      mchId: FLASH_EXPRESS_MCH_ID,
       nonceStr: nonceStr,
       timestamp: timestamp,
       pno: trackingNumber
     };
     
-    // 3. สร้างลายเซ็น
-    console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
+    // สร้างลายเซ็น
+    console.log('ข้อมูลที่ใช้สร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
     const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
     console.log('ลายเซ็นที่สร้าง:', signature);
     
-    // 4. นำลายเซ็นมาเพิ่มเข้ากับข้อมูลคำขอ
-    const payload = { ...requestParams, sign: signature };
+    // เพิ่มลายเซ็นเข้าไปในพารามิเตอร์
+    requestParams.sign = signature;
     
-    // 5. สร้าง URL-encoded payload สำหรับส่งไปยัง API
-    const encodedPayload = new URLSearchParams(payload).toString();
+    // แปลงเป็น URL-encoded string
+    const encodedPayload = new URLSearchParams(requestParams as Record<string, string>).toString();
     
-    // 6. ตั้งค่า Headers ที่ถูกต้อง
+    // ตั้งค่า headers
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
       'X-Flash-Signature': signature,
       'X-Flash-Timestamp': timestamp,
-      'X-Flash-Nonce': nonceStr,
-      'Accept': 'application/json'
+      'X-Flash-Nonce': nonceStr
     };
     
-    console.log('URL ที่เรียก:', `${FLASH_EXPRESS_API_URL}/open/v3/tracking/search`);
+    console.log('URL ที่เรียก:', `${FLASH_EXPRESS_API_URL}/open/v3/orders/query_detail`);
     console.log('Headers ที่ใช้:', JSON.stringify(headers, null, 2));
-    console.log('Payload ที่ส่งไป (ก่อน encode):', JSON.stringify(payload, null, 2));
     console.log('Encoded payload ที่ส่งไป:', encodedPayload);
     
-    // 7. เรียกใช้ API
-    const response = await axios.post(
-      `${FLASH_EXPRESS_API_URL}/open/v3/tracking/search`,
-      encodedPayload,
-      {
-        headers: headers,
-        timeout: API_TIMEOUT
+    // เรียกใช้ API
+    try {
+      const response = await axios.post(
+        `${FLASH_EXPRESS_API_URL}/open/v3/orders/query_detail`,
+        encodedPayload,
+        { headers, timeout: API_TIMEOUT }
+      );
+      
+      console.log('Flash Express API Response:', response.status);
+      console.log('Response data:', JSON.stringify(response.data, null, 2));
+      
+      if (response.data && response.data.code === 1) {
+        console.log('✅ ดึงข้อมูลสถานะพัสดุสำเร็จ!');
+        console.log('🚚 สถานะ:', response.data.data.statusDesc);
+        
+        return {
+          success: true,
+          status: response.data.data.statusDesc,
+          detail: response.data.data
+        };
+      } else {
+        console.log('❌ การดึงข้อมูลสถานะพัสดุไม่สำเร็จ:', response.data);
+        return { success: false, error: response.data?.message || 'Unknown error' };
       }
-    );
-    
-    console.log("Flash Express API Response:", JSON.stringify(response.data, null, 2));
-    
-    if (response.data && response.data.code === 1) {
-      console.log('ดึงข้อมูลสถานะพัสดุสำเร็จ!');
-      return response.data;
-    } else {
-      console.log('การตอบกลับไม่สำเร็จจาก Flash Express API:', response.data);
-      return null;
+    } catch (apiError: any) {
+      console.error('❌ เกิดข้อผิดพลาดในการเรียก API:', apiError.message);
+      
+      if (apiError.response) {
+        console.error('❌ Response status:', apiError.response.status);
+        console.error('❌ Response data:', JSON.stringify(apiError.response.data, null, 2));
+      }
+      
+      return { success: false, error: apiError.message };
     }
   } catch (error: any) {
-    console.error('เกิดข้อผิดพลาดในการทดสอบ trackingStatus:', error.message);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', JSON.stringify(error.response.data, null, 2));
-    }
-    return null;
+    console.error('❌ เกิดข้อผิดพลาดในการทดสอบติดตามสถานะพัสดุ:', error.message);
+    return { success: false, error: error.message };
   }
 }
 
+// รันการทดสอบทั้งหมด
 async function runAllTests() {
+  console.log('========================= Flash Express API Tests (FIXED) =========================');
+  
+  // ทดสอบดึงตัวเลือกการจัดส่ง
+  console.log('\n🧪 TEST 1: ดึงตัวเลือกการจัดส่ง 🧪');
   try {
-    console.log('เริ่มทดสอบ Flash Express API แบบใหม่ล่าสุด...');
-    console.log(`API URL: ${FLASH_EXPRESS_API_URL}`);
-    console.log(`Merchant ID: ${FLASH_EXPRESS_MERCHANT_ID}`);
-    console.log(`API Key: ${FLASH_EXPRESS_API_KEY?.substring(0, 5)}...${FLASH_EXPRESS_API_KEY?.substring(FLASH_EXPRESS_API_KEY.length - 5)}`);
-    
-    // ทดสอบดึงตัวเลือกการจัดส่ง
     await testGetShippingOptions();
-    
-    // ทดสอบสร้างการจัดส่ง
-    const trackingNumber = await testCreateShipping();
-    
-    // ทดสอบตรวจสอบสถานะพัสดุ (ถ้ามีเลขติดตามพัสดุจากการทดสอบก่อนหน้า)
-    if (trackingNumber) {
-      await testTrackingStatus(trackingNumber);
-    } else {
-      console.log('\n⚠️ ไม่สามารถทดสอบตรวจสอบสถานะพัสดุได้เนื่องจากไม่มีเลขพัสดุ');
-    }
-    
-    console.log('\n========= การทดสอบเสร็จสิ้น =========');
   } catch (error) {
-    console.error('เกิดข้อผิดพลาดในการทดสอบ:', error);
+    console.error('❌ การทดสอบดึงตัวเลือกการจัดส่งล้มเหลว:', error);
   }
+  
+  // ทดสอบสร้างการจัดส่ง
+  console.log('\n🧪 TEST 2: สร้างการจัดส่ง 🧪');
+  try {
+    await testCreateShipping();
+  } catch (error) {
+    console.error('❌ การทดสอบสร้างการจัดส่งล้มเหลว:', error);
+  }
+  
+  console.log('\n========================= Tests Complete =========================');
 }
 
 // เริ่มการทดสอบ

@@ -46,8 +46,17 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
     // 1. แปลงทุกค่าเป็น string และกรองพารามิเตอร์
     const stringParams: Record<string, string> = {};
     Object.keys(params).forEach(key => {
-      // ข้ามฟิลด์ sign และ subItemTypes (จะเพิ่มหลังจากสร้างลายเซ็น) และ merchantId (ใช้ mchId แทน)
-      if (key === 'sign' || key === 'subItemTypes' || key === 'merchantId') return;
+      // Flash Express API มีพารามิเตอร์ที่ต้องข้ามในการคำนวณลายเซ็น
+      const skipParams = [
+        'sign', 
+        'subItemTypes', 
+        'merchantId',  // ใช้ mchId แทน
+        'subParcel',   // ไม่รวมในการคำนวณลายเซ็น
+        'subParcelQuantity', // ไม่รวมในการคำนวณลายเซ็น
+        'remark'       // ไม่รวมในการคำนวณลายเซ็น
+      ];
+      
+      if (skipParams.includes(key)) return;
       
       // ข้ามค่าที่เป็น null, undefined หรือช่องว่าง
       if (params[key] === null || params[key] === undefined || params[key] === '') return;
