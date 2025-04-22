@@ -180,7 +180,7 @@ export const createFlashExpressShipping = async (
         dstDetailAddress: orderData.dstDetailAddress,
         articleCategory: orderData.articleCategory,
         weight: orderData.weight,
-        insured: orderData.insured || 0,
+        insured: 0, // กำหนดค่าคงที่เสมอ
         codEnabled: orderData.codEnabled || 0
       };
       
