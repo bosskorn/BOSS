@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from '@/hooks/use-toast';
 import { Checkbox } from "@/components/ui/checkbox";
+import axios from 'axios';
 import { 
   Table, 
   TableBody, 
@@ -895,30 +896,23 @@ const OrderList: React.FC = () => {
                         if (confirm(`ต้องการลบรายการที่เลือกทั้งหมด ${selectedOrders.length} รายการใช่หรือไม่?`)) {
                           // สร้างอาร์เรย์ของคำขอลบ
                           const deletePromises = selectedOrders.map(orderId => {
-                            const token = localStorage.getItem('auth_token');
-                            return fetch(`/api/orders/${orderId}`, {
-                              method: 'DELETE',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': token ? `Bearer ${token}` : '',
-                              },
-                              credentials: 'include'
-                            })
-                            .then(response => {
-                              if (!response.ok) {
-                                throw new Error(`Error ${response.status}: ${response.statusText}`);
-                              }
-                              return response.json();
-                            });
+                            // ใช้ axios แทน fetch เพื่อให้มีการจัดการเรื่อง credential แบบอัตโนมัติ
+                            return axios.delete(`/api/orders/${orderId}`)
+                              .then(response => {
+                                return response.data;
+                              })
+                              .catch(error => {
+                                console.error(`ไม่สามารถลบรายการ ID: ${orderId}`, error.response?.data || error.message);
+                                // ส่งข้อผิดพลาดเพื่อจัดการที่ส่วนกลาง
+                                throw new Error(error.response?.data?.message || `ไม่สามารถลบรายการ ID: ${orderId}`);
+                              });
                           });
                           
                           // จำนวนรายการที่จะลบ
                           const deleteCount = selectedOrders.length;
                           
-                          // สำรองข้อมูลเดิมก่อนลบ (ในกรณีที่ต้องการคืนสถานะ)
+                          // สำรองข้อมูลเดิมก่อนลบ
                           const ordersBackup = [...orders];
-                          const filteredOrdersBackup = [...filteredOrders];
-                          const selectedOrdersBackup = [...selectedOrders];
                           
                           // แสดงข้อความกำลังดำเนินการ
                           toast({
@@ -926,68 +920,74 @@ const OrderList: React.FC = () => {
                             description: `กำลังลบรายการที่เลือก ${deleteCount} รายการ`,
                           });
                           
-                          // ลบรายการจาก state ทันที (เพื่อ UI ตอบสนองเร็ว)
-                          const deletedOrderIds = [...selectedOrders];
-                          const updatedOrders = orders.filter(order => !deletedOrderIds.includes(order.id));
-                          const updatedFilteredOrders = filteredOrders.filter(order => !deletedOrderIds.includes(order.id));
+                          // ดำเนินการลบทีละรายการแทนการใช้ Promise.all
+                          // เพื่อให้สามารถดูว่ารายการใดลบได้หรือไม่ได้
+                          let successCount = 0;
+                          let failedCount = 0;
+                          let failedMessages: string[] = [];
                           
-                          setOrders(updatedOrders);
-                          setFilteredOrders(updatedFilteredOrders);
-                          setSelectedOrders([]);
-                          
-                          // ทำการลบพร้อมกันทั้งหมดที่ backend
-                          Promise.all(deletePromises)
-                            .then(results => {
-                              // ตรวจสอบว่ามีรายการใดลบไม่ได้บ้าง
-                              const failedResults = results.filter(result => !result?.success);
-                              
-                              if (failedResults.length === 0) {
-                                // ทุกรายการลบสำเร็จ
+                          const processDeleteOne = (index: number) => {
+                            // ถ้าลบครบทุกรายการแล้ว แสดงสรุปผล
+                            if (index >= selectedOrders.length) {
+                              // สรุปผลการลบ
+                              if (failedCount === 0) {
                                 toast({
                                   title: 'ลบรายการสำเร็จ',
-                                  description: `ลบรายการทั้งหมด ${deleteCount} รายการเรียบร้อยแล้ว`,
+                                  description: `ลบรายการทั้งหมด ${successCount} รายการเรียบร้อยแล้ว`,
+                                  variant: 'default',
+                                });
+                              } else if (successCount > 0) {
+                                toast({
+                                  title: 'ลบรายการบางส่วนสำเร็จ',
+                                  description: `ลบได้ ${successCount} จาก ${deleteCount} รายการ มีบางรายการไม่สามารถลบได้`,
                                   variant: 'default',
                                 });
                               } else {
-                                // มีบางรายการลบไม่สำเร็จ แต่บางรายการลบได้
-                                const successCount = deleteCount - failedResults.length;
-                                
-                                if (successCount > 0) {
-                                  toast({
-                                    title: 'ลบรายการบางส่วนสำเร็จ',
-                                    description: `ลบได้ ${successCount} จาก ${deleteCount} รายการ มีบางรายการไม่สามารถลบได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่`,
-                                    variant: 'default',
-                                  });
-                                } else {
-                                  // ไม่มีรายการใดลบสำเร็จเลย
-                                  toast({
-                                    title: 'ไม่สามารถลบรายการได้',
-                                    description: 'ไม่สามารถลบรายการได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่',
-                                    variant: 'destructive',
-                                  });
-                                }
+                                toast({
+                                  title: 'ไม่สามารถลบรายการได้',
+                                  description: failedMessages[0] || 'ไม่สามารถลบรายการได้',
+                                  variant: 'destructive',
+                                });
                               }
                               
-                              // รีเฟรชข้อมูลทุกกรณี
+                              // รีเฟรชข้อมูลออเดอร์
                               fetchOrders();
+                              return;
+                            }
+                            
+                            // ดำเนินการลบรายการปัจจุบัน
+                            const orderId = selectedOrders[index];
+                            
+                            fetch(`/api/orders/${orderId}`, {
+                              method: 'DELETE',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              credentials: 'include'
                             })
-                            .catch(error => {
-                              console.error('Error deleting orders:', error);
-                              
-                              // ตรวจสอบว่าเป็น foreign key error หรือไม่
-                              const errorMessage = error instanceof Error ? error.message : 'ไม่สามารถลบรายการได้';
-                              const isForeignKeyError = errorMessage.includes('foreign key constraint') || 
-                                                       errorMessage.includes('fee_history') ||
-                                                       errorMessage.includes('referenced');
-                              
-                              toast({
-                                title: 'การลบรายการบางรายการไม่สำเร็จ',
-                                description: isForeignKeyError 
-                                  ? 'บางรายการไม่สามารถลบได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่ แต่รายการที่เหลือที่ลบได้ถูกลบออกจากรายการแล้ว' 
-                                  : errorMessage,
-                                variant: 'destructive',
+                              .then(response => response.json())
+                              .then(data => {
+                                if (data.success) {
+                                  successCount++;
+                                } else {
+                                  failedCount++;
+                                  failedMessages.push(data.message || `ไม่สามารถลบรายการ ID: ${orderId}`);
+                                }
+                                // ดำเนินการกับรายการถัดไป
+                                processDeleteOne(index + 1);
+                              })
+                              .catch(error => {
+                                failedCount++;
+                                const errorMessage = error instanceof Error ? error.message : `ไม่สามารถลบรายการ ID: ${orderId}`;
+                                failedMessages.push(errorMessage);
+                                console.error('Error deleting order:', error);
+                                // ดำเนินการกับรายการถัดไปแม้จะมีข้อผิดพลาด
+                                processDeleteOne(index + 1);
                               });
-                            });
+                          };
+                          
+                          // เริ่มต้นกระบวนการลบรายการแรก
+                          processDeleteOne(0);
                         }
                       }}
                     >
