@@ -804,30 +804,79 @@ const TopUpPage: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {history.map((item, index) => (
-                          <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {formatDate(item.createdAt)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm font-semibold text-gray-800">฿{item.amount.toLocaleString()}</span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {item.method === 'prompt_pay' ? 'PromptPay' : 
-                                 item.method === 'credit_card' ? 'บัตรเครดิต/เดบิต' : 'โอนเงิน'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                              {renderStatus(item.status)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
-                              {item.reference || '-'}
-                            </td>
-                          </tr>
+                        {history
+                          .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                          .map((item, index) => (
+                            <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {formatDate(item.createdAt)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className="text-sm font-semibold text-gray-800">฿{item.amount.toLocaleString()}</span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  {item.method === 'prompt_pay' ? 'PromptPay' : 
+                                   item.method === 'credit_card' ? 'บัตรเครดิต/เดบิต' : 'โอนเงิน'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                {renderStatus(item.status)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                                {item.reference || '-'}
+                              </td>
+                            </tr>
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+                
+                {/* ระบบแบ่งหน้า - แสดงเฉพาะเมื่อมีข้อมูลมากกว่า 1 หน้า */}
+                {history.length > itemsPerPage && (
+                  <div className="mt-6 flex justify-between items-center border-t pt-4">
+                    <div className="text-sm text-gray-600">
+                      แสดง {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, history.length)} จาก {history.length} รายการ
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="h-8 px-3"
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        ก่อนหน้า
+                      </Button>
+                      
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: Math.ceil(history.length / itemsPerPage) }, (_, i) => i + 1)
+                          .map(page => (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handlePageChange(page)}
+                              className="h-8 min-w-[2rem] px-2"
+                            >
+                              {page}
+                            </Button>
+                          ))}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === Math.ceil(history.length / itemsPerPage)}
+                        className="h-8 px-3"
+                      >
+                        ถัดไป
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
