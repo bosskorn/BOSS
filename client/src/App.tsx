@@ -47,6 +47,7 @@ import PrintMultipleLabelsFixed from './pages/print-multiple-labels-fixed';
 import FlashExpressLabelFixed from './pages/flash-express-label-fixed';
 import JntExpressLabel from './pages/jnt-express-label';
 import FeeHistory from './pages/fee-history';
+import LandingPage from './pages/landing';
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -77,6 +78,7 @@ function Router() {
       <Route path="/print-multiple-labels" component={PrintMultipleLabels} />
       <Route path="/print-multiple-labels-fixed" component={PrintMultipleLabelsFixed} />
       <Route path="/flash-express-label-fixed" component={FlashExpressLabelFixed} />
+      <Route path="/landing" component={LandingPage} />
 
 
       {/* Protected routes - require authentication */}
