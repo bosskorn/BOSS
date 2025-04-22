@@ -6,12 +6,12 @@
 @tailwind utilities;
 
 :root {
-  --brand-purple: #9C27B0;
-  --brand-purple-dark: #7B1FA2;
-  --brand-purple-light: #CE93D8;
-  --brand-yellow: #FFC107;
-  --brand-yellow-dark: #FFA000;
-  --brand-yellow-light: #FFECB3;
+  --brand-blue: #0070F3;
+  --brand-blue-dark: #0050B3;
+  --brand-blue-light: #4DA6FF;
+  --brand-cyan: #00B0FF;
+  --brand-cyan-dark: #0091EA;
+  --brand-cyan-light: #80D8FF;
 }
 
 .font-kanit {
@@ -87,7 +87,7 @@
 }
 
 .logo-icon {
-  background-color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
+  background-color: #0070F3; /* สีน้ำเงินหลัก */
   color: white;
   width: 40px;
   height: 40px;
@@ -109,7 +109,7 @@
   font-size: 20px;
   color: #333;
   letter-spacing: 1px;
-  background: linear-gradient(to right, #9C27B0, #7B1FA2); /* สีม่วงไล่ระดับตามโลโก้ใหม่ */
+  background: linear-gradient(to right, #0070F3, #0050B3); /* สีน้ำเงินไล่ระดับ */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -149,7 +149,7 @@
 
 .menu-link:hover, 
 .menu-link.active {
-  color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
+  color: #0070F3; /* สีน้ำเงินหลัก */
 }
 
 .menu-link:hover::after,
@@ -160,7 +160,7 @@
   left: 15px;
   right: 15px;
   height: 3px;
-  background-color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
+  background-color: #0070F3; /* สีน้ำเงินหลัก */
   border-radius: 3px 3px 0 0;
 }
 
@@ -209,13 +209,13 @@
 
 .dropdown-menu li a:hover {
   background-color: #F5F5F5;
-  color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
+  color: #0070F3; /* สีน้ำเงินหลัก */
   padding-left: 25px;
 }
 
 .dropdown-menu li a.active {
   background-color: #F5F5F5;
-  color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
+  color: #0070F3; /* สีน้ำเงินหลัก */
 }
 
 .dropdown-menu li i {
@@ -312,7 +312,7 @@
     width: 100%;
     border-radius: 0;
     background-color: #f9f9f9;
-    border-left: 4px solid #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
+    border-left: 4px solid #0070F3; /* สีน้ำเงินหลัก */
     margin: 0;
   }
   
@@ -350,7 +350,7 @@
     
     /* ปรับปรุงการแสดงผลของปุ่มปิดใน sidebar */
     .menu-link:active, .menu-link:focus {
-      background-color: rgba(138, 43, 226, 0.1);
+      background-color: rgba(0, 112, 243, 0.1);
     }
     
     /* ปรับแต่งปุ่มบัญชีให้แสดงผลได้ถูกต้องบนมือถือ */
@@ -364,7 +364,7 @@
     .account-item .user-balance {
       display: block;
       font-size: 0.75rem;
-      color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
+      color: #0070F3; /* สีน้ำเงินหลัก */
       margin-top: 2px;
     }
     
@@ -403,18 +403,18 @@
   }
 }
 
-/* คัสตอมสีสำหรับระบบขนส่ง ShipSync - โลโก้แบบ Network+Hub */
+/* คัสตอมสีสำหรับระบบขนส่ง ShipSync - โลโก้แบบใหม่ โทนสีน้ำเงิน-ฟ้า */
 :root {
-  --primary-purple: #9C27B0;  /* สีม่วงหลักตามโลโก้ใหม่ */
-  --primary-purple-light: #CE93D8;  /* สีม่วงอ่อน */
-  --primary-purple-dark: #7B1FA2;  /* สีม่วงเข้ม */
-  --primary-purple-accent: #AB47BC;  /* สีม่วงสดเน้น */
+  --primary-blue: #0070F3;  /* สีน้ำเงินหลัก */
+  --primary-blue-light: #4DA6FF;  /* สีน้ำเงินอ่อน */
+  --primary-blue-dark: #0050B3;  /* สีน้ำเงินเข้ม */
+  --primary-blue-accent: #2B88FF;  /* สีน้ำเงินสดเน้น */
   
-  --accent-yellow: #FFC107;  /* สีเหลืองจากจุดศูนย์กลางในโลโก้ */
-  --accent-yellow-light: #FFECB3;  /* สีเหลืองอ่อน */
-  --accent-yellow-dark: #FFA000;  /* สีเหลืองเข้ม */
+  --accent-cyan: #00B0FF;  /* สีฟ้าเน้น */
+  --accent-cyan-light: #80D8FF;  /* สีฟ้าอ่อน */
+  --accent-cyan-dark: #0091EA;  /* สีฟ้าเข้ม */
   
-  --dark-bg: #2E2157;  /* สีพื้นหลังโลโก้ใหม่ */
+  --dark-bg: #0A1929;  /* สีพื้นหลังโทนน้ำเงินเข้ม */
   
   --neutral-grey-light: #f9fafb;  /* เทาอ่อน */
   --neutral-grey: #9ca3af;  /* เทากลาง */
@@ -422,26 +422,38 @@
   
   --accent-red: #ef4444;  /* แดงเน้น */
   
-  /* เก็บสีเดิมไว้อ้างอิง - จะลบทิ้งหลังจากปรับปรุงระบบสมบูรณ์ */
-  --primary-blue: #9C27B0; /* เปลี่ยนเป็นสีม่วง */
-  --primary-blue-light: #CE93D8; /* เปลี่ยนเป็นสีม่วงอ่อน */
-  --primary-blue-dark: #7B1FA2; /* เปลี่ยนเป็นสีม่วงเข้ม */
-  --primary-blue-accent: #AB47BC; /* เปลี่ยนเป็นสีม่วงสดเน้น */
-  --accent-blue: #9C27B0; /* เปลี่ยนเป็นสีม่วง */
-  --accent-orange: #FFC107; /* เปลี่ยนเป็นสีเหลือง */
+  /* ค่าสีใหม่สำหรับอ้างอิงในโค้ดทั้งหมด */
+  --primary-color: #0070F3; /* สีน้ำเงินหลัก */
+  --primary-color-light: #4DA6FF; /* สีน้ำเงินอ่อน */
+  --primary-color-dark: #0050B3; /* สีน้ำเงินเข้ม */
+  --accent-color: #00B0FF; /* สีฟ้าเน้น */
+  --accent-color-light: #80D8FF; /* สีฟ้าอ่อน */
 }
 
-/* สไตล์สำหรับปุ่มสีม่วง */
+/* สไตล์สำหรับปุ่มสีน้ำเงิน */
+.btn-blue {
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+}
+
+.btn-blue-light {
+  @apply bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+}
+
+.btn-blue-outline {
+  @apply border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+}
+
+/* สำหรับการอ้างอิงเดิม */
 .btn-purple {
-  @apply bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-all;
 }
 
 .btn-purple-light {
-  @apply bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+  @apply bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
 }
 
 .btn-purple-outline {
-  @apply border border-purple-600 text-purple-600 hover:bg-purple-50 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
+  @apply border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-2 px-4 rounded-md shadow-sm transition-all;
 }
 
 /* สไตล์สำหรับแบนเนอร์และการ์ด */
@@ -449,8 +461,12 @@
   @apply bg-white rounded-lg shadow-md p-5 border-l-4;
 }
 
+.status-card.blue {
+  @apply border-l-blue-500;
+}
+
 .status-card.purple {
-  @apply border-l-purple-500;
+  @apply border-l-blue-500;
 }
 
 .status-card.warning {
@@ -462,7 +478,7 @@
 }
 
 .status-card.info {
-  @apply border-l-purple-500;
+  @apply border-l-blue-500;
 }
 
 /* สไตล์สำหรับแท็ก */
@@ -470,8 +486,12 @@
   @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
 }
 
+.badge-blue {
+  @apply bg-blue-100 text-blue-800;
+}
+
 .badge-purple {
-  @apply bg-purple-100 text-purple-800;
+  @apply bg-blue-100 text-blue-800;
 }
 
 .badge-warning {
@@ -483,7 +503,7 @@
 }
 
 .badge-info {
-  @apply bg-purple-100 text-purple-800;
+  @apply bg-blue-100 text-blue-800;
 }
 
 /* เอฟเฟกต์ฮฟเวอร์ */
@@ -492,17 +512,25 @@
 }
 
 /* สไตล์สำหรับไอคอน */
+.icon-blue {
+  @apply text-blue-600;
+}
+
+.icon-blue-light {
+  @apply text-blue-400;
+}
+
 .icon-purple {
-  @apply text-purple-600;
+  @apply text-blue-600;
 }
 
 .icon-purple-light {
-  @apply text-purple-400;
+  @apply text-blue-400;
 }
 
 /* อนิเมชันโหลดิ้ง */
 .loading-pulse {
-  @apply animate-pulse bg-purple-100;
+  @apply animate-pulse bg-blue-100;
 }
 
 /* อนิเมชันรถขนส่ง */
@@ -536,17 +564,22 @@
 }
 
 /* เอฟเฟกต์ Glowing */
+.glow-blue {
+  filter: drop-shadow(0 0 8px rgba(0, 112, 243, 0.8)); /* สีน้ำเงินหลัก */
+  animation: glow 3s ease-in-out infinite alternate;
+}
+
 .glow-purple {
-  filter: drop-shadow(0 0 8px rgba(156, 39, 176, 0.8)); /* สีม่วงตามโลโก้ใหม่ */
+  filter: drop-shadow(0 0 8px rgba(0, 112, 243, 0.8)); /* สีน้ำเงินหลัก */
   animation: glow 3s ease-in-out infinite alternate;
 }
 
 @keyframes glow {
   from {
-    filter: drop-shadow(0 0 5px rgba(156, 39, 176, 0.5)); /* สีม่วงตามโลโก้ใหม่ */
+    filter: drop-shadow(0 0 5px rgba(0, 112, 243, 0.5)); /* สีน้ำเงินหลัก */
   }
   to {
-    filter: drop-shadow(0 0 20px rgba(156, 39, 176, 0.8)); /* สีม่วงตามโลโก้ใหม่ */
+    filter: drop-shadow(0 0 20px rgba(0, 112, 243, 0.8)); /* สีน้ำเงินหลัก */
   }
 }
 
@@ -565,7 +598,7 @@
 /* สไตล์สำหรับส่วนกราฟิกการจัดส่ง */
 .delivery-dash {
   @apply relative py-1 px-3 font-bold;
-  background: linear-gradient(90deg, #9C27B0 0%, #AB47BC 100%); /* ไล่ระดับสีม่วงตามโลโก้ใหม่ */
+  background: linear-gradient(90deg, #0070F3 0%, #2B88FF 100%); /* ไล่ระดับสีน้ำเงินหลัก */
   border-radius: 4px;
   color: white;
   text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
@@ -581,30 +614,49 @@
   height: 0;
   border-top: 8px solid transparent;
   border-bottom: 8px solid transparent;
-  border-left: 8px solid #AB47BC; /* สีม่วงตามโลโก้ใหม่ */
+  border-left: 8px solid #2B88FF; /* สีน้ำเงินหลัก */
 }
 
-/* สไตล์สำหรับพื้นหลังลาย gradient ม่วง */
+/* สไตล์สำหรับพื้นหลังลาย gradient น้ำเงิน */
+.blue-gradient-bg {
+  background: linear-gradient(135deg, #0070F3 0%, #2B88FF 100%); /* ไล่ระดับสีน้ำเงินหลัก */
+}
+
 .purple-gradient-bg {
-  background: linear-gradient(135deg, #9C27B0 0%, #AB47BC 100%); /* ไล่ระดับสีม่วงตามโลโก้ใหม่ */
+  background: linear-gradient(135deg, #0070F3 0%, #2B88FF 100%); /* ไล่ระดับสีน้ำเงินหลัก */
 }
 
-/* สไตล์สำหรับเส้นประม่วง Animation */
+/* สไตล์สำหรับเส้นประน้ำเงิน Animation */
+.blue-dash-line {
+  @apply relative overflow-hidden;
+}
+
 .purple-dash-line {
   @apply relative overflow-hidden;
 }
 
+.blue-dash-line::after,
 .purple-dash-line::after {
   content: '';
   position: absolute;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #9C27B0, transparent); /* สีม่วงตามโลโก้ใหม่ */
-  animation: purpleDash 2s infinite linear;
+  background: linear-gradient(90deg, transparent, #0070F3, transparent); /* สีน้ำเงินหลัก */
+  animation: blueDash 2s infinite linear;
   width: 100%;
   bottom: 0;
   left: 0;
 }
 
+@keyframes blueDash {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* สำหรับ backward compatibility */
 @keyframes purpleDash {
   0% {
     background-position: -200% 0;
