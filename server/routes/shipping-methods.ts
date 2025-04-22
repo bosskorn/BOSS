@@ -84,26 +84,75 @@ router.post('/flash-express/rates', auth, async (req, res) => {
       });
     }
     
-    console.log('เรียกใช้ Flash Express API เวอร์ชันล่าสุดเพื่อดึงข้อมูลค่าจัดส่ง');
-    console.log('ข้อมูลที่ส่ง:', JSON.stringify({ fromAddress, toAddress, weight: weight || 1.0 }, null, 2));
+    if (!fromAddress.zipcode || !toAddress.zipcode) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุรหัสไปรษณีย์ต้นทางและปลายทาง'
+      });
+    }
     
-    // เรียก API Flash Express เพื่อดึงข้อมูลค่าจัดส่ง (เวอร์ชัน final)
-    const shippingRates = await getFlashExpressShippingOptions(
-      fromAddress,
-      toAddress,
-      { weight: weight || 1.0 }
-    );
+    console.log('=== เรียกใช้ Flash Express API เพื่อดึงข้อมูลค่าจัดส่ง ===');
+    console.log('ข้อมูลที่ส่ง:', JSON.stringify({
+      จาก: fromAddress.zipcode,
+      ไปยัง: {
+        province: toAddress.province || 'กรุงเทพมหานคร',
+        district: toAddress.district || 'ลาดพร้าว',
+        subdistrict: toAddress.subdistrict || 'ลาดพร้าว',
+        zipcode: toAddress.zipcode
+      },
+      น้ำหนัก: weight || 1.0
+    }, null, 2));
     
-    res.json({
-      success: true,
-      shippingRates
-    });
+    try {
+      // เรียก API Flash Express เพื่อดึงข้อมูลค่าจัดส่ง (เวอร์ชัน final)
+      const shippingRates = await getFlashExpressShippingOptions(
+        fromAddress,
+        toAddress,
+        { weight: weight || 1.0 }
+      );
+      
+      res.json({
+        success: true,
+        shippingRates
+      });
+    } catch (apiError) {
+      console.error('เกิดข้อผิดพลาดเฉพาะใน Flash Express API:', apiError);
+      
+      // ใช้ข้อมูลตัวเลือกการจัดส่งเริ่มต้น
+      const defaultShippingRates = [
+        {
+          id: 1,
+          name: 'Flash Express - ส่งด่วน',
+          price: 60,
+          deliveryTime: '1-2 วัน',
+          provider: 'Flash Express',
+          serviceId: 'FLASH-FAST',
+          logo: '/assets/flash-express.png'
+        },
+        {
+          id: 2,
+          name: 'Flash Express - ส่งธรรมดา',
+          price: 40,
+          deliveryTime: '2-3 วัน',
+          provider: 'Flash Express',
+          serviceId: 'FLASH-NORMAL',
+          logo: '/assets/flash-express.png'
+        }
+      ];
+      
+      console.log('ใช้ข้อมูลตัวเลือกการจัดส่งเริ่มต้นแทน');
+      res.json({
+        success: true,
+        shippingRates: defaultShippingRates,
+        isDefault: true
+      });
+    }
   } catch (error) {
     console.error('Error fetching Flash Express shipping rates:', error);
     res.status(500).json({
       success: false,
       message: 'เกิดข้อผิดพลาดในการดึงข้อมูลค่าจัดส่ง',
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
