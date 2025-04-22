@@ -40,8 +40,8 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
     // คัดกรองพารามิเตอร์เฉพาะที่จะใช้ในการสร้างลายเซ็น
     const filteredParams: Record<string, string> = {};
     for (const key in params) {
-      // ข้ามฟิลด์ sign และ subItemTypes ตามเอกสาร Flash Express
-      if (key === 'sign' || key === 'subItemTypes') continue;
+      // ข้ามฟิลด์ sign, subItemTypes, และ subParcel ตามเอกสาร Flash Express
+      if (key === 'sign' || key === 'subItemTypes' || key === 'subParcel') continue;
 
       const value = params[key];
       if (value === null || value === undefined) continue;
