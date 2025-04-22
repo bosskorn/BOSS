@@ -295,8 +295,9 @@ router.post("/create-shipping", async (req, res) => {
     // ข้อมูลการสร้างการจัดส่ง
     const orderData = {
       outTradeNo: orderNumber,
-      merchantId,
-      warehouseNo: `${merchantId}_001`, // เพิ่ม warehouse number ตามรูปแบบที่ Flash Express ต้องการ
+      mchId: merchantId, // เปลี่ยนจาก merchantId เป็น mchId ตามรูปแบบที่ Flash Express ต้องการ
+      warehouseNo: `${merchantId}_001`, // เพิ่ม warehouse number ตามรูปแบบที่ Flash Express ต้องการ 
+      // ไม่รวม merchantId เพราะใช้ mchId แทน
       srcName: "บริษัท ชิพซิงค์ จำกัด",
       srcPhone: "0829327325",
       srcProvinceName: "กรุงเทพมหานคร",
@@ -360,15 +361,20 @@ router.post("/create-shipping", async (req, res) => {
     // แปลงและเตรียมข้อมูลให้เป็นรูปแบบที่ถูกต้องสำหรับ Flash Express API
     const stringifiedData: Record<string, string> = {};
     
-    // แปลงทุกฟิลด์เป็น string
+    // แปลงทุกฟิลด์เป็น string และแทนที่ merchantId ด้วย mchId
     Object.entries(finalOrderData).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
-        stringifiedData[key] = String(value);
+        // ไม่เพิ่ม merchantId เข้าไปในข้อมูลที่ส่ง เพราะใช้ mchId แทน
+        if (key !== 'merchantId') {
+          stringifiedData[key === 'mchId' ? 'mchId' : key] = String(value);
+        }
       }
     });
     
     // สร้าง URL-encoded string
     const encodedPayload = new URLSearchParams(stringifiedData).toString();
+    console.log("มี mchId ในข้อมูลหรือไม่:", stringifiedData.hasOwnProperty('mchId'));
+    console.log("ค่า mchId ที่จะส่ง:", stringifiedData.mchId);
     console.log("ข้อมูลที่ส่งหลังแปลงเป็น URL-encoded:", encodedPayload);
     
     const response = await axios.post(
