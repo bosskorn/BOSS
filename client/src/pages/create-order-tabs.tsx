@@ -1143,19 +1143,27 @@ const CreateOrderTabsPage: React.FC = () => {
               console.log("ดึงข้อมูลค่าจัดส่งจาก Flash Express สำเร็จ:", response.data.shippingRates);
               
               // แปลงรูปแบบข้อมูลจาก Flash Express ให้ตรงกับที่ใช้ในฟอร์ม
-              const flashExpressRates = response.data.shippingRates.map(rate => ({
-                id: `flash_express_${rate.serviceCode}`,
-                name: `Flash Express - ${rate.serviceName}`,
-                price: rate.totalFee,
-                deliveryTime: rate.estimateDeliveryTime,
-                provider: 'Flash Express',
-                serviceId: rate.serviceCode,
-                logo: '/assets/flash-express.png',
-                icon: '⚡',
-                isPopular: true,
-                isCODAvailable: true,
-                maxCODAmount: 20000
-              }));
+              const flashExpressRates = response.data.shippingRates.map((rate, index) => {
+                // ตรวจสอบและกำหนดค่าเริ่มต้นเพื่อป้องกันค่า undefined
+                const serviceCode = rate.serviceCode || `flash_service_${index + 1}`;
+                const serviceName = rate.serviceName || (index === 0 ? 'ส่งด่วน' : 'ส่งธรรมดา');
+                const totalFee = rate.totalFee || (index === 0 ? 60 : 40);
+                const estimateDeliveryTime = rate.estimateDeliveryTime || (index === 0 ? '1-2 วัน' : '2-3 วัน');
+                
+                return {
+                  id: `flash_express_${serviceCode}_${index}`, // เพิ่ม index เพื่อป้องกัน key ซ้ำกัน
+                  name: `Flash Express - ${serviceName}`,
+                  price: totalFee,
+                  deliveryTime: estimateDeliveryTime,
+                  provider: 'Flash Express',
+                  serviceId: serviceCode,
+                  logo: '/assets/flash-express.png',
+                  icon: '⚡',
+                  isPopular: true,
+                  isCODAvailable: true,
+                  maxCODAmount: 20000
+                };
+              });
               
               // ถ้ามีข้อมูลจาก Flash Express ให้ใช้ข้อมูลนั้น รวมกับตัวเลือกอื่นๆ
               if (flashExpressRates.length > 0) {
