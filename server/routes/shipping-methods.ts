@@ -2,7 +2,11 @@ import { Router } from 'express';
 import { storage } from '../storage';
 import { auth } from '../middleware/auth';
 import { insertShippingMethodSchema } from '@shared/schema';
-import { getFlashExpressShippingOptions } from '../services/flash-express';
+import { getFlashExpressShippingOptions as getFlashExpressShippingOptionsOriginal } from '../services/flash-express';
+import { 
+  getFlashExpressShippingOptions, 
+  createFlashExpressShipping 
+} from '../services/flash-express-final';
 
 const router = Router();
 
@@ -68,7 +72,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// API สำหรับดึงข้อมูลค่าจัดส่งจาก Flash Express
+// API สำหรับดึงข้อมูลค่าจัดส่งจาก Flash Express (ใช้เวอร์ชันล่าสุด)
 router.post('/flash-express/rates', auth, async (req, res) => {
   try {
     const { fromAddress, toAddress, weight } = req.body;
@@ -80,11 +84,14 @@ router.post('/flash-express/rates', auth, async (req, res) => {
       });
     }
     
-    // เรียก API Flash Express เพื่อดึงข้อมูลค่าจัดส่ง
+    console.log('เรียกใช้ Flash Express API เวอร์ชันล่าสุดเพื่อดึงข้อมูลค่าจัดส่ง');
+    console.log('ข้อมูลที่ส่ง:', JSON.stringify({ fromAddress, toAddress, weight: weight || 1.0 }, null, 2));
+    
+    // เรียก API Flash Express เพื่อดึงข้อมูลค่าจัดส่ง (เวอร์ชัน final)
     const shippingRates = await getFlashExpressShippingOptions(
       fromAddress,
       toAddress,
-      weight || 1.0
+      { weight: weight || 1.0 }
     );
     
     res.json({
@@ -95,7 +102,52 @@ router.post('/flash-express/rates', auth, async (req, res) => {
     console.error('Error fetching Flash Express shipping rates:', error);
     res.status(500).json({
       success: false,
-      message: 'เกิดข้อผิดพลาดในการดึงข้อมูลค่าจัดส่ง'
+      message: 'เกิดข้อผิดพลาดในการดึงข้อมูลค่าจัดส่ง',
+      error: error.message
+    });
+  }
+});
+
+// API สำหรับสร้างการจัดส่งกับ Flash Express (แบบจริง)
+router.post('/flash-express/shipping', auth, async (req, res) => {
+  try {
+    const { orderData } = req.body;
+    
+    if (!orderData) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุข้อมูลคำสั่งซื้อ'
+      });
+    }
+    
+    console.log('กำลังสร้างการจัดส่งกับ Flash Express API (แบบจริง):', JSON.stringify(orderData, null, 2));
+    
+    // เรียกใช้ Flash Express API เพื่อสร้างการจัดส่ง
+    const result = await createFlashExpressShipping(orderData);
+    
+    // ตรวจสอบผลลัพธ์
+    if (result.success) {
+      console.log('สร้างการจัดส่งกับ Flash Express API สำเร็จ:', result);
+      res.json({
+        success: true,
+        trackingNumber: result.trackingNumber,
+        sortCode: result.sortCode,
+        message: 'สร้างการจัดส่งสำเร็จ'
+      });
+    } else {
+      console.error('เกิดข้อผิดพลาดในการสร้างการจัดส่งกับ Flash Express:', result.error);
+      res.status(400).json({
+        success: false,
+        message: result.error || 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง',
+        errorDetails: result.error
+      });
+    }
+  } catch (error) {
+    console.error('Error creating Flash Express shipping:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง',
+      error: error.message
     });
   }
 });
