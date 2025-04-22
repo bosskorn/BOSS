@@ -80,7 +80,7 @@
 }
 
 .logo-icon {
-  background-color: #1E88E5;
+  background-color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
   color: white;
   width: 40px;
   height: 40px;
@@ -102,7 +102,7 @@
   font-size: 20px;
   color: #333;
   letter-spacing: 1px;
-  background: linear-gradient(to right, #1E88E5, #0D47A1);
+  background: linear-gradient(to right, #9C27B0, #7B1FA2); /* สีม่วงไล่ระดับตามโลโก้ใหม่ */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -142,7 +142,7 @@
 
 .menu-link:hover, 
 .menu-link.active {
-  color: #1E88E5;
+  color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
 }
 
 .menu-link:hover::after,
@@ -153,7 +153,7 @@
   left: 15px;
   right: 15px;
   height: 3px;
-  background-color: #1E88E5;
+  background-color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
   border-radius: 3px 3px 0 0;
 }
 
@@ -202,13 +202,13 @@
 
 .dropdown-menu li a:hover {
   background-color: #F5F5F5;
-  color: #1E88E5;
+  color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
   padding-left: 25px;
 }
 
 .dropdown-menu li a.active {
   background-color: #F5F5F5;
-  color: #1E88E5;
+  color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
 }
 
 .dropdown-menu li i {
@@ -305,7 +305,7 @@
     width: 100%;
     border-radius: 0;
     background-color: #f9f9f9;
-    border-left: 4px solid #1E88E5;
+    border-left: 4px solid #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
     margin: 0;
   }
   
@@ -357,7 +357,7 @@
     .account-item .user-balance {
       display: block;
       font-size: 0.75rem;
-      color: #1E88E5;
+      color: #9C27B0; /* สีม่วงตามโลโก้ใหม่ */
       margin-top: 2px;
     }
     
@@ -396,20 +396,32 @@
   }
 }
 
-/* คัสตอมสีสำหรับระบบขนส่ง ShipSync */
+/* คัสตอมสีสำหรับระบบขนส่ง ShipSync - โลโก้แบบ Network+Hub */
 :root {
-  --primary-blue: #1E88E5;  /* น้ำเงินหลัก */
-  --primary-blue-light: #BBDEFB;  /* น้ำเงินอ่อน */
-  --primary-blue-dark: #0D47A1;  /* น้ำเงินเข้ม */
-  --primary-blue-accent: #42A5F5;  /* น้ำเงินสดเน้น */
+  --primary-purple: #9C27B0;  /* สีม่วงหลักตามโลโก้ใหม่ */
+  --primary-purple-light: #CE93D8;  /* สีม่วงอ่อน */
+  --primary-purple-dark: #7B1FA2;  /* สีม่วงเข้ม */
+  --primary-purple-accent: #AB47BC;  /* สีม่วงสดเน้น */
+  
+  --accent-yellow: #FFC107;  /* สีเหลืองจากจุดศูนย์กลางในโลโก้ */
+  --accent-yellow-light: #FFECB3;  /* สีเหลืองอ่อน */
+  --accent-yellow-dark: #FFA000;  /* สีเหลืองเข้ม */
+  
+  --dark-bg: #2E2157;  /* สีพื้นหลังโลโก้ใหม่ */
   
   --neutral-grey-light: #f9fafb;  /* เทาอ่อน */
   --neutral-grey: #9ca3af;  /* เทากลาง */
   --neutral-grey-dark: #374151;  /* เทาเข้ม */
   
-  --accent-orange: #f97316;  /* ส้มเน้น */
-  --accent-blue: #3b82f6;  /* น้ำเงินเน้น */
   --accent-red: #ef4444;  /* แดงเน้น */
+  
+  /* เก็บสีเดิมไว้อ้างอิง - จะลบทิ้งหลังจากปรับปรุงระบบสมบูรณ์ */
+  --primary-blue: #9C27B0; /* เปลี่ยนเป็นสีม่วง */
+  --primary-blue-light: #CE93D8; /* เปลี่ยนเป็นสีม่วงอ่อน */
+  --primary-blue-dark: #7B1FA2; /* เปลี่ยนเป็นสีม่วงเข้ม */
+  --primary-blue-accent: #AB47BC; /* เปลี่ยนเป็นสีม่วงสดเน้น */
+  --accent-blue: #9C27B0; /* เปลี่ยนเป็นสีม่วง */
+  --accent-orange: #FFC107; /* เปลี่ยนเป็นสีเหลือง */
 }
 
 /* สไตล์สำหรับปุ่มสีน้ำเงิน */
@@ -518,16 +530,16 @@
 
 /* เอฟเฟกต์ Glowing */
 .glow-purple {
-  filter: drop-shadow(0 0 8px rgba(30, 136, 229, 0.8));
+  filter: drop-shadow(0 0 8px rgba(156, 39, 176, 0.8)); /* สีม่วงตามโลโก้ใหม่ */
   animation: glow 3s ease-in-out infinite alternate;
 }
 
 @keyframes glow {
   from {
-    filter: drop-shadow(0 0 5px rgba(30, 136, 229, 0.5));
+    filter: drop-shadow(0 0 5px rgba(156, 39, 176, 0.5)); /* สีม่วงตามโลโก้ใหม่ */
   }
   to {
-    filter: drop-shadow(0 0 20px rgba(30, 136, 229, 0.8));
+    filter: drop-shadow(0 0 20px rgba(156, 39, 176, 0.8)); /* สีม่วงตามโลโก้ใหม่ */
   }
 }
 
@@ -546,7 +558,7 @@
 /* สไตล์สำหรับส่วนกราฟิกการจัดส่ง */
 .delivery-dash {
   @apply relative py-1 px-3 font-bold;
-  background: linear-gradient(90deg, #1E88E5 0%, #42A5F5 100%);
+  background: linear-gradient(90deg, #9C27B0 0%, #AB47BC 100%); /* ไล่ระดับสีม่วงตามโลโก้ใหม่ */
   border-radius: 4px;
   color: white;
   text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
@@ -562,15 +574,15 @@
   height: 0;
   border-top: 8px solid transparent;
   border-bottom: 8px solid transparent;
-  border-left: 8px solid #42A5F5;
+  border-left: 8px solid #AB47BC; /* สีม่วงตามโลโก้ใหม่ */
 }
 
-/* สไตล์สำหรับพื้นหลังลาย gradient น้ำเงิน */
+/* สไตล์สำหรับพื้นหลังลาย gradient ม่วง */
 .purple-gradient-bg {
-  background: linear-gradient(135deg, #1E88E5 0%, #42A5F5 100%);
+  background: linear-gradient(135deg, #9C27B0 0%, #AB47BC 100%); /* ไล่ระดับสีม่วงตามโลโก้ใหม่ */
 }
 
-/* สไตล์สำหรับเส้นประน้ำเงิน Animation */
+/* สไตล์สำหรับเส้นประม่วง Animation */
 .purple-dash-line {
   @apply relative overflow-hidden;
 }
@@ -579,7 +591,7 @@
   content: '';
   position: absolute;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #1E88E5, transparent);
+  background: linear-gradient(90deg, transparent, #9C27B0, transparent); /* สีม่วงตามโลโก้ใหม่ */
   animation: purpleDash 2s infinite linear;
   width: 100%;
   bottom: 0;
