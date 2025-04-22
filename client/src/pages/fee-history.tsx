@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -17,7 +18,8 @@ import {
 } from "@/components/ui/table";
 import Layout from "@/components/Layout";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { parseISO, format } from "date-fns";
 import { th } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +27,8 @@ import { FeeHistory } from "@shared/schema";
 
 export default function FeeHistoryPage() {
   const { toast } = useToast();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // ใช้ TanStack Query ดึงข้อมูลประวัติค่าธรรมเนียม
   const {
@@ -73,7 +77,21 @@ export default function FeeHistoryPage() {
     );
   }
 
-  const feeHistory = feeHistoryData.data || [];
+  const allFeeHistory = feeHistoryData.data || [];
+  
+  // คำนวณจำนวนหน้าทั้งหมด
+  const totalPages = Math.ceil(allFeeHistory.length / itemsPerPage);
+  
+  // ตัดเฉพาะข้อมูลที่ต้องแสดงในหน้าปัจจุบัน
+  const currentItems = allFeeHistory.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  
+  // ฟังก์ชั่นเปลี่ยนหน้า
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <Layout>
@@ -85,7 +103,7 @@ export default function FeeHistoryPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {feeHistory.length === 0 ? (
+          {allFeeHistory.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">ไม่พบข้อมูลประวัติค่าธรรมเนียม</p>
             </div>
@@ -103,7 +121,7 @@ export default function FeeHistoryPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {feeHistory.map((fee) => (
+                  {currentItems.map((fee) => (
                     <TableRow key={fee.id}>
                       <TableCell>{formatDate(fee.createdAt)}</TableCell>
                       <TableCell>{fee.description || "-"}</TableCell>
@@ -131,6 +149,48 @@ export default function FeeHistoryPage() {
             </div>
           )}
         </CardContent>
+        
+        {/* แสดงปุ่มเพจเนชันเมื่อมีข้อมูลมากกว่า 1 หน้า */}
+        {totalPages > 1 && (
+          <CardFooter className="flex justify-between items-center border-t px-6 py-4">
+            <div className="text-sm text-muted-foreground">
+              แสดง {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, allFeeHistory.length)} จาก {allFeeHistory.length} รายการ
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                ก่อนหน้า
+              </Button>
+              <div className="flex items-center">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    className="mx-1 min-w-[2rem]"
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                ถัดไป
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </CardFooter>
+        )}
       </Card>
     </Layout>
   );
