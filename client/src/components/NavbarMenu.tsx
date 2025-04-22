@@ -97,10 +97,10 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
         <Link href="/" className="logo-link">
           <div className="logo-container">
             <div className="logo-icon">
-              <i className="fas fa-bolt"></i>
+              <i className="fa-solid fa-truck-fast mr-2 text-purple-600"></i>
             </div>
-            <div className="logo-text">
-              <span className="logo-main">SHIPSYNC</span>
+            <div className="logo-text ml-2">
+              <span className="logo-main">ShipSync</span>
               <span className="logo-sub">Delivery System</span>
             </div>
           </div>
@@ -275,7 +275,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
             className="menu-link"
           >
             <div className="flex items-center">
-              <i className="fas fa-user-circle text-blue-600 mr-1"></i>
+              <i className="fas fa-user-circle text-purple-600 mr-1"></i>
               <span className="menu-text">
                 {user ? 'บัญชีของฉัน' : 'บัญชี'}
               </span>

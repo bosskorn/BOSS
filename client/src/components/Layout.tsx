@@ -32,9 +32,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
               <div className="flex items-center mb-2">
-                <i className="fa-solid fa-truck-fast mr-2 text-blue-600"></i>
-                <span className="text-blue-700 font-semibold">BLUE</span>
-                <span className="text-blue-500 font-semibold">DASH</span>
+                <i className="fa-solid fa-truck-fast mr-2 text-purple-600"></i>
+                <span className="text-purple-700 font-semibold">Ship</span>
+                <span className="text-yellow-500 font-semibold">Sync</span>
               </div>
               <p className="text-gray-600 text-sm">© 2025 เสี่ยวไป๋ เอ็กเพรส จัดส่งด่วนทั่วไทย สงวนลิขสิทธิ์.</p>
             </div>
