@@ -895,18 +895,8 @@ const OrderList: React.FC = () => {
                       onClick={() => {
                         if (confirm(`ต้องการลบรายการที่เลือกทั้งหมด ${selectedOrders.length} รายการใช่หรือไม่?`)) {
                           // สร้างอาร์เรย์ของคำขอลบ
-                          const deletePromises = selectedOrders.map(orderId => {
-                            // ใช้ axios แทน fetch เพื่อให้มีการจัดการเรื่อง credential แบบอัตโนมัติ
-                            return axios.delete(`/api/orders/${orderId}`)
-                              .then(response => {
-                                return response.data;
-                              })
-                              .catch(error => {
-                                console.error(`ไม่สามารถลบรายการ ID: ${orderId}`, error.response?.data || error.message);
-                                // ส่งข้อผิดพลาดเพื่อจัดการที่ส่วนกลาง
-                                throw new Error(error.response?.data?.message || `ไม่สามารถลบรายการ ID: ${orderId}`);
-                              });
-                          });
+                          // ยกเลิกการใช้ deletePromises เพราะเราจะใช้การลบทีละรายการอยู่แล้ว
+                          // จึงไม่จำเป็นต้องสร้าง promise array อีก
                           
                           // จำนวนรายการที่จะลบ
                           const deleteCount = selectedOrders.length;
