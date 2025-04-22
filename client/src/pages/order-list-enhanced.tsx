@@ -972,9 +972,14 @@ const OrderList: React.FC = () => {
                                   failedMessages.push(errorMsg);
                                   
                                   // แสดงข้อความแจ้งเตือนสำหรับแต่ละรายการที่ลบไม่สำเร็จ
+                                  // ตรวจสอบว่าเป็นข้อความเกี่ยวกับเครดิตหรือไม่
+                                  const isCreditError = errorMsg.includes('เครดิต') || errorMsg.includes('credit');
+                                  
                                   toast({
                                     title: 'ลบรายการไม่สำเร็จ',
-                                    description: errorMsg,
+                                    description: isCreditError 
+                                      ? 'ระบบกำลังคืนเครดิตและลบรายการ กรุณาลองอีกครั้งในอีกสักครู่'
+                                      : errorMsg,
                                     variant: 'destructive',
                                   });
                                 }

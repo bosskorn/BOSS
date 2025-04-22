@@ -659,22 +659,82 @@ router.delete('/:id', auth, async (req, res) => {
       });
     }
     
-    // ตรวจสอบว่ามีข้อมูลค่าธรรมเนียมหรือไม่ก่อนลบ
+    // ตรวจสอบและคืนเครดิตหากมีการใช้เครดิตสำหรับออเดอร์นี้
     try {
-      // ตรวจสอบว่ามีข้อมูลในตาราง fee_history ที่เชื่อมกับออเดอร์นี้หรือไม่
+      // ดึงข้อมูลประวัติค่าธรรมเนียมสำหรับออเดอร์นี้
       const [feeHistoryRecord] = await db.select()
         .from(feeHistory)
         .where(eq(feeHistory.orderId, orderId));
       
       if (feeHistoryRecord) {
-        return res.status(400).json({
-          success: false,
-          message: 'ไม่สามารถลบรายการได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่'
-        });
+        // ตรวจสอบว่ามีข้อมูลผู้ใช้หรือไม่
+        if (!req.user || !req.user.id) {
+          return res.status(401).json({
+            success: false,
+            message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
+          });
+        }
+        
+        console.log(`พบข้อมูลการใช้เครดิต orderId: ${orderId}, เตรียมคืนเครดิต ${feeHistoryRecord.amount} บาท`);
+        
+        // ดึงข้อมูลผู้ใช้ปัจจุบัน
+        const [userData] = await db.select()
+          .from(users)
+          .where(eq(users.id, req.user.id));
+        
+        if (!userData) {
+          return res.status(400).json({
+            success: false,
+            message: 'ไม่พบข้อมูลผู้ใช้'
+          });
+        }
+
+        // ดึงข้อมูลออเดอร์เพื่อใช้หมายเลขออเดอร์ในข้อความ
+        const order = await storage.getOrder(orderId);
+        if (!order) {
+          return res.status(404).json({
+            success: false,
+            message: 'ไม่พบออเดอร์นี้'
+          });
+        }
+        
+        // คำนวณยอดเงินที่จะคืน
+        const currentBalance = parseFloat(userData.balance || '0');
+        const refundAmount = parseFloat(feeHistoryRecord.amount || '0');
+        const newBalance = currentBalance + refundAmount;
+        
+        console.log(`คืนเครดิต: ยอดปัจจุบัน ${currentBalance} บาท + คืน ${refundAmount} บาท = ${newBalance} บาท`);
+        
+        // บันทึกประวัติการคืนเครดิต
+        await db.insert(feeHistory)
+          .values({
+            userId: req.user.id,
+            orderId: null, // ไม่ผูกกับออเดอร์เพราะกำลังจะลบ
+            amount: (-refundAmount).toString(), // ใส่เครื่องหมายลบเพื่อแสดงว่าเป็นการคืนเครดิต
+            balanceBefore: currentBalance.toString(),
+            balanceAfter: newBalance.toString(),
+            description: `คืนเครดิตค่าธรรมเนียมจากการลบออเดอร์ #${order.orderNumber}`,
+            feeType: 'refund',
+            createdAt: new Date()
+          });
+        
+        // อัพเดตเครดิตในบัญชีผู้ใช้
+        await db.update(users)
+          .set({ 
+            balance: newBalance.toString(),
+            updatedAt: new Date()
+          })
+          .where(eq(users.id, req.user.id));
+        
+        // ลบประวัติค่าธรรมเนียมเดิม
+        await db.delete(feeHistory)
+          .where(eq(feeHistory.id, feeHistoryRecord.id));
+        
+        console.log(`คืนเครดิตสำหรับออเดอร์ ${orderId} เรียบร้อยแล้ว`);
       }
     } catch (feeCheckError) {
-      console.error('Error checking fee history:', feeCheckError);
-      // ดำเนินการต่อไปแม้จะไม่สามารถตรวจสอบได้
+      console.error('Error processing fee history:', feeCheckError);
+      // ไม่หยุดการทำงาน ดำเนินการลบออเดอร์ต่อไป
     }
     
     const result = await storage.deleteOrder(orderId);
