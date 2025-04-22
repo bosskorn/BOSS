@@ -937,9 +937,18 @@ const OrderList: React.FC = () => {
                             })
                             .catch(error => {
                               console.error('Error deleting orders:', error);
+                              
+                              // ตรวจสอบว่าเป็น foreign key error หรือไม่
+                              const errorMessage = error instanceof Error ? error.message : 'ไม่สามารถลบรายการได้';
+                              const isForeignKeyError = errorMessage.includes('foreign key constraint') || 
+                                                       errorMessage.includes('fee_history') ||
+                                                       errorMessage.includes('referenced');
+                              
                               toast({
-                                title: 'เกิดข้อผิดพลาด',
-                                description: error instanceof Error ? error.message : 'ไม่สามารถลบรายการได้',
+                                title: 'การลบรายการบางรายการไม่สำเร็จ',
+                                description: isForeignKeyError 
+                                  ? 'บางรายการไม่สามารถลบได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่ แต่รายการที่เหลือที่ลบได้ถูกลบออกจากรายการแล้ว' 
+                                  : errorMessage,
                                 variant: 'destructive',
                               });
                             });
@@ -1162,9 +1171,18 @@ const OrderList: React.FC = () => {
                                   })
                                   .catch(error => {
                                     console.error('Error deleting order:', error);
+                                    
+                                    // ตรวจสอบว่าเป็น foreign key error หรือไม่
+                                    const errorMessage = error instanceof Error ? error.message : 'ไม่สามารถลบออเดอร์ได้';
+                                    const isForeignKeyError = errorMessage.includes('foreign key constraint') || 
+                                                            errorMessage.includes('fee_history') ||
+                                                            errorMessage.includes('referenced');
+                                    
                                     toast({
-                                      title: 'เกิดข้อผิดพลาด',
-                                      description: error instanceof Error ? error.message : 'ไม่สามารถลบออเดอร์ได้',
+                                      title: 'ไม่สามารถลบรายการได้',
+                                      description: isForeignKeyError 
+                                        ? `ไม่สามารถลบออเดอร์ ${order.orderNumber} ได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่` 
+                                        : errorMessage,
                                       variant: 'destructive',
                                     });
                                   });
