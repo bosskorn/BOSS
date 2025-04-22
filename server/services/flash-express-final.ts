@@ -25,8 +25,7 @@ function generateNonceStr(length = 16): string {
 }
 
 /**
- * สร้างลายเซ็นตามมาตรฐานของ Flash Express อย่างเคร่งครัด
- * ตรงตามโค้ดในไฟล์ทดสอบที่ทำงานได้
+ * สร้างลายเซ็นตามมาตรฐานของ Flash Express อย่างเคร่งครัด - ฉบับปรับปรุงล่าสุด
  * 
  * 1. จัดเรียงพารามิเตอร์ตามตัวอักษร (ASCII)
  * 2. เชื่อมต่อเป็นสตริงในรูปแบบ key1=value1&key2=value2
@@ -34,32 +33,49 @@ function generateNonceStr(length = 16): string {
  * 4. คำนวณค่า SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
  */
 function generateFlashSignature(params: Record<string, any>, apiKey: string): string {
-  // 1. แปลงทุกค่าเป็น string (สำคัญมาก)
-  const stringParams: Record<string, string> = {};
-  Object.keys(params).forEach(key => {
-    // ข้ามฟิลด์ sign และ subItemTypes (เหมือนในไฟล์ทดสอบ)
-    if (key === 'sign' || key === 'subItemTypes') return;
+  try {
+    console.log('⚙️ เริ่มคำนวณลายเซ็น Flash Express API...');
+    console.log('⚙️ ข้อมูลเริ่มต้น:', JSON.stringify(params, null, 2));
     
-    // แปลงทุกค่าเป็น string และจัดการค่า null/undefined
-    stringParams[key] = String(params[key] || '');
-  });
+    // 0. ตรวจสอบว่ามี API key หรือไม่
+    if (!apiKey) {
+      console.error('❌ ไม่พบ API Key สำหรับสร้างลายเซ็น');
+      throw new Error('API Key is required for signature generation');
+    }
 
-  // 2. จัดเรียงคีย์ตามลำดับตัวอักษร ASCII
-  const sortedKeys = Object.keys(stringParams).sort();
+    // 1. แปลงทุกค่าเป็น string และกรองพารามิเตอร์
+    const stringParams: Record<string, string> = {};
+    Object.keys(params).forEach(key => {
+      // ข้ามฟิลด์ sign และ subItemTypes (จะเพิ่มหลังจากสร้างลายเซ็น)
+      if (key === 'sign' || key === 'subItemTypes') return;
+      
+      // ข้ามค่าที่เป็น null หรือ undefined
+      if (params[key] === null || params[key] === undefined) return;
+      
+      // แปลงทุกค่าเป็น string
+      stringParams[key] = String(params[key]);
+    });
 
-  // 3. สร้างสตริงสำหรับลายเซ็น
-  const stringToSign = sortedKeys
-    .map(key => `${key}=${stringParams[key]}`)
-    .join('&') + `&key=${apiKey}`;
+    // 2. จัดเรียงคีย์ตามลำดับตัวอักษร ASCII
+    const sortedKeys = Object.keys(stringParams).sort();
 
-  console.log('สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
+    // 3. สร้างสตริงสำหรับลายเซ็น
+    const stringToSign = sortedKeys
+      .map(key => `${key}=${stringParams[key]}`)
+      .join('&') + `&key=${apiKey}`;
 
-  // 4. สร้าง SHA-256 hash และแปลงเป็นตัวพิมพ์ใหญ่
-  const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+    console.log('🔑 สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
 
-  console.log('ลายเซ็นที่สร้าง:', signature);
-  
-  return signature;
+    // 4. สร้าง SHA-256 hash และแปลงเป็นตัวพิมพ์ใหญ่
+    const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+
+    console.log('🔒 ลายเซ็นที่สร้าง:', signature);
+    
+    return signature;
+  } catch (error) {
+    console.error('❌ เกิดข้อผิดพลาดในการสร้างลายเซ็น Flash Express:', error);
+    throw error;
+  }
 }
 
 /**
@@ -274,10 +290,13 @@ export const createFlashExpressShipping = async (
       // 6. สร้าง URL-encoded payload สำหรับส่งไปยัง API
       const encodedPayload = new URLSearchParams(payload).toString();
 
-      // 7. ตั้งค่า Headers ตามรูปแบบของ Flash Express - ทดลองใช้เฉพาะ Content-Type
+      // 7. ตั้งค่า Headers ตามรูปแบบของ Flash Express - คืนค่าเหมือนเดิมตามที่เคยทำงานได้
       const headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'X-Flash-Signature': signature,
+        'X-Flash-Timestamp': timestamp,
+        'X-Flash-Nonce': nonceStr
       };
 
       console.log('URL ที่เรียก:', `${FLASH_EXPRESS_API_URL}/open/v3/orders`);
@@ -419,10 +438,13 @@ export const getFlashExpressShippingOptions = async (
       // 5. แปลงเป็นรูปแบบ application/x-www-form-urlencoded
       const encodedPayload = new URLSearchParams(requestParams).toString();
 
-      // 6. กำหนด Headers - ทดลองใช้เฉพาะ Content-Type เหมือนกับส่วนสร้างเลขพัสดุ
+      // 6. กำหนด Headers - คืนค่าเหมือนเดิมตามที่เคยทำงานได้
       const headers = {
         'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Flash-Signature': signature,
+        'X-Flash-Timestamp': timestamp,
+        'X-Flash-Nonce': nonceStr
       };
 
       console.log('🔍 รายละเอียดที่ส่งไป API:');
