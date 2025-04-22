@@ -84,6 +84,10 @@ const OrderList: React.FC = () => {
   const [selectedLabelType, setSelectedLabelType] = useState('standard');
   const [showFilters, setShowFilters] = useState(false);
   const [isPrintingMultiple, setIsPrintingMultiple] = useState(false);
+  
+  // การแบ่งหน้า
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 20; // จำนวนรายการต่อหน้า
 
   // ฟังก์ชันดึงข้อมูลคำสั่งซื้อจาก API
   const fetchOrders = async () => {
@@ -372,6 +376,13 @@ const OrderList: React.FC = () => {
         direction: 'desc'
       });
     }
+  };
+  
+  // ฟังก์ชันเปลี่ยนหน้า
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    // เลื่อนกลับขึ้นด้านบนของตาราง
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // ฟังก์ชันเปิด/ปิดดรอปดาวน์
@@ -961,7 +972,9 @@ const OrderList: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredOrders.map((order) => (
+                    filteredOrders
+                      .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                      .map((order) => (
                       <TableRow key={order.id} className="group hover:bg-blue-50">
                         <TableCell className="w-10">
                           <Checkbox 
@@ -1099,6 +1112,82 @@ const OrderList: React.FC = () => {
                   )}
                 </TableBody>
               </Table>
+              
+              {/* ส่วนควบคุมการแบ่งหน้า */}
+              {filteredOrders.length > itemsPerPage && (
+                <div className="flex flex-col sm:flex-row justify-between items-center py-4 px-6 bg-white border-t border-gray-200">
+                  <div className="text-sm text-gray-600 mb-4 sm:mb-0">
+                    แสดง {Math.min(1 + (currentPage - 1) * itemsPerPage, filteredOrders.length)} - {Math.min(currentPage * itemsPerPage, filteredOrders.length)} จากทั้งหมด {filteredOrders.length} รายการ
+                  </div>
+                  
+                  <div className="flex items-center space-x-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="h-8 px-3"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">ก่อนหน้า</span>
+                    </Button>
+                    
+                    <div className="hidden md:flex items-center space-x-1">
+                      {Array.from(
+                        { length: Math.min(5, Math.ceil(filteredOrders.length / itemsPerPage)) }, 
+                        (_, i) => {
+                          // ให้แสดงปุ่มไม่เกิน 5 ปุ่มในแบบสมาร์ท
+                          const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+                          let pageNum;
+                          
+                          if (totalPages <= 5) {
+                            // ถ้ามีน้อยกว่า 5 หน้า ให้แสดงทั้งหมด
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            // ถ้าอยู่หน้าแรกๆ ให้แสดง 1-5
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            // ถ้าอยู่หน้าท้ายๆ ให้แสดง totalPages-4 ถึง totalPages
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            // ถ้าอยู่ตรงกลาง ให้แสดง currentPage-2 ถึง currentPage+2
+                            pageNum = currentPage - 2 + i;
+                          }
+                          
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handlePageChange(pageNum)}
+                              className={`h-8 w-8 p-0 ${currentPage === pageNum ? 'bg-blue-600 text-white' : ''}`}
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        }
+                      )}
+                    </div>
+                    
+                    <div className="md:hidden flex items-center">
+                      <span className="mx-2 text-sm font-medium">
+                        หน้า {currentPage} จาก {Math.ceil(filteredOrders.length / itemsPerPage)}
+                      </span>
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === Math.ceil(filteredOrders.length / itemsPerPage)}
+                      className="h-8 px-3"
+                    >
+                      <span className="hidden sm:inline">ถัดไป</span>
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </Tabs>
         </div>
