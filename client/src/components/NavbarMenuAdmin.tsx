@@ -110,7 +110,7 @@ const NavbarMenuAdmin: React.FC<NavbarMenuAdminProps> = ({ onToggleSidebar }) =>
               <i className="fas fa-shield-alt"></i>
             </div>
             <div className="logo-text">
-              <span className="logo-main">BLUEDASH</span>
+              <span className="logo-main">SHIPSYNC</span>
               <span className="logo-sub">ระบบผู้ดูแล</span>
             </div>
           </div>

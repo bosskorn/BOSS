@@ -278,7 +278,7 @@ const SidebarMenuAdmin: React.FC<SidebarMenuAdminProps> = ({ isOpen, onClose, us
         <div className="sticky bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <span className="text-purple-800 font-semibold">PURPLE</span><span className="text-purple-600 font-semibold">DASH</span>
+              <span className="text-blue-700 font-semibold">Ship</span><span className="text-blue-500 font-semibold">Sync</span>
               <span className="ml-1 text-xs px-1 py-0.5 bg-gray-100 text-gray-800 rounded">ADMIN</span>
             </div>
             <span className="text-xs text-gray-500">v1.5.0</span>
