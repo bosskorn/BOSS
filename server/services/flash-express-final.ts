@@ -26,25 +26,25 @@ function generateNonceStr(length = 16): string {
 
 /**
  * สร้างลายเซ็นตามมาตรฐานของ Flash Express อย่างเคร่งครัด
+ * อ้างอิงจากตัวอย่างในเอกสาร Flash Express
+ * 
  * 1. จัดเรียงพารามิเตอร์ตามตัวอักษร (ASCII)
  * 2. เชื่อมต่อเป็นสตริงในรูปแบบ key1=value1&key2=value2
  * 3. เพิ่ม API key ที่ท้ายสตริง: stringToSign + "&key=" + apiKey
  * 4. คำนวณค่า SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
- * 
- * ตามเอกสาร Flash Express ลายเซ็นต้องถูกคำนวณจากข้อมูลที่ยังไม่ได้ encode
  */
 function generateFlashSignature(params: Record<string, any>, apiKey: string): string {
   try {
     console.log('พารามิเตอร์ที่ได้รับเพื่อสร้างลายเซ็น:', JSON.stringify(params, null, 2));
 
-    // รายการฟิลด์ที่จะไม่นำมาใช้ในการคำนวณลายเซ็น
-    const excludedFields = ['sign', 'subItemTypes', 'subParcel', 'expressCategory'];
+    // รายการฟิลด์ที่จะไม่นำมาใช้ในการคำนวณลายเซ็น ตามเอกสาร Flash Express
+    const excludedFields = ['sign', 'subItemTypes', 'subParcel', 'expressCategory', 'timestamp'];
 
     // สร้างอ็อบเจกต์ใหม่ที่ไม่มีฟิลด์ที่ถูกกันออก
     const signParams: Record<string, string> = {};
     
     for (const key in params) {
-      // ข้ามฟิลด์ที่อยู่ในรายการที่ไม่ต้องการ
+      // ข้ามฟิลด์ที่อยู่ในรายการที่ไม่ต้องการคำนวณลายเซ็น
       if (excludedFields.includes(key)) continue;
 
       const value = params[key];
@@ -58,7 +58,7 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
         value.replace(/[\u0009-\u000D\u001C-\u001F]/g, '').trim() === ''
       ) continue;
 
-      // แปลงทุกค่าเป็น string
+      // แปลงทุกค่าเป็น string ตามที่ Flash Express API ต้องการ
       signParams[key] = String(value);
     }
 
@@ -68,18 +68,19 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
     // สร้างสตริงสำหรับลายเซ็น
     const paramPairs = [];
     for (const key of sortedKeys) {
+      // ต้องไม่มีการ encode URL ในขั้นตอนนี้
       paramPairs.push(`${key}=${signParams[key]}`);
     }
     
     // รวมเป็นสตริงเดียว
     const paramString = paramPairs.join('&');
     
-    // เพิ่ม API key
+    // เพิ่ม API key แบบตรงๆ ไม่มีการ encode
     const stringToSign = `${paramString}&key=${apiKey}`;
 
     console.log('สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
 
-    // คำนวณลายเซ็น SHA-256
+    // คำนวณลายเซ็น SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
     const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
 
     console.log('ลายเซ็นที่สร้าง:', signature);
@@ -156,12 +157,13 @@ export const createFlashExpressShipping = async (
 
       // 2. เตรียมข้อมูลคำขอตามเอกสาร Flash Express
       
-      // เตรียมข้อมูลสำหรับใช้ในการสร้างลายเซ็น (ไม่รวม expressCategory)
+      // เตรียมข้อมูลสำหรับใช้ในการสร้างลายเซ็น ตามรูปแบบจาก Flash Express
       const requestParams: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
-        timestamp: timestamp,  // เพิ่ม timestamp ในการคำนวณลายเซ็น
+        // จากตัวอย่าง Flash Express API ไม่มี timestamp ในข้อมูลที่ใช้คำนวณลายเซ็น
         outTradeNo: orderData.outTradeNo,
+        warehouseNo: `${FLASH_EXPRESS_MERCHANT_ID}_001`, // เพิ่ม warehouseNo ตามที่ระบุในตัวอย่าง
         srcName: orderData.srcName,
         srcPhone: senderPhone.replace(/[-\s]/g, ''),
         srcProvinceName: orderData.srcProvinceName,
@@ -288,13 +290,12 @@ export const createFlashExpressShipping = async (
       // 6. สร้าง URL-encoded payload สำหรับส่งไปยัง API
       const encodedPayload = new URLSearchParams(payload).toString();
 
-      // 7. ตั้งค่า Headers ที่ถูกต้อง
+      // 7. ตั้งค่า Headers ตามรูปแบบของ Flash Express
       const headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Flash-Signature': signature,
-        'X-Flash-Timestamp': timestamp,
-        'X-Flash-Nonce': nonceStr,
         'Accept': 'application/json'
+        // ตัดการส่ง X-Flash-Signature, X-Flash-Timestamp, X-Flash-Nonce ออก
+        // เนื่องจากตัวอย่างจาก Flash Express ไม่ได้ใช้ headers เหล่านี้
       };
 
       console.log('URL ที่เรียก:', `${FLASH_EXPRESS_API_URL}/open/v3/orders`);
