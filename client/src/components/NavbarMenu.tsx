@@ -161,11 +161,13 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
                 <i className="fas fa-box-open"></i> รายการพัสดุ
               </Link>
             </li>
+            {/* ซ่อนเมนูรายการเคลมพัสดุตามคำขอ
             <li>
               <Link href="/claims-list" className={isClaimsList ? 'active' : ''}>
                 <i className="fas fa-shield-alt"></i> รายการเคลมพัสดุ
               </Link>
             </li>
+            */}
             <li>
               <Link 
                 href="/bulk-order-import" 
