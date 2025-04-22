@@ -274,13 +274,10 @@ export const createFlashExpressShipping = async (
       // 6. สร้าง URL-encoded payload สำหรับส่งไปยัง API
       const encodedPayload = new URLSearchParams(payload).toString();
 
-      // 7. ตั้งค่า Headers ตามรูปแบบของ Flash Express และเพิ่ม headers พิเศษ
+      // 7. ตั้งค่า Headers ตามรูปแบบของ Flash Express - ทดลองใช้เฉพาะ Content-Type
       const headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-        'X-Flash-Signature': signature,
-        'X-Flash-Timestamp': timestamp,
-        'X-Flash-Nonce': nonceStr
+        'Accept': 'application/json'
       };
 
       console.log('URL ที่เรียก:', `${FLASH_EXPRESS_API_URL}/open/v3/orders`);
@@ -422,14 +419,10 @@ export const getFlashExpressShippingOptions = async (
       // 5. แปลงเป็นรูปแบบ application/x-www-form-urlencoded
       const encodedPayload = new URLSearchParams(requestParams).toString();
 
-      // 6. กำหนด Headers และเพิ่ม headers พิเศษเพื่อความถูกต้อง
-      // ใช้ timestamp ที่สร้างก่อนหน้า
+      // 6. กำหนด Headers - ทดลองใช้เฉพาะ Content-Type เหมือนกับส่วนสร้างเลขพัสดุ
       const headers = {
         'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Flash-Signature': signature,
-        'X-Flash-Timestamp': timestamp,
-        'X-Flash-Nonce': nonceStr
+        'Content-Type': 'application/x-www-form-urlencoded'
       };
 
       console.log('🔍 รายละเอียดที่ส่งไป API:');
