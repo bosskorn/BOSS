@@ -274,9 +274,9 @@ export const createFlashExpressShipping = async (
         subItemTypesJSON = JSON.stringify(defaultItem);
       }
       
-      // ลบ subItemTypes ออกจาก params ก่อนคำนวณลายเซ็น
+      // สำคัญมาก: subItemTypes ต้องไม่ถูกรวมเข้าไปในการคำนวณลายเซ็น
+      // ลบออกจาก requestParams ก่อนคำนวณลายเซ็น
       delete requestParams.subItemTypes;
-      delete fullRequestParams.subItemTypes;
 
       // 4. สร้างลายเซ็นจากข้อมูลที่ยังไม่ได้ encode (สำคัญมาก) - ใช้วิธีการเดียวกับไฟล์ทดสอบ
       console.log('ข้อมูลคำขอก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
@@ -291,8 +291,8 @@ export const createFlashExpressShipping = async (
       const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
       console.log('ลายเซ็นที่สร้าง:', signature);
 
-      // 5. สร้าง payload พร้อมลายเซ็น
-      const payload: Record<string, any> = { ...fullRequestParams, sign: signature };
+      // 5. สร้าง payload พร้อมลายเซ็น (สำคัญ: ใช้แค่ requestParams ไม่ใช่ fullRequestParams)
+      const payload: Record<string, any> = { ...requestParams, sign: signature };
 
       // 6. เพิ่ม subItemTypes เข้าไปใน payload หลังจากคำนวณลายเซ็นแล้ว
       if (subItemTypesJSON) {
