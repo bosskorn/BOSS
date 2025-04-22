@@ -399,13 +399,18 @@ export const getFlashExpressShippingOptions = async (
       // 1. สร้างข้อมูลพื้นฐาน
       const nonceStr = generateNonceStr();
 
-      // 2. สร้างพารามิเตอร์ตามที่ API ต้องการ
+      // 2. สร้างพารามิเตอร์ตามที่ Flash Express API ต้องการ
       const requestParams: Record<string, string> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
+        warehouseNo: `${FLASH_EXPRESS_MERCHANT_ID}_001`, // เพิ่ม warehouseNo ตามที่ระบุในตัวอย่าง
         
-        // ข้อมูลจากเอกสาร API - ฟิลด์ที่จำเป็น
+        // ข้อมูลจากเอกสาร API - ฟิลด์ที่จำเป็นสำหรับผู้ส่ง
+        srcProvinceName: fromAddress.province,
+        srcCityName: fromAddress.district,
         srcPostalCode: fromAddress.zipcode,
+        
+        // ข้อมูลของผู้รับ
         dstProvinceName: toAddress.province || 'กรุงเทพมหานคร',
         dstCityName: toAddress.district || 'ลาดพร้าว',
         dstPostalCode: toAddress.zipcode,
@@ -413,6 +418,7 @@ export const getFlashExpressShippingOptions = async (
       };
       
       // ข้อมูลเพิ่มเติม (ไม่บังคับ)
+      if (fromAddress.subdistrict) requestParams.srcDistrictName = fromAddress.subdistrict;
       if (toAddress.subdistrict) requestParams.dstDistrictName = toAddress.subdistrict;
       if (packageInfo.width) requestParams.width = String(Math.round(packageInfo.width));
       if (packageInfo.length) requestParams.length = String(Math.round(packageInfo.length));
