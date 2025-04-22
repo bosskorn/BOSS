@@ -8,81 +8,110 @@ interface LogoProps {
 const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
   // ขนาดของโลโก้ตามแต่ละขนาด
   const dimensions = {
-    small: { width: 180, height: 60 },
-    medium: { width: 270, height: 90 },
-    large: { width: 360, height: 120 },
+    small: { width: 200, height: 70 },
+    medium: { width: 300, height: 105 },
+    large: { width: 400, height: 140 },
   };
-
-  // คำนวณอัตราส่วนตามขนาด
-  const scale = dimensions[size].width / 180;
 
   return (
     <div className={`inline-flex flex-shrink-0 ${className}`}>
       <svg
         width={dimensions[size].width}
         height={dimensions[size].height}
-        viewBox={`0 0 ${180} ${60}`}
+        viewBox={`0 0 ${200} ${70}`}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* พื้นหลังโลโก้ */}
-        <rect width="180" height="60" rx="10" fill="#007E33" />
+        <rect width="200" height="70" rx="12" fill="#0B2F5C" />
+        
+        {/* ลูกศรเคลื่อนไหวสีส้ม - ด้านซ้ายบน */}
+        <path 
+          d="M30 15 C45 15, 60 15, 75 25 S85 40, 100 42"
+          stroke="#FF7D1A" 
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          fill="none"
+        />
+        
+        {/* ลูกศรเคลื่อนไหวสีส้ม - หัวลูกศร */}
+        <path 
+          d="M95 37 L105 42 L95 47" 
+          stroke="#FF7D1A" 
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        
+        {/* ลูกศรเคลื่อนไหวสีฟ้า - ด้านล่างขวา */}
+        <path 
+          d="M175 50 C160 50, 145 50, 130 40 S120 25, 105 23"
+          stroke="#00B2FF" 
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          fill="none"
+        />
+        
+        {/* ลูกศรเคลื่อนไหวสีฟ้า - หัวลูกศร */}
+        <path 
+          d="M110 28 L100 23 L110 18" 
+          stroke="#00B2FF" 
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        
+        {/* ลูกศรเคลื่อนไหวสีเขียว - แนวไขว้ตรงกลาง */}
+        <path 
+          d="M75 50 C85 45, 95 40, 100 32 S105 25, 115 20"
+          stroke="#01C27C" 
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
+        
+        {/* ลูกศรเคลื่อนไหวสีเขียว - หัวลูกศร */}
+        <path 
+          d="M110 18 L120 15 L115 25" 
+          stroke="#01C27C" 
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
         
         {/* ตัวอักษร Ship */}
         <text 
-          x="17" 
-          y="35" 
+          x="50" 
+          y="45" 
           fontFamily="Arial, sans-serif" 
           fontWeight="900" 
-          fontSize="24" 
+          fontSize="22" 
           fill="white"
           letterSpacing="0"
         >
           Ship
         </text>
         
-        {/* ตัวอักษร Sync แบบสร้างความน่าจดจำ */}
+        {/* ตัวอักษร Sync */}
         <text 
-          x="81" 
-          y="35" 
+          x="115" 
+          y="45" 
           fontFamily="Arial, sans-serif" 
           fontWeight="900" 
-          fontSize="26" 
-          fill="#FFEE58"
+          fontSize="22" 
+          fill="white"
           letterSpacing="0"
         >
           Sync
         </text>
         
-        {/* เอฟเฟคการซิงค์ (สัญลักษณ์การเชื่อมต่อ) */}
-        <path 
-          d="M125 22 L133 22 L133 17 L140 25 L133 33 L133 28 L125 28 Z" 
-          fill="#FFEE58" 
-        />
-        
-        {/* เอฟเฟคการซิงค์อีกด้าน */}
-        <path 
-          d="M75 28 L67 28 L67 33 L60 25 L67 17 L67 22 L75 22 Z" 
-          fill="#FFEE58" 
-        />
-        
-        {/* เส้นประด้านล่างตัวอักษร */}
-        <path 
-          d="M17 40 L125 40" 
-          stroke="white" 
-          strokeWidth="2"
-          strokeDasharray="4 2"
-        />
-        
-        {/* จุดเล็กๆ ต่อจากเส้นประ */}
-        <circle cx="132" cy="40" r="2" fill="white" />
-        <circle cx="140" cy="40" r="2" fill="white" />
-        <circle cx="148" cy="40" r="2" fill="white" />
-        
         {/* สโลแกนภาษาไทย */}
         <text 
-          x="84" 
-          y="52" 
+          x="100" 
+          y="60" 
           fontFamily="Kanit, sans-serif" 
           fontWeight="400" 
           fontSize="10" 

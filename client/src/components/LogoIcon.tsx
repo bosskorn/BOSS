@@ -5,7 +5,7 @@ interface LogoIconProps {
   className?: string;
 }
 
-const LogoIcon: React.FC<LogoIconProps> = ({ size = 40, className = '' }) => {
+const LogoIcon: React.FC<LogoIconProps> = ({ size = 50, className = '' }) => {
   return (
     <div className={`inline-flex flex-shrink-0 ${className}`}>
       <svg
@@ -16,39 +16,76 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 40, className = '' }) => {
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* พื้นหลังวงกลม */}
-        <circle cx="30" cy="30" r="30" fill="#007E33" />
+        <circle cx="30" cy="30" r="30" fill="#0B2F5C" />
+        
+        {/* ลูกศรสีส้ม - ด้านซ้ายบน */}
+        <path 
+          d="M12 20 C18 20, 24 20, 30 25" 
+          stroke="#FF7D1A" 
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
+        
+        {/* ลูกศรสีส้ม - หัวลูกศร */}
+        <path 
+          d="M27 21 L33 25 L28 28" 
+          stroke="#FF7D1A" 
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        
+        {/* ลูกศรสีฟ้า - ด้านล่างขวา */}
+        <path 
+          d="M48 40 C42 40, 36 40, 30 35" 
+          stroke="#00B2FF" 
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
+        
+        {/* ลูกศรสีฟ้า - หัวลูกศร */}
+        <path 
+          d="M33 39 L27 35 L32 32" 
+          stroke="#00B2FF" 
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        
+        {/* ลูกศรสีเขียว - แนวไขว้ตรงกลาง */}
+        <path 
+          d="M20 40 C25 35, 30 32, 35 25" 
+          stroke="#01C27C" 
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          fill="none"
+        />
+        
+        {/* ลูกศรสีเขียว - หัวลูกศร */}
+        <path 
+          d="M33 25 L38 20 L38 28" 
+          stroke="#01C27C" 
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
         
         {/* ตัวอักษร S */}
         <text 
-          x="25" 
+          x="26" 
           y="38" 
           fontFamily="Arial, sans-serif" 
           fontWeight="900" 
-          fontSize="24" 
-          fill="#FFEE58"
+          fontSize="14" 
+          fill="white"
         >
           S
         </text>
-        
-        {/* เอฟเฟคการซิงค์ (สัญลักษณ์การเชื่อมต่อ) */}
-        <path 
-          d="M42 24 L45 24 L45 21 L48 26 L45 31 L45 28 L42 28 Z" 
-          fill="#FFEE58" 
-        />
-        
-        {/* เอฟเฟคการซิงค์อีกด้าน */}
-        <path 
-          d="M18 28 L15 28 L15 31 L12 26 L15 21 L15 24 L18 24 Z" 
-          fill="#FFEE58" 
-        />
-        
-        {/* เส้นประด้านล่างตัวอักษร */}
-        <path 
-          d="M20 42 L40 42" 
-          stroke="white" 
-          strokeWidth="1.5"
-          strokeDasharray="2 1"
-        />
       </svg>
     </div>
   );
