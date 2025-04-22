@@ -12,29 +12,45 @@ function generateNonceStr(length = 16): string {
     .join("");
 }
 
-// ฟังก์ชันสร้างลายเซ็น Flash Express
+// ฟังก์ชันสร้างลายเซ็น Flash Express - ปรับปรุงตาม flash-express-final.ts
 function generateFlashSignature(params: Record<string, any>, apiKey: string): string {
-  // 1. จัดเรียงพารามิเตอร์ตามตัวอักษร (ASCII)
-  const sortedParams = Object.keys(params)
-    .filter(key => params[key] !== undefined && params[key] !== null && params[key] !== "")
-    .sort()
-    .reduce((result, key) => {
-      result[key] = params[key];
-      return result;
-    }, {} as Record<string, any>);
+  try {
+    console.log('⚙️ เริ่มคำนวณลายเซ็น Flash Express API...');
+    console.log('⚙️ ข้อมูลเริ่มต้น:', JSON.stringify(params, null, 2));
+    
+    // 1. แปลงทุกค่าเป็น string และกรองพารามิเตอร์
+    const stringParams: Record<string, string> = {};
+    Object.keys(params).forEach(key => {
+      // ข้ามฟิลด์ sign, subItemTypes และ merchantId (เพราะเราใช้ mchId)
+      if (key === 'sign' || key === 'subItemTypes' || key === 'merchantId') return;
+      
+      // ข้ามค่าที่เป็น null, undefined หรือว่าง
+      if (params[key] === null || params[key] === undefined || params[key] === '') return;
+      
+      // แปลงทุกค่าเป็น string
+      stringParams[key] = String(params[key]);
+    });
 
-  // 2. เชื่อมต่อเป็นสตริงในรูปแบบ key1=value1&key2=value2
-  const stringToSign = Object.entries(sortedParams)
-    .map(([key, value]) => `${key}=${value}`)
-    .join("&");
+    // 2. จัดเรียงคีย์ตามลำดับตัวอักษร ASCII
+    const sortedKeys = Object.keys(stringParams).sort();
 
-  // 3. เพิ่ม API key ที่ท้ายสตริง
-  const signString = `${stringToSign}&key=${apiKey}`;
-  
-  console.log("String to sign:", signString);
+    // 3. สร้างสตริงสำหรับลายเซ็น
+    const stringToSign = sortedKeys
+      .map(key => `${key}=${stringParams[key]}`)
+      .join('&') + `&key=${apiKey}`;
 
-  // 4. คำนวณค่า SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
-  return crypto.createHash("sha256").update(signString).digest("hex").toUpperCase();
+    console.log('🔑 สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
+
+    // 4. สร้าง SHA-256 hash และแปลงเป็นตัวพิมพ์ใหญ่
+    const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+
+    console.log('🔒 ลายเซ็นที่สร้าง:', signature);
+    
+    return signature;
+  } catch (error) {
+    console.error('❌ เกิดข้อผิดพลาดในการสร้างลายเซ็น Flash Express:', error);
+    throw error;
+  }
 }
 
 // หน้าทดสอบ Flash Express API
