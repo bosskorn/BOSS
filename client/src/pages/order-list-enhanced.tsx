@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import Layout from '@/components/Layout';
-import { Loader2, Search, Filter, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square, Tag, Clock, AlertCircle, CornerUpLeft, CircleDollarSign, Slash, Folder } from 'lucide-react';
+import { Loader2, Search, Filter, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square, Tag, Clock, AlertCircle, CornerUpLeft, CircleDollarSign, Slash, Folder, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -887,7 +887,57 @@ const OrderList: React.FC = () => {
                       <Printer className="h-4 w-4 mr-1.5" />
                       พิมพ์ลาเบล
                     </Button>
-
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-10 border-red-300 text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        if (confirm(`ต้องการลบรายการที่เลือกทั้งหมด ${selectedOrders.length} รายการใช่หรือไม่?`)) {
+                          // สร้างอาร์เรย์ของคำขอลบ
+                          const deletePromises = selectedOrders.map(orderId => {
+                            const token = localStorage.getItem('auth_token');
+                            return fetch(`/api/orders/${orderId}`, {
+                              method: 'DELETE',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': token ? `Bearer ${token}` : '',
+                              },
+                              credentials: 'include'
+                            })
+                            .then(response => {
+                              if (!response.ok) {
+                                throw new Error(`Error ${response.status}: ${response.statusText}`);
+                              }
+                              return response.json();
+                            });
+                          });
+                          
+                          // ทำการลบพร้อมกันทั้งหมด
+                          Promise.all(deletePromises)
+                            .then(results => {
+                              toast({
+                                title: 'ลบรายการสำเร็จ',
+                                description: `ลบรายการทั้งหมด ${selectedOrders.length} รายการเรียบร้อยแล้ว`,
+                                variant: 'default',
+                              });
+                              // รีเฟรชข้อมูลและล้างการเลือก
+                              setSelectedOrders([]);
+                              fetchOrders();
+                            })
+                            .catch(error => {
+                              console.error('Error deleting orders:', error);
+                              toast({
+                                title: 'เกิดข้อผิดพลาด',
+                                description: error instanceof Error ? error.message : 'ไม่สามารถลบรายการได้',
+                                variant: 'destructive',
+                              });
+                            });
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1.5" />
+                      ลบรายการที่เลือก
+                    </Button>
                   </div>
                 )}
               </div>
