@@ -38,6 +38,8 @@ import {
   Clock,
   CheckCircle2,
   Users,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink
 } from 'lucide-react';
 import { useLocation } from 'wouter';
@@ -90,6 +92,8 @@ const TopUpPage: React.FC = () => {
   const [stripeCheckoutUrl, setStripeCheckoutUrl] = useState<string>('');
   const [countdown, setCountdown] = useState<number>(15 * 60); // 15 นาที เป็นวินาที
   const [isTimerActive, setIsTimerActive] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20; // จำกัด 20 รายการต่อหน้า
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -427,10 +431,17 @@ const TopUpPage: React.FC = () => {
           reference: item.referenceId
         }));
         setHistory(formattedHistory);
+        // รีเซ็ตกลับไปหน้าแรกเมื่อมีการอัพเดตข้อมูล
+        setCurrentPage(1);
       }
     } catch (error) {
       console.error('ไม่สามารถดึงประวัติการเติมเงินได้:', error);
     }
+  };
+  
+  // ฟังก์ชันเปลี่ยนหน้า
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
   };
 
   // อัพเดตการนับถอยหลัง
