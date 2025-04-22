@@ -754,13 +754,12 @@ router.delete('/:id', auth, async (req, res) => {
     // ตรวจสอบว่าเป็น foreign key error หรือไม่
     const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการลบคำสั่งซื้อ';
     const isForeignKeyError = errorMessage.includes('foreign key constraint') || 
-                             errorMessage.includes('fee_history') ||
                              errorMessage.includes('referenced');
     
     res.status(500).json({
       success: false,
       message: isForeignKeyError 
-        ? 'ไม่สามารถลบรายการได้เนื่องจากมีข้อมูลการใช้เครดิตผูกอยู่' 
+        ? 'ไม่สามารถลบรายการ เนื่องจากมีข้อมูลที่เกี่ยวข้องอยู่ กรุณาลองอีกครั้งในภายหลัง' 
         : 'เกิดข้อผิดพลาดในการลบคำสั่งซื้อ'
     });
   }
