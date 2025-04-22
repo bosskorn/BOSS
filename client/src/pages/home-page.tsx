@@ -68,7 +68,7 @@ const HomePage: React.FC = () => {
                     </div>
                   </div>
                   <div className="space-y-4 text-center">
-                    <h3 className="text-2xl font-semibold text-white">ส่งด่วน ม่วงสะดุด!</h3>
+                    <h3 className="text-2xl font-semibold text-white">ส่งพัสดุรวดเร็ว ตรงเวลา</h3>
                     <p className="text-white/80">การจัดส่งที่รวดเร็วและแม่นยำ พร้อมการติดตามแบบเรียลไทม์</p>
                   </div>
                 </div>
@@ -210,11 +210,11 @@ const HomePage: React.FC = () => {
             <div>
               <div className="flex items-center mb-4">
                 <Logo size="small" className="mr-2" />
-                <span className="text-xl font-bold">PURPLEDASH</span>
+                <span className="text-xl font-bold">SHIPSYNC</span>
               </div>
               <p className="text-gray-400 mb-4">
                 ระบบจัดการขนส่งอัจฉริยะ<br />
-                ส่งด่วน ม่วงสะดุด!
+                ส่งพัสดุรวดเร็ว ตรงเวลา
               </p>
             </div>
             
@@ -241,7 +241,7 @@ const HomePage: React.FC = () => {
             <div>
               <h4 className="text-lg font-semibold mb-4">ติดต่อเรา</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>support@purpledash.co.th</li>
+                <li>support@shipsync.co.th</li>
                 <li>02-123-4567</li>
                 <li>กรุงเทพฯ, ประเทศไทย</li>
               </ul>
@@ -249,7 +249,7 @@ const HomePage: React.FC = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between">
-            <p className="text-gray-500">&copy; 2025 PURPLEDASH. สงวนลิขสิทธิ์.</p>
+            <p className="text-gray-500">&copy; 2025 SHIPSYNC. สงวนลิขสิทธิ์.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="#" className="text-gray-500 hover:text-purple-400">นโยบายความเป็นส่วนตัว</a>
               <a href="#" className="text-gray-500 hover:text-purple-400">เงื่อนไขการใช้งาน</a>
