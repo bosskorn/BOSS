@@ -159,6 +159,7 @@ export const createFlashExpressShipping = async (
       // 2. เตรียมข้อมูลคำขอตามเอกสาร Flash Express
       
       // เตรียมข้อมูลสำหรับใช้ในการสร้างลายเซ็น ตามรูปแบบจาก Flash Express (พารามิเตอร์ที่จำเป็นเท่านั้น)
+      // สำคัญ: ต้องแปลงทุกค่าเป็น string เพื่อให้ตรงกับการทดสอบที่สำเร็จ
       const requestParams: Record<string, any> = {
         mchId: FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
@@ -177,10 +178,10 @@ export const createFlashExpressShipping = async (
         dstCityName: orderData.dstCityName,
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
-        articleCategory: orderData.articleCategory,
-        weight: orderData.weight,
-        insured: 0, // กำหนดค่าคงที่เสมอ
-        codEnabled: orderData.codEnabled || 0
+        articleCategory: String(orderData.articleCategory),
+        weight: String(orderData.weight),
+        insured: String(0), // กำหนดค่าคงที่เสมอ
+        codEnabled: String(orderData.codEnabled || 0)
       };
       
       // ลบฟิลด์ที่ไม่ต้องใช้ในการคำนวณลายเซ็นออกทันที
@@ -188,14 +189,14 @@ export const createFlashExpressShipping = async (
       
       // เพิ่ม parcelKind ใน requestParams (สำคัญ: ต้องใช้ในการคำนวณลายเซ็น)
       if (orderData.parcelKind) {
-        requestParams.parcelKind = orderData.parcelKind;
+        requestParams.parcelKind = String(orderData.parcelKind);
       } else {
         // ใช้ค่าเริ่มต้น 1 (พัสดุปกติ) หากไม่ได้ระบุ
-        requestParams.parcelKind = 1;
+        requestParams.parcelKind = String(1);
       }
 
       // เพิ่ม expressCategory เข้าไปในข้อมูลที่ใช้คำนวณลายเซ็น
-      requestParams.expressCategory = orderData.expressCategory;
+      requestParams.expressCategory = String(orderData.expressCategory);
 
       // เตรียมข้อมูลสำหรับส่งไปยัง API (รวมทุกฟิลด์)
       const fullRequestParams: Record<string, any> = {
