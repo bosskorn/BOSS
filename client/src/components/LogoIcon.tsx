@@ -20,27 +20,35 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 40, className = '' }) => {
         
         {/* ตัวอักษร S */}
         <text 
-          x="27" 
-          y="35" 
+          x="25" 
+          y="38" 
           fontFamily="Arial, sans-serif" 
           fontWeight="900" 
-          fontSize="22" 
-          fill="white"
+          fontSize="24" 
+          fill="#FFDD00"
         >
           S
         </text>
         
+        {/* เอฟเฟคการซิงค์ (สัญลักษณ์การเชื่อมต่อ) */}
+        <path 
+          d="M42 24 L45 24 L45 21 L48 26 L45 31 L45 28 L42 28 Z" 
+          fill="#FFDD00" 
+        />
+        
+        {/* เอฟเฟคการซิงค์อีกด้าน */}
+        <path 
+          d="M18 28 L15 28 L15 31 L12 26 L15 21 L15 24 L18 24 Z" 
+          fill="#FFDD00" 
+        />
+        
         {/* เส้นประด้านล่างตัวอักษร */}
         <path 
-          d="M20 36 L40 36" 
+          d="M20 42 L40 42" 
           stroke="white" 
           strokeWidth="1.5"
           strokeDasharray="2 1"
         />
-        
-        {/* จุดเล็กๆ ต่อจากเส้นประ */}
-        <circle cx="42.5" cy="36" r="1" fill="white" />
-        <circle cx="45" cy="36" r="1" fill="white" />
       </svg>
     </div>
   );

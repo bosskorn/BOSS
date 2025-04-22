@@ -28,7 +28,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
         {/* พื้นหลังโลโก้ */}
         <rect width="180" height="60" rx="10" fill="#0056D6" />
         
-        {/* ตัวอักษร ShipSync */}
+        {/* ตัวอักษร Ship */}
         <text 
           x="17" 
           y="35" 
@@ -38,8 +38,33 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           fill="white"
           letterSpacing="0"
         >
-          ShipSync
+          Ship
         </text>
+        
+        {/* ตัวอักษร Sync แบบสร้างความน่าจดจำ */}
+        <text 
+          x="81" 
+          y="35" 
+          fontFamily="Arial, sans-serif" 
+          fontWeight="900" 
+          fontSize="26" 
+          fill="#FFDD00"
+          letterSpacing="0"
+        >
+          Sync
+        </text>
+        
+        {/* เอฟเฟคการซิงค์ (สัญลักษณ์การเชื่อมต่อ) */}
+        <path 
+          d="M125 22 L133 22 L133 17 L140 25 L133 33 L133 28 L125 28 Z" 
+          fill="#FFDD00" 
+        />
+        
+        {/* เอฟเฟคการซิงค์อีกด้าน */}
+        <path 
+          d="M75 28 L67 28 L67 33 L60 25 L67 17 L67 22 L75 22 Z" 
+          fill="#FFDD00" 
+        />
         
         {/* เส้นประด้านล่างตัวอักษร */}
         <path 
