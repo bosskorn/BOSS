@@ -441,6 +441,7 @@ export const getFlashExpressShippingOptions = async (
       const encodedPayload = new URLSearchParams(requestParams).toString();
 
       // 6. กำหนด Headers และเพิ่ม headers พิเศษเพื่อความถูกต้อง
+      // ใช้ timestamp ที่สร้างก่อนหน้า
       const headers = {
         'Accept': 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded',
