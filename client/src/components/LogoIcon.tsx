@@ -16,30 +16,30 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 50, className = '' }) => {
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* พื้นหลังวงกลม */}
-        <circle cx="30" cy="30" r="30" fill="#2E2157" />
+        <circle cx="30" cy="30" r="30" fill="#0A1929" />
         
         {/* ศูนย์กลางของเครือข่าย */}
         <circle 
           cx="30" 
           cy="30" 
           r="12" 
-          fill="#FFC107" 
+          fill="#00B0FF" 
         />
         
         {/* ไอคอนเส้นทางบนศูนย์กลาง */}
         <path 
           d="M26 30 L34 30 M30 26 L30 34" 
-          stroke="#2E2157" 
+          stroke="#0A1929" 
           strokeWidth="2" 
           strokeLinecap="round" 
         />
         
         {/* จุดเครือข่ายรอบนอก */}
-        <circle cx="12" cy="18" r="3" fill="#9C27B0" />
-        <circle cx="15" cy="45" r="3" fill="#9C27B0" />
-        <circle cx="45" cy="15" r="3" fill="#9C27B0" />
-        <circle cx="48" cy="42" r="3" fill="#9C27B0" />
-        <circle cx="30" cy="8" r="3" fill="#9C27B0" />
+        <circle cx="12" cy="18" r="3" fill="#0070F3" />
+        <circle cx="15" cy="45" r="3" fill="#0070F3" />
+        <circle cx="45" cy="15" r="3" fill="#0070F3" />
+        <circle cx="48" cy="42" r="3" fill="#0070F3" />
+        <circle cx="30" cy="8" r="3" fill="#0070F3" />
         
         {/* เส้นเชื่อมโยงหลัก */}
         <line 
@@ -47,7 +47,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 50, className = '' }) => {
           y1="18" 
           x2="30" 
           y2="30" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1.5" 
         />
         <line 
@@ -55,7 +55,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 50, className = '' }) => {
           y1="45" 
           x2="30" 
           y2="30" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1.5" 
         />
         <line 
@@ -63,7 +63,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 50, className = '' }) => {
           y1="15" 
           x2="30" 
           y2="30" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1.5" 
         />
         <line 
@@ -71,7 +71,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 50, className = '' }) => {
           y1="42" 
           x2="30" 
           y2="30" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1.5" 
         />
         <line 
@@ -79,7 +79,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 50, className = '' }) => {
           y1="8" 
           x2="30" 
           y2="30" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1.5" 
         />
         
@@ -89,7 +89,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 50, className = '' }) => {
           y1="18" 
           x2="45" 
           y2="15" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1" 
           strokeDasharray="1.5 1" 
         />
@@ -98,7 +98,7 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 50, className = '' }) => {
           y1="45" 
           x2="48" 
           y2="42" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1" 
           strokeDasharray="1.5 1"  
         />

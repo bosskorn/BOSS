@@ -23,22 +23,22 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* พื้นหลังโลโก้ */}
-        <rect width="180" height="60" rx="8" fill="#2E2157" />
+        <rect width="180" height="60" rx="8" fill="#0A1929" />
         
         {/* ศูนย์กลางของเครือข่าย */}
         <circle 
           cx="50" 
           cy="30" 
           r="15" 
-          fill="#FFC107" 
+          fill="#00B0FF" 
         />
         
         {/* จุดเครือข่ายสำหรับเชื่อมโยง */}
-        <circle cx="20" cy="15" r="4" fill="#9C27B0" />
-        <circle cx="25" cy="50" r="4" fill="#9C27B0" />
-        <circle cx="75" cy="15" r="4" fill="#9C27B0" />
-        <circle cx="80" cy="45" r="4" fill="#9C27B0" />
-        <circle cx="45" cy="8" r="3" fill="#9C27B0" />
+        <circle cx="20" cy="15" r="4" fill="#0070F3" />
+        <circle cx="25" cy="50" r="4" fill="#0070F3" />
+        <circle cx="75" cy="15" r="4" fill="#0070F3" />
+        <circle cx="80" cy="45" r="4" fill="#0070F3" />
+        <circle cx="45" cy="8" r="3" fill="#0070F3" />
         
         {/* เส้นเชื่อมโยงหลัก */}
         <line 
@@ -46,7 +46,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           y1="15" 
           x2="50" 
           y2="30" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1.5" 
         />
         <line 
@@ -54,7 +54,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           y1="50" 
           x2="50" 
           y2="30" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1.5" 
         />
         <line 
@@ -62,7 +62,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           y1="15" 
           x2="50" 
           y2="30" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1.5" 
         />
         <line 
@@ -70,7 +70,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           y1="45" 
           x2="50" 
           y2="30" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1.5" 
         />
         <line 
@@ -78,7 +78,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           y1="8" 
           x2="50" 
           y2="30" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1.5" 
         />
         
@@ -88,7 +88,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           y1="15" 
           x2="75" 
           y2="15" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1" 
           strokeDasharray="2 1" 
         />
@@ -97,7 +97,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           y1="50" 
           x2="80" 
           y2="45" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1" 
           strokeDasharray="2 1"  
         />
@@ -106,7 +106,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           y1="8" 
           x2="75" 
           y2="15" 
-          stroke="#9C27B0" 
+          stroke="#0070F3" 
           strokeWidth="1" 
           strokeDasharray="2 1"  
         />
@@ -114,7 +114,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
         {/* ไอคอนเส้นทางบนศูนย์กลาง */}
         <path 
           d="M45 30 L55 30 M50 25 L50 35" 
-          stroke="#2E2157" 
+          stroke="#0A1929" 
           strokeWidth="2.5" 
           strokeLinecap="round" 
         />
@@ -138,7 +138,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
           fontFamily="Arial, sans-serif" 
           fontWeight="900" 
           fontSize="20" 
-          fill="#FFC107"
+          fill="#00B0FF"
         >
           Sync
         </text>
