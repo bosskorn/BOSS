@@ -16,76 +16,47 @@ const LogoIcon: React.FC<LogoIconProps> = ({ size = 50, className = '' }) => {
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* พื้นหลังวงกลม */}
-        <circle cx="30" cy="30" r="30" fill="#0B2F5C" />
+        <circle cx="30" cy="30" r="30" fill="#00334E" />
         
-        {/* ลูกศรสีส้ม - ด้านซ้ายบน */}
-        <path 
-          d="M12 20 C18 20, 24 20, 30 25" 
-          stroke="#FF7D1A" 
-          strokeWidth="3"
-          strokeLinecap="round"
-          fill="none"
-        />
-        
-        {/* ลูกศรสีส้ม - หัวลูกศร */}
-        <path 
-          d="M27 21 L33 25 L28 28" 
-          stroke="#FF7D1A" 
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        
-        {/* ลูกศรสีฟ้า - ด้านล่างขวา */}
-        <path 
-          d="M48 40 C42 40, 36 40, 30 35" 
-          stroke="#00B2FF" 
-          strokeWidth="3"
-          strokeLinecap="round"
-          fill="none"
-        />
-        
-        {/* ลูกศรสีฟ้า - หัวลูกศร */}
-        <path 
-          d="M33 39 L27 35 L32 32" 
-          stroke="#00B2FF" 
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        
-        {/* ลูกศรสีเขียว - แนวไขว้ตรงกลาง */}
-        <path 
-          d="M20 40 C25 35, 30 32, 35 25" 
-          stroke="#01C27C" 
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          fill="none"
-        />
-        
-        {/* ลูกศรสีเขียว - หัวลูกศร */}
-        <path 
-          d="M33 25 L38 20 L38 28" 
-          stroke="#01C27C" 
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        
-        {/* ตัวอักษร S */}
-        <text 
-          x="26" 
-          y="38" 
-          fontFamily="Arial, sans-serif" 
-          fontWeight="900" 
-          fontSize="14" 
-          fill="white"
-        >
-          S
-        </text>
+        {/* ตัวอักษร S แบบมินิมอล */}
+        <g>
+          {/* ส่วนบนของตัว S - สีเทอร์ควอยซ์ */}
+          <path 
+            d="M20 25 C20 20, 25 18, 30 18 H35 C40 18, 45 20, 45 25 C45 30, 40 32, 35 32 H30" 
+            stroke="#00B8A9" 
+            strokeWidth="6"
+            strokeLinecap="round"
+            fill="none"
+          />
+          
+          {/* ส่วนล่างของตัว S - สีน้ำเงินเข้ม */}
+          <path 
+            d="M20 40 C20 35, 25 33, 30 33 H35 C40 33, 45 35, 45 40" 
+            stroke="#005B97" 
+            strokeWidth="6"
+            strokeLinecap="round"
+            fill="none"
+          />
+          
+          {/* หัวลูกศรตรงปลายตัว S */}
+          <path 
+            d="M47 35 L45 40 L42 37" 
+            stroke="#005B97" 
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+          
+          {/* เส้นประข้างล่าง แสดงการเคลื่อนที่ */}
+          <path 
+            d="M20 48 L40 48" 
+            stroke="#5BD0C8" 
+            strokeWidth="2"
+            strokeDasharray="2 1.5"
+            strokeLinecap="round"
+          />
+        </g>
       </svg>
     </div>
   );

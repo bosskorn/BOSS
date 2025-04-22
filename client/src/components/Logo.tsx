@@ -8,9 +8,9 @@ interface LogoProps {
 const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
   // ขนาดของโลโก้ตามแต่ละขนาด
   const dimensions = {
-    small: { width: 200, height: 70 },
-    medium: { width: 300, height: 105 },
-    large: { width: 400, height: 140 },
+    small: { width: 180, height: 60 },
+    medium: { width: 270, height: 90 },
+    large: { width: 360, height: 120 },
   };
 
   return (
@@ -18,103 +18,84 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', className = '' }) => {
       <svg
         width={dimensions[size].width}
         height={dimensions[size].height}
-        viewBox={`0 0 ${200} ${70}`}
+        viewBox={`0 0 ${180} ${60}`}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* พื้นหลังโลโก้ */}
-        <rect width="200" height="70" rx="12" fill="#0B2F5C" />
+        <rect width="180" height="60" rx="8" fill="#00334E" />
         
-        {/* ลูกศรเคลื่อนไหวสีส้ม - ด้านซ้ายบน */}
-        <path 
-          d="M30 15 C45 15, 60 15, 75 25 S85 40, 100 42"
-          stroke="#FF7D1A" 
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          fill="none"
-        />
-        
-        {/* ลูกศรเคลื่อนไหวสีส้ม - หัวลูกศร */}
-        <path 
-          d="M95 37 L105 42 L95 47" 
-          stroke="#FF7D1A" 
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        
-        {/* ลูกศรเคลื่อนไหวสีฟ้า - ด้านล่างขวา */}
-        <path 
-          d="M175 50 C160 50, 145 50, 130 40 S120 25, 105 23"
-          stroke="#00B2FF" 
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          fill="none"
-        />
-        
-        {/* ลูกศรเคลื่อนไหวสีฟ้า - หัวลูกศร */}
-        <path 
-          d="M110 28 L100 23 L110 18" 
-          stroke="#00B2FF" 
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        
-        {/* ลูกศรเคลื่อนไหวสีเขียว - แนวไขว้ตรงกลาง */}
-        <path 
-          d="M75 50 C85 45, 95 40, 100 32 S105 25, 115 20"
-          stroke="#01C27C" 
-          strokeWidth="3"
-          strokeLinecap="round"
-          fill="none"
-        />
-        
-        {/* ลูกศรเคลื่อนไหวสีเขียว - หัวลูกศร */}
-        <path 
-          d="M110 18 L120 15 L115 25" 
-          stroke="#01C27C" 
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
+        {/* ตัวอักษร S แบบมินิมอลที่มีเอกลักษณ์ */}
+        <g>
+          {/* ส่วนบนของตัว S - สีเทอร์ควอยซ์ */}
+          <path 
+            d="M35 25 C35 20, 40 18, 45 18 H55 C60 18, 65 20, 65 25 C65 30, 60 32, 55 32 H45" 
+            stroke="#00B8A9" 
+            strokeWidth="6"
+            strokeLinecap="round"
+            fill="none"
+          />
+          
+          {/* ส่วนล่างของตัว S - สีน้ำเงินเข้ม */}
+          <path 
+            d="M35 40 C35 35, 40 33, 45 33 H55 C60 33, 65 35, 65 40" 
+            stroke="#005B97" 
+            strokeWidth="6"
+            strokeLinecap="round"
+            fill="none"
+          />
+          
+          {/* หัวลูกศรตรงปลายตัว S */}
+          <path 
+            d="M67 35 L65 40 L62 37" 
+            stroke="#005B97" 
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+          
+          {/* เส้นประข้างล่าง แสดงการเคลื่อนที่ */}
+          <path 
+            d="M35 48 L65 48" 
+            stroke="#5BD0C8" 
+            strokeWidth="2"
+            strokeDasharray="3 2"
+            strokeLinecap="round"
+          />
+        </g>
         
         {/* ตัวอักษร Ship */}
         <text 
-          x="50" 
-          y="45" 
+          x="75" 
+          y="30" 
           fontFamily="Arial, sans-serif" 
           fontWeight="900" 
-          fontSize="22" 
+          fontSize="20" 
           fill="white"
-          letterSpacing="0"
         >
           Ship
         </text>
         
         {/* ตัวอักษร Sync */}
         <text 
-          x="115" 
-          y="45" 
+          x="75" 
+          y="48" 
           fontFamily="Arial, sans-serif" 
           fontWeight="900" 
-          fontSize="22" 
-          fill="white"
-          letterSpacing="0"
+          fontSize="20" 
+          fill="#00B8A9"
         >
           Sync
         </text>
         
         {/* สโลแกนภาษาไทย */}
         <text 
-          x="100" 
-          y="60" 
+          x="130" 
+          y="38" 
           fontFamily="Kanit, sans-serif" 
           fontWeight="400" 
-          fontSize="10" 
+          fontSize="9" 
           fill="white"
           textAnchor="middle"
         >
