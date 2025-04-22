@@ -10,6 +10,10 @@ const FLASH_EXPRESS_API_URL = 'https://open-api-tra.flashexpress.com';
 const FLASH_EXPRESS_MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const FLASH_EXPRESS_API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
+// ตรวจสอบค่า API KEY ที่ใช้
+console.log('Flash Express Merchant ID:', FLASH_EXPRESS_MERCHANT_ID);
+console.log('Flash Express API Key (บางส่วน):', FLASH_EXPRESS_API_KEY ? `${FLASH_EXPRESS_API_KEY.substring(0, 5)}...${FLASH_EXPRESS_API_KEY.substring(FLASH_EXPRESS_API_KEY.length - 5)}` : 'ไม่พบ API Key');
+
 // ฟังก์ชั่นสร้าง nonceStr สำหรับใช้ในการส่งคำขอไปยัง Flash Express API
 function generateNonceStr(length = 16): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -20,7 +24,7 @@ function generateNonceStr(length = 16): string {
   return result;
 }
 
-// สร้างลายเซ็นสำหรับ Flash Express API โดยตรง
+// สร้างลายเซ็นแบบที่ 1 - รูปแบบมาตรฐาน ค่าที่ไม่ใช่สตริงแปลงเป็นสตริง
 function generateFlashSignature(params: Record<string, any>, apiKey: string): string {
   try {
     // เรียงลำดับคีย์ตามตัวอักษร (ASCII)
@@ -39,11 +43,75 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
     // รวมเป็นสตริงเดียว แล้วเพิ่ม API key ที่ท้าย
     const stringToSign = `${paramPairs.join('&')}&key=${apiKey}`;
     
-    console.log('สตริงที่ใช้สร้างลายเซ็นแบบอิสระ:', stringToSign);
+    console.log('สตริงที่ใช้สร้างลายเซ็นแบบที่ 1:', stringToSign);
     
     // คำนวณลายเซ็น SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
     const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
-    console.log('ลายเซ็นที่สร้างโดยตรง:', signature);
+    console.log('ลายเซ็นแบบที่ 1:', signature);
+    
+    return signature;
+  } catch (error) {
+    console.error('เกิดข้อผิดพลาดในการสร้างลายเซ็น:', error);
+    throw error;
+  }
+}
+
+// สร้างลายเซ็นแบบที่ 2 - ค่าตัวเลขคงเป็นตัวเลข ไม่แปลงเป็นสตริง
+function generateFlashSignatureV2(params: Record<string, any>, apiKey: string): string {
+  try {
+    // เรียงลำดับคีย์ตามตัวอักษร (ASCII)
+    const sortedKeys = Object.keys(params).sort();
+    
+    // สร้างสตริงสำหรับลายเซ็น
+    const paramPairs: string[] = [];
+    for (const key of sortedKeys) {
+      // ข้ามค่า null, undefined
+      if (params[key] === null || params[key] === undefined) continue;
+      
+      // เก็บค่าตัวเลขไว้เป็นตัวเลข ไม่แปลงเป็นสตริง
+      paramPairs.push(`${key}=${params[key]}`);
+    }
+    
+    // รวมเป็นสตริงเดียว แล้วเพิ่ม API key ที่ท้าย
+    const stringToSign = `${paramPairs.join('&')}&key=${apiKey}`;
+    
+    console.log('สตริงที่ใช้สร้างลายเซ็นแบบที่ 2:', stringToSign);
+    
+    // คำนวณลายเซ็น SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
+    const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+    console.log('ลายเซ็นแบบที่ 2:', signature);
+    
+    return signature;
+  } catch (error) {
+    console.error('เกิดข้อผิดพลาดในการสร้างลายเซ็น:', error);
+    throw error;
+  }
+}
+
+// สร้างลายเซ็นแบบที่ 3 - ใช้ URL encoding กับค่าก่อนสร้างลายเซ็น
+function generateFlashSignatureV3(params: Record<string, any>, apiKey: string): string {
+  try {
+    // เรียงลำดับคีย์ตามตัวอักษร (ASCII)
+    const sortedKeys = Object.keys(params).sort();
+    
+    // สร้างสตริงสำหรับลายเซ็น
+    const paramPairs: string[] = [];
+    for (const key of sortedKeys) {
+      // ข้ามค่า null, undefined
+      if (params[key] === null || params[key] === undefined) continue;
+      
+      // ใช้ URL encoding
+      paramPairs.push(`${key}=${encodeURIComponent(String(params[key]))}`);
+    }
+    
+    // รวมเป็นสตริงเดียว แล้วเพิ่ม API key ที่ท้าย
+    const stringToSign = `${paramPairs.join('&')}&key=${apiKey}`;
+    
+    console.log('สตริงที่ใช้สร้างลายเซ็นแบบที่ 3:', stringToSign);
+    
+    // คำนวณลายเซ็น SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
+    const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+    console.log('ลายเซ็นแบบที่ 3:', signature);
     
     return signature;
   } catch (error) {
@@ -113,13 +181,19 @@ async function testDirectAPICall() {
     // ทำสำเนาข้อมูลสำหรับคำนวณลายเซ็น
     const signParams = { ...requestData };
     
-    // สร้างลายเซ็น
-    const signature = generateFlashSignature(signParams, FLASH_EXPRESS_API_KEY);
-
+    // สร้างลายเซ็นทั้ง 3 แบบ
+    console.log('\n=== เปรียบเทียบ 3 รูปแบบการสร้างลายเซ็น ===');
+    const signature1 = generateFlashSignature(signParams, FLASH_EXPRESS_API_KEY);
+    const signature2 = generateFlashSignatureV2(signParams, FLASH_EXPRESS_API_KEY);
+    const signature3 = generateFlashSignatureV3(signParams, FLASH_EXPRESS_API_KEY);
+    
+    // เลือกใช้ลายเซ็นแบบที่ 1 (แบบดั้งเดิม)
+    console.log('\n=== ใช้ลายเซ็นแบบที่ 1 สำหรับการทดสอบ ===');
+    
     // เพิ่มลายเซ็นและ subItemTypes
     const finalPayload = {
       ...requestData,
-      sign: signature,
+      sign: signature1,
       subItemTypes: JSON.stringify([{
         itemName: "สินค้าทดสอบ", 
         itemWeightSize: "1Kg",
