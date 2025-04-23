@@ -186,9 +186,13 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
         articleCategory: orderData.articleCategory,
         expressCategory: orderData.expressCategory,
         weight: orderData.weight,
-        codEnabled: orderData.codEnabled,
-        codAmount: orderData.codAmount
+        codEnabled: orderData.codEnabled || 0
       };
+      
+      // เพิ่ม codAmount เฉพาะถ้า codEnabled เป็น 1
+      if (orderData.codEnabled == 1 && orderData.codAmount) {
+        apiData.codAmount = orderData.codAmount;
+      }
       
       // ใช้ฟังก์ชัน generateFlashExpressSignature จาก generate-signature.ts
       const sign = generateFlashExpressSignature(
@@ -205,11 +209,15 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
       // เข้ารหัสข้อมูลเป็น form-urlencoded
       const formData = new URLSearchParams();
       for (const [key, value] of Object.entries(apiData)) {
-        formData.append(key, value.toString());
+        if (value !== null && value !== undefined) {
+          formData.append(key, value.toString());
+        }
       }
       
       // เพิ่ม subItemTypes หลังจากลงลายเซ็นแล้ว
-      formData.append('subItemTypes', JSON.stringify(orderData.subItemTypes));
+      if (orderData.subItemTypes) {
+        formData.append('subItemTypes', JSON.stringify(orderData.subItemTypes));
+      }
       
       console.log('Flash Express API request form data:', formData.toString());
       

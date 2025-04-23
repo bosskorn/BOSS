@@ -112,8 +112,8 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
     // 2. รวมข้อมูลทั้งหมด
     const requestParams = {
       ...baseParams,
-      fromPostalCode: originAddress.postalCode,
-      toPostalCode: destinationAddress.postalCode,
+      fromPostalCode: originAddress.postalCode || originAddress.zipcode,
+      toPostalCode: destinationAddress.postalCode || destinationAddress.zipcode,
       weight: packageDetails.weight,
       height: packageDetails.height,
       length: packageDetails.length,
@@ -216,13 +216,13 @@ export async function createShipment(shipmentData: any) {
     };
     
     // เพิ่มข้อมูล COD ถ้าเปิดใช้งาน
-    if (shipmentData.codEnabled === '1') {
+    if (shipmentData.codEnabled === '1' || shipmentData.codEnabled === 1) {
       requestData.codAmount = shipmentData.codAmount;
     }
     
     // เพิ่มข้อมูลประกันถ้าเปิดใช้งาน
-    if (shipmentData.insured === '1') {
-      requestData.insuredAmount = shipmentData.insuranceAmount;
+    if (shipmentData.insured === '1' || shipmentData.insured === 1) {
+      requestData.insuredAmount = shipmentData.insuranceAmount || shipmentData.insuredAmount;
     }
     
     // 4. สร้างลายเซ็น (ก่อนเพิ่ม remark และ subItemTypes)
