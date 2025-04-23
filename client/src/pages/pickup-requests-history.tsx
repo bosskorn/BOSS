@@ -31,7 +31,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/services/api";
 
 // สถานะสำหรับคำขอเรียกรถ
 const statusColors: Record<string, string> = {
@@ -63,7 +62,6 @@ export default function PickupRequestHistory() {
     refetch,
   } = useQuery({
     queryKey: ["/api/pickup-requests"],
-    retry: 1,
   });
 
   // กรองข้อมูลตาม Tab ที่เลือก
@@ -88,12 +86,17 @@ export default function PickupRequestHistory() {
   // ฟังก์ชันยกเลิกคำขอเรียกรถ
   const cancelRequest = async (requestId: string) => {
     try {
-      const response = await apiRequest({
-        url: `/api/pickup-requests/${requestId}/cancel`,
+      const response = await fetch(`/api/pickup-requests/${requestId}/cancel`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
       });
+      
+      const data = await response.json();
 
-      if (response.success) {
+      if (data.success) {
         toast({
           title: "ยกเลิกคำขอเรียกรถสำเร็จ",
           description: "คำขอเรียกรถถูกยกเลิกเรียบร้อยแล้ว",
@@ -103,7 +106,7 @@ export default function PickupRequestHistory() {
       } else {
         toast({
           title: "เกิดข้อผิดพลาด",
-          description: response.message || "ไม่สามารถยกเลิกคำขอเรียกรถได้",
+          description: data.message || "ไม่สามารถยกเลิกคำขอเรียกรถได้",
           variant: "destructive",
         });
       }
@@ -131,7 +134,13 @@ export default function PickupRequestHistory() {
   return (
     <Layout>
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">ประวัติการเรียกรถเข้ารับพัสดุ</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">ประวัติการเรียกรถเข้ารับพัสดุ</h1>
+          <Button onClick={() => refetch()} variant="outline" size="sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path><path d="M16 21h5v-5"></path></svg>
+            รีเฟรชข้อมูล
+          </Button>
+        </div>
 
         <Tabs
           defaultValue="all"
@@ -171,24 +180,26 @@ export default function PickupRequestHistory() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>รหัสคำขอ</TableHead>
+                          <TableHead className="w-[150px]">รหัสคำขอ</TableHead>
                           <TableHead>วันที่ขอให้เข้ารับ</TableHead>
                           <TableHead>เวลาเข้ารับ</TableHead>
-                          <TableHead>จำนวนพัสดุ</TableHead>
+                          <TableHead className="text-center">จำนวนพัสดุ</TableHead>
                           <TableHead>สถานะ</TableHead>
                           <TableHead>วันที่สร้าง</TableHead>
-                          <TableHead></TableHead>
+                          <TableHead className="text-right">จัดการ</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredData.map((request: any) => (
-                          <TableRow key={request.id}>
-                            <TableCell>{request.requestId}</TableCell>
+                          <TableRow key={request.id} className="hover:bg-slate-50">
+                            <TableCell className="font-medium">
+                              {request.requestId}
+                            </TableCell>
                             <TableCell>
                               {formatThaiDate(request.requestDate)}
                             </TableCell>
                             <TableCell>{request.requestTimeSlot}</TableCell>
-                            <TableCell>
+                            <TableCell className="text-center">
                               {request.trackingNumbers?.length || 0} รายการ
                             </TableCell>
                             <TableCell>
@@ -205,7 +216,7 @@ export default function PickupRequestHistory() {
                             <TableCell>
                               {formatThaiDate(request.createdAt)}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="text-right">
                               <Button
                                 onClick={() => showDetails(request)}
                                 variant="outline"
@@ -213,6 +224,16 @@ export default function PickupRequestHistory() {
                               >
                                 รายละเอียด
                               </Button>
+                              {(request.status === "pending" || request.status === "requested") && (
+                                <Button
+                                  onClick={() => cancelRequest(request.requestId)}
+                                  variant="destructive"
+                                  size="sm"
+                                  className="ml-2"
+                                >
+                                  ยกเลิก
+                                </Button>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
