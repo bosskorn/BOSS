@@ -14,6 +14,7 @@ import api from "@/services/api";
 import { useAuth } from "@/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // ประเภทการจัดส่ง Flash Express
 const expressCategories = [
@@ -279,6 +280,7 @@ export default function FlashExpressOrder() {
       dstPhone: "0888888888",
       dstProvinceName: "กรุงเทพมหานคร",
       dstCityName: "ห้วยขวาง",
+      dstDistrictName: "สามเสนนอก",
       dstPostalCode: "10310",
       dstDetailAddress: "ที่อยู่ทดสอบ",
       
@@ -780,13 +782,11 @@ export default function FlashExpressOrder() {
                 <p className="mb-4 text-gray-600">
                   การทดสอบนี้จะส่งข้อมูลตัวอย่างไปยัง Flash Express API โดยตรง โดยไม่ต้องกรอกฟอร์ม ใช้สำหรับการทดสอบระบบเท่านั้น
                 </p>
-                <Alert>
-                  <div className="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                    <p className="text-yellow-800 font-medium">ข้อควรระวัง!</p>
-                    <p className="text-yellow-700 text-sm mt-1">
-                      การทดสอบนี้จะสร้างเลขพัสดุจริงในระบบ Flash Express ซึ่งอาจส่งผลต่อการทำงานหรือค่าบริการตามที่ Flash Express กำหนด
-                    </p>
-                  </div>
+                <Alert className="mb-4 border-yellow-300 bg-yellow-50 text-yellow-800">
+                  <AlertTitle className="text-yellow-800 font-medium">ข้อควรระวัง!</AlertTitle>
+                  <AlertDescription className="text-yellow-700">
+                    การทดสอบนี้จะสร้างเลขพัสดุจริงในระบบ Flash Express ซึ่งอาจส่งผลต่อการทำงานหรือค่าบริการตามที่ Flash Express กำหนด
+                  </AlertDescription>
                 </Alert>
                 <Button 
                   onClick={testCreateOrder} 
