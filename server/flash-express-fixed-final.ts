@@ -187,7 +187,8 @@ export async function createShipment(shipmentData: any) {
     const senderPhone = (shipmentData.senderPhone || '').replace(/[\s-]/g, '');
     const recipientPhone = (shipmentData.recipientPhone || '').replace(/[\s-]/g, '');
     
-    // สร้างข้อมูลพื้นฐาน (จะถูกนำไปคำนวณลายเซ็น)
+    // สร้างข้อมูลพื้นฐาน
+    // หมายเหตุ: เราจะใส่ remark เข้าไปในข้อมูล แต่ skipParams ในฟังก์ชัน generateFlashSignature จะไม่นำมาคำนวณ
     const requestParams = {
       ...createBaseRequestParams(),
       outTradeNo,
@@ -220,23 +221,17 @@ export async function createShipment(shipmentData: any) {
       height: String(Math.round(shipmentData.height || 0)),
       insured: String(shipmentData.insured || 0), // ไม่ซื้อประกัน
       codEnabled: String(shipmentData.codEnabled || 0), // ไม่ใช้ COD
-    };
-    
-    // สำเนาข้อมูลสำหรับใช้ในการส่ง API (รวม remark)
-    const apiParams = {
-      ...requestParams,
-      // หมายเหตุ (จะไม่ถูกใช้ในการคำนวณลายเซ็น แต่จะส่งไปยัง API)
-      remark: shipmentData.remark || '',
+      remark: shipmentData.remark || '', // ใส่ remark ตั้งแต่ต้น แต่จะถูกข้ามในการคำนวณลายเซ็น
     };
     
     // สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
     
-    // เพิ่มลายเซ็นเข้าไปในพารามิเตอร์ที่จะส่งไป API
-    apiParams.sign = signature;
+    // เพิ่มลายเซ็นหลังจากสร้างลายเซ็นเสร็จแล้ว
+    requestParams.sign = signature;
     
     // แปลงเป็น URL-encoded string
-    const encodedPayload = new URLSearchParams(apiParams as Record<string, string>).toString();
+    const encodedPayload = new URLSearchParams(requestParams as Record<string, string>).toString();
     
     // ตั้งค่า headers
     const headers = {
