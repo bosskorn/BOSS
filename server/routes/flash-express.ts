@@ -123,27 +123,65 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
       });
     }
 
+    // ตรวจสอบรูปแบบข้อมูลที่ได้รับจากคำขอ
+    // รองรับทั้งรูปแบบมาตรฐานและรูปแบบที่ใช้ prefix เช่น snd_name, rcv_name
+    const senderName = srcName || req.body.snd_name;
+    const senderPhone = srcPhone || req.body.snd_phone;
+    const senderProvince = srcProvinceName || req.body.snd_province;
+    const senderCity = srcCityName || req.body.snd_district; // สลับชื่อตามที่ Flash Express ต้องการ
+    const senderDistrict = srcDistrictName || req.body.snd_subdistrict;
+    const senderPostcode = srcPostalCode || req.body.snd_zipcode;
+    const senderAddress = srcDetailAddress || req.body.snd_address;
+    
+    const receiverName = dstName || req.body.rcv_name;
+    const receiverPhone = dstPhone || req.body.rcv_phone;
+    const receiverProvince = dstProvinceName || req.body.rcv_province;
+    const receiverCity = dstCityName || req.body.rcv_district; // สลับชื่อตามที่ Flash Express ต้องการ
+    const receiverDistrict = dstDistrictName || req.body.rcv_subdistrict;
+    const receiverPostcode = dstPostalCode || req.body.rcv_zipcode;
+    const receiverAddress = dstDetailAddress || req.body.rcv_address;
+
     // ปรับรูปแบบข้อมูลให้ตรงกับที่ Flash Express API ต้องการ
     // สร้าง object params สำหรับ Flash Express API
+
+    // ทดลองใช้ชื่อฟิลด์แบบเป็นมาตรฐานของ Flash Express
     const params: Record<string, any> = {
       merchantID: process.env.FLASH_EXPRESS_MERCHANT_ID,
-      // ข้อมูลผู้ส่ง
-      srcName,
-      srcPhone,
-      srcProvinceName,
-      srcCityName,
-      srcDistrictName,
-      srcPostalCode,
-      srcDetailAddress,
+      // ข้อมูลผู้ส่งในรูปแบบปกติ
+      srcName: senderName,
+      srcPhone: senderPhone,
+      srcProvinceName: senderProvince, 
+      srcCityName: senderCity,
+      srcDistrictName: senderDistrict,
+      srcPostalCode: senderPostcode,
+      srcDetailAddress: senderAddress,
       
-      // ข้อมูลผู้รับ
-      dstName,
-      dstPhone,
-      dstProvinceName,
-      dstCityName,
-      dstDistrictName,
-      dstPostalCode,
-      dstDetailAddress,
+      // ข้อมูลผู้ส่งในรูปแบบที่ Flash Express อาจต้องการ
+      snd_name: senderName,
+      snd_phone: senderPhone,
+      snd_province: senderProvince,
+      snd_district: senderCity,
+      snd_subdistrict: senderDistrict,
+      snd_zipcode: senderPostcode,
+      snd_address: senderAddress,
+      
+      // ข้อมูลผู้รับในรูปแบบปกติ
+      dstName: receiverName,
+      dstPhone: receiverPhone,
+      dstProvinceName: receiverProvince,
+      dstCityName: receiverCity,
+      dstDistrictName: receiverDistrict,
+      dstPostalCode: receiverPostcode,
+      dstDetailAddress: receiverAddress,
+      
+      // ข้อมูลผู้รับในรูปแบบที่ Flash Express อาจต้องการ
+      rcv_name: receiverName,
+      rcv_phone: receiverPhone,
+      rcv_province: receiverProvince,
+      rcv_district: receiverCity,
+      rcv_subdistrict: receiverDistrict,
+      rcv_zipcode: receiverPostcode,
+      rcv_address: receiverAddress,
       
       // ข้อมูลพัสดุ
       weight: Math.round(weight), // แปลงเป็นจำนวนเต็ม

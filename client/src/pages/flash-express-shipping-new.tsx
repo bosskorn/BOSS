@@ -259,7 +259,7 @@ export default function FlashExpressShippingNew() {
     try {
       // เตรียมข้อมูลสำหรับส่งไป API
       const flashExpressOrderData = {
-        // ข้อมูลผู้ส่ง
+        // ข้อมูลผู้ส่ง (รูปแบบปกติ)
         srcName: orderData.srcName,
         srcPhone: orderData.srcPhone,
         srcProvinceName: orderData.srcProvinceName,
@@ -268,7 +268,16 @@ export default function FlashExpressShippingNew() {
         srcPostalCode: orderData.srcPostalCode,
         srcDetailAddress: orderData.srcDetailAddress,
         
-        // ข้อมูลผู้รับ
+        // ข้อมูลผู้ส่ง (รูปแบบที่ Flash Express API อาจต้องการ)
+        snd_name: orderData.srcName,
+        snd_phone: orderData.srcPhone,
+        snd_province: orderData.srcProvinceName,
+        snd_district: orderData.srcCityName,
+        snd_subdistrict: orderData.srcDistrictName,
+        snd_zipcode: orderData.srcPostalCode,
+        snd_address: orderData.srcDetailAddress,
+        
+        // ข้อมูลผู้รับ (รูปแบบปกติ)
         dstName: orderData.dstName,
         dstPhone: orderData.dstPhone,
         dstProvinceName: orderData.dstProvinceName,
@@ -276,6 +285,15 @@ export default function FlashExpressShippingNew() {
         dstDistrictName: orderData.dstDistrictName,
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
+        
+        // ข้อมูลผู้รับ (รูปแบบที่ Flash Express API อาจต้องการ)
+        rcv_name: orderData.dstName,
+        rcv_phone: orderData.dstPhone,
+        rcv_province: orderData.dstProvinceName,
+        rcv_district: orderData.dstCityName,
+        rcv_subdistrict: orderData.dstDistrictName,
+        rcv_zipcode: orderData.dstPostalCode,
+        rcv_address: orderData.dstDetailAddress,
         
         // ข้อมูลพัสดุ
         weight: parseFloat(orderData.weight) * 1000, // แปลงเป็นกรัม
@@ -307,6 +325,24 @@ export default function FlashExpressShippingNew() {
           itemQuantity: parseInt(orderData.itemQuantity) || 1
         }]
       };
+      
+      // กำหนดค่าให้กับฟิลด์ซ่อนที่ใช้สำหรับ Flash Express API
+      // เพื่อให้มีหลายรูปแบบให้ Flash Express API เลือกใช้
+      document.getElementById('snd_name')?.setAttribute('value', orderData.srcName);
+      document.getElementById('snd_phone')?.setAttribute('value', orderData.srcPhone);
+      document.getElementById('snd_province')?.setAttribute('value', orderData.srcProvinceName);
+      document.getElementById('snd_district')?.setAttribute('value', orderData.srcCityName);
+      document.getElementById('snd_subdistrict')?.setAttribute('value', orderData.srcDistrictName);
+      document.getElementById('snd_address')?.setAttribute('value', orderData.srcDetailAddress);
+      document.getElementById('snd_zipcode')?.setAttribute('value', orderData.srcPostalCode);
+      
+      document.getElementById('rcv_name')?.setAttribute('value', orderData.dstName);
+      document.getElementById('rcv_phone')?.setAttribute('value', orderData.dstPhone);
+      document.getElementById('rcv_province')?.setAttribute('value', orderData.dstProvinceName);
+      document.getElementById('rcv_district')?.setAttribute('value', orderData.dstCityName);
+      document.getElementById('rcv_subdistrict')?.setAttribute('value', orderData.dstDistrictName);
+      document.getElementById('rcv_address')?.setAttribute('value', orderData.dstDetailAddress);
+      document.getElementById('rcv_zipcode')?.setAttribute('value', orderData.dstPostalCode);
 
       setProgress(50);
       console.log('กำลังส่งข้อมูลไปยัง Flash Express API:', flashExpressOrderData);
@@ -638,6 +674,22 @@ export default function FlashExpressShippingNew() {
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="เลือกประเภทบริการ" />
+                            {/* ฟิลด์ที่ซ่อนไว้สำหรับการส่งข้อมูลไปยัง Flash Express API */}
+                            <input type="hidden" name="snd_name" id="snd_name" />
+                            <input type="hidden" name="snd_phone" id="snd_phone" />
+                            <input type="hidden" name="snd_province" id="snd_province" />
+                            <input type="hidden" name="snd_district" id="snd_district" />
+                            <input type="hidden" name="snd_subdistrict" id="snd_subdistrict" />
+                            <input type="hidden" name="snd_address" id="snd_address" />
+                            <input type="hidden" name="snd_zipcode" id="snd_zipcode" />
+                            
+                            <input type="hidden" name="rcv_name" id="rcv_name" />
+                            <input type="hidden" name="rcv_phone" id="rcv_phone" />
+                            <input type="hidden" name="rcv_province" id="rcv_province" />
+                            <input type="hidden" name="rcv_district" id="rcv_district" />
+                            <input type="hidden" name="rcv_subdistrict" id="rcv_subdistrict" />
+                            <input type="hidden" name="rcv_address" id="rcv_address" />
+                            <input type="hidden" name="rcv_zipcode" id="rcv_zipcode" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
