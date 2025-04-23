@@ -144,6 +144,7 @@ router.post("/test-order-v2", auth, async (req: Request, res: Response) => {
     ];
 
     // กำหนดค่าของพารามิเตอร์สำหรับการส่งคำขอไปยัง Flash Express API
+    // ทดลองใช้ชื่อฟิลด์อื่นที่ Flash Express อาจต้องการ
     const params: Record<string, any> = {
       mchId,
       nonceStr,
@@ -157,20 +158,28 @@ router.post("/test-order-v2", auth, async (req: Request, res: Response) => {
       codEnabled: "0", // 0 = ไม่เก็บเงินปลายทาง, 1 = เก็บเงินปลายทาง
       codAmount: "0", // ยอดเงินที่ต้องเก็บ กรณีเก็บเงินปลายทาง
       remark: "ทดสอบสร้างออเดอร์ Flash Express API รูปแบบใหม่",
+      
+      // ข้อมูลผู้ส่งทั้งแบบเดิมและแบบใหม่ (ให้ API เลือกใช้ตัวที่ถูกต้อง)
       senderName: sender.name,
       senderPhone: sender.phone,
       senderProvinceName: sender.province,
       senderDistrictName: sender.district,
       senderSubdistrictName: sender.subdistrict,
-      senderAddress: sender.address, // เปลี่ยนจาก senderDetailedAddress เป็น senderAddress
+      senderAddress: sender.address,
+      senderDetailedAddress: sender.address, // เผื่อ API ต้องการชื่อฟิลด์นี้
       senderZipcode: sender.postcode,
+      
+      // ข้อมูลผู้รับทั้งแบบเดิมและแบบใหม่
       receiverName: receiver.name,
       receiverPhone: receiver.phone,
       receiverProvinceName: receiver.province,
       receiverDistrictName: receiver.district,
       receiverSubdistrictName: receiver.subdistrict,
-      receiverAddress: receiver.address, // เปลี่ยนจาก receiverDetailedAddress เป็น receiverAddress
+      receiverAddress: receiver.address,
+      receiverDetailedAddress: receiver.address, // เผื่อ API ต้องการชื่อฟิลด์นี้
       receiverZipcode: receiver.postcode,
+      
+      // ข้อมูลสินค้า
       parcelItems: JSON.stringify(items)
     };
 
