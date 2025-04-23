@@ -122,15 +122,19 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
     
     // 3. สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, API_KEY!);
-    requestParams.sign = signature;
     
     // 4. สร้าง form data
     const formData = new URLSearchParams();
+    
+    // เพิ่มข้อมูลทั้งหมดลงใน form data
     for (const [key, value] of Object.entries(requestParams)) {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     }
+    
+    // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
+    formData.append('sign', signature);
     
     // 5. ส่งคำขอไปยัง Flash Express API
     const response = await axios.post(
@@ -229,8 +233,8 @@ export async function createShipment(shipmentData: any) {
     const signature = generateFlashSignature(requestData, API_KEY!);
     
     // 5. เพิ่มฟิลด์ที่ไม่นำมาคำนวณลายเซ็น
-    requestData.sign = signature;
-    requestData.remark = shipmentData.remark || '';
+    // ไม่เพิ่ม sign ลงใน requestData แต่จะเพิ่มในขั้นตอนการสร้าง form data
+    const remark = shipmentData.remark || '';
     
     // 6. แปลงข้อมูลรายการสินค้า
     const subItemTypes = items.map((item: any) => ({
@@ -238,15 +242,22 @@ export async function createShipment(shipmentData: any) {
       itemQuantity: String(item.itemQuantity)
     }));
     
-    requestData.subItemTypes = JSON.stringify(subItemTypes);
-    
-    // 7. สร้าง form data
+    // 7. สร้าง form data (ไม่รวม subItemTypes และ remark ในการคำนวณลายเซ็น)
     const formData = new URLSearchParams();
+    
+    // เพิ่มข้อมูลทั้งหมดลงใน form data
     for (const [key, value] of Object.entries(requestData)) {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     }
+    
+    // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
+    formData.append('sign', signature);
+    
+    // เพิ่มข้อมูลที่ไม่เกี่ยวข้องกับการคำนวณลายเซ็น
+    formData.append('remark', remark);
+    formData.append('subItemTypes', JSON.stringify(subItemTypes));
     
     // 8. ส่งคำขอไปยัง Flash Express API
     const response = await axios.post(
@@ -301,15 +312,19 @@ export async function trackShipment(trackingNumber: string) {
     
     // 3. สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, API_KEY!);
-    requestParams.sign = signature;
     
     // 4. สร้าง form data
     const formData = new URLSearchParams();
+    
+    // เพิ่มข้อมูลทั้งหมดลงใน form data
     for (const [key, value] of Object.entries(requestParams)) {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     }
+    
+    // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
+    formData.append('sign', signature);
     
     // 5. ส่งคำขอไปยัง Flash Express API
     const response = await axios.post(
