@@ -136,13 +136,13 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       'X-Flash-Nonce': requestParams.nonceStr
     };
     
-    console.log('กำลังเรียก Flash Express API ที่: ', `${FLASH_EXPRESS_API_URL}/open/v3/estimate_rate`);
+    console.log('กำลังเรียก Flash Express API ที่: ', `${FLASH_EXPRESS_API_URL}/open/v1/orders/estimate_rate`);
     console.log('ส่งข้อมูล: ', JSON.stringify(requestWithSign));
     
     try {
       // เรียกใช้ API
       const response = await axios.post(
-        `${FLASH_EXPRESS_API_URL}/open/v3/estimate_rate`,
+        `${FLASH_EXPRESS_API_URL}/open/v1/orders/estimate_rate`,
         encodedPayload,
         { headers, timeout: API_TIMEOUT }
       );
