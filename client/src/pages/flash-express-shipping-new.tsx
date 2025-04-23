@@ -264,10 +264,10 @@ export default function FlashExpressShippingNew() {
       
       const flashExpressOrderData = {
         // ข้อมูลพื้นฐานของบริษัทตามรูปแบบที่ถูกต้อง
-        mchId: import.meta.env.VITE_FLASH_EXPRESS_MERCHANT_ID || 'CBE1930',
+        mchId: import.meta.env.VITE_FLASH_EXPRESS_MERCHANT_ID || process.env.FLASH_EXPRESS_MERCHANT_ID,
         nonceStr: nonceStr,
         outTradeNo: outTradeNo,
-        warehouseNo: `${import.meta.env.VITE_FLASH_EXPRESS_MERCHANT_ID || 'CBE1930'}_001`,
+        warehouseNo: `${import.meta.env.VITE_FLASH_EXPRESS_MERCHANT_ID || process.env.FLASH_EXPRESS_MERCHANT_ID}_001`,
         
         // ข้อมูลผู้ส่ง
         srcName: orderData.srcName,
@@ -288,7 +288,7 @@ export default function FlashExpressShippingNew() {
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
         
-        // ข้อมูลการคืนพัสดุ (ใช้ข้อมูลผู้ส่ง)
+        // ข้อมูลการส่งคืน (ใช้ข้อมูลผู้ส่ง)
         returnName: orderData.srcName,
         returnPhone: orderData.srcPhone,
         returnProvinceName: orderData.srcProvinceName,
@@ -297,41 +297,51 @@ export default function FlashExpressShippingNew() {
         returnDetailAddress: orderData.srcDetailAddress,
         
         // ข้อมูลพัสดุและประเภทการจัดส่ง
-        articleCategory: 1, // ใช้ค่า 1 ตามตัวอย่าง
+        articleCategory: 1, // ใช้ค่า 1 ตามที่ API ต้องการ
         expressCategory: parseInt(orderData.expressCategory),
-        weight: parseFloat(orderData.weight) * 1000, // แปลงเป็นกรัม
+        weight: Math.round(parseFloat(orderData.weight) * 1000), // แปลงเป็นกรัมและปัดเป็นจำนวนเต็ม
+        length: parseInt(orderData.length),
+        width: parseInt(orderData.width),
+        height: parseInt(orderData.height),
         
         // ข้อมูลประกัน
         insured: hasInsurance ? 1 : 0,
-        insureDeclareValue: hasInsurance ? parseFloat(orderData.insuranceAmount) : 0,
+        insureDeclareValue: hasInsurance ? Math.round(parseFloat(orderData.insuranceAmount)) : 0,
         opdInsureEnabled: hasInsurance ? 1 : 0,
         
         // ข้อมูล COD
         codEnabled: hasCOD ? 1 : 0,
-        codAmount: hasCOD ? parseFloat(orderData.codAmount) : 0,
+        codAmount: hasCOD ? Math.round(parseFloat(orderData.codAmount)) : 0,
         
-        // ข้อมูลพัสดุย่อย
+        // ข้อมูลการชำระเงิน (เพิ่มตามที่ API ต้องการ)
+        settlementType: 1, // 1 = ผู้ส่งเป็นผู้ชำระ
+        payType: 1, // 1 = ชำระเงินสด
+        
+        // ข้อมูลสินค้า (จำเป็นต้องมีสำหรับ API)
+        itemCategory: parseInt(orderData.itemCategory),
+        
+        // ข้อมูลพัสดุย่อย (serialize เป็น string ตามที่ API ต้องการ)
         subParcelQuantity: 1,
-        subParcel: [
+        subParcel: JSON.stringify([
           {
             outTradeNo: outTradeNo + "1",
-            weight: parseFloat(orderData.weight) * 1000,
+            weight: Math.round(parseFloat(orderData.weight) * 1000),
             width: parseInt(orderData.width),
             length: parseInt(orderData.length),
             height: parseInt(orderData.height),
             remark: ""
           }
-        ],
+        ]),
         
-        // ข้อมูลสินค้า
-        subItemTypes: [
+        // ข้อมูลสินค้า (serialize เป็น string ตามที่ API ต้องการ)
+        subItemTypes: JSON.stringify([
           {
             itemName: orderData.itemName || "สินค้า",
             itemWeightSize: `${orderData.width}*${orderData.length}*${orderData.height} ${orderData.weight}Kg`,
             itemColor: "",
             itemQuantity: orderData.itemQuantity || "1"
           }
-        ],
+        ]),
         
         // หมายเหตุ
         remark: ""
