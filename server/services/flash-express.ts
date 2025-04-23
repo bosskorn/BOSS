@@ -137,9 +137,22 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
     formData.append('sign', signature);
     
     // 5. ส่งคำขอไปยัง Flash Express API
+    console.log('Flash Express API Request:', {
+      url: `${BASE_URL}/open/v1/estimate_rate`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'X-Flash-Signature': signature,
+        'X-Flash-Timestamp': baseParams.timestamp,
+        'X-Flash-Nonce': baseParams.nonceStr
+      },
+      data: formData.toString()
+    });
+    
     const response = await axios.post(
       `${BASE_URL}/open/v1/estimate_rate`,
-      formData,
+      formData.toString(),
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -148,7 +161,9 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
           'X-Flash-Timestamp': baseParams.timestamp,
           'X-Flash-Nonce': baseParams.nonceStr
         },
-        timeout: 15000
+        timeout: 15000,
+        maxRedirects: 0, // ป้องกันการ redirect
+        validateStatus: (status) => status < 500 // ยอมรับสถานะ 400-499 เพื่อดูข้อความผิดพลาด
       }
     );
     
@@ -414,9 +429,22 @@ export async function testApi() {
       formData.append('sign', signature);
       
       // ตั้งค่า timeout ให้สั้นลงเพื่อไม่ให้รอนานเกินไป
+      console.log('Flash Express API Test Request:', {
+        url: `${BASE_URL}/open/v1/estimate_rate`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          'X-Flash-Signature': signature,
+          'X-Flash-Timestamp': testParams.timestamp,
+          'X-Flash-Nonce': testParams.nonceStr
+        },
+        data: formData.toString()
+      });
+      
       const response = await axios.post(
         `${BASE_URL}/open/v1/estimate_rate`,
-        formData,
+        formData.toString(),
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -425,7 +453,9 @@ export async function testApi() {
             'X-Flash-Timestamp': testParams.timestamp,
             'X-Flash-Nonce': testParams.nonceStr
           },
-          timeout: 5000 // timeout 5 วินาทีสำหรับการทดสอบ
+          timeout: 5000, // timeout 5 วินาทีสำหรับการทดสอบ
+          maxRedirects: 0, // ป้องกันการ redirect
+          validateStatus: (status) => status < 500 // ยอมรับสถานะ 400-499 เพื่อดูข้อความผิดพลาด
         }
       );
       
