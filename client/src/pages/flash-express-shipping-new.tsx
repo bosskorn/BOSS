@@ -257,9 +257,19 @@ export default function FlashExpressShippingNew() {
     setResult(null);
 
     try {
-      // เตรียมข้อมูลสำหรับส่งไป API
+      // เตรียมข้อมูลสำหรับส่งไป API ตามรูปแบบที่ทำงานได้จริง
+      // สร้าง nonceStr และ outTradeNo
+      const nonceStr = Date.now().toString();
+      const outTradeNo = `ORDER${Date.now()}`;
+      
       const flashExpressOrderData = {
-        // ข้อมูลผู้ส่ง (รูปแบบปกติ)
+        // ข้อมูลพื้นฐานของบริษัทตามรูปแบบที่ถูกต้อง
+        mchId: process.env.FLASH_EXPRESS_MERCHANT_ID,
+        nonceStr: nonceStr,
+        outTradeNo: outTradeNo,
+        warehouseNo: `${process.env.FLASH_EXPRESS_MERCHANT_ID}_001`,
+        
+        // ข้อมูลผู้ส่ง
         srcName: orderData.srcName,
         srcPhone: orderData.srcPhone,
         srcProvinceName: orderData.srcProvinceName,
@@ -268,62 +278,59 @@ export default function FlashExpressShippingNew() {
         srcPostalCode: orderData.srcPostalCode,
         srcDetailAddress: orderData.srcDetailAddress,
         
-        // ข้อมูลผู้ส่ง (รูปแบบที่ Flash Express API อาจต้องการ)
-        snd_name: orderData.srcName,
-        snd_phone: orderData.srcPhone,
-        snd_province: orderData.srcProvinceName,
-        snd_district: orderData.srcCityName,
-        snd_subdistrict: orderData.srcDistrictName,
-        snd_zipcode: orderData.srcPostalCode,
-        snd_address: orderData.srcDetailAddress,
-        
-        // ข้อมูลผู้รับ (รูปแบบปกติ)
+        // ข้อมูลผู้รับ
         dstName: orderData.dstName,
         dstPhone: orderData.dstPhone,
+        dstHomePhone: orderData.dstPhone, // จำเป็นต้องมีตามตัวอย่าง
         dstProvinceName: orderData.dstProvinceName,
         dstCityName: orderData.dstCityName,
         dstDistrictName: orderData.dstDistrictName,
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
         
-        // ข้อมูลผู้รับ (รูปแบบที่ Flash Express API อาจต้องการ)
-        rcv_name: orderData.dstName,
-        rcv_phone: orderData.dstPhone,
-        rcv_province: orderData.dstProvinceName,
-        rcv_district: orderData.dstCityName,
-        rcv_subdistrict: orderData.dstDistrictName,
-        rcv_zipcode: orderData.dstPostalCode,
-        rcv_address: orderData.dstDetailAddress,
+        // ข้อมูลการคืนพัสดุ (ใช้ข้อมูลผู้ส่ง)
+        returnName: orderData.srcName,
+        returnPhone: orderData.srcPhone,
+        returnProvinceName: orderData.srcProvinceName,
+        returnCityName: orderData.srcCityName,
+        returnPostalCode: orderData.srcPostalCode,
+        returnDetailAddress: orderData.srcDetailAddress,
         
-        // ข้อมูลพัสดุ
-        weight: parseFloat(orderData.weight) * 1000, // แปลงเป็นกรัม
-        height: parseInt(orderData.height),
-        width: parseInt(orderData.width),
-        length: parseInt(orderData.length),
-        
-        // ข้อมูลเกี่ยวกับการจัดส่ง
+        // ข้อมูลพัสดุและประเภทการจัดส่ง
+        articleCategory: 1, // ใช้ค่า 1 ตามตัวอย่าง
         expressCategory: parseInt(orderData.expressCategory),
-        articleCategory: parseInt(orderData.articleCategory),
-        itemCategory: parseInt(orderData.itemCategory),
-        
-        // ข้อมูลการชำระเงิน
-        codEnabled: hasCOD ? 1 : 0,
-        codAmount: hasCOD ? parseFloat(orderData.codAmount) : 0,
+        weight: parseFloat(orderData.weight) * 1000, // แปลงเป็นกรัม
         
         // ข้อมูลประกัน
         insured: hasInsurance ? 1 : 0,
+        insureDeclareValue: hasInsurance ? parseFloat(orderData.insuranceAmount) : 0,
         opdInsureEnabled: hasInsurance ? 1 : 0,
-        insuranceAmount: hasInsurance ? parseFloat(orderData.insuranceAmount) : 0,
         
-        // ข้อมูลการชำระค่าจัดส่ง
-        settlementType: 1, // 1 = ผู้ส่งเป็นผู้ชำระ
-        payType: 1, // รูปแบบการชำระเงิน
+        // ข้อมูล COD
+        codEnabled: hasCOD ? 1 : 0,
+        codAmount: hasCOD ? parseFloat(orderData.codAmount) : 0,
+        
+        // ข้อมูลพัสดุย่อย
+        subParcelQuantity: 1,
+        subParcel: JSON.stringify([{
+          outTradeNo: outTradeNo + "1",
+          weight: parseFloat(orderData.weight) * 1000,
+          width: parseInt(orderData.width),
+          length: parseInt(orderData.length),
+          height: parseInt(orderData.height),
+          remark: ""
+        }]),
         
         // ข้อมูลสินค้า
-        subItemTypes: [{
+        subItemTypes: JSON.stringify([{
           itemName: orderData.itemName || "สินค้า",
-          itemQuantity: parseInt(orderData.itemQuantity) || 1
-        }]
+          itemWeightSize: `${orderData.width}*${orderData.length}*${orderData.height} ${orderData.weight}Kg`,
+          itemColor: "",
+          itemQuantity: orderData.itemQuantity || "1"
+        }]),
+        
+        // หมายเหตุ
+        remark: ""
       };
       
       // กำหนดค่าให้กับฟิลด์ซ่อนที่ใช้สำหรับ Flash Express API
