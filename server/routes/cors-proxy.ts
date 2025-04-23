@@ -72,30 +72,28 @@ router.get('/warehouses', async (req: Request, res: Response) => {
     
     console.log('Response from Flash Express API:', response.status);
     
-    // ตัวอย่างโครงสร้างข้อมูลคลังสินค้า ใช้เมื่อทดสอบ
+    // ตัวอย่างโครงสร้างข้อมูลคลังสินค้า ตามรูปแบบ API ที่กำหนด
     const warehouses = [
       {
         "warehouseNo": "AAXXXX_001",
-        "name": "AAXXXX_001",
         "countryName": "Thailand",
         "provinceName": "อุบลราชธานี",
         "cityName": "เมืองอุบลราชธานี",
         "districtName": "แจระแม",
         "postalCode": "34000",
-        "detailAddress": "example detail address",
-        "phone": "0123456789",
+        "detailAddress": "126 ถนนชยางกูร ตำบลแจระแม",
+        "phone": "0989876543",
         "srcName": "หอมรวม"
       }, 
       {
         "warehouseNo": "AAXXXX_002",
-        "name": "AAXXXX_002",
         "countryName": "Thailand",
-        "provinceName": "กรุงเทพ",
+        "provinceName": "กรุงเทพมหานคร",
         "cityName": "บางแค",
         "districtName": "บางแค",
         "postalCode": "10160",
-        "detailAddress": "example detail address",
-        "phone": "0123456789",
+        "detailAddress": "99/45 ถนนเพชรเกษม แขวงบางแค",
+        "phone": "0812345678",
         "srcName": "เอกรินทร์"
       }
     ];

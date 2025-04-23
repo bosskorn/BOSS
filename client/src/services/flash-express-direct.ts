@@ -73,11 +73,11 @@ export async function getWarehouses(): Promise<any> {
     }
   }
 
-  // สร้างพารามิเตอร์สำหรับ API
+  // สร้างพารามิเตอร์สำหรับ API ตามคำอธิบาย API ที่ต้องการเพียง mchId, nonceStr และ sign
+  const nonceStr = Math.random().toString(36).substring(2, 15);
   const params = {
     mchId: credentials!.mchId,
-    nonceStr: Math.random().toString(36).substring(2, 15),
-    timestamp: Math.floor(Date.now() / 1000).toString()
+    nonceStr: nonceStr
   };
   
   // สร้าง signature
@@ -94,7 +94,6 @@ export async function getWarehouses(): Promise<any> {
     console.log('Sending request via CORS proxy with params:', { 
       mchId: requestParams.mchId,
       nonceStr: requestParams.nonceStr,
-      timestamp: requestParams.timestamp,
       sign: requestParams.sign.substring(0, 8) + '...'
     });
     
@@ -140,11 +139,11 @@ export async function requestPickup(
     }
   }
   
-  // สร้างพารามิเตอร์สำหรับ API
+  // สร้างพารามิเตอร์สำหรับ API ตามคำอธิบาย API ที่ต้องการเพียง mchId, nonceStr และ sign
+  const nonceStr = Math.random().toString(36).substring(2, 15);
   const params = {
     mchId: credentials!.mchId,
-    nonceStr: Math.random().toString(36).substring(2, 15),
-    timestamp: Math.floor(Date.now() / 1000).toString(),
+    nonceStr: nonceStr,
     warehouseNo,
     pickupDate,
     quantity: quantity.toString(),

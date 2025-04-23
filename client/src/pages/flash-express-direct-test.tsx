@@ -243,10 +243,10 @@ export default function FlashExpressDirectTest() {
                           <tbody className="bg-white divide-y divide-gray-200">
                             {warehouseData.map((warehouse, index) => (
                               <tr key={index}>
-                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.warehouseNo || warehouse.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.warehouseName || warehouse.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.province || warehouse.provinceName}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.city || warehouse.cityName}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.warehouseNo}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.srcName}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.provinceName}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.cityName}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -274,8 +274,8 @@ export default function FlashExpressDirectTest() {
                             >
                               <option value="">เลือกคลังสินค้า</option>
                               {warehouseData.map((warehouse, index) => (
-                                <option key={index} value={warehouse.warehouseNo || warehouse.name}>
-                                  {warehouse.warehouseName || warehouse.name} - {warehouse.province || warehouse.provinceName}
+                                <option key={index} value={warehouse.warehouseNo}>
+                                  {warehouse.srcName} - {warehouse.provinceName} ({warehouse.cityName})
                                 </option>
                               ))}
                             </select>
