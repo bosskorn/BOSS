@@ -11,6 +11,7 @@ import adminAuthRoutes from './admin-auth';
 import testRoutes from './test';
 import dashboardRoutes from './dashboard';
 import feeHistoryRoutes from './fee-history';
+import testFlashExpressRoutes from './test-flash-express';
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.use('/locations', locationsRoutes);
 router.use('/test', testRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/fee-history', feeHistoryRoutes);
+router.use('/flash-express-test', testFlashExpressRoutes);
 
 // Base API route
 router.get('/', (req, res) => {
