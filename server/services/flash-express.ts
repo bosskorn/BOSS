@@ -291,7 +291,7 @@ export async function createFlashShipment(shipmentData: any) {
       // ใช้ค่าที่ส่งมาจาก client หรือค่า default ถ้าไม่มี
       parcelKind: shipmentData.parcelKind || "1", // ประเภทพัสดุ (1=ทั่วไป) - ต้องเป็น string ไม่ใช่ integer
       expressCategory: shipmentData.expressCategory || "1", // 1=ส่งด่วน, 2=ส่งธรรมดา - ต้องเป็น string
-      articleCategory: shipmentData.articleCategory || "1", // ประเภทสินค้า (1=ทั่วไป, 2=อื่นๆ) - ต้องเป็น string
+      articleCategory: shipmentData.articleCategory || "2", // ประเภทสินค้า (1=ทั่วไป, 2=อื่นๆ) - ต้องเป็น string
       expressTypeId: shipmentData.expressTypeId || "1", // ประเภทการส่ง (1=ส่งด่วน) - ต้องเป็น string
       productType: shipmentData.productType || "1", // ประเภทสินค้า (1=ทั่วไป) - ต้องเป็น string
       
