@@ -144,7 +144,7 @@ router.post("/test-order-v2", auth, async (req: Request, res: Response) => {
     ];
 
     // กำหนดค่าของพารามิเตอร์สำหรับการส่งคำขอไปยัง Flash Express API
-    // ทดลองใช้ชื่อฟิลด์แบบต่างๆ ที่ Flash Express อาจต้องการ
+    // ทดลองใช้ชื่อฟิลด์ที่ตรงกับ API v1 ของ Flash Express
     const params: Record<string, any> = {
       mchId,
       nonceStr,
@@ -159,20 +159,34 @@ router.post("/test-order-v2", auth, async (req: Request, res: Response) => {
       codAmount: "0", // ยอดเงินที่ต้องเก็บ กรณีเก็บเงินปลายทาง
       remark: "ทดสอบสร้างออเดอร์ Flash Express API รูปแบบใหม่",
       
-      // ข้อมูลผู้ส่ง - ทดลองใช้รูปแบบต่างๆ
+      // ทดลองใช้ชุดข้อมูลผู้ส่งและผู้รับในรูปแบบของ Flash Express แบบดั้งเดิม
+      // ข้อมูลผู้ส่ง
+      snd_name: sender.name,
+      snd_phone: sender.phone,
+      snd_province: sender.province,
+      snd_district: sender.district,
+      snd_subdistrict: sender.subdistrict,
+      snd_zipcode: sender.postcode,
+      snd_address: sender.address,
+      
+      // ข้อมูลผู้รับ
+      rcv_name: receiver.name,
+      rcv_phone: receiver.phone,
+      rcv_province: receiver.province,
+      rcv_district: receiver.district,
+      rcv_subdistrict: receiver.subdistrict,
+      rcv_zipcode: receiver.postcode,
+      rcv_address: receiver.address,
+      
+      // ยังคงเก็บฟิลด์แบบเดิมไว้เผื่อ API ต้องการ
       senderName: sender.name,
       senderPhone: sender.phone,
       senderProvinceName: sender.province,
       senderDistrictName: sender.district,
       senderSubdistrictName: sender.subdistrict,
       senderZipcode: sender.postcode,
-      senderAddress: sender.address, 
-      senderDetailedAddress: sender.address,
-      "sender.address": sender.address, // รูปแบบ dot notation
-      "sender_address": sender.address, // รูปแบบ underscore
-      "sender[address]": sender.address, // รูปแบบ array notation
+      senderAddress: sender.address,
       
-      // ข้อมูลผู้รับ
       receiverName: receiver.name,
       receiverPhone: receiver.phone,
       receiverProvinceName: receiver.province,
@@ -180,10 +194,6 @@ router.post("/test-order-v2", auth, async (req: Request, res: Response) => {
       receiverSubdistrictName: receiver.subdistrict,
       receiverZipcode: receiver.postcode,
       receiverAddress: receiver.address,
-      receiverDetailedAddress: receiver.address,
-      "receiver.address": receiver.address, // รูปแบบ dot notation
-      "receiver_address": receiver.address, // รูปแบบ underscore
-      "receiver[address]": receiver.address, // รูปแบบ array notation
       
       // ข้อมูลสินค้า
       parcelItems: JSON.stringify(items)
