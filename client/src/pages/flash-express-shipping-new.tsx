@@ -264,10 +264,10 @@ export default function FlashExpressShippingNew() {
       
       const flashExpressOrderData = {
         // ข้อมูลพื้นฐานของบริษัทตามรูปแบบที่ถูกต้อง
-        mchId: process.env.FLASH_EXPRESS_MERCHANT_ID,
+        mchId: import.meta.env.VITE_FLASH_EXPRESS_MERCHANT_ID || 'CBE1930',
         nonceStr: nonceStr,
         outTradeNo: outTradeNo,
-        warehouseNo: `${process.env.FLASH_EXPRESS_MERCHANT_ID}_001`,
+        warehouseNo: `${import.meta.env.VITE_FLASH_EXPRESS_MERCHANT_ID || 'CBE1930'}_001`,
         
         // ข้อมูลผู้ส่ง
         srcName: orderData.srcName,
