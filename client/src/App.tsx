@@ -85,6 +85,7 @@ function Router() {
       <Route path="/test-flash-express" component={TestFlashExpress} />
       <Route path="/flash-express-shipping-new" component={FlashExpressShippingNew} />
       <Route path="/flash-express-test-v2" component={FlashExpressTestV2} />
+      <Route path="/create-flash-express-order" component={CreateFlashExpressOrder} />
       {/* Flash Express routes have been updated */}
 
       {/* Protected routes - require authentication */}
