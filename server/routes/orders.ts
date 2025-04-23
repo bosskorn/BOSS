@@ -258,8 +258,7 @@ router.post('/', auth, async (req, res) => {
       }
     }
     
-    // Check for COD payment method to handle Flash Express integration
-    const isCashOnDelivery = orderData.payment_method === 'cash_on_delivery';
+    // Payment method processing
     
     // แปลงชื่อฟิลด์อื่นๆ จาก snake_case เป็น camelCase
     if (orderData.payment_method && !orderData.paymentMethod) {
