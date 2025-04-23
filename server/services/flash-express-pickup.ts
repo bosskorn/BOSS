@@ -94,33 +94,22 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
     // แปลงรูปแบบวันที่ให้เป็น YYYY-MM-DD
     const formattedDate = params.requestDate.toISOString().split('T')[0];
     
-    // สร้างข้อมูลสำหรับส่งไปยัง Flash Express API
+    // สร้างข้อมูลสำหรับส่งไปยัง Flash Express API ตามเอกสารและตัวอย่างล่าสุด
     const apiParams: Record<string, any> = {
       mchId: process.env.FLASH_EXPRESS_MERCHANT_ID,
       nonceStr: nonceStr,
-      referenceNumber: referenceId,
       
-      // ข้อมูลอิทธิการเรียกรถ
-      pickupDate: formattedDate,
-      timeSlot: params.requestTimeSlot,
+      // ข้อมูลที่อยู่รับพัสดุ (แบบแยกข้อมูล)
+      srcName: params.contactName,
+      srcPhone: params.contactPhone,
+      srcProvinceName: params.province,
+      srcCityName: params.district,
+      srcDistrictName: params.subdistrict,
+      srcPostalCode: params.zipcode,
+      srcDetailAddress: params.pickupAddress,
       
-      // ข้อมูลที่อยู่รับพัสดุ
-      province: params.province,
-      city: params.district,
-      district: params.subdistrict,
-      address: params.pickupAddress,
-      postalCode: params.zipcode,
-      
-      // ข้อมูลผู้ติดต่อ
-      contactPerson: params.contactName,
-      phone: params.contactPhone,
-      
-      // รายการเลขพัสดุ (ถ้ามี)
-      parcels: params.trackingNumbers.length > 0 
-        ? JSON.stringify(params.trackingNumbers.map(trackingNumber => ({
-            pno: trackingNumber
-          })))
-        : JSON.stringify([{ pno: `FLX${Date.now().toString().slice(-8)}` }]), // ใช้เลขพัสดุชั่วคราวในรูปแบบที่ถูกต้อง
+      // จำนวนพัสดุโดยประมาณ
+      estimateParcelNumber: params.trackingNumbers.length > 0 ? params.trackingNumbers.length : 1,
       
       // ข้อมูลเพิ่มเติม
       remark: "เรียกรถจากระบบอัตโนมัติ"
@@ -132,8 +121,8 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
     
     console.log('Flash Express Pickup API request params:', JSON.stringify(apiParams, null, 2));
     
-    // URL ของ API เรียกรถของ Flash Express
-    const apiUrl = `${FLASH_EXPRESS_API_URL}/v1/pickup`;
+    // URL ของ API เรียกรถของ Flash Express ตามเอกสารล่าสุด
+    const apiUrl = `${FLASH_EXPRESS_API_URL}/v1/notify`;
     
     // ส่งคำขอไปยัง Flash Express API
     const response = await axios.post(apiUrl, querystring.stringify(apiParams), {
