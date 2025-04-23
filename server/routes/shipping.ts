@@ -1,45 +1,36 @@
-
-import express, { Request, Response } from 'express';
+import { Router } from 'express';
 import { auth } from '../middleware/auth';
-import axios from 'axios';
-import crypto from 'crypto';
+import { storage } from '../storage';
 
-const router = express.Router();
+const router = Router();
 
 /**
  * API สำหรับดึงตัวเลือกการจัดส่ง
  */
-router.post('/options', auth, async (req: Request, res: Response) => {
+router.post('/options', auth, async (req, res) => {
   try {
-    const { address, weight } = req.body;
-
-    // ส่งข้อความรายละเอียดเพื่อให้เข้าใจขั้นตอนการทำงาน
-    console.log('Shipping API request received:', req.body);
-
-    // ประกาศข้อมูลตัวเลือกการจัดส่งเริ่มต้น - ใช้บริการจำลอง
+    // ตัวเลือกการจัดส่งเริ่มต้น
     const defaultOptions = [
       {
         id: 1,
-        name: 'ส่งด่วน',
+        name: 'บริการส่งด่วน',
         price: 60,
         deliveryTime: '1-2 วัน',
-        provider: 'บริการขนส่ง 1',
+        provider: 'บริการจัดส่ง',
         serviceId: 'EXPRESS-FAST',
-        logo: '/assets/delivery-icon.png'
+        logo: '/assets/shipping-icon.png'
       },
       {
         id: 2,
-        name: 'ส่งธรรมดา',
+        name: 'บริการส่งธรรมดา',
         price: 40,
         deliveryTime: '2-3 วัน',
-        provider: 'บริการขนส่ง 2',
+        provider: 'บริการจัดส่ง',
         serviceId: 'EXPRESS-NORMAL',
-        logo: '/assets/delivery-icon.png'
+        logo: '/assets/shipping-icon.png'
       }
     ];
 
-    // หากไม่สามารถใช้ API ได้ ใช้ข้อมูลตั้งต้น
-    console.log('ใช้ข้อมูลตัวเลือกการจัดส่งเริ่มต้น');
     res.json({
       success: true,
       options: defaultOptions
@@ -163,22 +154,6 @@ router.get('/track/:trackingNumber', async (req: Request, res: Response) => {
   }
 });
 
-// ฟังก์ชันช่วยแปลสถานะเป็นข้อความภาษาไทย
-function getStatusText(status: string): string {
-  switch (status) {
-    case 'pending':
-      return 'รอดำเนินการ';
-    case 'in_transit':
-      return 'อยู่ระหว่างการขนส่ง';
-    case 'out_for_delivery':
-      return 'กำลังนำส่ง';
-    case 'delivered':
-      return 'จัดส่งสำเร็จ';
-    default:
-      return 'ไม่ทราบสถานะ';
-  }
-}
-
 /**
  * API สำหรับวิเคราะห์ที่อยู่ (ใช้การวิเคราะห์แบบ local)
  */
@@ -216,6 +191,22 @@ router.post('/analyze-address', auth, async (req: Request, res: Response) => {
     });
   }
 });
+
+// ฟังก์ชันช่วยแปลสถานะเป็นข้อความภาษาไทย
+function getStatusText(status: string): string {
+  switch (status) {
+    case 'pending':
+      return 'รอดำเนินการ';
+    case 'in_transit':
+      return 'อยู่ระหว่างการขนส่ง';
+    case 'out_for_delivery':
+      return 'กำลังนำส่ง';
+    case 'delivered':
+      return 'จัดส่งสำเร็จ';
+    default:
+      return 'ไม่ทราบสถานะ';
+  }
+}
 
 // ฟังก์ชันสำหรับแยกประเภทข้อมูลที่อยู่จากข้อความ
 function parseAddress(text: string): any {

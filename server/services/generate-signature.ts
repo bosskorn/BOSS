@@ -1,5 +1,6 @@
+
 /**
- * ฟังก์ชันสร้างลายเซ็นสำหรับการทดสอบ (ไม่มีการเชื่อมต่อกับ Flash Express API จริง)
+ * ฟังก์ชันสร้างลายเซ็นสำหรับการทดสอบ (แบบจำลอง)
  */
 
 /**
@@ -15,13 +16,13 @@ export function generateNonceStr(length = 16): string {
 }
 
 /**
- * สร้างลายเซ็นจำลอง (ไม่มีการเชื่อมต่อกับ Flash Express API จริง)
+ * สร้างลายเซ็นจำลอง (แบบจำลอง)
  */
-export function generateFlashExpressSignature(apiKey: string, params: Record<string, any>, nonceStr?: string): string {
-  // สร้างลายเซ็นจำลอง (ใช้แทนการเชื่อมต่อกับ Flash Express API จริง)
+export function generateSignature(apiKey: string, params: Record<string, any>, nonceStr?: string): string {
+  // สร้างลายเซ็นจำลอง
   const dummySignature = 'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789';
-
-  console.log('สร้างลายเซ็นจำลองสำหรับการทดสอบ (ไม่ใช่ลายเซ็นจริง)');
-
+  
+  console.log('สร้างลายเซ็นจำลองสำหรับการทดสอบ');
+  
   return dummySignature;
 }

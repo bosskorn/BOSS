@@ -1,5 +1,5 @@
 /**
- * บริการจัดส่งพื้นฐาน (ไม่มีการเชื่อมต่อกับ Flash Express API)
+ * บริการจัดส่งพื้นฐาน (แบบจำลอง)
  */
 
 /**
@@ -35,7 +35,7 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
 /**
  * สร้างเลขพัสดุใหม่
  */
-export async function createFlashShipment(shipmentData: any) {
+export async function createShipment(shipmentData: any) {
   try {
     // สร้างเลขติดตามการจัดส่งสมมติ
     const trackingNumber = `TRK${Date.now()}`;
@@ -60,7 +60,7 @@ export async function createFlashShipment(shipmentData: any) {
 /**
  * ติดตามสถานะพัสดุ
  */
-export async function trackFlashShipment(trackingNumber: string) {
+export async function trackShipment(trackingNumber: string) {
   try {
     // สร้างข้อมูลสถานะการจัดส่งสมมติ
     return {
@@ -89,10 +89,11 @@ export async function trackFlashShipment(trackingNumber: string) {
   }
 }
 
+
 /**
  * ทดสอบการเชื่อมต่อกับ API
  */
-export async function testFlashApi() {
+export async function testApi() {
   return {
     success: true,
     statusText: 'API Connection Successful',
@@ -124,7 +125,8 @@ export async function findOrderByMerchantTrackingNumber(merchantTrackingNumber: 
   }
 }
 
-// Export ฟังก์ชันเดิมเพื่อให้โค้ดที่ใช้งานยังทำงานได้
-export const getFlashExpressShippingOptions = getShippingOptions;
-export const createFlashExpressShipping = createFlashShipment;
-export const getFlashExpressTrackingStatus = trackFlashShipment;
+export const getShippingOptions = getShippingOptions;
+export const createShipping = createShipment;
+export const getTrackingStatus = trackShipment;
+export const testApi = testApi;
+export const findOrder = findOrderByMerchantTrackingNumber;
