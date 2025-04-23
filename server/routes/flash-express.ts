@@ -117,12 +117,31 @@ router.get('/tracking/:trackingNumber', async (req, res) => {
     
     const result = await trackFlashOrder(trackingNumber);
     
-    if (result && result.code === 0) {
+    // ตรวจสอบรหัสที่ได้รับจาก Flash Express API
+    if (result && (result.code === 0 || result.code === 1)) {
+      // กรณีสำเร็จหรือมีข้อมูล
       return res.json({
         success: true,
-        tracking: result.data
+        tracking: result.data || {
+          trackingNumber: trackingNumber,
+          trackingStatus: 'waiting',
+          statusMessage: result.message || 'ยังไม่มีข้อมูลการติดตาม อาจเนื่องจากพัสดุเพิ่งถูกสร้าง',
+          trackingHistory: []
+        }
+      });
+    } else if (result && result.code === 1001) {
+      // กรณีไม่มีข้อมูล (พัสดุเพิ่งถูกสร้าง)
+      return res.json({
+        success: true,
+        tracking: {
+          trackingNumber: trackingNumber,
+          trackingStatus: 'pending',
+          statusMessage: 'พัสดุอยู่ระหว่างการรอเข้าระบบ Flash Express',
+          trackingHistory: []
+        }
       });
     } else {
+      // กรณีเกิดข้อผิดพลาด
       return res.status(400).json({
         success: false,
         message: result.message || 'ไม่สามารถติดตามพัสดุได้',
@@ -156,12 +175,29 @@ router.get('/find-by-merchant-tracking/:merchantTrackingNumber', async (req, res
     
     const result = await findByMerchantTracking(merchantTrackingNumber);
     
-    if (result && result.code === 0) {
+    // ตรวจสอบรหัสที่ได้รับจาก Flash Express API
+    if (result && (result.code === 0 || result.code === 1)) {
+      // กรณีสำเร็จหรือมีข้อมูล
       return res.json({
         success: true,
-        order: result.data
+        order: result.data || {
+          merchantTrackingNumber,
+          status: 'waiting',
+          statusMessage: result.message || 'ยังไม่มีข้อมูลการค้นหา อาจเนื่องจากพัสดุเพิ่งถูกสร้าง'
+        }
+      });
+    } else if (result && result.code === 1001) {
+      // กรณีไม่มีข้อมูล (พัสดุเพิ่งถูกสร้าง)
+      return res.json({
+        success: true,
+        order: {
+          merchantTrackingNumber,
+          status: 'pending',
+          statusMessage: 'พัสดุอยู่ระหว่างการรอเข้าระบบ Flash Express'
+        }
       });
     } else {
+      // กรณีเกิดข้อผิดพลาด
       return res.status(400).json({
         success: false,
         message: result.message || 'ไม่พบข้อมูลพัสดุจากเลขอ้างอิงร้านค้า',

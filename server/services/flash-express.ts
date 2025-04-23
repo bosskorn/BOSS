@@ -418,25 +418,22 @@ export async function trackFlashOrder(trackingNumber: string): Promise<any> {
     }
 
     console.log(`เริ่มติดตามพัสดุ Flash Express หมายเลข: ${trackingNumber}`);
-
-    // ปรับปรุงการส่งข้อมูลให้ตรงตามคู่มือล่าสุดของ Flash Express
-    // ตามข้อกำหนดของ API Flash Express อาจต้องใช้เฉพาะตัวเลขจากหมายเลขพัสดุ
-    const pno = trackingNumber.replace(/^[A-Za-z]+/, ''); // ตัดตัวอักษรด้านหน้าออก (เช่น TH)
     
+    // สร้างข้อมูลสำหรับการร้องขอ
     const data = { 
-      mchId: MERCHANT_ID, 
-      pno: trackingNumber // ใช้หมายเลขพัสดุเต็ม
+      mchId: MERCHANT_ID
     };
     
     const timestamp = Date.now();
     const signature = await createSignature(data, timestamp);
 
-    // ลองใช้ endpoint ที่อัปเดตตามเอกสารล่าสุด
-    console.log(`ส่งคำขอไปยัง Flash Express API: ${BASE_URL}/v3/tracking/routes/${trackingNumber}`, data);
+    // ใช้ endpoint ตามข้อมูลที่ได้รับจากทาง Flash Express ล่าสุด: POST /open/v1/orders/{pno}/routes
+    console.log(`ส่งคำขอไปยัง Flash Express API: ${BASE_URL}/v1/orders/${trackingNumber}/routes`);
     
-    const response = await axios.get(`${BASE_URL}/v3/tracking/routes/${trackingNumber}`, {
+    // ใช้ POST method ตามเอกสารล่าสุด
+    const response = await axios.post(`${BASE_URL}/v1/orders/${trackingNumber}/routes`, null, {
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         'X-Flash-Merchant-Id': MERCHANT_ID,
         'X-Flash-Timestamp': timestamp.toString(),
         'X-Flash-Signature': signature
@@ -461,7 +458,19 @@ export async function trackFlashOrder(trackingNumber: string): Promise<any> {
       };
     }
     
-    throw error;
+    // กรณีมีข้อผิดพลาดอื่นๆ
+    console.error('รายละเอียดข้อผิดพลาด:', error);
+    
+    return {
+      code: -1,
+      message: 'ไม่สามารถติดตามพัสดุได้ในขณะนี้',
+      error: error.response?.data || error.message,
+      data: {
+        trackingNumber,
+        trackingStatus: 'error',
+        trackingHistory: []
+      }
+    };
   }
 }
 
@@ -472,22 +481,57 @@ export async function findByMerchantTracking(merchantTrackingNumber: string): Pr
       throw new Error('Flash Express API credentials are missing');
     }
 
-    const data = { merchantTrackingNumber };
+    console.log(`เริ่มค้นหาพัสดุด้วยเลขอ้างอิงร้านค้า: ${merchantTrackingNumber}`);
+
+    // ข้อมูลสำหรับสร้างลายเซ็น
+    const data = { 
+      mchId: MERCHANT_ID,
+      outTradeNo: merchantTrackingNumber 
+    };
+    
     const timestamp = Date.now();
     const signature = await createSignature(data, timestamp);
 
-    const response = await axios.get(`${BASE_URL}/v3/orders/find-by-merchant-tracking/${merchantTrackingNumber}`, {
+    // ลองใช้ endpoint ใหม่สำหรับค้นหาพัสดุตามเลขอ้างอิงร้านค้า
+    console.log(`ส่งคำขอไปยัง Flash Express API: ${BASE_URL}/v1/orders/merchant/${merchantTrackingNumber}`);
+    
+    // ทดลองใช้ POST method ตามข้อมูลที่ได้รับ
+    const formData = new URLSearchParams();
+    formData.append('mchId', MERCHANT_ID);
+    
+    const response = await axios.post(`${BASE_URL}/v1/orders/merchant/${merchantTrackingNumber}`, formData, {
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         'X-Flash-Merchant-Id': MERCHANT_ID,
         'X-Flash-Timestamp': timestamp.toString(),
         'X-Flash-Signature': signature
       }
     });
 
+    console.log('Flash Express API Response (Find by Merchant Tracking):', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error: any) {
     console.error('Error finding Flash Express order by merchant tracking:', error?.response?.data || error.message);
-    throw error;
+    
+    // กรณีไม่พบข้อมูล
+    if (error.response && error.response.status === 404) {
+      return {
+        code: 0,
+        message: 'ยังไม่พบข้อมูลพัสดุจากเลขอ้างอิงร้านค้านี้',
+        data: {
+          merchantTrackingNumber,
+          status: 'pending',
+          statusMessage: 'ยังไม่พบข้อมูลพัสดุในระบบ Flash Express',
+          pno: null
+        }
+      };
+    }
+    
+    // กรณีมีข้อผิดพลาดอื่นๆ
+    return {
+      code: -1,
+      message: 'ไม่สามารถค้นหาพัสดุด้วยเลขอ้างอิงร้านค้าได้ในขณะนี้',
+      error: error.response?.data || error.message
+    };
   }
 }
