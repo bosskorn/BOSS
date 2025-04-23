@@ -47,7 +47,7 @@ import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import Layout from '@/components/Layout';
 
-import { LuPackageOpen, LuTruck, LuPrinter, LuCopy, LuCheck, LuSearch, LuAlertCircle } from 'react-icons/lu';
+import { LuPackageOpen, LuTruck, LuPrinter, LuCopy, LuCheck, LuSearch, LuInfo } from 'react-icons/lu';
 
 // สำหรับการแสดงผลในรูปแบบ JSON
 import { CopyToClipboard } from 'react-copy-to-clipboard';
@@ -1089,7 +1089,7 @@ export default function FlashExpressShippingNew() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center text-red-600">
-              <LuAlertTriangle className="mr-2 h-5 w-5" />
+              <LuInfo className="mr-2 h-5 w-5" />
               เกิดข้อผิดพลาด
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-700">
