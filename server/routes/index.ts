@@ -7,7 +7,7 @@ import productsRoutes from './products';
 import categoriesRoutes from './categories';
 import customersRoutes from './customers';
 import locationsRoutes from './locations';
-import shippingRoutes from './shipping';
+// import shippingRoutes from './shipping'; // Removed Flash Express routes
 import adminAuthRoutes from './admin-auth';
 import testRoutes from './test';
 import dashboardRoutes from './dashboard';
@@ -25,7 +25,7 @@ router.use('/products', productsRoutes);
 router.use('/categories', categoriesRoutes);
 router.use('/customers', customersRoutes);
 router.use('/locations', locationsRoutes);
-router.use('/shipping', shippingRoutes);
+// router.use('/shipping', shippingRoutes); // Removed Flash Express routes
 router.use('/test', testRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/fee-history', feeHistoryRoutes);
