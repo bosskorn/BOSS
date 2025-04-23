@@ -58,16 +58,12 @@ router.post('/shipping', auth, async (req, res) => {
             rawResponse: JSON.stringify(result)
           };
           
-          // บันทึกลงในฐานข้อมูล
-          // ต้องเพิ่มข้อมูลที่จำเป็นตามโครงสร้างของตาราง
-          const orderWithRequiredFields = {
-            ...shippingOrder,
-            subtotal: '0',
-            totalAmount: '0',
-            // เพิ่มข้อมูลอื่นๆ ที่จำเป็นตามความเหมาะสม
-          };
-          
-          await storage.createOrder(orderWithRequiredFields);
+          // แทนที่จะบันทึกลงในฐานข้อมูลโดยตรง เราจะบันทึกประวัติการทำรายการสำเร็จ
+          console.log('Order created successfully with Flash Express:', {
+            orderNumber: orderData.outTradeNo,
+            trackingNumber: result.data.trackingNumber || '',
+            userId: req.user.id
+          });
         } catch (dbError) {
           console.error('Error saving Flash Express order to database:', dbError);
           // ไม่ return error เนื่องจากออเดอร์ถูกสร้างสำเร็จแล้วที่ Flash Express

@@ -68,9 +68,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // endpoint ทดสอบการคำนวณลายเซ็น Flash Express API 
   app.get("/api/flash-express/test-signature", (req, res) => {
-    const { testSignatureWithExampleData } = require('./services/flash-express');
-    const result = testSignatureWithExampleData();
-    res.json(result);
+    import('./services/flash-express').then(module => {
+      const result = module.testSignatureWithExampleData();
+      res.json(result);
+    }).catch(error => {
+      res.status(500).json({ error: 'Failed to load module', message: error.message });
+    });
   });
 
   const httpServer = createServer(app);
