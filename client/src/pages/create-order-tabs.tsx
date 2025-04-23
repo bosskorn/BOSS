@@ -1065,9 +1065,9 @@ const CreateOrderTabsPage: React.FC = () => {
   // ฟังก์ชันดึงตัวเลือกการจัดส่งเฉพาะบริการจริง (Flash Express)
   const fetchShippingOptions = async () => {
     try {
-      console.log("กำลังดึงข้อมูลตัวเลือกการจัดส่ง...");
+      console.log("กำลังดึงข้อมูลตัวเลือกการจัดส่ง Flash Express...");
 
-      // ตัวเลือก Flash Express เท่านั้น
+      // ตัวเลือก Flash Express เริ่มต้น (ใช้เป็นค่าเริ่มต้นในกรณีที่ไม่สามารถดึงข้อมูลจาก API ได้)
       const flashExpressOptions = [
         {
           id: 'flash_express_normal',
@@ -1080,7 +1080,8 @@ const CreateOrderTabsPage: React.FC = () => {
           icon: '🚚',
           isPopular: true,
           isCODAvailable: true,
-          maxCODAmount: 20000
+          maxCODAmount: 20000,
+          expressCategory: 1  // ส่งธรรมดา
         },
         {
           id: 'flash_express_fast',
@@ -1093,7 +1094,8 @@ const CreateOrderTabsPage: React.FC = () => {
           icon: '⚡',
           isPopular: true,
           isCODAvailable: true,
-          maxCODAmount: 20000
+          maxCODAmount: 20000,
+          expressCategory: 2  // ส่งด่วน
         }
       ];
 
@@ -1102,72 +1104,108 @@ const CreateOrderTabsPage: React.FC = () => {
         // สร้างข้อมูลที่อยู่สำหรับส่งไปยัง API ของ Flash Express
         const fromAddress = {
           province: senderInfo?.province || 'กรุงเทพมหานคร',
-          district: senderInfo?.district || 'คลองเตย',
-          zipcode: senderInfo?.zipcode || '10110'
+          district: senderInfo?.district || 'ลาดพร้าว',
+          subdistrict: senderInfo?.subdistrict || 'จรเข้บัว',
+          zipcode: senderInfo?.zipcode || '10230',
+          address: senderInfo?.address || ''
         };
 
         const toAddress = {
           province: form.getValues('province') || 'กรุงเทพมหานคร',
-          district: form.getValues('district') || 'พระนคร',
-          zipcode: form.getValues('zipcode') || '10200'
+          district: form.getValues('district') || '',
+          subdistrict: form.getValues('subdistrict') || '',
+          zipcode: form.getValues('zipcode') || '',
+          address: form.getValues('fullAddress') || ''
         };
 
-        // หากมีที่อยู่ปลายทางครบถ้วน ลองดึงข้อมูลการจัดส่ง
+        // หากมีที่อยู่ปลายทางครบถ้วน ลองดึงข้อมูลการจัดส่ง Flash Express
         if (toAddress.province && toAddress.district && toAddress.zipcode) {
           try {
-            console.log("กำลังดึงข้อมูลการจัดส่ง...");
+            console.log("กำลังดึงข้อมูลการจัดส่ง Flash Express...");
 
-            // เรียกใช้ API ของบริการขนส่ง
-            const response = await api.post('/api/shipping-methods/rates', {
-              fromAddress,
-              toAddress,
-              weight: 1.0 // น้ำหนัก 1 กิโลกรัม
+            // เรียกใช้ API ขนส่ง Flash Express
+            const response = await api.post('/api/flash-express/shipping-rates', {
+              srcProvinceName: fromAddress.province,
+              srcCityName: fromAddress.district,
+              srcDistrictName: fromAddress.subdistrict,
+              srcPostalCode: fromAddress.zipcode,
+              srcDetailAddress: fromAddress.address,
+              
+              dstProvinceName: toAddress.province,
+              dstCityName: toAddress.district,
+              dstDistrictName: toAddress.subdistrict,
+              dstPostalCode: toAddress.zipcode,
+              dstDetailAddress: toAddress.address,
+              
+              // ข้อมูลพัสดุ
+              weight: 1000, // น้ำหนัก 1 กิโลกรัม (1000 กรัม)
+              width: 20,    // ความกว้าง 20 ซม.
+              length: 30,   // ความยาว 30 ซม.
+              height: 10    // ความสูง 10 ซม.
             });
 
-            if (response.data && response.data.shippingRates && response.data.shippingRates.length > 0) {
-              console.log("ดึงข้อมูลค่าจัดส่งสำเร็จ:", response.data.shippingRates);
+            if (response.data && response.data.success) {
+              console.log("ดึงข้อมูลค่าจัดส่ง Flash Express สำเร็จ:", response.data);
 
-              // แปลงรูปแบบข้อมูลให้ตรงกับที่ใช้ในฟอร์ม
-              const shippingRates = response.data.shippingRates.map((rate: any, index: number) => {
-                // ตรวจสอบและกำหนดค่าเริ่มต้นเพื่อป้องกันค่า undefined
-                const serviceCode = rate.serviceCode || `service_${index + 1}`;
-                const serviceName = rate.serviceName || (index === 0 ? 'ส่งด่วน' : 'ส่งธรรมดา');
-                const totalFee = rate.totalFee || (index === 0 ? 60 : 40);
-                const estimateDeliveryTime = rate.estimateDeliveryTime || (index === 0 ? '1-2 วัน' : '2-3 วัน');
-
-                return {
-                  id: `service_${serviceCode}_${index}`, // เพิ่ม index เพื่อป้องกัน key ซ้ำกัน
-                  name: `${serviceName}`,
-                  price: totalFee,
-                  deliveryTime: estimateDeliveryTime,
-                  provider: rate.provider || 'Generic Provider',
-                  serviceId: serviceCode,
-                  logo: rate.logo || '/placeholder.png',
+              // สร้างตัวเลือกการจัดส่งจากข้อมูลที่ได้รับ
+              const shippingRates = [];
+              
+              // ตรวจสอบว่ามีข้อมูลบริการส่งธรรมดา (Express Category = 1)
+              if (response.data.normalRate !== undefined) {
+                shippingRates.push({
+                  id: 'flash_express_normal',
+                  name: 'Flash Express - ส่งธรรมดา',
+                  price: response.data.normalRate || 40,
+                  deliveryTime: '2-3 วัน',
+                  provider: 'Flash Express',
+                  serviceId: 'FLASH-NORMAL',
+                  logo: '/assets/flash-express.png',
                   icon: '🚚',
-                  isPopular: rate.isPopular || false,
-                  isCODAvailable: rate.isCODAvailable || false,
-                  maxCODAmount: rate.maxCODAmount || 0
-                };
-              });
+                  isPopular: true,
+                  isCODAvailable: true,
+                  maxCODAmount: 20000,
+                  expressCategory: 1
+                });
+              }
+              
+              // ตรวจสอบว่ามีข้อมูลบริการส่งด่วน (Express Category = 2)
+              if (response.data.expressRate !== undefined) {
+                shippingRates.push({
+                  id: 'flash_express_fast',
+                  name: 'Flash Express - ส่งด่วน',
+                  price: response.data.expressRate || 60,
+                  deliveryTime: '1-2 วัน',
+                  provider: 'Flash Express',
+                  serviceId: 'FLASH-FAST',
+                  logo: '/assets/flash-express.png',
+                  icon: '⚡',
+                  isPopular: true,
+                  isCODAvailable: true,
+                  maxCODAmount: 20000,
+                  expressCategory: 2
+                });
+              }
 
-              // ถ้ามีข้อมูลจาก API ให้ใช้ข้อมูลนั้น
-              setShippingOptions(shippingRates);
-              console.log("ใช้ข้อมูลค่าจัดส่งจาก API");
-              return;
+              // ถ้ามีข้อมูล ให้ใช้ข้อมูลจาก API
+              if (shippingRates.length > 0) {
+                setShippingOptions(shippingRates);
+                console.log("ใช้ข้อมูลค่าจัดส่ง Flash Express จาก API");
+                return;
+              }
             }
           } catch (apiError) {
-            console.error("เกิดข้อผิดพลาดในการเรียก API:", apiError);
+            console.error("เกิดข้อผิดพลาดในการเรียก API Flash Express:", apiError);
           }
         }
 
         // หากไม่สามารถดึงข้อมูลจาก API ได้ ใช้ค่าเริ่มต้น
-        console.log("ไม่สามารถดึงข้อมูลอัตราค่าส่งจาก API ได้ ใช้ค่าเริ่มต้นแทน");
+        console.log("ไม่สามารถดึงข้อมูลอัตราค่าส่ง Flash Express จาก API ได้ ใช้ค่าเริ่มต้นแทน");
       } catch (apiError) {
         console.error("เกิดข้อผิดพลาดในการเรียก API:", apiError);
         console.log("ใช้ข้อมูลเริ่มต้นแทน");
       }
 
-      // ใช้ค่าเริ่มต้นของ Flash Express เท่านั้น ไม่ใช้บริการจำลองอีกต่อไป
+      // ใช้ค่าเริ่มต้นของ Flash Express
       setShippingOptions(flashExpressOptions);
       console.log("ใช้ข้อมูลตัวเลือก Flash Express เริ่มต้น");
 
@@ -1328,18 +1366,62 @@ const CreateOrderTabsPage: React.FC = () => {
         // ตรวจสอบและแก้ไขข้อมูลเบอร์โทรศัพท์ให้ถูกต้อง
         const customerPhone = data.customerPhone.replace(/[- ]/g, ''); // ลบเครื่องหมายขีดและช่องว่าง
 
-        // ข้อมูลที่จะส่งไปยัง API
-        const shippingData = {
-          orderNumber,
-          sender,
-          recipient,
-          shipmentDetails,
-          shippingCode
+        // ข้อมูลที่จะส่งไปยัง API ของ Flash Express
+        const selectedOption = shippingOptions.find(option => option.name === data.shippingMethod);
+        const expressCategory = selectedOption?.expressCategory || 1; // ค่าเริ่มต้นคือ ส่งธรรมดา
+
+        const flashExpressData = {
+          // ข้อมูลผู้ส่ง
+          srcName: sender.name,
+          srcPhone: sender.phone,
+          srcProvinceName: sender.address.province,
+          srcCityName: sender.address.district,
+          srcDistrictName: sender.address.subdistrict,
+          srcPostalCode: sender.address.zipcode,
+          srcDetailAddress: sender.address.addressLine1,
+          
+          // ข้อมูลผู้รับ
+          dstName: recipient.name,
+          dstPhone: recipient.phone,
+          dstProvinceName: recipient.address.province,
+          dstCityName: recipient.address.district,
+          dstDistrictName: recipient.address.subdistrict,
+          dstPostalCode: recipient.address.zipcode,
+          dstDetailAddress: recipient.address.addressLine1,
+          
+          // ข้อมูลพัสดุ
+          weight: shipmentDetails.weight * 1000, // แปลงเป็นกรัม
+          width: shipmentDetails.dimensions.width,
+          length: shipmentDetails.dimensions.length,
+          height: shipmentDetails.dimensions.height,
+          
+          // ประเภทการจัดส่ง
+          expressCategory: expressCategory, // 1 = ธรรมดา, 2 = ด่วน
+          articleCategory: 99, // 99 = อื่นๆ
+          itemCategory: 100, // 100 = อื่นๆ
+          
+          // ข้อมูลเก็บเงินปลายทาง (COD)
+          codEnabled: shipmentDetails.isCOD ? 1 : 0,
+          codAmount: shipmentDetails.isCOD ? shipmentDetails.codAmount || 0 : 0,
+          
+          // ข้อมูลการชำระค่าจัดส่ง
+          settlementType: 1, // 1 = ผู้ส่งเป็นผู้ชำระ
+          payType: 1, // รูปแบบการชำระเงิน
+          
+          // ข้อมูลสินค้า
+          subItemTypes: data.items.map(item => ({
+            itemName: item.name || "สินค้า",
+            itemQuantity: item.quantity || 1
+          })),
+          
+          // อ้างอิงภายใน - เลขออเดอร์ของเรา
+          orderNumber
         };
 
-        console.log('ส่งข้อมูลไปยัง API:', JSON.stringify(shippingData, null, 2));
+        console.log('ส่งข้อมูลไปยัง Flash Express API:', JSON.stringify(flashExpressData, null, 2));
 
-        const response = await api.post('/api/shipping', shippingData);
+        // ใช้ API การขนส่งที่ปรับปรุงใหม่เพื่อส่งข้อมูลไปยัง Flash Express โดยตรง
+        const response = await api.post('/api/flash-express/create-order', flashExpressData);
         console.log('API response:', response.data);
 
         if (response.data.success && response.data.trackingNumber) {
