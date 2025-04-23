@@ -329,7 +329,7 @@ export async function createFlashShipment(shipmentData: any) {
     
     // 8. ส่งคำขอไปยัง Flash Express API
     // แสดงข้อมูลที่ส่งให้กับ API อย่างละเอียดเพื่อช่วยในการดีบัก
-    console.log('Flash Express URL:', `${BASE_URL}/orders/open/v3/orders`); // แก้ไข endpoint ตามที่ถูกต้อง
+    console.log('Flash Express URL:', `${BASE_URL}/open/v3/orders`); // แก้ไข endpoint ตามที่ถูกต้อง
     console.log('Flash Express request headers:', {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Accept': 'application/json',
@@ -340,7 +340,7 @@ export async function createFlashShipment(shipmentData: any) {
     console.log('Flash Express request data (formData):', formData.toString());
     
     const response = await axios.post(
-      `${BASE_URL}/orders/open/v3/orders`, // แก้ไข endpoint ตามที่ถูกต้อง
+      `${BASE_URL}/open/v3/orders`, // แก้ไข endpoint ตามที่ถูกต้อง
       formData,
       {
         headers: {
@@ -585,7 +585,7 @@ async function testFlashApi() {
       
       // ขั้นตอนที่ 3.1: ทดสอบด้วย endpoint เฉพาะ
       // กลับมาใช้ endpoint เดิมเนื่องจากในประวัติการใช้งานเคยสำเร็จกับ endpoint นี้
-      console.log('ทดสอบเชื่อมต่อกับ endpoint: /open/v3/orders/create');
+      console.log('ทดสอบเชื่อมต่อกับ endpoint: /open/v3/orders');
             
       // ตั้งค่าตัวเลือกการส่งคำขอ
       const requestOptions = {
