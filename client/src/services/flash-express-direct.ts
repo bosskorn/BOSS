@@ -13,18 +13,36 @@ let credentials: {
 } | null = null;
 
 /**
- * ดึงข้อมูล credentials จาก server
+ * ดึงข้อมูล credentials จาก environment variables
  */
 export async function loadCredentials(): Promise<boolean> {
   try {
-    const response = await axios.get('/api/flash-express-test/api-key-status');
-    if (response.data && response.data.success) {
+    // ใช้ environment variables โดยตรง
+    const mchId = import.meta.env.VITE_FLASH_EXPRESS_MERCHANT_ID;
+    const apiKey = import.meta.env.VITE_FLASH_EXPRESS_API_KEY;
+    
+    console.log('Loading credentials from environment variables');
+    
+    if (mchId && apiKey) {
       credentials = {
-        mchId: response.data.mchId,
-        apiKey: response.data.apiKey
+        mchId: mchId as string,
+        apiKey: apiKey as string
       };
+      
+      // แสดงข้อมูลที่ได้รับเพื่อการตรวจสอบ (ปกปิด apiKey บางส่วน)
+      console.log('Loaded credentials mchId:', credentials.mchId);
+      if (credentials.apiKey) {
+        const maskedKey = credentials.apiKey.substring(0, 4) + '...' + 
+                         credentials.apiKey.substring(credentials.apiKey.length - 4);
+        console.log('Loaded credentials apiKey:', maskedKey);
+      } else {
+        console.log('API key is missing or empty');
+      }
+      
       return true;
     }
+    
+    console.error('Credentials not found in environment variables');
     return false;
   } catch (error) {
     console.error('Error loading Flash Express credentials:', error);
