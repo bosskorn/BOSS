@@ -38,7 +38,13 @@ import {
   User, 
   Key, 
   AtSign, 
-  Phone 
+  Phone,
+  Package,
+  Truck,
+  History,
+  Activity,
+  BarChart,
+  Map
 } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
@@ -116,21 +122,51 @@ const AuthPage: React.FC = () => {
   // สำหรับแสดง 3D model หรือข้อความต้อนรับในฝั่งขวา
   const renderWelcomeSection = () => {
     return (
-      <div className="h-full flex flex-col justify-center items-center text-center px-6 bg-gradient-to-r from-purple-900 via-purple-800 to-purple-700 relative overflow-hidden">
-        {/* ลวดลายพื้นหลัง */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-full h-full">
-            <svg width="100%" height="100%" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 0 10 L 40 10 M 10 0 L 10 40" stroke="white" strokeWidth="0.5" fill="none" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-            </svg>
+      <div className="h-full flex flex-col justify-center items-center text-center px-6 bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 relative overflow-hidden">
+        {/* ลวดลายพื้นหลังแบบ 3D */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* ลูกบอล 3D ที่ลอยอยู่ */}
+          <div className="absolute w-40 h-40 top-10 right-[15%] rounded-full bg-gradient-to-br from-blue-400 to-blue-600 opacity-40 animate-[float_10s_ease-in-out_infinite]"></div>
+          <div className="absolute w-20 h-20 top-[35%] right-[30%] rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 opacity-30 animate-[float_13s_ease-in-out_infinite_0.5s]"></div>
+          <div className="absolute w-28 h-28 bottom-[20%] right-[15%] rounded-full bg-gradient-to-br from-blue-300 to-blue-500 opacity-20 animate-[float_15s_ease-in-out_infinite_1s]"></div>
+          <div className="absolute w-24 h-24 top-[15%] left-[10%] rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 opacity-25 animate-[float_11s_ease-in-out_infinite_reverse]"></div>
+          <div className="absolute w-16 h-16 bottom-[30%] left-[20%] rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 opacity-30 animate-[float_17s_ease-in-out_infinite_reverse_0.7s]"></div>
+          
+          {/* พื้นหลังกริด */}
+          <div className="absolute inset-0 perspective-[1000px]">
+            <div className="absolute inset-0">
+              <div className="absolute inset-0 rotate-x-[60deg] scale-150 opacity-10 origin-center">
+                <svg width="100%" height="200%" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" className="animate-[moveUp_20s_linear_infinite]">
+                  <defs>
+                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                      <path d="M 0 10 L 40 10 M 10 0 L 10 40" stroke="white" strokeWidth="0.5" fill="none" />
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#grid)" />
+                </svg>
+              </div>
+            </div>
           </div>
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-400 rounded-full filter blur-3xl opacity-20"></div>
-          <div className="absolute bottom-20 -left-20 w-80 h-80 bg-purple-300 rounded-full filter blur-3xl opacity-20"></div>
+          
+          {/* ไฟเบลอที่เคลื่อนไหว */}
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-400 rounded-full filter blur-3xl opacity-20 animate-[pulse_8s_ease-in-out_infinite]"></div>
+          <div className="absolute bottom-20 -left-20 w-80 h-80 bg-blue-300 rounded-full filter blur-3xl opacity-20 animate-[pulse_10s_ease-in-out_infinite_1s]"></div>
+          <div className="absolute top-1/4 left-1/4 w-40 h-40 bg-yellow-300 rounded-full filter blur-3xl opacity-10 animate-[pulse_7s_ease-in-out_infinite_0.5s]"></div>
+          
+          {/* ฝุ่นกลิตเตอร์เล็กๆ */}
+          <div className="absolute inset-0 opacity-30">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div 
+                key={i}
+                className="absolute w-1 h-1 rounded-full bg-white opacity-60"
+                style={{
+                  top: `${Math.random() * 100}%`,
+                  left: `${Math.random() * 100}%`,
+                  animation: `twinkle ${3 + Math.random() * 7}s ease-in-out infinite ${Math.random() * 5}s`
+                }}
+              />
+            ))}
+          </div>
         </div>
         
         {/* เนื้อหาหลัก */}
@@ -140,10 +176,10 @@ const AuthPage: React.FC = () => {
               <LogoIcon size={64} />
             </div>
             <h1 className="text-4xl font-bold text-white mb-2">
-              <span className="inline-block text-purple-200">Ship</span>
+              <span className="inline-block text-blue-200">Ship</span>
               <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-yellow-200">Sync</span>
             </h1>
-            <p className="text-xl text-purple-200 font-medium italic">
+            <p className="text-xl text-blue-200 font-medium italic">
               ส่งด่วน สะดวกรวดเร็ว
             </p>
           </div>
@@ -152,7 +188,7 @@ const AuthPage: React.FC = () => {
             <h2 className="text-2xl font-bold mb-3">
               {activeTab === 'login' ? 'ยินดีต้อนรับกลับ!' : 'เริ่มต้นใช้งานเลย!'}
             </h2>
-            <p className="text-purple-200 mb-6">
+            <p className="text-blue-200 mb-6">
               {activeTab === 'login'
                 ? 'เข้าสู่ระบบเพื่อจัดการการขนส่งของคุณอย่างมีประสิทธิภาพ'
                 : 'ลงทะเบียนเพื่อใช้งานระบบจัดการการขนส่งอัจฉริยะ'}
@@ -200,7 +236,7 @@ const AuthPage: React.FC = () => {
           
           {/* ไฮไลต์การเชื่อมต่อกับขนส่งชั้นนำ */}
           <div className="relative mt-4">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-700 rounded-xl blur-md opacity-60"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl blur-md opacity-60"></div>
             <div className="relative bg-white bg-opacity-15 backdrop-blur-md p-4 rounded-xl border border-white border-opacity-20">
               <div className="flex items-center mb-2">
                 <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 p-2 rounded-md mr-3">
@@ -210,7 +246,7 @@ const AuthPage: React.FC = () => {
                 </div>
                 <h3 className="text-white font-bold">การเชื่อมต่อระบบขนส่ง</h3>
               </div>
-              <p className="text-purple-100 text-sm">
+              <p className="text-blue-100 text-sm">
                 เชื่อมต่อกับขนส่งชั้นนำในประเทศไทย ให้คุณจัดการการขนส่งได้อย่างมีประสิทธิภาพสูงสุด
               </p>
             </div>
