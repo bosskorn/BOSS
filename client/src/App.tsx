@@ -44,7 +44,7 @@ import TikTokShippingLabel from './pages/tiktok-shipping-label';
 import TikTokShippingLabelFixed from './pages/tiktok-shipping-label-fixed';
 import PrintMultipleLabels from './pages/print-multiple-labels';
 import PrintMultipleLabelsFixed from './pages/print-multiple-labels-fixed';
-import FlashExpressLabelFixed from './pages/flash-express-label-fixed';
+// การอ้างอิงไปยังหน้า Flash Express ที่ไม่มีอยู่ถูกลบออกแล้ว
 import JntExpressLabel from './pages/jnt-express-label';
 import FeeHistory from './pages/fee-history';
 import LandingPage from './pages/landing';
@@ -80,7 +80,7 @@ function Router() {
       <Route path="/tiktok-shipping-label-fixed" component={TikTokShippingLabelFixed} />
       <Route path="/print-multiple-labels" component={PrintMultipleLabels} />
       <Route path="/print-multiple-labels-fixed" component={PrintMultipleLabelsFixed} />
-      <Route path="/flash-express-label-fixed" component={FlashExpressLabelFixed} />
+      {/* เส้นทาง Flash Express Label Fixed ถูกลบออกแล้ว */}
       <Route path="/landing" component={LandingPage} />
       <Route path="/flash-express-api-test" component={FlashExpressAPITest} />
       {/* Flash Express routes have been removed */}
