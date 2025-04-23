@@ -31,25 +31,21 @@ import BarcodeTest from "@/pages/barcode-test";
 import PrintLabelEnhanced from "@/pages/print-label-enhanced";
 import BarcodeTestImproved from "@/pages/barcode-test-improved";
 import JTExpressLabel from "@/pages/jt-express-label";
-import FlashExpressLabel from "@/pages/flash-express-label";
-import FlashExpressLabelNew from "@/pages/flash-express-label-new";
-import FlashExpressLabelSimple from "@/pages/flash-express-label-simple";
 import PrintLabelsFullPage from "@/pages/print-labels-full";
 import PrintLabelsFullFixedPage from "@/pages/print-labels-full-fixed";
 import TikTokStyleLabelPage from "@/pages/tiktok-style-label";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
-import TikTokFlashLabel from './pages/tiktok-flash-label';
 import TikTokShippingLabel from './pages/tiktok-shipping-label';
 import TikTokShippingLabelFixed from './pages/tiktok-shipping-label-fixed';
 import PrintMultipleLabels from './pages/print-multiple-labels';
 import PrintMultipleLabelsFixed from './pages/print-multiple-labels-fixed';
-// การอ้างอิงไปยังหน้า Flash Express ที่ไม่มีอยู่ถูกลบออกแล้ว
 import JntExpressLabel from './pages/jnt-express-label';
 import FeeHistory from './pages/fee-history';
 import LandingPage from './pages/landing';
 import FlashExpressAPITest from './pages/flash-express-api-test';
 import CreateFlashExpressOrder from './pages/create-flash-express-order';
+import CreateFlashExpressOrderNew from './pages/create-flash-express-order-new';
 import FindByMerchantTracking from './pages/orders/find-by-merchant-tracking';
 
 // รายงาน
@@ -72,18 +68,15 @@ function Router() {
       <Route path="/print-label-enhanced" component={PrintLabelEnhanced} />
       <Route path="/barcode-test-improved" component={BarcodeTestImproved} />
       <Route path="/jt-express-label" component={JTExpressLabel} />
-      <Route path="/flash-express-label" component={FlashExpressLabel} />
-      <Route path="/flash-express-label-new" component={FlashExpressLabelNew} />
       <Route path="/jnt-express-label" component={JntExpressLabel} />
-      <Route path="/tiktok-flash-label" component={TikTokFlashLabel} />
       <Route path="/tiktok-shipping-label" component={TikTokShippingLabel} />
       <Route path="/tiktok-shipping-label-fixed" component={TikTokShippingLabelFixed} />
       <Route path="/print-multiple-labels" component={PrintMultipleLabels} />
       <Route path="/print-multiple-labels-fixed" component={PrintMultipleLabelsFixed} />
-      {/* เส้นทาง Flash Express Label Fixed ถูกลบออกแล้ว */}
       <Route path="/landing" component={LandingPage} />
       <Route path="/flash-express-api-test" component={FlashExpressAPITest} />
-      {/* Flash Express routes have been removed */}
+      <Route path="/create-flash-express-order-new" component={CreateFlashExpressOrderNew} />
+      {/* Flash Express routes have been updated */}
 
       {/* Protected routes - require authentication */}
       <ProtectedRoute path="/" component={Dashboard} />
