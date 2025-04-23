@@ -201,43 +201,77 @@ export default function FlashExpressAPITest() {
     try {
       setLoading(true);
       
-      console.log('กำลังทดสอบการเชื่อมต่อกับ Flash Express API...');
+      console.log('กำลังทดสอบการเชื่อมต่อกับ Flash Express API... (URL: https://open-api.flashexpress.com)');
       
+      // เปลี่ยนมาใช้ endpoint ใหม่ที่เราเพิ่งสร้าง
       const response = await apiRequest(
         'GET',
-        '/api/flash-express/test',
+        '/api/shipping/test-connection',
         null
       );
       
       try {
         // พยายามแปลงข้อมูลเป็น JSON
         const data = await response.json();
-        console.log('ผลการทดสอบการเชื่อมต่อ:', data);
+        console.log('ผลการทดสอบการเชื่อมต่อ Flash Express API:', data);
         setConnectionTestResult(data);
+        
+        let description = data.message || (data.success ? 'สามารถเชื่อมต่อกับ Flash Express API ได้' : 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้');
+        
+        // เพิ่มรายละเอียดหากมีข้อมูล API response
+        if (data.apiResponse) {
+          console.log('รายละเอียดการตอบกลับจาก API:', data.apiResponse);
+          
+          if (data.apiResponse.data) {
+            description += ` (API Response Code: ${data.apiResponse.data.code || 'N/A'})`;
+          }
+        }
+        
+        // เพิ่มข้อมูล HTML response หากได้รับการตอบกลับเป็น HTML
+        if (data.htmlResponse) {
+          console.log('ได้รับการตอบกลับเป็น HTML:', data.htmlResponse);
+          description += ' - เซิร์ฟเวอร์ตอบกลับด้วย HTML แทน JSON ซึ่งอาจเกิดจากการเปลี่ยนเส้นทาง';
+        }
         
         toast({
           title: data.success ? 'การเชื่อมต่อสำเร็จ' : 'การเชื่อมต่อไม่สำเร็จ',
-          description: data.message || (data.success ? 'สามารถเชื่อมต่อกับ Flash Express API ได้' : 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้'),
+          description: description,
           variant: data.success ? 'default' : 'destructive',
         });
       } catch (jsonError) {
         // หากไม่สามารถแปลงเป็น JSON ได้ แสดงว่าอาจได้รับ HTML แทน
-        const text = await response.text();
-        console.log('ผลการทดสอบการเชื่อมต่อ:', text.substring(0, 500) + '...');
-        setConnectionTestResult(text);
+        console.error('เกิดข้อผิดพลาดในการแปลงข้อมูล JSON:', jsonError);
         
-        toast({
-          title: 'เกิดข้อผิดพลาดรูปแบบข้อมูล',
-          description: 'ได้รับข้อมูล HTML แทน JSON ซึ่งอาจเกิดจากปัญหา CORS หรือการเชื่อมต่อ',
-          variant: 'destructive',
-        });
+        try {
+          const text = await response.text();
+          console.log('ข้อมูลการตอบกลับ (ไม่ใช่ JSON):', text.substring(0, 500) + '...');
+          setConnectionTestResult({ success: false, rawResponse: text });
+          
+          toast({
+            title: 'เกิดข้อผิดพลาดรูปแบบข้อมูล',
+            description: 'ได้รับข้อมูลที่ไม่ใช่ JSON ซึ่งอาจเกิดจากปัญหาในการเชื่อมต่อ',
+            variant: 'destructive',
+          });
+        } catch (textError) {
+          setConnectionTestResult({ success: false, error: String(textError) });
+          toast({
+            title: 'เกิดข้อผิดพลาด',
+            description: 'ไม่สามารถอ่านข้อมูลการตอบกลับจากเซิร์ฟเวอร์',
+            variant: 'destructive',
+          });
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('เกิดข้อผิดพลาดในการทดสอบการเชื่อมต่อ:', error);
-      setConnectionTestResult({ success: false, error: String(error) });
+      setConnectionTestResult({ 
+        success: false, 
+        error: String(error),
+        message: error.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'
+      });
+      
       toast({
         title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้',
+        description: `ไม่สามารถเชื่อมต่อกับ Flash Express API ได้: ${error.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'}`,
         variant: 'destructive',
       });
     } finally {

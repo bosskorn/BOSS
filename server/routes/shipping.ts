@@ -3,7 +3,8 @@ import { auth } from '../middleware/auth';
 import {
   getFlashExpressShippingOptions,
   createFlashShipment as createFlashExpressShipping,
-  trackFlashShipment as getFlashExpressTrackingStatus
+  trackFlashShipment as getFlashExpressTrackingStatus,
+  testFlashApi
 } from '../services/flash-express';
 import axios from 'axios';
 import crypto from 'crypto';
@@ -442,6 +443,54 @@ router.get('/track/:trackingNumber', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to track shipment'
+    });
+  }
+});
+
+/**
+ * API สำหรับทดสอบการเชื่อมต่อกับ Flash Express API
+ */
+router.get('/test-connection', auth, async (req: Request, res: Response) => {
+  try {
+    console.log('เริ่มทดสอบการเชื่อมต่อกับ Flash Express API (URL: https://open-api.flashexpress.com)');
+    
+    // เก็บข้อมูล API key และ merchant ID สำหรับการวิเคราะห์ปัญหา (เซ็นเซอร์บางส่วนเพื่อความปลอดภัย)
+    const flashApiKey = process.env.FLASH_EXPRESS_API_KEY;
+    const merchantId = process.env.FLASH_EXPRESS_MERCHANT_ID;
+    
+    // แสดงข้อมูลเพื่อการวิเคราะห์ปัญหา
+    console.log(`ใช้ Merchant ID: ${merchantId}`);
+    console.log(`ใช้ API Key: ${flashApiKey?.substring(0, 3)}...${flashApiKey?.substring(flashApiKey.length - 3) || ''}`);
+    
+    // ทดสอบการเชื่อมต่อ
+    const testResult = await testFlashApi();
+    
+    // ตรวจสอบข้อมูลการตอบกลับละเอียด
+    console.log('ผลการทดสอบการเชื่อมต่อกับ Flash Express API:', testResult);
+    
+    // ตรวจสอบหากตอบกลับเป็น HTML แทนที่จะเป็น JSON
+    if (testResult.error?.response?.data && 
+        typeof testResult.error.response.data === 'string' && 
+        testResult.error.response.data.includes('<!DOCTYPE html>')) {
+      console.log('ได้รับ HTML response แทน JSON - อาจมีการ redirect');
+      
+      // วิเคราะห์สาเหตุ
+      testResult.htmlResponse = {
+        snippet: testResult.error.response.data.substring(0, 200) + '...',
+        analysis: 'ได้รับการตอบกลับเป็น HTML แทนที่จะเป็น JSON ซึ่งอาจเกิดจากการ redirect ไปยังหน้าเว็บหรือ endpoint ที่ไม่ถูกต้อง'
+      };
+    }
+    
+    res.json(testResult);
+  } catch (error: any) {
+    console.error('Error testing Flash Express API connection:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to test API connection',
+      errorDetails: {
+        name: error.name,
+        stack: error.stack
+      }
     });
   }
 });
