@@ -97,6 +97,7 @@ function Router() {
       <ProtectedRoute path="/product-list-old" component={ProductList} />
       <ProtectedRoute path="/product-management" component={ProductManagement} />
       <ProtectedRoute path="/create-order" component={CreateOrderTabs} />
+      <ProtectedRoute path="/create-order-tabs" component={CreateOrderTabs} />
       <ProtectedRoute path="/create-order-old" component={CreateOrder} />
       <ProtectedRoute path="/bulk-order-import" component={BulkOrderImport} />
 
