@@ -28,6 +28,9 @@ function generateNonceStr(length = 16): string {
  */
 function generateFlashSignature(params: Record<string, any>, apiKey: string): string {
   try {
+    console.log('⚙️ สร้างลายเซ็น Flash Express API...');
+    console.log('⚙️ ข้อมูลเริ่มต้น:', JSON.stringify(params, null, 2));
+    
     // 1. แปลงทุกค่าเป็น string และกรองพารามิเตอร์
     const stringParams: Record<string, string> = {};
     Object.keys(params).forEach(key => {
@@ -58,8 +61,12 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
       .map(key => `${key}=${stringParams[key]}`)
       .join('&') + `&key=${apiKey}`;
 
+    console.log('🔑 สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
+    
     // 4. สร้าง SHA-256 hash และแปลงเป็นตัวพิมพ์ใหญ่
     const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+    
+    console.log('🔒 ลายเซ็นที่สร้าง:', signature);
     
     return signature;
   } catch (error) {
@@ -213,19 +220,23 @@ export async function createShipment(shipmentData: any) {
       height: String(Math.round(shipmentData.height || 0)),
       insured: String(shipmentData.insured || 0), // ไม่ซื้อประกัน
       codEnabled: String(shipmentData.codEnabled || 0), // ไม่ใช้ COD
-      
-      // หมายเหตุ (จะไม่ถูกใช้ในการคำนวณลายเซ็น)
+    };
+    
+    // สำเนาข้อมูลสำหรับใช้ในการส่ง API (รวม remark)
+    const apiParams = {
+      ...requestParams,
+      // หมายเหตุ (จะไม่ถูกใช้ในการคำนวณลายเซ็น แต่จะส่งไปยัง API)
       remark: shipmentData.remark || '',
     };
     
     // สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
     
-    // เพิ่มลายเซ็นเข้าไปในพารามิเตอร์ หลังจากคำนวณเสร็จแล้ว
-    requestParams.sign = signature;
+    // เพิ่มลายเซ็นเข้าไปในพารามิเตอร์ที่จะส่งไป API
+    apiParams.sign = signature;
     
     // แปลงเป็น URL-encoded string
-    const encodedPayload = new URLSearchParams(requestParams as Record<string, string>).toString();
+    const encodedPayload = new URLSearchParams(apiParams as Record<string, string>).toString();
     
     // ตั้งค่า headers
     const headers = {
@@ -412,8 +423,10 @@ export async function testApi() {
   }
 }
 
-// หากรันไฟล์นี้โดยตรง จะทำการทดสอบ API
-if (require.main === module) {
+// รันการทดสอบหากเรียกไฟล์โดยตรง
+// เพื่อทดสอบโค้ดนี้ รัน: 
+// npx tsx server/flash-express-fixed-final.ts test
+if (process.argv.includes('test')) {
   testApi().then(result => {
     console.log('🏁 ผลลัพธ์การทดสอบ:', result);
   });
