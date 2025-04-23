@@ -36,6 +36,44 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
+// Middleware สำหรับตรวจสอบการยืนยันตัวตน (authentication)
+export const auth = (req: Request, res: Response, next: NextFunction) => {
+  // ถ้ามีการเข้าสู่ระบบด้วย session
+  if (req.isAuthenticated() && req.user) {
+    return next();
+  }
+  
+  // ตรวจสอบ Authorization header
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ success: false, message: "กรุณาเข้าสู่ระบบ" });
+  }
+
+  const token = authHeader.split(' ')[1]; // แยก "Bearer" ออกจาก token
+  if (!token) {
+    return res.status(401).json({ success: false, message: "รูปแบบ token ไม่ถูกต้อง" });
+  }
+
+  try {
+    // ตรวจสอบความถูกต้องของ token
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    
+    // เพิ่มข้อมูลผู้ใช้ใน request
+    storage.getUser(decoded.id).then(user => {
+      if (!user) {
+        return res.status(401).json({ success: false, message: "ไม่พบข้อมูลผู้ใช้" });
+      }
+      
+      req.user = user;
+      next();
+    }).catch(err => {
+      return res.status(500).json({ success: false, message: "ไม่สามารถดึงข้อมูลผู้ใช้ได้" });
+    });
+  } catch (error: any) {
+    return res.status(401).json({ success: false, message: "Token ไม่ถูกต้องหรือหมดอายุ" });
+  }
+};
+
 export function setupAuth(app: Express) {
   const isProduction = process.env.NODE_ENV === "production";
   console.log('Setting up auth, environment:', isProduction ? 'production' : 'development');

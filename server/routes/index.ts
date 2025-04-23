@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import authRoutes from './auth';
-import ordersRoutes from './orders';
+import ordersRoutes from './orders-new';
 import usersRoutes from './users';
 import uploadRoutes from './upload';
 import productsRoutes from './products';

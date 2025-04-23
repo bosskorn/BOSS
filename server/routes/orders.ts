@@ -1,21 +1,22 @@
 
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
-import { authenticateToken } from '../middleware/auth';
+import { auth } from '../auth';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
-import { generateFlashExpressSignature } from '../services/generate-signature';
 import dotenv from 'dotenv';
+import { db } from '../db';
+import { orders, orderItems } from '@shared/schema';
+import { eq, and, desc, like, ilike, or, sql } from 'drizzle-orm';
+import { storage } from '../storage';
 
 dotenv.config();
 
-const prisma = new PrismaClient();
 const router = express.Router();
 
 // กำหนด Express routes สำหรับการจัดการออเดอร์
 
 // สร้างออเดอร์ใหม่
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -99,7 +100,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // ดึงข้อมูลออเดอร์ทั้งหมดของผู้ใช้
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
     
@@ -173,7 +174,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // ดึงข้อมูลออเดอร์ตาม ID
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const orderId = parseInt(req.params.id);
@@ -210,7 +211,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // อัปเดตสถานะออเดอร์
-router.patch('/:id/status', authenticateToken, async (req, res) => {
+router.patch('/:id/status', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const orderId = parseInt(req.params.id);
@@ -258,7 +259,7 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
 });
 
 // อัปเดตข้อมูลการติดตามและการจัดส่ง
-router.patch('/:id/tracking', authenticateToken, async (req, res) => {
+router.patch('/:id/tracking', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const orderId = parseInt(req.params.id);
