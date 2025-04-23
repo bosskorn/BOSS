@@ -127,7 +127,7 @@ router.post("/test-order-v2", auth, async (req: Request, res: Response) => {
     const receiver = {
       name: "ทดสอบ ผู้รับ",
       phone: "0987654321",
-      address: "456 ทดสอบ",
+      address: "456 ถนนฉลองกรุง แขวงลาดกระบัง", // เพิ่มรายละเอียดที่อยู่ให้ชัดเจนขึ้น
       province: "กรุงเทพมหานคร",
       district: "ลาดกระบัง",
       subdistrict: "ลาดกระบัง",
@@ -162,14 +162,14 @@ router.post("/test-order-v2", auth, async (req: Request, res: Response) => {
       senderProvinceName: sender.province,
       senderDistrictName: sender.district,
       senderSubdistrictName: sender.subdistrict,
-      senderDetailedAddress: sender.address,
+      senderAddress: sender.address, // เปลี่ยนจาก senderDetailedAddress เป็น senderAddress
       senderZipcode: sender.postcode,
       receiverName: receiver.name,
       receiverPhone: receiver.phone,
       receiverProvinceName: receiver.province,
       receiverDistrictName: receiver.district,
       receiverSubdistrictName: receiver.subdistrict,
-      receiverDetailedAddress: receiver.address,
+      receiverAddress: receiver.address, // เปลี่ยนจาก receiverDetailedAddress เป็น receiverAddress
       receiverZipcode: receiver.postcode,
       parcelItems: JSON.stringify(items)
     };
