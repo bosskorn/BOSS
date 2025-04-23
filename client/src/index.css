@@ -587,6 +587,69 @@
   animation: rotate3D 15s linear infinite;
 }
 
+/* อนิเมชัน 3D สำหรับหน้าล็อกอิน/ลงทะเบียน */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes moveUp {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 0.3; transform: scale(1); }
+}
+
+/* อนิเมชันพิเศษสำหรับลูกเล่น 3D */
+.animate-float-slow {
+  animation: float 10s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float 7s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+.animate-float-slow-reverse {
+  animation: float 12s ease-in-out infinite reverse;
+}
+
+.animate-pulse-slow {
+  animation: pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-pulse-slower {
+  animation: pulse 10s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.rotate-x-60 {
+  transform: rotateX(60deg);
+}
+
+.animate-grid-move {
+  animation: moveUp 20s linear infinite;
+}
+
 /* เอฟเฟกต์ Glowing */
 .glow-blue {
   filter: drop-shadow(0 0 8px rgba(0, 112, 243, 0.8)); /* สีน้ำเงินหลัก */

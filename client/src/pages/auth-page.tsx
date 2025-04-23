@@ -197,7 +197,7 @@ const AuthPage: React.FC = () => {
             {/* คุณสมบัติที่น่าสนใจ */}
             <div className="grid grid-cols-2 gap-5 text-left">
               <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-xl border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
-                <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-2 rounded-lg inline-block mb-3">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-700 p-2 rounded-lg inline-block mb-3">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
@@ -206,7 +206,7 @@ const AuthPage: React.FC = () => {
               </div>
               
               <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-xl border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
-                <div className="bg-gradient-to-br from-purple-400 to-purple-600 p-2 rounded-lg inline-block mb-3">
+                <div className="bg-gradient-to-br from-blue-400 to-blue-600 p-2 rounded-lg inline-block mb-3">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
@@ -215,7 +215,7 @@ const AuthPage: React.FC = () => {
               </div>
               
               <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-xl border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
-                <div className="bg-gradient-to-br from-purple-400 to-purple-600 p-2 rounded-lg inline-block mb-3">
+                <div className="bg-gradient-to-br from-blue-400 to-blue-600 p-2 rounded-lg inline-block mb-3">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -224,7 +224,7 @@ const AuthPage: React.FC = () => {
               </div>
               
               <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-xl border border-white border-opacity-20 hover:bg-opacity-20 transition-all">
-                <div className="bg-gradient-to-br from-purple-400 to-purple-600 p-2 rounded-lg inline-block mb-3">
+                <div className="bg-gradient-to-br from-blue-400 to-blue-600 p-2 rounded-lg inline-block mb-3">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                   </svg>
@@ -262,7 +262,7 @@ const AuthPage: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       <div className="flex flex-col md:flex-row min-h-screen font-kanit">
         <div className="md:w-1/2 lg:w-5/12 p-4 md:p-8 flex items-center justify-center">
           <div className="w-full max-w-md">
@@ -271,7 +271,7 @@ const AuthPage: React.FC = () => {
                 <LogoIcon size={48} />
               </div>
               <h1 className="text-3xl font-bold">
-                <span className="text-purple-700">Ship</span>
+                <span className="text-blue-700">Ship</span>
                 <span className="text-yellow-500">Sync</span>
               </h1>
               <p className="text-gray-600">ระบบจัดการขนส่งอัจฉริยะ</p>
@@ -343,7 +343,7 @@ const AuthPage: React.FC = () => {
                         />
                         <Button
                           type="submit"
-                          className="w-full bg-purple-600 hover:bg-purple-700"
+                          className="w-full bg-blue-600 hover:bg-blue-700"
                           disabled={loginMutation.isPending}
                         >
                           {loginMutation.isPending ? (
@@ -470,7 +470,7 @@ const AuthPage: React.FC = () => {
                         
                         <Button
                           type="submit"
-                          className="w-full bg-purple-600 hover:bg-purple-700" 
+                          className="w-full bg-blue-600 hover:bg-blue-700" 
                           disabled={registerMutation.isPending}
                         >
                           {registerMutation.isPending ? (
