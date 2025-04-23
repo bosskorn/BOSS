@@ -1,3 +1,121 @@
+
+import express from 'express';
+import { authenticateToken } from '../middleware/auth';
+import { db } from '../db';
+import { orders } from '../schema';
+import { v4 as uuidv4 } from 'uuid';
+
+const router = express.Router();
+
+// สร้างออเดอร์ใหม่
+router.post('/create', authenticateToken, async (req, res) => {
+  try {
+    const {
+      outTradeNo,
+      expressCategory,
+      srcName,
+      srcPhone,
+      srcProvinceName,
+      srcCityName,
+      srcDistrictName,
+      srcPostalCode,
+      srcDetailAddress,
+      dstName,
+      dstPhone,
+      dstHomePhone,
+      dstProvinceName,
+      dstCityName,
+      dstDistrictName,
+      dstPostalCode,
+      dstDetailAddress,
+      returnName,
+      returnPhone,
+      codEnabled,
+      codAmount,
+      remark,
+      items
+    } = req.body;
+
+    // ตรวจสอบข้อมูลที่จำเป็น
+    if (!outTradeNo || !srcName || !srcPhone || !srcProvinceName || !srcCityName || 
+        !srcPostalCode || !srcDetailAddress || !dstName || !dstPhone || 
+        !dstProvinceName || !dstCityName || !dstPostalCode || !dstDetailAddress) {
+      return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+    }
+
+    // สร้างข้อมูลออเดอร์
+    const userId = req.user?.id;
+    const newOrder = {
+      id: uuidv4(),
+      userId,
+      orderNumber: outTradeNo,
+      status: 'pending',
+      expressType: expressCategory === 1 ? 'express' : 'standard',
+      
+      // ข้อมูลผู้ส่ง
+      senderName: srcName,
+      senderPhone: srcPhone,
+      senderProvince: srcProvinceName,
+      senderCity: srcCityName,
+      senderDistrict: srcDistrictName || null,
+      senderPostalCode: srcPostalCode,
+      senderAddress: srcDetailAddress,
+      
+      // ข้อมูลผู้รับ
+      recipientName: dstName,
+      recipientPhone: dstPhone,
+      recipientHomePhone: dstHomePhone || null,
+      recipientProvince: dstProvinceName,
+      recipientCity: dstCityName,
+      recipientDistrict: dstDistrictName || null,
+      recipientPostalCode: dstPostalCode,
+      recipientAddress: dstDetailAddress,
+      
+      // ข้อมูลการตีกลับ
+      returnName: returnName || null,
+      returnPhone: returnPhone || null,
+      
+      // ข้อมูล COD
+      codEnabled: codEnabled || false,
+      codAmount: codAmount || 0,
+      
+      // ข้อมูลเพิ่มเติม
+      remark: remark || null,
+      items: JSON.stringify(items || []),
+      
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // บันทึกข้อมูลออเดอร์ลงในฐานข้อมูล
+    // ในตัวอย่างนี้เราจะจำลองการบันทึกข้อมูล
+    // const result = await db.insert(orders).values(newOrder);
+    
+    // สำหรับตัวอย่าง เราจะส่งค่ากลับเป็นข้อมูลออเดอร์ที่สร้างขึ้น
+    return res.status(201).json({
+      success: true,
+      message: 'สร้างออเดอร์สำเร็จ',
+      order: {
+        id: newOrder.id,
+        outTradeNo: newOrder.orderNumber,
+        status: newOrder.status,
+        expressType: newOrder.expressType,
+        // สามารถเพิ่มข้อมูลอื่นๆ ตามต้องการ
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error creating order:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'เกิดข้อผิดพลาดในการสร้างออเดอร์',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+export default router;
+
 import { Router } from 'express';
 import { storage } from '../storage';
 import { auth } from '../middleware/auth';
