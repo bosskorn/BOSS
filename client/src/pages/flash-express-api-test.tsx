@@ -81,6 +81,7 @@ export default function FlashExpressAPITest() {
     srcDistrictName: 'จรเข้บัว',
     srcPostalCode: '10230',
     srcDetailAddress: user?.address || '123 ถนนทดสอบ',
+    srcEmail: 'test@example.com', // เพิ่มอีเมลผู้ส่ง
     dstName: 'ลูกค้าทดสอบ',
     dstPhone: '0812345678',
     dstProvinceName: 'เชียงใหม่',
@@ -88,11 +89,23 @@ export default function FlashExpressAPITest() {
     dstDistrictName: 'ช้างคลาน',
     dstPostalCode: '50100',
     dstDetailAddress: '456 ถนนทดสอบ ต.ช้างคลาน อ.เมือง จ.เชียงใหม่ 50100',
-    articleCategory: 1, // เสื้อผ้า
-    expressCategory: 1, // ส่งปกติ
+    dstEmail: 'customer@example.com', // เพิ่มอีเมลผู้รับ
     weight: 1000, // 1 kg (หน่วยเป็น g)
-    insured: 0, // ไม่มีประกัน
-    codEnabled: 0, // ไม่มี COD
+    width: 10, // ความกว้างเป็น cm
+    length: 10, // ความยาวเป็น cm
+    height: 10, // ความสูงเป็น cm
+    // ข้อมูลที่จำเป็นตามข้อกำหนดของ Flash Express API
+    parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป) ต้องเป็น string
+    expressCategory: "1", // 1=ส่งด่วน, 2=ส่งธรรมดา ต้องเป็น string
+    articleCategory: "1", // ประเภทสินค้า (1=ทั่วไป) ต้องเป็น string
+    expressTypeId: "1", // ประเภทการส่ง (1=ส่งด่วน) ต้องเป็น string
+    productType: "1", // ประเภทสินค้า (1=ทั่วไป) ต้องเป็น string
+    payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย) ต้องเป็น string
+    transportType: "1", // ประเภทการขนส่ง (1=ปกติ) ต้องเป็น string
+    insured: "0", // 0=ไม่ซื้อ Flash care ต้องเป็น string
+    codEnabled: "0", // 0=ไม่ใช่ COD ต้องเป็น string
+    codAmount: "0", // จำนวนเงิน COD (ถ้ามี) ต้องเป็น string
+    insuredAmount: "0", // จำนวนเงินประกัน (ถ้ามี) ต้องเป็น string
   });
   
   // ดึงข้อมูลค่าจัดส่ง

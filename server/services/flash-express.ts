@@ -152,10 +152,11 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       weight: packageDetails.weight < 100 ? packageDetails.weight * 1000 : packageDetails.weight,
     };
     
-    // เพิ่มขนาดหากมี
-    if (packageDetails.height) requestParams.height = packageDetails.height;
-    if (packageDetails.length) requestParams.length = packageDetails.length;
-    if (packageDetails.width) requestParams.width = packageDetails.width;
+    // เพิ่มขนาดหากมี - แก้ไข TypeScript error ด้วยการกำหนดประเภทก่อน
+    const paramsWithDimensions = requestParams as any;
+    if (packageDetails.height) paramsWithDimensions.height = packageDetails.height;
+    if (packageDetails.length) paramsWithDimensions.length = packageDetails.length;
+    if (packageDetails.width) paramsWithDimensions.width = packageDetails.width;
     
     // 3. สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, API_KEY!);
@@ -286,24 +287,22 @@ export async function createFlashShipment(shipmentData: any) {
       length: String(parseInt(String(shipmentData.length)) || 30), // ความยาวเป็น string (ซม.) optional
       height: String(parseInt(String(shipmentData.height)) || 10), // ความสูงเป็น string (ซม.) optional
       
-      // ประเภทพัสดุและการจัดส่ง (required) - ตามฟอร์แมตที่เคยทำงานได้
-      parcelKind: shipmentData.parcelKind ? String(shipmentData.parcelKind) : "1", // ประเภทพัสดุ (1=ทั่วไป) - ต้องเป็น string ไม่ใช่ integer
-      expressCategory: String(parseInt(String(shipmentData.expressCategory)) || 1), // 1=ส่งด่วน, 2=ส่งธรรมดา
-      articleCategory: String(parseInt(String(shipmentData.articleCategory)) || 1), // ประเภทสินค้า (1=ทั่วไป)
-      expressTypeId: String(parseInt(String(shipmentData.expressTypeId)) || 1), // ประเภทการส่ง (1=ส่งด่วน)
-      productType: "1", // ประเภทสินค้า (1=ทั่วไป) - เพิ่มเติมจากเอกสาร
+      // ประเภทพัสดุและการจัดส่ง (required) - ตามฟอร์แมตที่ต้องเป็น string และมีค่าตามที่ Flash Express กำหนด
+      parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป) - ต้องเป็น string ไม่ใช่ integer
+      expressCategory: "1", // 1=ส่งด่วน, 2=ส่งธรรมดา - ต้องเป็น string
+      articleCategory: "1", // ประเภทสินค้า (1=ทั่วไป) - ต้องเป็น string
+      expressTypeId: "1", // ประเภทการส่ง (1=ส่งด่วน) - ต้องเป็น string
+      productType: "1", // ประเภทสินค้า (1=ทั่วไป) - ต้องเป็น string
       
       // พารามิเตอร์ที่จำเป็นสำหรับ Flash Express API
       payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย) ต้องเป็น string
       transportType: "1", // ประเภทการขนส่ง (1=ปกติ) ต้องเป็น string
       
       // บริการเสริม (required) - ต้องเป็น string ทั้งหมด
-      insured: shipmentData.insured !== undefined ? String(parseInt(String(shipmentData.insured))) : "0", // 0=ไม่ซื้อ Flash care
-      codEnabled: shipmentData.codEnabled !== undefined ? String(parseInt(String(shipmentData.codEnabled))) : "0", // 0=ไม่ใช่ COD
-      codAmount: shipmentData.codEnabled && shipmentData.codEnabled !== 0 && shipmentData.codAmount ? 
-                String(parseInt(String(shipmentData.codAmount))) : "0", // จำนวนเงิน COD (ถ้ามี)
-      insuredAmount: shipmentData.insured && shipmentData.insured !== 0 && shipmentData.insuredAmount ? 
-                    String(parseInt(String(shipmentData.insuredAmount))) : "0" // จำนวนเงินประกัน (ถ้ามี)
+      insured: "0", // 0=ไม่ซื้อ Flash care (ต้องเป็น string)
+      codEnabled: "0", // 0=ไม่ใช่ COD (ต้องเป็น string)
+      codAmount: "0", // จำนวนเงิน COD (ต้องเป็น string)
+      insuredAmount: "0" // จำนวนเงินประกัน (ต้องเป็น string)
     };
     
     // เพิ่มข้อมูล COD ถ้าเปิดใช้งาน
