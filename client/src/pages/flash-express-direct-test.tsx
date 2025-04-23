@@ -79,14 +79,44 @@ export default function FlashExpressDirectTest() {
       setError(null);
       
       const response = await getWarehouses();
+      console.log('Warehouse response structure:', JSON.stringify(response, null, 2));
       
-      if (response.success && response.data && response.data.data) {
-        setWarehouseData(response.data.data);
-        setResult(response);
-        toast({
-          title: 'ดึงข้อมูลสำเร็จ',
-          description: `ดึงข้อมูลคลังสินค้าทั้งหมด ${response.data.data.length} รายการ`,
-        });
+      // ตรวจสอบโครงสร้างข้อมูลที่ได้รับจาก proxy
+      if (response.success) {
+        // รูปแบบจากตัวอย่างที่ได้รับ:
+        // {
+        //   "code": 1,
+        //   "message": "success",
+        //   "data": [ ... array ของคลังสินค้า ... ]
+        // }
+        
+        let warehouses = [];
+        
+        if (response.data && response.data.code === 1 && Array.isArray(response.data.data)) {
+          // รูปแบบตามตัวอย่าง
+          warehouses = response.data.data;
+          console.log('พบข้อมูลคลังสินค้าในรูปแบบตามตัวอย่าง:', warehouses.length, 'รายการ');
+        } else if (response.data && Array.isArray(response.data.data)) {
+          // รูปแบบ response.data.data เป็น array
+          warehouses = response.data.data;
+          console.log('พบข้อมูลคลังสินค้าในรูปแบบ data.data:', warehouses.length, 'รายการ');
+        } else if (response.data && Array.isArray(response.data)) {
+          // รูปแบบ response.data เป็น array
+          warehouses = response.data;
+          console.log('พบข้อมูลคลังสินค้าในรูปแบบ data เป็น array:', warehouses.length, 'รายการ');
+        }
+        
+        if (warehouses.length > 0) {
+          setWarehouseData(warehouses);
+          setResult(response);
+          toast({
+            title: 'ดึงข้อมูลสำเร็จ',
+            description: `ดึงข้อมูลคลังสินค้าทั้งหมด ${warehouses.length} รายการ`,
+          });
+        } else {
+          console.error('ไม่พบข้อมูลคลังสินค้าในรูปแบบที่คาดหวัง:', response);
+          throw new Error('ไม่พบข้อมูลคลังสินค้าในรูปแบบที่คาดหวัง');
+        }
       } else {
         throw new Error(response.message || 'ไม่สามารถดึงข้อมูลคลังสินค้าได้');
       }
@@ -193,10 +223,10 @@ export default function FlashExpressDirectTest() {
                           <tbody className="bg-white divide-y divide-gray-200">
                             {warehouseData.map((warehouse, index) => (
                               <tr key={index}>
-                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.warehouseNo}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.warehouseName}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.province}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.city}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.warehouseNo || warehouse.name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.warehouseName || warehouse.name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.province || warehouse.provinceName}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{warehouse.city || warehouse.cityName}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -224,8 +254,8 @@ export default function FlashExpressDirectTest() {
                             >
                               <option value="">เลือกคลังสินค้า</option>
                               {warehouseData.map((warehouse, index) => (
-                                <option key={index} value={warehouse.warehouseNo}>
-                                  {warehouse.warehouseName} - {warehouse.province}
+                                <option key={index} value={warehouse.warehouseNo || warehouse.name}>
+                                  {warehouse.warehouseName || warehouse.name} - {warehouse.province || warehouse.provinceName}
                                 </option>
                               ))}
                             </select>
