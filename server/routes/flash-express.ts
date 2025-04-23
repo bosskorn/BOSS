@@ -178,6 +178,7 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
       returnPhone: senderPhone,
       returnProvinceName: senderProvince,
       returnCityName: senderCity,
+      returnDistrictName: senderDistrict,
       returnPostalCode: senderPostcode,
       returnDetailAddress: senderAddress,
       
