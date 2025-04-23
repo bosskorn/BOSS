@@ -19,7 +19,6 @@ import mockShippingRouter from "./routes/mock-shipping";
 import dashboardRouter from "./routes/dashboard";
 import stripeRouter from "./routes/stripe";
 import feeHistoryRouter from "./routes/fee-history";
-import flashExpressTestRouter from "./routes/flash-express-test";
 import flashExpressRouter from "./routes/flash-express-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -67,8 +66,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
-  // เพิ่มเส้นทางสำหรับทดสอบ Flash Express API
-  app.use("/flash-express-test", flashExpressTestRouter);
+  // เพิ่มเส้นทางสำหรับการใช้งาน Flash Express API
+  app.use("/api/flash-express", flashExpressRouter);
 
   const httpServer = createServer(app);
 

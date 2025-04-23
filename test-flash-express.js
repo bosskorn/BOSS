@@ -28,50 +28,52 @@ function createBaseParams() {
   };
 }
 
-// สร้างลายเซ็น Flash Express (ปรับปรุงตามวิธีการของไฟล์ final)
+// สร้างลายเซ็น Flash Express (ทดลองวิธีใหม่ตามแบบ Server)
 function generateFlashSignature(params, apiKey) {
   console.log('⚙️ เริ่มคำนวณลายเซ็น...');
-  // สร้างสำเนาข้อมูล เพื่อไม่เปลี่ยนแปลงข้อมูลต้นฉบับ
-  const paramsClone = { ...params };
   
-  // ลบฟิลด์ที่ไม่ควรใช้ในการคำนวณลายเซ็น
-  delete paramsClone.sign;
-  delete paramsClone.subItemTypes;
-  delete paramsClone.merchantId;
-  delete paramsClone.subParcel;
-  delete paramsClone.subParcelQuantity;
-  delete paramsClone.remark;
+  // 1. สร้างสำเนาข้อมูล - ใช้ JSON.parse/stringify เพื่อตัดขาดการอ้างอิง
+  const paramsClone = JSON.parse(JSON.stringify(params));
+  
+  // 2. ลบฟิลด์ที่ไม่ควรใช้ในการคำนวณลายเซ็น
+  const excludeFields = ['sign', 'subItemTypes', 'merchantId', 'subParcel', 'subParcelQuantity', 'remark'];
+  for (const field of excludeFields) {
+    delete paramsClone[field];
+  }
   
   console.log('⚙️ ข้อมูลหลังจากลบฟิลด์ที่ไม่ใช้ในการคำนวณลายเซ็น:', JSON.stringify(paramsClone, null, 2));
   
-  // 1. แปลงทุกค่าเป็น string
+  // 3. สร้าง string params และแปลงทุกค่าเป็น string
   const stringParams = {};
-  for (const key in paramsClone) {
+  for (const key of Object.keys(paramsClone)) {
     // ข้ามค่าที่เป็น null, undefined หรือช่องว่าง
     if (paramsClone[key] === null || paramsClone[key] === undefined || paramsClone[key] === '') {
       console.log(`⚠️ ข้ามพารามิเตอร์ "${key}" เนื่องจากค่าเป็น null, undefined หรือค่าว่าง`);
       continue;
     }
     
-    // แปลงทุกค่าเป็น string
     stringParams[key] = String(paramsClone[key]);
   }
-
-  // 2. จัดเรียงคีย์ตามลำดับตัวอักษร ASCII
+  
+  // 4. จัดเรียงคีย์ตามลำดับตัวอักษร ASCII
   const sortedKeys = Object.keys(stringParams).sort();
   console.log('📝 คีย์ที่เรียงลำดับแล้ว:', sortedKeys);
-
-  // 3. สร้างสตริงสำหรับลายเซ็น
-  const stringToSign = sortedKeys
-    .map(key => `${key}=${stringParams[key]}`)
-    .join('&');
   
-  // 4. เพิ่ม API key ที่ท้ายสตริง
+  // 5. สร้างสตริงสำหรับลายเซ็น
+  let stringToSign = '';
+  for (let i = 0; i < sortedKeys.length; i++) {
+    const key = sortedKeys[i];
+    stringToSign += `${key}=${stringParams[key]}`;
+    if (i < sortedKeys.length - 1) {
+      stringToSign += '&';
+    }
+  }
+  
+  // 6. เพิ่ม API key ที่ท้ายสตริง
   const signString = `${stringToSign}&key=${apiKey}`;
-  
   console.log('🔑 สตริงสำหรับลายเซ็น:', signString);
   
-  // 5. คำนวณค่า SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
+  // 7. คำนวณค่า SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
   const signature = crypto.createHash('sha256')
     .update(signString)
     .digest('hex')

@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
 import { auth } from '../middleware/auth';
 import {
-  getFlashExpressShippingOptions,
-  createFlashExpressShipping,
-  getFlashExpressTrackingStatus
+  getShippingOptions as getFlashExpressShippingOptions,
+  createShipment as createFlashExpressShipping,
+  trackShipment as getFlashExpressTrackingStatus
 } from '../services/flash-express';
 import axios from 'axios';
 import crypto from 'crypto';

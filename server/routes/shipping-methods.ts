@@ -2,14 +2,14 @@ import { Router } from 'express';
 import { storage } from '../storage';
 import { auth } from '../middleware/auth';
 import { insertShippingMethodSchema } from '@shared/schema';
-import { getFlashExpressShippingOptions as getFlashExpressShippingOptionsOriginal } from '../services/flash-express';
+
 import { 
   getShippingOptions as getFlashExpressShippingOptions, 
   createShipment as createFlashExpressShipping
-} from '../services/flash-express-final';
+} from '../services/flash-express';
 import flashExpressRoutes from './flash-express-routes';
 
-// ฟังก์ชันสร้าง nonceStr (ทำซ้ำจาก flash-express-final.ts)
+// ฟังก์ชันสร้าง nonceStr
 function generateNonceStr(length = 16): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';

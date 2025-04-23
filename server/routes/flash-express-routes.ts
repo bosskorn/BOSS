@@ -1,239 +1,276 @@
-import { Router } from "express";
-import { z } from "zod";
-import { getShippingOptions, createShipment, trackShipment } from "../services/flash-express-final";
-import { auth } from "../middleware/auth";
-import { storage } from "../storage";
+// Flash Express API Routes
+import express, { Request, Response } from 'express';
+import { auth } from '../middleware/auth';
+import { storage } from '../storage'; 
+import { getShippingOptions, createShipment, trackShipment } from '../services/flash-express';
 
-const router = Router();
+const router = express.Router();
 
-// สคีมาตรวจสอบข้อมูลสำหรับคำนวณค่าจัดส่ง
-const calculateRateSchema = z.object({
-  originAddress: z.object({
-    province: z.string(),
-    district: z.string(),
-    subdistrict: z.string(),
-    zipcode: z.string(),
-  }),
-  destinationAddress: z.object({
-    province: z.string(),
-    district: z.string(),
-    subdistrict: z.string(),
-    zipcode: z.string(),
-  }),
-  packageDetails: z.object({
-    weight: z.number().positive(),
-    width: z.number().positive(),
-    length: z.number().positive(),
-    height: z.number().positive(),
-  }),
-});
-
-// สคีมาตรวจสอบข้อมูลสำหรับสร้างเลขพัสดุ
-const createShipmentSchema = z.object({
-  // ข้อมูลผู้ส่ง
-  senderName: z.string(),
-  senderPhone: z.string(),
-  senderAddress: z.object({
-    address: z.string(),
-    province: z.string(),
-    district: z.string(),
-    subdistrict: z.string(),
-    zipcode: z.string(),
-  }),
-  
-  // ข้อมูลผู้รับ
-  recipientName: z.string(),
-  recipientPhone: z.string(),
-  recipientAddress: z.object({
-    address: z.string(),
-    province: z.string(),
-    district: z.string(),
-    subdistrict: z.string(),
-    zipcode: z.string(),
-  }),
-  
-  // ข้อมูลพัสดุ
-  weight: z.number().positive(),
-  width: z.number().positive(),
-  length: z.number().positive(),
-  height: z.number().positive(),
-  
-  // อื่นๆ
-  remark: z.string().optional(),
-  insured: z.number().default(0),
-  codEnabled: z.number().default(0),
-  codAmount: z.number().default(0),
-  articleCategory: z.string().default('1'),
-  expressCategory: z.string().default('1'),
-  parcelKind: z.string().default('1'),
-});
-
-// คำนวณค่าจัดส่ง Flash Express
-router.post("/calculate", auth, async (req, res) => {
+/**
+ * ดึงตัวเลือกการจัดส่งและราคาจาก Flash Express API
+ * รับพารามิเตอร์: 
+ * - fromPostalCode: รหัสไปรษณีย์ต้นทาง
+ * - toPostalCode: รหัสไปรษณีย์ปลายทาง
+ * - weight: น้ำหนักพัสดุ (กรัม)
+ * - width, height, length: ขนาดพัสดุ (ซม.)
+ */
+router.get('/shipping/options', auth, async (req: Request, res: Response) => {
   try {
-    // ตรวจสอบข้อมูล
-    const validationResult = calculateRateSchema.safeParse(req.body);
-    if (!validationResult.success) {
-      return res.status(400).json({
-        success: false,
-        error: "ข้อมูลไม่ถูกต้อง",
-        details: validationResult.error.format(),
+    const { fromPostalCode, toPostalCode, weight, width, height, length } = req.query;
+    
+    if (!fromPostalCode || !toPostalCode || !weight) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'กรุณาระบุรหัสไปรษณีย์ต้นทาง ปลายทาง และน้ำหนัก' 
       });
     }
     
-    const { originAddress, destinationAddress, packageDetails } = validationResult.data;
+    const packageDetails = {
+      weight: String(weight),
+      width: String(width || 10),
+      height: String(height || 10),
+      length: String(length || 10)
+    };
     
-    // เรียกใช้บริการคำนวณค่าจัดส่ง
+    const originAddress = {
+      postalCode: String(fromPostalCode)
+    };
+    
+    const destinationAddress = {
+      postalCode: String(toPostalCode)
+    };
+    
     const result = await getShippingOptions(originAddress, destinationAddress, packageDetails);
     
-    return res.json(result);
+    return res.json({
+      success: true,
+      options: result
+    });
+    
   } catch (error: any) {
-    console.error("Error calculating shipping rate:", error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || "เกิดข้อผิดพลาดในการคำนวณค่าจัดส่ง",
+    console.error('Error getting shipping options:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'เกิดข้อผิดพลาดในการดึงข้อมูลตัวเลือกการจัดส่ง',
+      error: error.message
     });
   }
 });
 
-// สร้างเลขพัสดุ Flash Express
-router.post("/create", auth, async (req, res) => {
+/**
+ * สร้างเลขพัสดุใหม่กับ Flash Express
+ */
+router.post('/shipping/create', auth, async (req: Request, res: Response) => {
   try {
-    // ตรวจสอบข้อมูล
-    const validationResult = createShipmentSchema.safeParse(req.body);
-    if (!validationResult.success) {
-      return res.status(400).json({
-        success: false,
-        error: "ข้อมูลไม่ถูกต้อง",
-        details: validationResult.error.format(),
-      });
-    }
-
-    const userId = (req.user as any).id;
+    const userId = req.user?.id;
     
-    // ตรวจสอบยอดเงินว่าเพียงพอหรือไม่
-    const user = await storage.getUserById(userId);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'ไม่พบข้อมูลผู้ใช้' });
+    }
+    
+    const user = await storage.getUser(userId);
     
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: "ไม่พบข้อมูลผู้ใช้",
-      });
+      return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลผู้ใช้' });
     }
-    
-    // คำนวณค่าส่งเพื่อตรวจสอบความถูกต้องก่อนส่ง API
-    const { senderAddress, recipientAddress, weight, width, length, height, insured, codEnabled, codAmount } = validationResult.data;
-    
-    const packageDetails = { weight, width, length, height };
-    const shippingRate = await getShippingOptions(senderAddress, recipientAddress, packageDetails);
-    
-    if (!shippingRate.success) {
-      return res.status(400).json({
-        success: false,
-        error: `ไม่สามารถคำนวณค่าจัดส่งได้: ${shippingRate.error}`,
-      });
-    }
-    
-    // คำนวณค่าบริการทั้งหมด (ค่าส่ง + ประกัน + COD)
-    let totalFee = parseFloat(shippingRate.estimatePrice || "0");
-    if (insured === 1) {
-      totalFee += 20; // ค่าประกัน 20 บาท
-    }
-    
-    if (codEnabled === 1 && codAmount > 0) {
-      const codFee = Math.max(codAmount * 0.03, 10); // ค่าธรรมเนียม COD 3% หรือขั้นต่ำ 10 บาท
-      totalFee += codFee;
-    }
-    
-    // ค่าธรรมเนียมแพลตฟอร์ม
-    const platformFee = 25; // ค่าธรรมเนียมแพลตฟอร์ม 25 บาท
-    totalFee += platformFee;
     
     // ตรวจสอบยอดเงินคงเหลือ
-    if (Number(user.balance) < totalFee) {
-      return res.status(400).json({
-        success: false,
-        error: `ยอดเงินไม่เพียงพอ กรุณาเติมเงิน จำนวนเงินที่ต้องการ ${totalFee.toFixed(2)} บาท แต่มียอดเงินคงเหลือ ${Number(user.balance).toFixed(2)} บาท`,
+    if (parseFloat(user.balance) < 25) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'ยอดเงินคงเหลือไม่เพียงพอ กรุณาเติมเงิน' 
       });
     }
     
-    // สร้างเลขพัสดุ
-    const shipmentResult = await createShipment(validationResult.data);
+    // อ่านข้อมูลจาก req.body
+    const {
+      outTradeNo,
+      // ข้อมูลผู้รับ
+      recipientName,
+      recipientPhone,
+      recipientAddress,
+      recipientProvince,
+      recipientDistrict,
+      recipientSubdistrict,
+      recipientPostalCode,
+      // ข้อมูลพัสดุ
+      weight,
+      width,
+      height,
+      length,
+      parcelValue,
+      remark,
+      // ประเภทการจัดส่ง
+      expressType,
+      articleType
+    } = req.body;
     
-    if (!shipmentResult.success) {
-      return res.status(400).json({
-        success: false,
-        error: shipmentResult.error || "ไม่สามารถสร้างเลขพัสดุได้",
-        errorData: shipmentResult,
+    if (!recipientName || !recipientPhone || !recipientAddress || !recipientPostalCode) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'กรุณาระบุข้อมูลผู้รับให้ครบถ้วน' 
       });
     }
     
-    // หักเงินจากบัญชีผู้ใช้
-    await storage.updateUserBalance(userId, -totalFee);
+    if (!weight) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'กรุณาระบุน้ำหนักพัสดุ' 
+      });
+    }
     
-    // บันทึกประวัติการใช้บริการ
+    // สร้างข้อมูลสำหรับ API
+    const shipmentData = {
+      outTradeNo: outTradeNo || `ORDER${Date.now()}`,
+      // ข้อมูลผู้ส่ง (ข้อมูลจากผู้ใช้ในระบบ)
+      srcName: user.fullname,
+      srcPhone: user.phone,
+      srcProvinceName: user.province,
+      srcCityName: user.district,
+      srcDistrictName: user.subdistrict,
+      srcPostalCode: user.zipcode,
+      srcDetailAddress: user.address,
+      
+      // ข้อมูลผู้รับ
+      dstName: recipientName,
+      dstPhone: recipientPhone,
+      dstProvinceName: recipientProvince,
+      dstCityName: recipientDistrict,
+      dstDistrictName: recipientSubdistrict,
+      dstPostalCode: recipientPostalCode,
+      dstDetailAddress: recipientAddress,
+      
+      // ข้อมูลพัสดุ
+      weight: String(weight * 1000), // แปลงจาก kg เป็น g
+      width: String(width || 10),
+      height: String(height || 10),
+      length: String(length || 10),
+      remark: remark || '',
+      
+      // สินค้าในพัสดุ
+      items: [{
+        itemName: 'สินค้า',
+        itemQuantity: '1'
+      }],
+      
+      // ประเภทการจัดส่ง
+      parcelKind: '1', // 1=ทั่วไป
+      expressCategory: expressType || '1', // 1=ปกติ, 2=ด่วน
+      articleCategory: articleType || '2', // 2=อื่นๆ
+      insured: parcelValue ? '1' : '0', // 1=มีประกัน, 0=ไม่มีประกัน
+      insuranceAmount: parcelValue ? String(parcelValue) : '0',
+      codEnabled: '0' // 0=ไม่มี COD
+    };
+    
+    // เรียก API สร้างเลขพัสดุ
+    const result = await createShipment(shipmentData);
+    
+    if (result.code !== 1) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'ไม่สามารถสร้างเลขพัสดุได้',
+        error: result.message,
+        data: result
+      });
+    }
+    
+    // ตัดเงินจากยอดเงินคงเหลือ (25 บาทต่อพัสดุ)
+    const newBalance = parseFloat(user.balance) - 25;
+    await storage.updateUserBalance(userId, String(newBalance));
+    
+    // บันทึกประวัติการตัดเงิน
     await storage.createFeeHistory({
-      userId,
-      amount: totalFee,
-      description: `ค่าบริการจัดส่งพัสดุ Flash Express เลขติดตาม ${shipmentResult.trackingNumber}`,
-      type: "shipping",
-      status: "completed"
+      userId: userId,
+      amount: '25.00',
+      type: 'deduction',
+      description: 'ค่าสร้างเลขพัสดุ Flash Express',
+      trackingNumber: result.data.pno,
+      createdAt: new Date(),
     });
     
     // บันทึกข้อมูลออเดอร์
     const order = await storage.createOrder({
-      userId,
-      trackingNumber: shipmentResult.trackingNumber,
-      senderName: validationResult.data.senderName,
-      senderPhone: validationResult.data.senderPhone,
-      senderAddress: `${senderAddress.address} ${senderAddress.subdistrict} ${senderAddress.district} ${senderAddress.province} ${senderAddress.zipcode}`,
-      recipientName: validationResult.data.recipientName,
-      recipientPhone: validationResult.data.recipientPhone,
-      recipientAddress: `${recipientAddress.address} ${recipientAddress.subdistrict} ${recipientAddress.district} ${recipientAddress.province} ${recipientAddress.zipcode}`,
-      shippingMethod: "Flash Express",
-      status: "pending",
-      amount: totalFee,
+      userId: userId,
+      orderNumber: shipmentData.outTradeNo,
+      trackingNumber: result.data.pno,
+      providerName: 'Flash Express',
+      senderName: user.fullname,
+      senderPhone: user.phone,
+      senderAddress: user.address,
+      senderProvince: user.province,
+      senderDistrict: user.district,
+      senderSubdistrict: user.subdistrict,
+      senderPostalCode: user.zipcode,
+      recipientName: recipientName,
+      recipientPhone: recipientPhone,
+      recipientAddress: recipientAddress,
+      recipientProvince: recipientProvince,
+      recipientDistrict: recipientDistrict,
+      recipientSubdistrict: recipientSubdistrict,
+      recipientPostalCode: recipientPostalCode,
+      status: 'pending',
       weight: String(weight),
-      shippingData: JSON.stringify(shipmentResult),
-      remark: validationResult.data.remark || "",
+      dimensions: JSON.stringify({
+        width: width || 10,
+        height: height || 10,
+        length: length || 10
+      }),
+      subtotal: '25.00',
+      totalAmount: '25.00',
+      createdAt: new Date(),
+      sortCode: result.data.sortCode || '',
+      sourceData: JSON.stringify(result)
     });
     
     return res.json({
       success: true,
-      trackingNumber: shipmentResult.trackingNumber,
-      orderId: order.id,
-      amount: totalFee,
-      message: "สร้างเลขพัสดุสำเร็จ",
+      message: 'สร้างเลขพัสดุสำเร็จ',
+      data: {
+        trackingNumber: result.data.pno,
+        sortCode: result.data.sortCode,
+        orderId: order.id,
+        orderNumber: shipmentData.outTradeNo,
+        remainingBalance: String(newBalance)
+      }
     });
+    
   } catch (error: any) {
-    console.error("Error creating shipment:", error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || "เกิดข้อผิดพลาดในการสร้างเลขพัสดุ",
+    console.error('Error creating shipping:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'เกิดข้อผิดพลาดในการสร้างเลขพัสดุ',
+      error: error.message
     });
   }
 });
 
-// ติดตามสถานะพัสดุ
-router.get("/track/:trackingNumber", auth, async (req, res) => {
+/**
+ * ติดตามสถานะพัสดุตามเลขติดตาม
+ */
+router.get('/tracking/:trackingNumber', async (req: Request, res: Response) => {
   try {
     const { trackingNumber } = req.params;
     
     if (!trackingNumber) {
-      return res.status(400).json({
-        success: false,
-        error: "กรุณาระบุเลขพัสดุ",
+      return res.status(400).json({ 
+        success: false, 
+        message: 'กรุณาระบุเลขพัสดุ' 
       });
     }
     
     const result = await trackShipment(trackingNumber);
     
-    return res.json(result);
+    return res.json({
+      success: true,
+      data: result
+    });
+    
   } catch (error: any) {
-    console.error("Error tracking shipment:", error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || "เกิดข้อผิดพลาดในการติดตามพัสดุ",
+    console.error('Error tracking shipment:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'เกิดข้อผิดพลาดในการติดตามสถานะพัสดุ',
+      error: error.message
     });
   }
 });
