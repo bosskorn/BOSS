@@ -83,8 +83,7 @@ function Router() {
       <Route path="/flash-express-label-fixed" component={FlashExpressLabelFixed} />
       <Route path="/landing" component={LandingPage} />
       <Route path="/flash-express-api-test" component={FlashExpressAPITest} />
-      {/* Flash Express routes have been removed */}essOrder} />
-
+      {/* Flash Express routes have been removed */}
 
       {/* Protected routes - require authentication */}
       <ProtectedRoute path="/" component={Dashboard} />
