@@ -86,8 +86,8 @@ async function testCreateShipping() {
     const nonceStr = generateNonceStr();
     const outTradeNo = `TEST${Date.now()}`; // เลขที่คำสั่งซื้อที่ไม่ซ้ำกัน
     
-    // สร้าง request data
-    const requestParams = {
+    // 1. สร้างข้อมูลเริ่มต้นสำหรับคำนวณลายเซ็น
+    const requestData = {
       // ข้อมูลพื้นฐาน
       mchId: mchId,
       nonceStr: nonceStr,
@@ -123,33 +123,34 @@ async function testCreateShipping() {
       articleCategory: "2", // ประเภทสินค้า (2=อื่นๆ)
       insured: "0", // ประกันพัสดุ (0=ไม่มี)
       codEnabled: "0", // COD (0=ไม่มี)
-      userNote: "ทดสอบส่งพัสดุ Flash Express"
+      
+      // ข้อมูลเพิ่มเติมที่ต้องการไว้แต่ไม่รวมในการคำนวณลายเซ็น
+      remark: "ทดสอบการส่งพัสดุ"
     };
     
-    // รายการสินค้า (จำเป็นต้องมี)
-    const subItemTypes = [
+    // 2. สร้างลายเซ็น (ต้องกรองฟิลด์ที่ไม่ใช้ในการคำนวณลายเซ็นออกก่อน)
+    const signature = generateFlashSignature(requestData, apiKey);
+    
+    // 3. เพิ่มลายเซ็นเข้าไปในข้อมูล
+    requestData.sign = signature;
+    
+    // 4. เพิ่ม subItemTypes หลังจากคำนวณลายเซ็นแล้ว (จำเป็นต้องมี)
+    requestData.subItemTypes = JSON.stringify([
       {
-        name: "สินค้าทดสอบ", 
-        quantity: "1"
+        itemName: "สินค้าทดสอบ",
+        itemQuantity: "1"
       }
-    ];
+    ]);
     
-    // สร้างลายเซ็น (ต้องข้าม remark ในการคำนวณลายเซ็น)
-    const remark = "ทดสอบการส่งพัสดุ"; // เก็บไว้ใช้ทีหลัง
-    const signature = generateFlashSignature(requestParams, apiKey);
+    // 5. สร้าง form data โดยแปลงทุกค่าเป็น string
+    const formData = new URLSearchParams();
+    Object.entries(requestData).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        formData.append(key, String(value));
+      }
+    });
     
-    // เพิ่มข้อมูลที่ต้องใส่หลังจากคำนวณลายเซ็นแล้ว
-    const requestWithSign = { 
-      ...requestParams, 
-      sign: signature,
-      remark: remark, // เพิ่ม remark หลังจากคำนวณลายเซ็นแล้ว
-      subItemTypes: JSON.stringify(subItemTypes) // เปลี่ยนเป็น string
-    };
-    
-    // แปลงเป็น URL-encoded string
-    const encodedPayload = new URLSearchParams(requestWithSign).toString();
-    
-    // สร้าง headers
+    // 6. สร้าง headers
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Accept': 'application/json',
@@ -158,18 +159,25 @@ async function testCreateShipping() {
       'X-Flash-Nonce': nonceStr
     };
     
+    console.log('Request URL:', 'https://open-api-tra.flashexpress.com/open/v3/orders');
     console.log('Request headers:', headers);
-    console.log('Request params:', requestWithSign);
+    console.log('Request form data:', formData.toString());
     
-    // ส่ง request
+    // 7. ส่ง request
     const response = await axios.post(
       'https://open-api-tra.flashexpress.com/open/v3/orders',
-      encodedPayload,
-      { headers }
+      formData,
+      { headers, timeout: 15000 } // เพิ่ม timeout เป็น 15 วินาที
     );
     
     console.log('Response status:', response.status);
     console.log('Response data:', JSON.stringify(response.data, null, 2));
+    
+    if (response.data.code === 1) {
+      console.log('🎉 สร้างเลขพัสดุสำเร็จ!');
+      console.log('📦 เลขพัสดุ:', response.data.data.pno);
+      console.log('🏷️ Sort Code:', response.data.data.sortCode);
+    }
     
     return response.data;
   } catch (error) {
