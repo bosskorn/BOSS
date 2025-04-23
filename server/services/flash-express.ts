@@ -158,12 +158,18 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     // - ทำให้แน่ใจว่าข้อมูลตัวเลขส่งเป็น integer จริงๆ (ไม่ใช่ string)
     // - ทำให้แน่ใจว่า subItemTypes อยู่ในรูปแบบที่ถูกต้อง
     // Flash Express API ต้องการ subItemTypes ในรูปแบบที่เฉพาะเจาะจง
-    // คือต้องมี itemName และ itemQuantity (เป็นตัวเลข) เท่านั้น
+    // คือต้องมี itemName, itemWeightSize (ถ้ามี), itemColor (ถ้ามี) และ itemQuantity (เป็นตัวเลข)
     const subItemTypes = Array.isArray(orderData.subItemTypes) ? orderData.subItemTypes.map(item => {
-      return {
+      const formattedItem: Record<string, any> = {
         itemName: item.itemName || 'สินค้า',
         itemQuantity: typeof item.itemQuantity === 'string' ? parseInt(item.itemQuantity) : (item.itemQuantity || 1)
       };
+      
+      // เพิ่มฟิลด์เสริมตามเอกสาร Flash Express API
+      if (item.itemWeightSize) formattedItem.itemWeightSize = item.itemWeightSize;
+      if (item.itemColor) formattedItem.itemColor = item.itemColor;
+      
+      return formattedItem;
     }) : [{ itemName: 'สินค้า', itemQuantity: 1 }];
 
     // สร้างข้อมูลตามรูปแบบที่ Flash Express API ต้องการ ตรงตามเอกสาร
