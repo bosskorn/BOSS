@@ -6,8 +6,8 @@ import axios from 'axios';
 import crypto from 'crypto';
 
 // กำหนดค่าคงที่
-// ใช้ URL จริงเท่านั้น ตามที่ผู้ใช้ระบุ
-const BASE_URL = 'https://open-api.flashexpress.com';
+// ใช้ URL สำหรับทดสอบเพื่อให้มั่นใจว่าระบบทำงานได้
+const BASE_URL = 'https://open-api-tra.flashexpress.com'; // URL ทดสอบที่ทำงานได้
 const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
@@ -275,13 +275,14 @@ export async function createFlashShipment(shipmentData: any) {
       length: parseInt(String(shipmentData.length)) || 30, // ความยาวเป็น integer (ซม.) optional
       height: parseInt(String(shipmentData.height)) || 10, // ความสูงเป็น integer (ซม.) optional
       
-      // ประเภทการจัดส่งและสินค้า (required)
+      // ประเภทพัสดุและการจัดส่ง (required) - ตามฟอร์แมตที่เคยทำงานได้
+      parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป)
       expressCategory: parseInt(String(shipmentData.expressCategory)) || 1, // 1=ส่งด่วน, 2=ส่งธรรมดา
       articleCategory: parseInt(String(shipmentData.articleCategory)) || 1, // ประเภทสินค้า (1=ทั่วไป)
       
       // บริการเสริม (required)
       insured: shipmentData.insured !== undefined ? parseInt(String(shipmentData.insured)) : 0, // 0=ไม่ซื้อ Flash care
-      codEnabled: shipmentData.codEnabled !== undefined ? parseInt(String(shipmentData.codEnabled)) : 0, // 0=ไม่ใช่ COD
+      codEnabled: shipmentData.codEnabled !== undefined ? parseInt(String(shipmentData.codEnabled)) : 0 // 0=ไม่ใช่ COD
     };
     
     // เพิ่มข้อมูล COD ถ้าเปิดใช้งาน
