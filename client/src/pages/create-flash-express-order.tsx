@@ -318,23 +318,68 @@ export default function CreateFlashExpressOrderPage() {
     height,
   ]);
 
+  // ฟังก์ชันแปลงชื่อเขต/อำเภอให้เข้ากับรูปแบบที่ Flash Express API ต้องการ
+  const formatDistrictName = (district: string) => {
+    // ตัด "เขต" ออกจากชื่อเขตของกรุงเทพฯ
+    if (district.startsWith('เขต')) {
+      return district.substring(3).trim();
+    }
+    return district;
+  };
+
+  // ฟังก์ชันแปลงชื่อแขวง/ตำบลให้เข้ากับรูปแบบที่ Flash Express API ต้องการ
+  const formatSubdistrictName = (subdistrict: string) => {
+    // ตัด "แขวง" ออกจากชื่อแขวงของกรุงเทพฯ
+    if (subdistrict.startsWith('แขวง')) {
+      return subdistrict.substring(4).trim();
+    }
+    return subdistrict;
+  };
+
   // ฟังก์ชันคำนวณค่าจัดส่ง
   const calculateShippingRate = async () => {
     try {
       setCalculatingRate(true);
+      console.log('กำลังคำนวณค่าจัดส่ง...');
 
+      // ดึงข้อมูลจากฟอร์ม
+      const senderProvince = form.getValues('senderAddress.province');
+      const senderDistrict = form.getValues('senderAddress.district');
+      const senderSubdistrict = form.getValues('senderAddress.subdistrict');
+      const senderZipcode = form.getValues('senderAddress.zipcode');
+      
+      const recipientProvince = form.getValues('recipientAddress.province');
+      const recipientDistrict = form.getValues('recipientAddress.district');
+      const recipientSubdistrict = form.getValues('recipientAddress.subdistrict');
+      const recipientZipcode = form.getValues('recipientAddress.zipcode');
+
+      console.log('ข้อมูลต้นทาง:', {
+        province: senderProvince,
+        district: senderDistrict,
+        subdistrict: senderSubdistrict,
+        zipcode: senderZipcode
+      });
+      
+      console.log('ข้อมูลปลายทาง:', {
+        province: recipientProvince,
+        district: recipientDistrict,
+        subdistrict: recipientSubdistrict,
+        zipcode: recipientZipcode
+      });
+
+      // แปลงข้อมูลให้ตรงกับที่ Flash Express API ต้องการ
       const originAddress = {
-        province: form.getValues('senderAddress.province'),
-        district: form.getValues('senderAddress.district'),
-        subdistrict: form.getValues('senderAddress.subdistrict'),
-        zipcode: form.getValues('senderAddress.zipcode'),
+        province: senderProvince,
+        district: formatDistrictName(senderDistrict),
+        subdistrict: formatSubdistrictName(senderSubdistrict),
+        zipcode: senderZipcode,
       };
 
       const destinationAddress = {
-        province: form.getValues('recipientAddress.province'),
-        district: form.getValues('recipientAddress.district'),
-        subdistrict: form.getValues('recipientAddress.subdistrict'),
-        zipcode: form.getValues('recipientAddress.zipcode'),
+        province: recipientProvince,
+        district: formatDistrictName(recipientDistrict),
+        subdistrict: formatSubdistrictName(recipientSubdistrict),
+        zipcode: recipientZipcode,
       };
 
       const packageDetails = {
@@ -343,6 +388,12 @@ export default function CreateFlashExpressOrderPage() {
         length: form.getValues('length'),
         height: form.getValues('height'),
       };
+      
+      console.log('ส่งข้อมูลไปยัง API:', {
+        originAddress,
+        destinationAddress,
+        packageDetails
+      });
 
       // เรียกใช้ API คำนวณค่าจัดส่ง
       const response = await fetch('/api/shipping/flash-express-new/calculate', {
@@ -408,7 +459,23 @@ export default function CreateFlashExpressOrderPage() {
     try {
       setIsLoading(true);
       console.log('กำลังสร้างเลขพัสดุ Flash Express...');
-      console.log('ข้อมูลที่จะส่งไปยัง API:', values);
+
+      // แปลงข้อมูลให้ตรงกับที่ Flash Express API ต้องการ
+      const modifiedValues = {
+        ...values,
+        senderAddress: {
+          ...values.senderAddress,
+          district: formatDistrictName(values.senderAddress.district),
+          subdistrict: formatSubdistrictName(values.senderAddress.subdistrict),
+        },
+        recipientAddress: {
+          ...values.recipientAddress,
+          district: formatDistrictName(values.recipientAddress.district),
+          subdistrict: formatSubdistrictName(values.recipientAddress.subdistrict),
+        }
+      };
+
+      console.log('ข้อมูลที่จะส่งไปยัง API (หลังการแปลง):', modifiedValues);
 
       // ส่งข้อมูลไปยัง API
       const response = await fetch('/api/shipping/flash-express-new/create', {
@@ -417,7 +484,7 @@ export default function CreateFlashExpressOrderPage() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(values),
+        body: JSON.stringify(modifiedValues),
       });
 
       const data = await response.json();
