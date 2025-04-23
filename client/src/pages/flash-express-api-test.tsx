@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface AddressData {
   province: string;
@@ -51,6 +52,7 @@ export default function FlashExpressAPITest() {
   const [loading, setLoading] = useState(false);
   const [rateResponse, setRateResponse] = useState<any>(null);
   const [shippingResponse, setShippingResponse] = useState<any>(null);
+  const [connectionTestResult, setConnectionTestResult] = useState<any>(null);
   
   // ข้อมูลที่อยู่สำหรับดึงอัตราค่าขนส่ง
   const [fromAddress, setFromAddress] = useState<AddressData>({
@@ -194,13 +196,49 @@ export default function FlashExpressAPITest() {
     setShippingData(prev => ({ ...prev, [key]: value }));
   };
   
+  // ทดสอบการเชื่อมต่อกับ Flash Express API โดยตรง
+  const testConnection = async () => {
+    try {
+      setLoading(true);
+      
+      console.log('กำลังทดสอบการเชื่อมต่อกับ Flash Express API...');
+      
+      const response = await apiRequest(
+        'GET',
+        '/api/flash-express/test',
+        null
+      );
+      
+      const data = await response.json();
+      console.log('ผลการทดสอบการเชื่อมต่อ:', data);
+      setConnectionTestResult(data);
+      
+      toast({
+        title: data.success ? 'การเชื่อมต่อสำเร็จ' : 'การเชื่อมต่อไม่สำเร็จ',
+        description: data.message || (data.success ? 'สามารถเชื่อมต่อกับ Flash Express API ได้' : 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้'),
+        variant: data.success ? 'default' : 'destructive',
+      });
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการทดสอบการเชื่อมต่อ:', error);
+      setConnectionTestResult({ success: false, error: String(error) });
+      toast({
+        title: 'เกิดข้อผิดพลาด',
+        description: 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   return (
     <Layout>
       <div className="container mx-auto py-6">
         <h1 className="text-2xl font-bold mb-6">ทดสอบการเชื่อมต่อ Flash Express API</h1>
         
-        <Tabs defaultValue="rates">
+        <Tabs defaultValue="connection">
           <TabsList className="mb-4">
+            <TabsTrigger value="connection">ทดสอบการเชื่อมต่อ</TabsTrigger>
             <TabsTrigger value="rates">ทดสอบดึงข้อมูลค่าจัดส่ง</TabsTrigger>
             <TabsTrigger value="shipping">ทดสอบสร้างการจัดส่ง</TabsTrigger>
           </TabsList>
@@ -329,6 +367,73 @@ export default function FlashExpressAPITest() {
                   ) : (
                     <div className="text-center p-6 text-muted-foreground">
                       ยังไม่มีข้อมูล กรุณากดปุ่ม 'ตรวจสอบค่าจัดส่ง' เพื่อเริ่มดึงข้อมูล
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          {/* แท็บทดสอบการเชื่อมต่อ */}
+          <TabsContent value="connection">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* คำอธิบายการทดสอบ */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>ทดสอบการเชื่อมต่อกับ Flash Express API</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Alert>
+                      <AlertTitle>วิธีการทดสอบ</AlertTitle>
+                      <AlertDescription>
+                        กดปุ่ม "ทดสอบการเชื่อมต่อ" เพื่อตรวจสอบว่าระบบสามารถเชื่อมต่อกับ Flash Express API ได้หรือไม่
+                        การทดสอบนี้จะส่งคำขอตรวจสอบไปยัง Flash Express API โดยตรง
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <Button 
+                      onClick={testConnection} 
+                      disabled={loading}
+                      className="w-full"
+                    >
+                      {loading ? 'กำลังทดสอบ...' : 'ทดสอบการเชื่อมต่อ'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* แสดงผลลัพธ์การทดสอบ */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>ผลการทดสอบการเชื่อมต่อ</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {connectionTestResult ? (
+                    <div>
+                      {connectionTestResult.success ? (
+                        <Alert className="mb-4">
+                          <AlertTitle className="text-green-600">เชื่อมต่อสำเร็จ</AlertTitle>
+                          <AlertDescription>
+                            สามารถเชื่อมต่อกับ Flash Express API ได้
+                          </AlertDescription>
+                        </Alert>
+                      ) : (
+                        <Alert className="mb-4" variant="destructive">
+                          <AlertTitle>เชื่อมต่อไม่สำเร็จ</AlertTitle>
+                          <AlertDescription>
+                            {connectionTestResult.message || 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้'}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      
+                      <div className="bg-muted p-4 rounded-md whitespace-pre-wrap h-[500px] overflow-auto">
+                        <pre>{JSON.stringify(connectionTestResult, null, 2)}</pre>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center p-6 text-muted-foreground">
+                      ยังไม่มีข้อมูล กรุณากดปุ่ม 'ทดสอบการเชื่อมต่อ' เพื่อเริ่มการทดสอบ
                     </div>
                   )}
                 </CardContent>
