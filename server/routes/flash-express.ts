@@ -22,41 +22,27 @@ const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com/open';
 
 // ฟังก์ชันสำหรับสร้างลายเซ็นดิจิตอล (signature) สำหรับ Flash Express API
 function createSignature(params: Record<string, any>, apiKey: string): string {
-  // 1. เรียงพารามิเตอร์ตามรหัส ASCII
-  const sortedParams = Object.keys(params).sort().reduce(
-    (result: Record<string, any>, key: string) => {
-      result[key] = params[key];
-      return result;
-    }, 
-    {}
-  );
-
-  // 2. แปลงเป็น URL-encoded string
-  const queryString = Object.entries(sortedParams)
-    .map(([key, value]) => {
-      // ละเว้นค่าว่างหรือ undefined
-      if (value === undefined || value === null || value === '') {
-        return null;
-      }
-      
-      // แปลง Array เป็น JSON string
-      if (Array.isArray(value)) {
-        return `${key}=${encodeURIComponent(JSON.stringify(value))}`;
-      }
-      
-      // แปลง Object เป็น JSON string
-      if (typeof value === 'object') {
-        return `${key}=${encodeURIComponent(JSON.stringify(value))}`;
-      }
-      
-      // ค่าปกติ
-      return `${key}=${encodeURIComponent(value)}`;
-    })
-    .filter(Boolean) // กรองค่า null ออก
-    .join('&');
+  // 1. เรียงพารามิเตอร์ตามตัวอักษร (ให้ตรงกับวิธีของ Flash Express API)
+  const keys = Object.keys(params).sort();
+  
+  // 2. สร้าง query string แบบไม่มี URL encoding
+  let queryString = '';
+  for(const key of keys) {
+    if (params[key] === undefined || params[key] === null || params[key] === '') {
+      continue;
+    }
+    // เพิ่ม parameter เข้าไปใน query string โดยไม่ encode
+    queryString += `${key}=${params[key]}&`;
+  }
+  
+  // ตัด & ตัวสุดท้ายออกถ้ามี
+  if (queryString.endsWith('&')) {
+    queryString = queryString.slice(0, -1);
+  }
 
   // 3. เพิ่ม API key และสร้างลายเซ็นด้วย SHA-256
   const dataToSign = queryString + apiKey;
+  console.log('Data to sign:', dataToSign); // เพื่อดีบัก
   const signature = crypto.createHash('sha256').update(dataToSign).digest('hex');
   
   return signature;
