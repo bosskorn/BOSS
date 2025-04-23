@@ -124,38 +124,59 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
     // URL ของ API เรียกรถของ Flash Express ตามเอกสารล่าสุด
     const apiUrl = `${FLASH_EXPRESS_API_URL}/v1/notify`;
     
-    // ส่งคำขอไปยัง Flash Express API
-    const response = await axios.post(apiUrl, querystring.stringify(apiParams), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json'
+    try {
+      // ส่งคำขอไปยัง Flash Express API
+      const response = await axios.post(apiUrl, querystring.stringify(apiParams), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        validateStatus: (status) => status < 500 // ยอมรับการตอบกลับที่มี status code น้อยกว่า 500
+      });
+      
+      // ตรวจสอบว่าการตอบกลับเป็น HTML (มีแท็ก DOCTYPE) หรือไม่
+      if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE')) {
+        console.error('Flash Express API returned HTML instead of JSON:', response.data.substring(0, 200));
+        throw new Error('Flash Express API ตอบกลับด้วยหน้าเว็บแทนที่จะเป็น JSON - โปรดตรวจสอบ API Key และการตั้งค่า');
       }
-    });
-    
-    console.log('Flash Express Pickup API response:', response.data);
-    
-    // ตรวจสอบการตอบกลับจาก API
-    if (response.data.code === 1 || response.data.msg === 'success' || response.data.message === 'success') {
-      return {
-        success: true,
-        referenceId,
-        pickupDate: formattedDate,
-        timeSlot: params.requestTimeSlot,
-        response: response.data
-      };
+      
+      console.log('Flash Express Pickup API response:', response.data);
+      
+      // ตรวจสอบการตอบกลับจาก API
+      if (response.data.code === 1 || response.data.msg === 'success' || response.data.message === 'success') {
+        return {
+          success: true,
+          referenceId,
+          pickupDate: formattedDate,
+          timeSlot: params.requestTimeSlot,
+          response: response.data
+        };
+      }
+      
+      // กรณีมีข้อผิดพลาด
+      throw new Error(response.data.msg || response.data.message || 'ไม่ทราบสาเหตุ');
+    } catch (axiosError: any) {
+      if (axiosError.response) {
+        // ตรวจสอบข้อผิดพลาดจาก Axios
+        const responseData = axiosError.response.data;
+        
+        // ตรวจสอบว่าข้อมูลตอบกลับเป็น HTML หรือไม่
+        if (typeof responseData === 'string' && responseData.includes('<!DOCTYPE')) {
+          console.error('Error: Flash Express API returned HTML:', responseData.substring(0, 200));
+          throw new Error('Flash Express API ตอบกลับด้วยหน้าเว็บแทนที่จะเป็น JSON - โปรดตรวจสอบ API Key และการตั้งค่า');
+        }
+        
+        console.error('Error response from Flash Express Pickup API:', responseData);
+        throw new Error(
+          (responseData.msg || responseData.message || 'มีข้อผิดพลาดจาก Flash Express API') + 
+          (responseData.code ? ` (รหัสข้อผิดพลาด: ${responseData.code})` : '')
+        );
+      }
+      
+      throw axiosError;
     }
-    
-    // กรณีมีข้อผิดพลาด
-    throw new Error(response.data.msg || response.data.message || 'ไม่ทราบสาเหตุ');
   } catch (error: any) {
     console.error('Error requesting pickup from Flash Express:', error);
-    
-    // ตรวจสอบว่าเป็นข้อผิดพลาดจาก Axios หรือไม่
-    if (error.response) {
-      console.error('Error response from Flash Express Pickup API:', error.response.data);
-      throw new Error(error.response.data.msg || error.response.data.message || 'มีข้อผิดพลาดจาก Flash Express API');
-    }
-    
     throw error;
   }
 }
