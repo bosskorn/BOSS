@@ -1,6 +1,9 @@
 import axios from 'axios';
 import crypto from 'crypto';
 
+// กำหนดค่า timeout สำหรับการเชื่อมต่อ API
+const API_TIMEOUT = 15000; // 15 วินาที
+
 // ฟังก์ชันสร้าง nonceStr
 function generateNonceStr(length = 16) {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -11,37 +14,47 @@ function generateNonceStr(length = 16) {
   return result;
 }
 
+// สร้างข้อมูลพื้นฐานสำหรับทดสอบ (แบบเดียวกับ server/flash-express-fixed-final.ts)
+function createBaseParams() {
+  const mchId = process.env.FLASH_EXPRESS_MERCHANT_ID;
+  const nonceStr = generateNonceStr();
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  
+  return {
+    mchId,
+    nonceStr,
+    timestamp,
+    warehouseNo: `${mchId}_001`,
+  };
+}
+
 // สร้างลายเซ็น Flash Express (ปรับปรุงตามวิธีการของไฟล์ final)
 function generateFlashSignature(params, apiKey) {
   console.log('⚙️ เริ่มคำนวณลายเซ็น...');
-  console.log('⚙️ ข้อมูลเริ่มต้น:', JSON.stringify(params, null, 2));
+  // สร้างสำเนาข้อมูล เพื่อไม่เปลี่ยนแปลงข้อมูลต้นฉบับ
+  const paramsClone = { ...params };
   
-  // 1. แปลงทุกค่าเป็น string และกรองพารามิเตอร์
+  // ลบฟิลด์ที่ไม่ควรใช้ในการคำนวณลายเซ็น
+  delete paramsClone.sign;
+  delete paramsClone.subItemTypes;
+  delete paramsClone.merchantId;
+  delete paramsClone.subParcel;
+  delete paramsClone.subParcelQuantity;
+  delete paramsClone.remark;
+  
+  console.log('⚙️ ข้อมูลหลังจากลบฟิลด์ที่ไม่ใช้ในการคำนวณลายเซ็น:', JSON.stringify(paramsClone, null, 2));
+  
+  // 1. แปลงทุกค่าเป็น string
   const stringParams = {};
-  for (const key in params) {
-    // Flash Express API มีพารามิเตอร์ที่ต้องข้ามในการคำนวณลายเซ็น
-    const skipParams = [
-      'sign', 
-      'subItemTypes', 
-      'merchantId',  // ใช้ mchId แทน
-      'subParcel',   // ไม่รวมในการคำนวณลายเซ็น
-      'subParcelQuantity', // ไม่รวมในการคำนวณลายเซ็น
-      'remark'       // ห้ามรวมในการคำนวณลายเซ็น (สำคัญมาก)
-    ];
-    
-    if (skipParams.includes(key)) {
-      console.log(`🚫 ข้ามพารามิเตอร์ "${key}" ในการคำนวณลายเซ็น`);
-      continue;
-    }
-    
+  for (const key in paramsClone) {
     // ข้ามค่าที่เป็น null, undefined หรือช่องว่าง
-    if (params[key] === null || params[key] === undefined || params[key] === '') {
+    if (paramsClone[key] === null || paramsClone[key] === undefined || paramsClone[key] === '') {
       console.log(`⚠️ ข้ามพารามิเตอร์ "${key}" เนื่องจากค่าเป็น null, undefined หรือค่าว่าง`);
       continue;
     }
     
     // แปลงทุกค่าเป็น string
-    stringParams[key] = String(params[key]);
+    stringParams[key] = String(paramsClone[key]);
   }
 
   // 2. จัดเรียงคีย์ตามลำดับตัวอักษร ASCII
@@ -81,21 +94,16 @@ async function testCreateShipping() {
       return;
     }
     
-    // สร้างข้อมูลพื้นฐาน
-    const timestamp = String(Math.floor(Date.now() / 1000));
-    const nonceStr = generateNonceStr();
+    // 1. สร้างข้อมูลพื้นฐาน (แบบเดียวกับที่ทำงานได้ในระบบของเรา)
+    const baseParams = createBaseParams();
     const outTradeNo = `TEST${Date.now()}`; // เลขที่คำสั่งซื้อที่ไม่ซ้ำกัน
     
-    // 1. สร้างข้อมูลเริ่มต้นสำหรับคำนวณลายเซ็น
-    const requestData = {
-      // ข้อมูลพื้นฐาน
-      mchId: mchId,
-      nonceStr: nonceStr,
-      timestamp: timestamp,
-      warehouseNo: `${mchId}_001`, // รูปแบบมาตรฐานของ Flash Express
-      outTradeNo: outTradeNo,
+    // 2. สร้างข้อมูลที่ไม่รวม remark
+    const cleanParams = {
+      ...baseParams,
+      outTradeNo,
       
-      // ข้อมูลผู้ส่ง (ค่าตั้งต้นจากคนสร้างระบบ)
+      // ข้อมูลผู้ส่ง
       srcName: "กรธนภัทร นาคคงคำ", 
       srcPhone: "0829327325",
       srcProvinceName: "กรุงเทพมหานคร",
@@ -104,7 +112,7 @@ async function testCreateShipping() {
       srcPostalCode: "10230",
       srcDetailAddress: "26 ลาดปลาเค้า 24 แยก 8",
       
-      // ข้อมูลผู้รับ (ข้อมูลที่ได้รับจากคุณ)
+      // ข้อมูลผู้รับ
       dstName: "ธัญลักษณ์ ภาคภูมิ",
       dstPhone: "0869972410",
       dstProvinceName: "พระนครศรีอยุธยา",
@@ -113,7 +121,7 @@ async function testCreateShipping() {
       dstPostalCode: "13160",
       dstDetailAddress: "138/348 ม.7 ซ.20 ต.เชียงรากน้อย อ.บางปะอิน",
       
-      // ข้อมูลพัสดุ
+      // ข้อมูลพัสดุ (ห้ามขาด)
       weight: "1000", // น้ำหนัก 1 กก. ในหน่วยกรัม
       width: "10",
       length: "10",
@@ -123,18 +131,17 @@ async function testCreateShipping() {
       articleCategory: "2", // ประเภทสินค้า (2=อื่นๆ)
       insured: "0", // ประกันพัสดุ (0=ไม่มี)
       codEnabled: "0", // COD (0=ไม่มี)
-      
-      // ข้อมูลเพิ่มเติมที่ต้องการไว้แต่ไม่รวมในการคำนวณลายเซ็น
-      remark: "ทดสอบการส่งพัสดุ"
     };
     
-    // 2. สร้างลายเซ็น (ต้องกรองฟิลด์ที่ไม่ใช้ในการคำนวณลายเซ็นออกก่อน)
-    const signature = generateFlashSignature(requestData, apiKey);
+    // 3. สร้างลายเซ็นจากข้อมูลสะอาด (ไม่มี remark)
+    const signature = generateFlashSignature(cleanParams, apiKey);
     
-    // 3. เพิ่มลายเซ็นเข้าไปในข้อมูล
+    // 4. สร้างข้อมูลที่ส่งจริง: เพิ่ม sign และ remark
+    const requestData = { ...cleanParams };
     requestData.sign = signature;
+    requestData.remark = "ทดสอบการส่งพัสดุ";  // เพิ่ม remark หลังจากคำนวณลายเซ็นแล้ว
     
-    // 4. เพิ่ม subItemTypes หลังจากคำนวณลายเซ็นแล้ว (จำเป็นต้องมี)
+    // 5. เพิ่ม subItemTypes หลังจากคำนวณลายเซ็นแล้ว (จำเป็นต้องมี)
     requestData.subItemTypes = JSON.stringify([
       {
         itemName: "สินค้าทดสอบ",
@@ -142,7 +149,7 @@ async function testCreateShipping() {
       }
     ]);
     
-    // 5. สร้าง form data โดยแปลงทุกค่าเป็น string
+    // 6. สร้าง form data โดยแปลงทุกค่าเป็น string
     const formData = new URLSearchParams();
     Object.entries(requestData).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
@@ -150,13 +157,13 @@ async function testCreateShipping() {
       }
     });
     
-    // 6. สร้าง headers
+    // 7. สร้าง headers
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Accept': 'application/json',
       'X-Flash-Signature': signature,
-      'X-Flash-Timestamp': timestamp,
-      'X-Flash-Nonce': nonceStr
+      'X-Flash-Timestamp': baseParams.timestamp,
+      'X-Flash-Nonce': baseParams.nonceStr
     };
     
     console.log('Request URL:', 'https://open-api-tra.flashexpress.com/open/v3/orders');
