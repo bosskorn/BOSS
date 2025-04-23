@@ -115,10 +115,12 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
       contactPerson: params.contactName,
       phone: params.contactPhone,
       
-      // รายการเลขพัสดุ
-      parcels: JSON.stringify(params.trackingNumbers.map(trackingNumber => ({
-        pno: trackingNumber
-      }))),
+      // รายการเลขพัสดุ (ถ้ามี)
+      parcels: params.trackingNumbers.length > 0 
+        ? JSON.stringify(params.trackingNumbers.map(trackingNumber => ({
+            pno: trackingNumber
+          })))
+        : JSON.stringify([{ pno: `DUMMY${Date.now()}` }]), // ใช้เลขพัสดุชั่วคราวถ้าไม่มีเลขพัสดุจริง
       
       // ข้อมูลเพิ่มเติม
       remark: "เรียกรถจากระบบอัตโนมัติ"
