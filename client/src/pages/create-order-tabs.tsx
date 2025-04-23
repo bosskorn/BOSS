@@ -1561,16 +1561,16 @@ const CreateOrderTabsPage: React.FC = () => {
     }
   };
 
-  // เรียกใช้ Flash Express API สำหรับสร้างเลขพัสดุ
+  // ไม่ใช้งานฟังก์ชันนี้อีกต่อไป เนื่องจากได้ย้ายไปใช้ createRealShippingService แทน
   const createFlashExpressShipping = async (data: CreateOrderFormValues) => {
     try {
-      console.log('กำลังเรียกใช้  API เพื่อสร้างเลขพัสดุ...');
+      console.log('กำลังเรียกใช้ Flash Express API เพื่อสร้างเลขพัสดุ...');
 
-      // สร้างเลขออเดอร์ (ใช้ SS เป็นคำนำหน้าตามตัวย่อของ ShipSync แทน PD ซึ่งเป็นของ PurpleDash)
+      // สร้างเลขออเดอร์ (ใช้ SS เป็นคำนำหน้าตามตัวย่อของ ShipSync)
       const orderNumber = `SS${Date.now()}`;
       console.log('สร้างเลขออเดอร์:', orderNumber);
 
-      // แก้ไขข้อมูลจังหวัดให้ถูกต้องตามรูปแบบที่  API ต้องการ
+      // แก้ไขข้อมูลจังหวัดให้ถูกต้องตามรูปแบบที่ API ต้องการ
       let provinceName = data.province;
       if (provinceName === 'กรุงเทพ' || provinceName === 'กทม' || provinceName === 'กรุงเทพฯ') {
         provinceName = 'กรุงเทพมหานคร';
