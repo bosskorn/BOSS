@@ -65,6 +65,18 @@ router.post('/test-pickup-call', auth, async (req: Request, res: Response) => {
     await db.insert(pickupRequests).values([pickupRequestData]);
 
     try {
+      console.log('Sending pickup request to Flash Express API with user data:', {
+        address: user.address,
+        fullname: user.fullname,
+        phone: user.phone,
+        province: user.province,
+        district: user.district,
+        subdistrict: user.subdistrict,
+        zipcode: user.zipcode,
+        requestDate: finalRequestDate,
+        timeSlot: requestTimeSlot
+      });
+      
       // ส่งคำขอเรียกรถไปที่ Flash Express
       const pickupResponse = await flashExpressPickupRequest({
         trackingNumbers: trackingNumberArray,

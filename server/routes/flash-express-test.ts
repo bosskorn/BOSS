@@ -185,6 +185,7 @@ router.get('/api-key-status', async (req: Request, res: Response) => {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json'
         },
+        responseType: 'json',
         timeout: 5000, // ตั้งค่า timeout ที่ 5 วินาที
         maxRedirects: 0, // ป้องกันการ redirect ที่อาจนำไปสู่การได้รับ HTML
         validateStatus: (status) => status < 500, // ยอมรับการตอบกลับที่มี status code น้อยกว่า 500

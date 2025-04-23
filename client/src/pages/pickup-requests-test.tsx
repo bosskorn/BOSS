@@ -58,7 +58,22 @@ export default function PickupRequestsTest() {
   useEffect(() => {
     async function checkApiKey() {
       try {
-        const response = await fetch('/api/flash-express-test/api-key-status');
+        // เพิ่ม headers ที่ชัดเจนเพื่อระบุว่าเราต้องการ JSON
+        const response = await fetch('/api/flash-express-test/api-key-status', {
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        // ตรวจสอบ Content-Type ของการตอบกลับ
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('API key status check returned non-JSON response:', contentType);
+          setApiKeyStatus('invalid');
+          setShowApiKeyWarning(true);
+          return;
+        }
+        
         const data = await response.json();
         
         if (data.success && data.active) {
@@ -97,6 +112,7 @@ export default function PickupRequestsTest() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify({
           trackingNumber: data.trackingNumber,
@@ -105,6 +121,12 @@ export default function PickupRequestsTest() {
         }),
         credentials: "include",
       });
+      
+      // ตรวจสอบ content-type ก่อนแปลงเป็น JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('เซิร์ฟเวอร์ส่งข้อมูลกลับมาในรูปแบบที่ไม่ใช่ JSON กรุณาติดต่อผู้ดูแลระบบ');
+      }
 
       const result = await response.json();
       setResult(result);
