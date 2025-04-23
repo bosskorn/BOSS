@@ -131,7 +131,9 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json'
         },
-        validateStatus: (status) => status < 500 // ยอมรับการตอบกลับที่มี status code น้อยกว่า 500
+        validateStatus: (status) => status < 500, // ยอมรับการตอบกลับที่มี status code น้อยกว่า 500
+        timeout: 15000, // เพิ่ม timeout เป็น 15 วินาที
+        maxRedirects: 0 // ป้องกันการ redirect ที่อาจนำไปสู่การได้รับ HTML
       });
       
       // ตรวจสอบว่าการตอบกลับเป็น HTML (มีแท็ก DOCTYPE) หรือไม่
@@ -203,6 +205,18 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
           (responseData.msg || responseData.message || 'มีข้อผิดพลาดจาก Flash Express API') + 
           (responseData.code ? ` (รหัสข้อผิดพลาด: ${responseData.code})` : '')
         );
+      }
+      
+      // กรณีที่ข้อผิดพลาดระบุว่าไม่สามารถแปลง HTML เป็น JSON ได้
+      if (axiosError.message && axiosError.message.includes("Unexpected token '<'")) {
+        console.error('Error parsing Flash Express API response - received HTML instead of JSON');
+        throw new Error('Flash Express API ส่งคืนหน้าเว็บแทนที่จะเป็น JSON - API Key หรือ URL อาจไม่ถูกต้อง');
+      }
+      
+      // กรณีที่เกิดข้อผิดพลาด timeout
+      if (axiosError.code === 'ECONNABORTED') {
+        console.error('Flash Express API request timed out');
+        throw new Error('การเชื่อมต่อกับ Flash Express API หมดเวลา - อาจเกิดจากปัญหาเครือข่ายหรือ API ไม่ตอบสนอง');
       }
       
       throw axiosError;

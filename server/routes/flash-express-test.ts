@@ -175,6 +175,9 @@ router.get('/api-key-status', async (req: Request, res: Response) => {
     // ส่งคำขอไปยัง Flash Express API แบบง่ายที่สุดเพื่อตรวจสอบ API Key
     const apiUrl = `${FLASH_EXPRESS_API_URL}/api/fee`;
     console.log('Testing API Key status with endpoint:', apiUrl);
+    console.log('Using merchant ID:', process.env.FLASH_EXPRESS_MERCHANT_ID);
+    // ไม่แสดง API Key ในล็อกเพื่อความปลอดภัย
+    console.log('API Key provided:', process.env.FLASH_EXPRESS_API_KEY ? 'Yes (hidden)' : 'No');
     
     try {
       const response = await axios.post(apiUrl, querystring.stringify(params), {
@@ -182,7 +185,9 @@ router.get('/api-key-status', async (req: Request, res: Response) => {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json'
         },
-        timeout: 5000 // ตั้งค่า timeout ที่ 5 วินาที
+        timeout: 5000, // ตั้งค่า timeout ที่ 5 วินาที
+        maxRedirects: 0, // ป้องกันการ redirect ที่อาจนำไปสู่การได้รับ HTML
+        validateStatus: (status) => status < 500, // ยอมรับการตอบกลับที่มี status code น้อยกว่า 500
       });
       
       // ตรวจสอบการตอบกลับ

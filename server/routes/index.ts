@@ -31,9 +31,9 @@ router.use('/locations', locationsRoutes);
 router.use('/test', testRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/fee-history', feeHistoryRoutes);
-router.use('/flash-express-test', testFlashExpressRoutes);
-router.use('/flash-express', flashExpressRoutes); // เพิ่มเส้นทาง Flash Express API
-router.use('/flash-express-api-test', flashExpressTestRoutes); // เพิ่มเส้นทางทดสอบ Flash Express API ใหม่
+router.use('/flash-express-test', flashExpressTestRoutes); // เส้นทางทดสอบ Flash Express API
+router.use('/flash-express', flashExpressRoutes); // เส้นทาง Flash Express API
+router.use('/test-flash-express', testFlashExpressRoutes); // เส้นทางทดสอบเก่าสำหรับความเข้ากันได้
 router.use('/pickup-test', pickupTestRoutes); // เพิ่มเส้นทางทดสอบการเรียกรถเข้ารับพัสดุ
 
 // Base API route
