@@ -320,9 +320,10 @@ const CreateFlashExpressOrderNew: React.FC = () => {
             : Math.min(Math.max(item.itemQuantity || 1, 1), 999)
         })) : [{itemName: "สินค้า", itemQuantity: 1}],
         
-        // เพิ่มฟิลด์ที่อาจจำเป็นสำหรับ Flash Express API
+        // เพิ่มฟิลด์ที่จำเป็นสำหรับ Flash Express API
         settlementType: 1, // 1 = ผู้ส่งเป็นผู้ชำระ, 2 = ผู้รับเป็นผู้ชำระ (ตามเอกสาร Flash Express)
-        itemCategory: data.articleCategory || 1, // ใช้ articleCategory ที่เลือกหรือค่าเริ่มต้น
+        payType: 1, // เก็บไว้ด้วยเผื่อ API ต้องการ Field นี้เพิ่มเติม
+        itemCategory: data.articleCategory || 1 // ใช้ articleCategory ที่เลือกหรือค่าเริ่มต้น
       };
       
       console.log("ส่งข้อมูลไปยัง API:", orderData);

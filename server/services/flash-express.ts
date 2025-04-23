@@ -251,6 +251,9 @@ export async function createFlashOrder(orderData: any): Promise<any> {
       // เปลี่ยนจาก payType เป็น settlementType ตามเอกสาร Flash Express
       settlementType: parseInt(orderData.settlementType || orderData.payType || 1),
       
+      // เก็บ payType ไว้ด้วย
+      payType: parseInt(orderData.payType || 1),
+      
       // รายการสินค้า (อยู่ในรูปแบบ array ที่มี itemName และ itemQuantity)
       subItemTypes: subItemTypes
     };
