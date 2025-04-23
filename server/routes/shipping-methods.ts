@@ -197,10 +197,10 @@ router.post('/flash-express/shipping', auth, async (req, res) => {
       insured: "0", 
       // ไม่เก็บเงินปลายทาง (default) - ต้องเป็น string
       codEnabled: "0", 
-      // ประเภทสินค้า (default: สินค้าทั่วไป) - ต้องเป็น string
-      articleCategory: "1", 
+      // ใช้ค่าจาก request หรือเป็นค่า default (อื่นๆ) - ต้องเป็น string
+      articleCategory: orderData.articleCategory || "2", 
       // ประเภทการจัดส่ง (default: ธรรมดา) - ต้องเป็น string
-      expressCategory: "1",
+      expressCategory: orderData.expressCategory || "1",
       // เพิ่มข้อมูลที่จำเป็นตามข้อกำหนดของ Flash Express API
       expressTypeId: "1", // ประเภทการจัดส่ง (1=ส่งด่วน)
       productType: "1", // ประเภทสินค้า (1=ทั่วไป)
