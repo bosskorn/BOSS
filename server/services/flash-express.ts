@@ -128,7 +128,7 @@ async function createSignature(data: any, timestamp: number): Promise<string> {
 }
 
 // คำสั่งตรวจสอบลายเซ็นตัวอย่าง
-export function testSignatureWithExampleData() {
+export async function testSignatureWithExampleData() {
   // ตัวอย่างข้อมูลออเดอร์ที่ใช้ในการทดสอบเพื่อให้เห็นรูปแบบชัดเจน
   const testOrder = {
     mchId: MERCHANT_ID || 'CBE1930',
@@ -165,7 +165,7 @@ export function testSignatureWithExampleData() {
   };
 
   const timestamp = Date.now();
-  const signature = createSignature(testOrder, timestamp);
+  const signature = await createSignature(testOrder, timestamp);
   
   return {
     exampleData: testOrder,
@@ -341,7 +341,7 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     }
     
     // สร้างลายเซ็น
-    const signature = createSignature(formattedOrderData, Date.now());
+    const signature = await createSignature(formattedOrderData, Date.now());
     
     // เพิ่มลายเซ็นเข้าไปในข้อมูล
     formattedOrderData.sign = signature;
@@ -419,7 +419,7 @@ export async function trackFlashOrder(trackingNumber: string): Promise<any> {
 
     const data = { trackingNumber };
     const timestamp = Date.now();
-    const signature = createSignature(data, timestamp);
+    const signature = await createSignature(data, timestamp);
 
     const response = await axios.get(`${BASE_URL}/v3/tracking`, {
       params: data,
@@ -447,7 +447,7 @@ export async function findByMerchantTracking(merchantTrackingNumber: string): Pr
 
     const data = { merchantTrackingNumber };
     const timestamp = Date.now();
-    const signature = createSignature(data, timestamp);
+    const signature = await createSignature(data, timestamp);
 
     const response = await axios.get(`${BASE_URL}/v3/orders/find-by-merchant-tracking/${merchantTrackingNumber}`, {
       headers: {
