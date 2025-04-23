@@ -1,982 +1,595 @@
 
 import express from 'express';
+import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
-import { db } from '../db';
-import { orders } from '../schema';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
+import { generateFlashExpressSignature } from '../services/generate-signature';
+import dotenv from 'dotenv';
 
+dotenv.config();
+
+const prisma = new PrismaClient();
 const router = express.Router();
 
-// สร้างออเดอร์ใหม่
-router.post('/create', authenticateToken, async (req, res) => {
-  try {
-    const {
-      outTradeNo,
-      expressCategory,
-      srcName,
-      srcPhone,
-      srcProvinceName,
-      srcCityName,
-      srcDistrictName,
-      srcPostalCode,
-      srcDetailAddress,
-      dstName,
-      dstPhone,
-      dstHomePhone,
-      dstProvinceName,
-      dstCityName,
-      dstDistrictName,
-      dstPostalCode,
-      dstDetailAddress,
-      returnName,
-      returnPhone,
-      codEnabled,
-      codAmount,
-      remark,
-      items
-    } = req.body;
+// กำหนด Express routes สำหรับการจัดการออเดอร์
 
-    // ตรวจสอบข้อมูลที่จำเป็น
-    if (!outTradeNo || !srcName || !srcPhone || !srcProvinceName || !srcCityName || 
-        !srcPostalCode || !srcDetailAddress || !dstName || !dstPhone || 
-        !dstProvinceName || !dstCityName || !dstPostalCode || !dstDetailAddress) {
-      return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+// สร้างออเดอร์ใหม่
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'ไม่ได้รับอนุญาต' });
     }
 
-    // สร้างข้อมูลออเดอร์
-    const userId = req.user?.id;
-    const newOrder = {
-      id: uuidv4(),
-      userId,
-      orderNumber: outTradeNo,
-      status: 'pending',
-      expressType: expressCategory === 1 ? 'express' : 'standard',
-      
-      // ข้อมูลผู้ส่ง
-      senderName: srcName,
-      senderPhone: srcPhone,
-      senderProvince: srcProvinceName,
-      senderCity: srcCityName,
-      senderDistrict: srcDistrictName || null,
-      senderPostalCode: srcPostalCode,
-      senderAddress: srcDetailAddress,
-      
-      // ข้อมูลผู้รับ
-      recipientName: dstName,
-      recipientPhone: dstPhone,
-      recipientHomePhone: dstHomePhone || null,
-      recipientProvince: dstProvinceName,
-      recipientCity: dstCityName,
-      recipientDistrict: dstDistrictName || null,
-      recipientPostalCode: dstPostalCode,
-      recipientAddress: dstDetailAddress,
-      
-      // ข้อมูลการตีกลับ
-      returnName: returnName || null,
-      returnPhone: returnPhone || null,
-      
-      // ข้อมูล COD
-      codEnabled: codEnabled || false,
-      codAmount: codAmount || 0,
-      
-      // ข้อมูลเพิ่มเติม
-      remark: remark || null,
-      items: JSON.stringify(items || []),
-      
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    const {
+      customerName,
+      customerPhone,
+      customerEmail,
+      shippingAddress,
+      shippingProvince,
+      shippingDistrict,
+      shippingSubdistrict,
+      shippingZipcode,
+      note,
+      items,
+      total,
+      shippingMethod,
+      shippingCost,
+      isCOD,
+      codAmount,
+      trackingNumber,
+      sortCode
+    } = req.body;
 
-    // บันทึกข้อมูลออเดอร์ลงในฐานข้อมูล
-    // ในตัวอย่างนี้เราจะจำลองการบันทึกข้อมูล
-    // const result = await db.insert(orders).values(newOrder);
-    
-    // สำหรับตัวอย่าง เราจะส่งค่ากลับเป็นข้อมูลออเดอร์ที่สร้างขึ้น
-    return res.status(201).json({
-      success: true,
-      message: 'สร้างออเดอร์สำเร็จ',
-      order: {
-        id: newOrder.id,
-        outTradeNo: newOrder.orderNumber,
-        status: newOrder.status,
-        expressType: newOrder.expressType,
-        // สามารถเพิ่มข้อมูลอื่นๆ ตามต้องการ
+    // สร้างหมายเลขออเดอร์แบบสุ่ม
+    const orderNumber = `ORD-${Date.now().toString().slice(-8)}-${Math.floor(Math.random() * 1000)}`;
+
+    // สร้างออเดอร์ใหม่ในฐานข้อมูล
+    const newOrder = await prisma.order.create({
+      data: {
+        userId,
+        orderNumber,
+        customerName,
+        customerPhone,
+        customerEmail,
+        shippingAddress,
+        shippingProvince,
+        shippingDistrict,
+        shippingSubdistrict,
+        shippingZipcode,
+        note,
+        total,
+        shippingMethod,
+        shippingCost,
+        isCOD,
+        codAmount,
+        trackingNumber,
+        sortCode,
+        status: 'pending',
+        items: {
+          create: items.map((item: any) => ({
+            productId: item.productId,
+            productName: item.productName,
+            productSku: item.productSku,
+            quantity: item.quantity,
+            price: item.price,
+            options: item.options || {}
+          }))
+        }
+      },
+      include: {
+        items: true
       }
     });
-    
+
+    res.status(201).json({
+      success: true,
+      message: 'สร้างออเดอร์สำเร็จ',
+      order: newOrder
+    });
   } catch (error) {
     console.error('Error creating order:', error);
-    return res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'เกิดข้อผิดพลาดในการสร้างออเดอร์',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: (error as Error).message
     });
   }
 });
 
-export default router;
-
-import { Router } from 'express';
-import { storage } from '../storage';
-import { auth } from '../middleware/auth';
-import { db } from '../db';
-import { users, feeHistory } from '@shared/schema';
-import { eq } from 'drizzle-orm';
-
-const router = Router();
-
-// Get all orders
-router.get('/', auth, async (req, res) => {
+// ดึงข้อมูลออเดอร์ทั้งหมดของผู้ใช้
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    // ดึงข้อมูลออเดอร์ตาม user ID จากผู้ใช้ที่ล็อกอิน
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({
-        success: false,
-        message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
-      });
+    const userId = req.user?.id;
+    
+    // คิวรี่พารามิเตอร์
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const status = req.query.status as string || undefined;
+    const search = req.query.search as string || undefined;
+    
+    // คำนวณการข้ามข้อมูล
+    const skip = (page - 1) * limit;
+    
+    // สร้างเงื่อนไขการค้นหา
+    const whereCondition: any = { userId };
+    
+    // เพิ่มเงื่อนไขสถานะ ถ้ามี
+    if (status && status !== 'all') {
+      whereCondition.status = status;
     }
-
-    const userId = req.user.id;
-    // ดึงข้อมูลออเดอร์พื้นฐาน
-    const basicOrders = await storage.getOrdersByUserId(userId);
-
-    // เพิ่มข้อมูลที่จำเป็นสำหรับการแสดงผลในตาราง
-    const ordersWithDetails = await Promise.all(basicOrders.map(async (order) => {
-      // ดึงข้อมูลรายการสินค้าในออเดอร์
-      const orderItems = await storage.getOrderItems(order.id);
-
-      // ดึงข้อมูลลูกค้า (ถ้ามี)
-      let customer = null;
-      if (order.customerId) {
-        customer = await storage.getCustomer(order.customerId);
-      }
-
-      return {
-        ...order,
-        items: orderItems.length, // จำนวนรายการสินค้า
-        customerName: customer ? customer.name : 'ไม่ระบุ',
-        // ข้อมูลเพิ่มเติมอื่นๆ ที่ต้องการ
-      };
-    }));
-
+    
+    // เพิ่มเงื่อนไขการค้นหา ถ้ามี
+    if (search) {
+      whereCondition.OR = [
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { trackingNumber: { contains: search, mode: 'insensitive' } },
+        { customerName: { contains: search, mode: 'insensitive' } },
+        { customerPhone: { contains: search, mode: 'insensitive' } },
+        { customerEmail: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+    
+    // ดึงข้อมูลออเดอร์
+    const orders = await prisma.order.findMany({
+      where: whereCondition,
+      include: {
+        items: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      skip,
+      take: limit
+    });
+    
+    // นับจำนวนออเดอร์ทั้งหมด
+    const totalOrders = await prisma.order.count({
+      where: whereCondition
+    });
+    
+    // คำนวณจำนวนหน้าทั้งหมด
+    const totalPages = Math.ceil(totalOrders / limit);
+    
     res.json({
       success: true,
-      data: ordersWithDetails // ส่งกลับในรูปแบบ data field ตามมาตรฐานของแอป
+      orders,
+      pagination: {
+        total: totalOrders,
+        page,
+        limit,
+        totalPages
+      }
     });
   } catch (error) {
     console.error('Error fetching orders:', error);
     res.status(500).json({
       success: false,
-      message: 'เกิดข้อผิดพลาดในการดึงข้อมูลคำสั่งซื้อ'
+      message: 'เกิดข้อผิดพลาดในการดึงข้อมูลออเดอร์',
+      error: (error as Error).message
     });
   }
 });
 
-// Get order by ID
-router.get('/:id', auth, async (req, res) => {
+// ดึงข้อมูลออเดอร์ตาม ID
+router.get('/:id', authenticateToken, async (req, res) => {
   try {
-    const orderId = parseInt(req.params.id, 10);
-    if (isNaN(orderId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'รูปแบบ ID ไม่ถูกต้อง'
-      });
-    }
-
-    const order = await storage.getOrder(orderId);
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'ไม่พบคำสั่งซื้อนี้'
-      });
-    }
-
-    // ดึงข้อมูลสินค้าในออเดอร์
-    const orderItems = await storage.getOrderItems(orderId);
-
-    // เพิ่มข้อมูลสินค้าให้กับรายการสินค้า
-    const orderItemsWithProductDetails = await Promise.all(orderItems.map(async (item) => {
-      // แปลงข้อมูลตัวเลขให้เป็นตัวเลขจริงๆ
-      const quantity = parseInt(item.quantity as any, 10) || 1;
-      const price = parseFloat(item.price as any) || 0;
-      const discount = parseFloat(item.discount as any || '0') || 0;
-
-      // คำนวณยอดรวมของสินค้าแต่ละรายการ
-      const total = (quantity * price) - discount;
-
-      // ถ้ามี productId ให้ดึงข้อมูลสินค้า
-      if (item.productId) {
-        try {
-          const product = await storage.getProduct(item.productId);
-          if (product) {
-            return {
-              ...item,
-              productName: product.name,
-              sku: product.sku,
-              imageUrl: product.imageUrl,
-              quantity: quantity,
-              price: price,
-              discount: discount,
-              total: total
-            };
-          }
-        } catch (err) {
-          console.error(`ไม่สามารถดึงข้อมูลสินค้า ID: ${item.productId}`, err);
-        }
-      }
-
-      // ถ้าไม่พบสินค้าหรือไม่มี productId ใช้ข้อมูลเดิม
-      return {
-        ...item,
-        productName: item.productName || 'ไม่ระบุสินค้า',
-        sku: item.sku || '',
-        quantity: quantity,
-        price: price,
-        discount: discount,
-        total: total
-      };
-    }));
-
-    // ดึงข้อมูลลูกค้า
-    let customer = null;
-    if (order.customerId) {
-      customer = await storage.getCustomer(order.customerId);
-    }
-
-    // สร้างข้อมูลสำหรับส่งกลับไปยัง client
-    const orderWithDetails = {
-      ...order,
-      customerName: customer ? customer.name : 'ไม่ระบุ',
-      customerPhone: customer ? customer.phone : '',
-      customerEmail: customer ? customer.email : '',
-      customerAddress: customer ? customer.address : '',
-      customerProvince: customer ? customer.province : '',
-      customerDistrict: customer ? customer.district : '',
-      customerSubdistrict: customer ? customer.subdistrict : '',
-      customerZipcode: customer ? customer.zipcode : '',
-      customerAddressNumber: customer ? customer.addressNumber : '',
-      customerRoad: customer ? customer.road : '',
-      customerMoo: customer ? customer.moo : '',
-      customerSoi: customer ? customer.soi : '',
-      customerBuilding: customer ? customer.building : '',
-      customerFloor: customer ? customer.floor : '',
-      items: orderItemsWithProductDetails
-    };
-
-    res.json({
-      success: true,
-      order: orderWithDetails
-    });
-  } catch (error) {
-    console.error(`Error fetching order ${req.params.id}:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'เกิดข้อผิดพลาดในการดึงข้อมูลคำสั่งซื้อ'
-    });
-  }
-});
-
-// Create new order
-router.post('/', auth, async (req, res) => {
-  try {
-    const orderData = req.body;
-
-    console.log('Received order data:', JSON.stringify(orderData, null, 2));
-
-    // ตรวจสอบเครดิตของผู้ใช้ - ต้องมีเครดิตอย่างน้อย 25 บาทต่อออเดอร์
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({
-        success: false,
-        message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
-      });
-    }
-
-    // ดึงข้อมูลผู้ใช้เพื่อตรวจสอบเครดิต
-    const user = await storage.getUser(req.user.id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'ไม่พบข้อมูลผู้ใช้'
-      });
-    }
-
-    // ค่าธรรมเนียมต่อออเดอร์
-    const ORDER_FEE = 25; // 25 บาทต่อออเดอร์
-
-    // แปลงเครดิตเป็นตัวเลข
-    const userBalance = user.balance ? parseFloat(user.balance.toString()) : 0;
-
-    // ตรวจสอบว่าเครดิตเพียงพอหรือไม่
-    if (userBalance < ORDER_FEE) {
-      return res.status(400).json({
-        success: false,
-        message: `เครดิตไม่เพียงพอสำหรับการสร้างออเดอร์ (ต้องการ ${ORDER_FEE} บาท, คงเหลือ ${userBalance.toFixed(2)} บาท)`
-      });
-    }
-
-    // Generate order number if not provided
-    if (!orderData.orderNumber) {
-      // สร้างเลขออเดอร์ในรูปแบบ PD + ปีเดือนวัน + เลข 4 หลักสุดท้ายของ timestamp
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-      orderData.orderNumber = `PD${year}${month}${day}${random}`;
-
-      console.log(`สร้างเลขออเดอร์อัตโนมัติ: ${orderData.orderNumber}`);
-    }
-
-    // มีการส่งชื่อฟิลด์แบบ order_number แต่ฐานข้อมูลใช้ชื่อแบบ camelCase
-    if (orderData.order_number && !orderData.orderNumber) {
-      orderData.orderNumber = orderData.order_number;
-      delete orderData.order_number;
-    }
-
-    // ตรวจสอบและเพิ่มข้อมูลที่จำเป็น camelCase สำหรับ Drizzle ORM
-    if (!orderData.hasOwnProperty('subtotal')) {
-      orderData.subtotal = orderData.total || 0;
-    }
-
-    if (!orderData.hasOwnProperty('totalAmount')) {
-      orderData.totalAmount = orderData.total || 0;
-
-      // แปลงค่าจาก snake_case เป็น camelCase ถ้ามี
-      if (orderData.total_amount) {
-        orderData.totalAmount = orderData.total_amount;
-        delete orderData.total_amount;
-      }
-    }
-
-    if (!orderData.hasOwnProperty('shippingFee')) {
-      // ถ้ามี shippingCost ให้ใช้ค่านั้น อย่างอื่นใช้ค่าเริ่มต้น 40
-      orderData.shippingFee = orderData.shippingCost || 40;
-
-      // แปลงค่าจาก snake_case เป็น camelCase ถ้ามี
-      if (orderData.shipping_fee) {
-        orderData.shippingFee = orderData.shipping_fee;
-        delete orderData.shipping_fee;
-      }
-
-      console.log('ตั้งค่าขนส่งเป็น:', orderData.shippingFee);
-    }
-
-    if (!orderData.hasOwnProperty('discount')) {
-      orderData.discount = 0;
-    }
-
-    // Set user ID from the authenticated user
-    if (req.user && !orderData.userId) {
-      orderData.userId = (req.user as any).id;
-
-      // แปลงค่าจาก snake_case เป็น camelCase ถ้ามี
-      if (orderData.user_id) {
-        orderData.userId = orderData.user_id;
-        delete orderData.user_id;
-      }
-    }
-
-    // Payment method processing
-
-    // แปลงชื่อฟิลด์อื่นๆ จาก snake_case เป็น camelCase
-    if (orderData.payment_method && !orderData.paymentMethod) {
-      orderData.paymentMethod = orderData.payment_method;
-      delete orderData.payment_method;
-    }
-
-    if (orderData.customer_id && !orderData.customerId) {
-      orderData.customerId = orderData.customer_id;
-      delete orderData.customer_id;
-    }
-
-    if (orderData.shipping_method_id && !orderData.shippingMethodId) {
-      orderData.shippingMethodId = orderData.shipping_method_id;
-      delete orderData.shipping_method_id;
-    }
-
-    console.log('Processed order data ready for storage:', JSON.stringify(orderData, null, 2));
-
-    // สร้างข้อมูลลูกค้าก่อนถ้ามีการส่งชื่อและเบอร์โทรมา แต่ไม่มี customerId
-    if (!orderData.customerId && orderData.customerName) {
-      try {
-        console.log('ไม่มี customerId แต่มีชื่อลูกค้า, กำลังสร้างข้อมูลลูกค้าใหม่');
-
-        // สร้างข้อมูลลูกค้าใหม่จากข้อมูลในออเดอร์
-        const customerData = {
-          userId: orderData.userId,
-          name: orderData.customerName || 'ไม่ระบุชื่อ',
-          phone: orderData.customerPhone || '',
-          address: orderData.fullAddress || '',
-          subdistrict: orderData.subdistrict || '',
-          district: orderData.district || '',
-          province: orderData.province || '',
-          zipcode: orderData.zipcode || '',
-          addressNumber: orderData.addressNumber || '',  // ใช้ addressNumber เท่านั้น
-          road: orderData.road || '',
-          moo: orderData.village || orderData.moo || '',
-          soi: orderData.soi || '',
-          building: orderData.building || '',
-          floor: orderData.floor || '',
-          email: '',
-          notes: `ลูกค้าจากออเดอร์ ${orderData.orderNumber}`
-        };
-
-        const newCustomer = await storage.createCustomer(customerData);
-        console.log('สร้างข้อมูลลูกค้าใหม่สำเร็จ:', newCustomer);
-
-        // เชื่อมโยงลูกค้ากับออเดอร์
-        orderData.customerId = newCustomer.id;
-      } catch (error) {
-        console.error('เกิดข้อผิดพลาดในการสร้างข้อมูลลูกค้าใหม่:', error);
-        // ไม่ต้อง throw error แค่ไม่เชื่อมโยงลูกค้า
-      }
-    }
-
-    // Store order in database
-    const order = await storage.createOrder(orderData);
-
-    // หักค่าธรรมเนียมจากเครดิตของผู้ใช้ (25 บาทต่อออเดอร์)
-    try {
-      // ค่าธรรมเนียมต่อออเดอร์
-      const ORDER_FEE = 25; // 25 บาทต่อออเดอร์
-
-      // คำนวณยอดเงินคงเหลือใหม่
-      const newBalance = userBalance - ORDER_FEE;
-
-      // อัพเดตเครดิตในฐานข้อมูล
-      await db.update(users)
-        .set({ 
-          balance: newBalance.toString(),
-          updatedAt: new Date()
-        })
-        .where(eq(users.id, req.user.id));
-
-      // บันทึกประวัติการหักค่าธรรมเนียม
-      await db.insert(feeHistory)
-        .values({
-          userId: req.user.id,
-          orderId: order.id,
-          amount: ORDER_FEE.toString(),
-          balanceBefore: userBalance.toString(),
-          balanceAfter: newBalance.toString(),
-          description: `ค่าธรรมเนียมการสร้างออเดอร์ #${order.orderNumber}`,
-          feeType: 'order',
-          createdAt: new Date()
-        });
-
-      console.log(`หักค่าธรรมเนียมออเดอร์ ${ORDER_FEE} บาท จากเครดิตผู้ใช้ ${req.user.username} เครดิตคงเหลือ ${newBalance.toFixed(2)} บาท`);
-    } catch (error) {
-      console.error('เกิดข้อผิดพลาดในการหักค่าธรรมเนียมออเดอร์:', error);
-      // ไม่ต้อง throw error ให้ดำเนินการต่อไป แต่บันทึก log ไว้
-    }
-
-    // บันทึกข้อมูลรายการสินค้า (order items) ถ้ามี
-    if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
-      console.log(`เพิ่มรายการสินค้าจำนวน ${orderData.items.length} รายการ`);
-
-      for (const item of orderData.items) {
-        try {
-          // ข้อมูลสำหรับบันทึกรายการสินค้า
-          const orderItemData: any = {
-            orderId: order.id,
-            quantity: item.quantity || 1,
-            price: item.price || 0,
-          };
-
-          // ตรวจสอบว่ามีการส่ง productId มาหรือไม่
-          if (item.productId) {
-            orderItemData.productId = item.productId;
-          } 
-          // กรณีที่มีการส่ง sku มาแทน (จากการนำเข้า Excel)
-          else if (item.sku) {
-            // ค้นหาสินค้าจาก sku
-            try {
-              const products = await storage.getProductsBySku(item.sku);
-              if (products && products.length > 0) {
-                orderItemData.productId = products[0].id;
-                console.log(`พบสินค้าจาก SKU ${item.sku}: ID = ${orderItemData.productId}`);
-              } else {
-                // ถ้าไม่พบสินค้าจาก SKU แต่มีชื่อสินค้า
-                if (item.name) {
-                  const product = await storage.createProduct({
-                    userId: orderData.userId,
-                    name: item.name,
-                    sku: item.sku,
-                    price: item.price || 0,
-                    cost: item.price ? (item.price * 0.7) : 0, // ประมาณต้นทุน 70% ของราคาขาย
-                    stock: 0,
-                    categoryId: null,
-                    status: 'active',
-                  });
-
-                  if (product) {
-                    orderItemData.productId = product.id;
-                    console.log(`สร้างสินค้าใหม่จาก SKU ${item.sku}: ID = ${orderItemData.productId}`);
-                  }
-                }
-              }
-            } catch (skuError) {
-              console.error(`เกิดข้อผิดพลาดในการค้นหาสินค้าจาก SKU:`, skuError);
-            }
-          }
-
-          // ถ้ามี productId แล้วจึงบันทึกข้อมูลรายการสินค้า
-          if (orderItemData.productId) {
-            await storage.createOrderItem(orderItemData);
-            console.log(`บันทึกรายการสินค้า ${orderItemData.productId} สำเร็จ`);
-          } else {
-            console.warn(`ไม่สามารถบันทึกรายการสินค้า: ไม่มี productId และไม่สามารถค้นหาจาก SKU ${item.sku}`);
-          }
-        } catch (error) {
-          console.error(`เกิดข้อผิดพลาดในการบันทึกรายการสินค้า:`, error);
-        }
-      }
-    } else {
-      console.log('ไม่มีรายการสินค้าที่จะบันทึก');
-    }
-
-    // ตรวจสอบการสร้างเลขพัสดุอัตโนมัติ
-    const generateTrackingNumber = orderData.generateTrackingNumber === true && orderData.shippingMethod;
-
-    // ถ้ามีการเลือกบริษัทขนส่งและต้องการสร้างเลขพัสดุอัตโนมัติ
-    if (generateTrackingNumber && order.id) {
-      try {
-        console.log(`สร้างเลขพัสดุอัตโนมัติสำหรับออเดอร์ ${order.id} กับ ${orderData.shippingMethod}`);
-
-        // สร้างเลขพัสดุโดยใช้รหัสบริษัทขนส่ง
-        const shippingCompany = orderData.shippingMethod;
-        let companyCode = '';
-
-        // กำหนดรหัสตามบริษัทขนส่ง
-        if (shippingCompany.includes('Xiaobai') || shippingCompany.includes('เสี่ยวไป๋')) {
-          companyCode = 'XBE';
-        } else if (shippingCompany.includes('SpeedLine') || shippingCompany.includes('สปีด')) {
-          companyCode = 'SPE';
-        } else if (shippingCompany.includes('ThaiStar') || shippingCompany.includes('ไทยสตาร์')) {
-          companyCode = 'TST';
-        } else if (shippingCompany.includes('J&T') || shippingCompany.includes('เจแอนด์ที')) {
-          companyCode = 'JNT';
-        } else if (shippingCompany.includes('Kerry') || shippingCompany.includes('เคอรี่')) {
-          companyCode = 'KRY';
-        } else if (shippingCompany.includes('Thailand Post') || shippingCompany.includes('ไปรษณีย์')) {
-          companyCode = 'THP';
-        } else if (shippingCompany.includes('DHL')) {
-          companyCode = 'DHL';
-        } else if (shippingCompany.includes('Ninja')) {
-          companyCode = 'NJV';
-        } else {
-          // ถ้าไม่รู้จักบริษัทขนส่งให้ใช้ตัวอักษร 3 ตัวแรก
-          companyCode = shippingCompany.substring(0, 3).toUpperCase();
-        }
-
-        // สร้างเลขพัสดุในรูปแบบ รหัสบริษัท + เลข 7 หลัก + อักษรสุ่ม 2 ตัว
-        const randomDigits = Math.floor(1000000 + Math.random() * 9000000);
-        const randomLetters = String.fromCharCode(65 + Math.floor(Math.random() * 26)) + 
-                              String.fromCharCode(65 + Math.floor(Math.random() * 26));
-        const trackingNumber = `${companyCode}${randomDigits}${randomLetters}`;
-
-        // อัพเดทออเดอร์ด้วยเลขพัสดุ
-        await storage.updateOrder(order.id, {
-          trackingNumber,
-          status: 'processing'
-        });
-
-        console.log(`สร้างเลขพัสดุสำเร็จ: ${trackingNumber}`);
-
-        // อัพเดทข้อมูลออเดอร์ใน order object เพื่อส่งกลับ
-        order.trackingNumber = trackingNumber;
-        order.status = 'processing';
-      } catch (error) {
-        console.error(`เกิดข้อผิดพลาดในการสร้างเลขพัสดุอัตโนมัติ:`, error);
-      }
-    }
-
-
-    // ดึงข้อมูลผู้ใช้ล่าสุดหลังจากหักเครดิต
-    const updatedUser = await storage.getUser(req.user.id);
-    const currentBalance = updatedUser?.balance ? parseFloat(updatedUser.balance.toString()) : 0;
-
-    res.status(201).json({
-      success: true,
-      order,
-      creditInfo: {
-        orderFee: 25, // ค่าธรรมเนียมต่อออเดอร์
-        currentBalance: currentBalance.toFixed(2)
+    const userId = req.user?.id;
+    const orderId = parseInt(req.params.id);
+    
+    const order = await prisma.order.findFirst({
+      where: {
+        id: orderId,
+        userId
       },
-      message: `สร้างออเดอร์สำเร็จ โดยหักค่าธรรมเนียม 25฿ จากเครดิตของคุณ ยอดคงเหลือ ${currentBalance.toFixed(2)} บาท`
+      include: {
+        items: true
+      }
     });
-  } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({
-      success: false,
-      message: 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อใหม่'
-    });
-  }
-});
-
-// Update order
-router.put('/:id', auth, async (req, res) => {
-  try {
-    const orderId = parseInt(req.params.id, 10);
-    if (isNaN(orderId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'รูปแบบ ID ไม่ถูกต้อง'
-      });
-    }
-
-    const orderData = req.body;
-    const order = await storage.updateOrder(orderId, orderData);
+    
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'ไม่พบคำสั่งซื้อนี้'
+        message: 'ไม่พบออเดอร์'
       });
     }
+    
     res.json({
       success: true,
       order
     });
   } catch (error) {
-    console.error(`Error updating order ${req.params.id}:`, error);
+    console.error('Error fetching order:', error);
     res.status(500).json({
       success: false,
-      message: 'เกิดข้อผิดพลาดในการอัพเดตคำสั่งซื้อ'
+      message: 'เกิดข้อผิดพลาดในการดึงข้อมูลออเดอร์',
+      error: (error as Error).message
     });
   }
 });
 
-// Delete order
-router.delete('/:id', auth, async (req, res) => {
+// อัปเดตสถานะออเดอร์
+router.patch('/:id/status', authenticateToken, async (req, res) => {
   try {
-    const orderId = parseInt(req.params.id, 10);
-    if (isNaN(orderId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'รูปแบบ ID ไม่ถูกต้อง'
-      });
-    }
-
-    // ตรวจสอบและคืนเครดิตหากมีการใช้เครดิตสำหรับออเดอร์นี้
-    try {
-      // ดึงข้อมูลประวัติค่าธรรมเนียมสำหรับออเดอร์นี้
-      const [feeHistoryRecord] = await db.select()
-        .from(feeHistory)
-        .where(eq(feeHistory.orderId, orderId));
-
-      if (feeHistoryRecord) {
-        // ตรวจสอบว่ามีข้อมูลผู้ใช้หรือไม่
-        if (!req.user || !req.user.id) {
-          return res.status(401).json({
-            success: false,
-            message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
-          });
-        }
-
-        console.log(`พบข้อมูลการใช้เครดิต orderId: ${orderId}, เตรียมคืนเครดิต ${feeHistoryRecord.amount} บาท`);
-
-        // ดึงข้อมูลผู้ใช้ปัจจุบัน
-        const [userData] = await db.select()
-          .from(users)
-          .where(eq(users.id, req.user.id));
-
-        if (!userData) {
-          return res.status(400).json({
-            success: false,
-            message: 'ไม่พบข้อมูลผู้ใช้'
-          });
-        }
-
-        // ดึงข้อมูลออเดอร์เพื่อใช้หมายเลขออเดอร์ในข้อความ
-        const order = await storage.getOrder(orderId);
-        if (!order) {
-          return res.status(404).json({
-            success: false,
-            message: 'ไม่พบออเดอร์นี้'
-          });
-        }
-
-        // คำนวณยอดเงินที่จะคืน
-        const currentBalance = parseFloat(userData.balance || '0');
-        const refundAmount = parseFloat(feeHistoryRecord.amount || '0');
-        const newBalance = currentBalance + refundAmount;
-
-        console.log(`คืนเครดิต: ยอดปัจจุบัน ${currentBalance} บาท + คืน ${refundAmount} บาท = ${newBalance} บาท`);
-
-        // บันทึกประวัติการคืนเครดิต
-        await db.insert(feeHistory)
-          .values({
-            userId: req.user.id,
-            orderId: null, // ไม่ผูกกับออเดอร์เพราะกำลังจะลบ
-            amount: (-refundAmount).toString(), // ใส่เครื่องหมายลบเพื่อแสดงว่าเป็นการคืนเครดิต
-            balanceBefore: currentBalance.toString(),
-            balanceAfter: newBalance.toString(),
-            description: `คืนเครดิตค่าธรรมเนียมจากการลบออเดอร์ #${order.orderNumber}`,
-            feeType: 'refund',
-            createdAt: new Date()
-          });
-
-        // อัพเดตเครดิตในบัญชีผู้ใช้
-        await db.update(users)
-          .set({ 
-            balance: newBalance.toString(),
-            updatedAt: new Date()
-          })
-          .where(eq(users.id, req.user.id));
-
-        // ลบประวัติค่าธรรมเนียมเดิม
-        await db.delete(feeHistory)
-          .where(eq(feeHistory.id, feeHistoryRecord.id));
-
-        console.log(`คืนเครดิตสำหรับออเดอร์ ${orderId} เรียบร้อยแล้ว`);
+    const userId = req.user?.id;
+    const orderId = parseInt(req.params.id);
+    const { status } = req.body;
+    
+    const order = await prisma.order.findFirst({
+      where: {
+        id: orderId,
+        userId
       }
-    } catch (feeCheckError) {
-      console.error('Error processing fee history:', feeCheckError);
-      // ไม่หยุดการทำงาน ดำเนินการลบออเดอร์ต่อไป
-    }
-
-    const result = await storage.deleteOrder(orderId);
-    if (!result) {
-      return res.status(404).json({
-        success: false,
-        message: 'ไม่พบคำสั่งซื้อนี้'
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'ลบคำสั่งซื้อสำเร็จ'
     });
-  } catch (error) {
-    console.error(`Error deleting order ${req.params.id}:`, error);
-    // ตรวจสอบว่าเป็น foreign key error หรือไม่
-    const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการลบคำสั่งซื้อ';
-    const isForeignKeyError = errorMessage.includes('foreign key constraint') || 
-                             errorMessage.includes('referenced');
-
-    res.status(500).json({
-      success: false,
-      message: isForeignKeyError 
-        ? 'ไม่สามารถลบรายการ เนื่องจากมีข้อมูลที่เกี่ยวข้องอยู่ กรุณาลองอีกครั้งในภายหลัง' 
-        : 'เกิดข้อผิดพลาดในการลบคำสั่งซื้อ'
-    });
-  }
-});
-
-// Get summary data for dashboard
-router.get('/summary', auth, async (req, res) => {
-  try {
-    // ดึงข้อมูลออเดอร์ของผู้ใช้ปัจจุบัน
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({
-        success: false,
-        message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
-      });
-    }
-
-    const userId = req.user.id;
-    const orders = await storage.getOrdersByUserId(userId);
-
-    // คำนวณข้อมูลสรุปต่างๆ
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const todayOrders = orders.filter(order => {
-      const orderDate = new Date(order.createdAt);
-      return orderDate >= today;
-    });
-
-    const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const monthOrders = orders.filter(order => {
-      const orderDate = new Date(order.createdAt);
-      return orderDate >= thisMonth;
-    });
-
-    // คำนวณยอดขาย 7 วันล่าสุด
-    const last7Days = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      date.setHours(0, 0, 0, 0);
-
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 1);
-
-      const dayOrders = orders.filter(order => {
-        const orderDate = new Date(order.createdAt);
-        return orderDate >= date && orderDate < nextDate;
-      });
-
-      const total = dayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-
-      last7Days.push({
-        date: date.toISOString().split('T')[0],
-        total
-      });
-    }
-
-    // รายการออเดอร์ล่าสุด 5 รายการ
-    const latestOrders = [...orders]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 5)
-      .map(order => ({
-        id: order.id.toString(),
-        orderNumber: order.orderNumber,
-        customer: order.customerName,
-        total: order.totalAmount || 0
-      }));
-
-    const summary = {
-      todayTotal: todayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0),
-      monthTotal: monthOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0),
-      last7Days,
-      latestOrders
-    };
-
-    res.json({
-      success: true,
-      data: summary
-    });
-  } catch (error) {
-    console.error('Error fetching orders summary:', error);
-    res.status(500).json({
-      success: false,
-      message: 'เกิดข้อผิดพลาดในการดึงข้อมูลสรุปยอดขาย'
-    });
-  }
-});
-
-// สร้างเลขพัสดุสำหรับออเดอร์
-router.post('/:id/tracking', auth, async (req, res) => {
-  try {
-    // ตรวจสอบข้อมูลผู้ใช้
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({
-        success: false,
-        message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
-      });
-    }
-
-    const orderId = parseInt(req.params.id, 10);
-    if (isNaN(orderId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'รูปแบบ ID ไม่ถูกต้อง'
-      });
-    }
-
-    // ดึงข้อมูลออเดอร์
-    const order = await storage.getOrder(orderId);
+    
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'ไม่พบคำสั่งซื้อนี้'
+        message: 'ไม่พบออเดอร์'
       });
     }
-
-    // ตรวจสอบว่ามีเลขพัสดุแล้วหรือไม่
-    if (order.trackingNumber) {
-      return res.json({
-        success: true,
-        message: 'ออเดอร์นี้มีเลขพัสดุแล้ว',
-        trackingNumber: order.trackingNumber
-      });
-    }
-
-    // ดึงข้อมูล shipping method จาก request
-    const { shippingMethod } = req.body;
-    if (!shippingMethod) {
-      return res.status(400).json({
-        success: false,
-        message: 'กรุณาระบุวิธีการจัดส่ง'
-      });
-    }
-
-    // สร้างเลขพัสดุจำลองตามวิธีการจัดส่ง
-    let prefix = "";
-
-    // จัดการกรณีพิเศษสำหรับ ThaiStar Delivery ใช้ TST แทน THA
-    if (shippingMethod.toLowerCase().includes('thaistar')) {
-      prefix = "TST";
-    } else {
-      prefix = shippingMethod.substring(0, 3).toUpperCase();
-    }
-
-    const randomPart = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
-    const randomLetters = String.fromCharCode(65 + Math.floor(Math.random() * 26)) +
-                         String.fromCharCode(65 + Math.floor(Math.random() * 26));
-    const trackingNumber = `${prefix}${randomPart}${randomLetters}`;
-
-    // อัพเดตข้อมูลออเดอร์
-    const updatedOrder = await storage.updateOrder(orderId, {
-      trackingNumber,
-      shippingMethod,
-      status: 'processing'
+    
+    const updatedOrder = await prisma.order.update({
+      where: {
+        id: orderId
+      },
+      data: {
+        status
+      },
+      include: {
+        items: true
+      }
     });
-
-    if (!updatedOrder) {
-      return res.status(500).json({
-        success: false,
-        message: 'ไม่สามารถอัพเดตข้อมูลออเดอร์ได้'
-      });
-    }
-
+    
     res.json({
       success: true,
-      message: 'สร้างเลขพัสดุสำเร็จ',
-      trackingNumber,
+      message: 'อัปเดตสถานะออเดอร์สำเร็จ',
       order: updatedOrder
     });
   } catch (error) {
-    console.error(`Error creating tracking number for order ${req.params.id}:`, error);
+    console.error('Error updating order status:', error);
     res.status(500).json({
       success: false,
-      message: 'เกิดข้อผิดพลาดในการสร้างเลขพัสดุ'
+      message: 'เกิดข้อผิดพลาดในการอัปเดตสถานะออเดอร์',
+      error: (error as Error).message
     });
   }
 });
 
-// อัพเดตสถานะการพิมพ์ใบลาเบล
-router.patch('/:id/print-status', auth, async (req, res) => {
+// อัปเดตข้อมูลการติดตามและการจัดส่ง
+router.patch('/:id/tracking', authenticateToken, async (req, res) => {
   try {
-    // ตรวจสอบข้อมูลผู้ใช้
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({
-        success: false,
-        message: 'ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่'
-      });
-    }
-
-    const userId = req.user.id;
-    const orderId = parseInt(req.params.id, 10);
-    const { isPrinted } = req.body;
-
-    // ตรวจสอบว่าออเดอร์นี้เป็นของผู้ใช้นี้หรือไม่
-    const order = await storage.getOrder(orderId);
-
+    const userId = req.user?.id;
+    const orderId = parseInt(req.params.id);
+    const { trackingNumber, shippingMethod, sortCode } = req.body;
+    
+    const order = await prisma.order.findFirst({
+      where: {
+        id: orderId,
+        userId
+      }
+    });
+    
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'ไม่พบข้อมูลออเดอร์'
+        message: 'ไม่พบออเดอร์'
       });
     }
-
-    // อัพเดตสถานะการพิมพ์
-    const updatedOrder = await storage.updateOrder(orderId, {
-      isPrinted: isPrinted
+    
+    const updatedOrder = await prisma.order.update({
+      where: {
+        id: orderId
+      },
+      data: {
+        trackingNumber,
+        shippingMethod,
+        sortCode,
+        status: 'shipped'
+      },
+      include: {
+        items: true
+      }
     });
-
-    return res.status(200).json({
+    
+    res.json({
       success: true,
-      message: 'อัพเดตสถานะการพิมพ์ใบลาเบลเรียบร้อย',
-      data: updatedOrder
+      message: 'อัปเดตข้อมูลการติดตามสำเร็จ',
+      order: updatedOrder
     });
-
   } catch (error) {
-    console.error('Error updating print status:', error);
-    return res.status(500).json({
+    console.error('Error updating tracking info:', error);
+    res.status(500).json({
       success: false,
-      message: 'เกิดข้อผิดพลาดในการอัพเดตสถานะการพิมพ์ใบลาเบล'
+      message: 'เกิดข้อผิดพลาดในการอัปเดตข้อมูลการติดตาม',
+      error: (error as Error).message
+    });
+  }
+});
+
+// ลบออเดอร์
+router.delete('/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const orderId = parseInt(req.params.id);
+    
+    const order = await prisma.order.findFirst({
+      where: {
+        id: orderId,
+        userId
+      }
+    });
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบออเดอร์'
+      });
+    }
+    
+    // ลบรายการสินค้าก่อน
+    await prisma.orderItem.deleteMany({
+      where: {
+        orderId
+      }
+    });
+    
+    // จากนั้นลบออเดอร์
+    await prisma.order.delete({
+      where: {
+        id: orderId
+      }
+    });
+    
+    res.json({
+      success: true,
+      message: 'ลบออเดอร์สำเร็จ'
+    });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการลบออเดอร์',
+      error: (error as Error).message
+    });
+  }
+});
+
+// ค้นหาออเดอร์จากหมายเลขการติดตาม
+router.get('/tracking/:trackingNumber', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const trackingNumber = req.params.trackingNumber;
+    
+    const order = await prisma.order.findFirst({
+      where: {
+        trackingNumber,
+        userId
+      },
+      include: {
+        items: true
+      }
+    });
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบออเดอร์จากหมายเลขการติดตาม'
+      });
+    }
+    
+    res.json({
+      success: true,
+      order
+    });
+  } catch (error) {
+    console.error('Error finding order by tracking number:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการค้นหาออเดอร์',
+      error: (error as Error).message
+    });
+  }
+});
+
+// ค้นหาออเดอร์จากหมายเลขออเดอร์
+router.get('/order-number/:orderNumber', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const orderNumber = req.params.orderNumber;
+    
+    const order = await prisma.order.findFirst({
+      where: {
+        orderNumber,
+        userId
+      },
+      include: {
+        items: true
+      }
+    });
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบออเดอร์จากหมายเลขออเดอร์'
+      });
+    }
+    
+    res.json({
+      success: true,
+      order
+    });
+  } catch (error) {
+    console.error('Error finding order by order number:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการค้นหาออเดอร์',
+      error: (error as Error).message
+    });
+  }
+});
+
+// สร้างออเดอร์จำนวนมาก (Bulk)
+router.post('/bulk', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'ไม่ได้รับอนุญาต' });
+    }
+
+    const { orders } = req.body;
+    
+    if (!orders || !Array.isArray(orders) || orders.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'ไม่มีข้อมูลออเดอร์ที่จะนำเข้า'
+      });
+    }
+    
+    const createdOrders = [];
+    
+    for (const orderData of orders) {
+      const {
+        customerName,
+        customerPhone,
+        customerEmail,
+        shippingAddress,
+        shippingProvince,
+        shippingDistrict,
+        shippingSubdistrict,
+        shippingZipcode,
+        note,
+        items,
+        total,
+        shippingMethod,
+        shippingCost,
+        isCOD,
+        codAmount
+      } = orderData;
+      
+      // สร้างหมายเลขออเดอร์แบบสุ่ม
+      const orderNumber = `ORD-${Date.now().toString().slice(-8)}-${Math.floor(Math.random() * 1000)}`;
+      
+      // สร้างออเดอร์ใหม่ในฐานข้อมูล
+      const newOrder = await prisma.order.create({
+        data: {
+          userId,
+          orderNumber,
+          customerName,
+          customerPhone,
+          customerEmail,
+          shippingAddress,
+          shippingProvince,
+          shippingDistrict,
+          shippingSubdistrict,
+          shippingZipcode,
+          note,
+          total,
+          shippingMethod,
+          shippingCost,
+          isCOD,
+          codAmount,
+          status: 'pending',
+          items: {
+            create: items.map((item: any) => ({
+              productId: item.productId,
+              productName: item.productName,
+              productSku: item.productSku,
+              quantity: item.quantity,
+              price: item.price,
+              options: item.options || {}
+            }))
+          }
+        },
+        include: {
+          items: true
+        }
+      });
+      
+      createdOrders.push(newOrder);
+    }
+    
+    res.status(201).json({
+      success: true,
+      message: `สร้างออเดอร์สำเร็จ ${createdOrders.length} รายการ`,
+      orders: createdOrders
+    });
+  } catch (error) {
+    console.error('Error creating bulk orders:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการสร้างออเดอร์จำนวนมาก',
+      error: (error as Error).message
+    });
+  }
+});
+
+// เพิ่ม endpoint สำหรับตรวจสอบการค้นหาออเดอร์จากหมายเลขการติดตามของลูกค้า (Merchant Tracking)
+router.get('/merchant-tracking/:merchantTracking', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const merchantTracking = req.params.merchantTracking;
+    
+    const order = await prisma.order.findFirst({
+      where: {
+        orderNumber: {
+          contains: merchantTracking
+        },
+        userId
+      },
+      include: {
+        items: true
+      }
+    });
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบออเดอร์จากหมายเลขการติดตามของลูกค้า'
+      });
+    }
+    
+    res.json({
+      success: true,
+      order
+    });
+  } catch (error) {
+    console.error('Error finding order by merchant tracking:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการค้นหาออเดอร์',
+      error: (error as Error).message
+    });
+  }
+});
+
+// API สำหรับสร้างออเดอร์ใหม่
+router.post('/create', async (req, res) => {
+  try {
+    const orderData = req.body;
+    console.log('ข้อมูลการสร้างออเดอร์ที่ได้รับ:', orderData);
+
+    // สร้างออเดอร์จริงในระบบ (จำลอง - ให้เปลี่ยนตามระบบจริง)
+    // ในตัวอย่างนี้เราแค่ส่งกลับข้อมูลที่ได้รับมาพร้อมกับ ID สุ่ม
+    const createdOrder = {
+      id: Math.floor(Math.random() * 10000),
+      ...orderData,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+
+    res.status(201).json({
+      success: true,
+      message: 'สร้างออเดอร์สำเร็จ',
+      order: createdOrder
+    });
+  } catch (error) {
+    console.error('เกิดข้อผิดพลาดในการสร้างออเดอร์:', error);
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการสร้างออเดอร์',
+      error: (error as Error).message
     });
   }
 });
