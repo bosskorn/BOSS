@@ -233,4 +233,32 @@ router.post('/shipping', auth, async (req, res) => {
   }
 });
 
+/**
+ * API สำหรับ Flash Express
+ */
+router.post('/flash-express/shipping', auth, async (req, res) => {
+  try {
+    // ส่งต่อคำขอไปยัง Flash Express API
+    const response = await fetch('http://localhost:5000/api/flash-express/shipping', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': req.headers.authorization || '',
+      },
+      body: JSON.stringify(req.body)
+    });
+    
+    const data = await response.json();
+    
+    return res.status(response.status).json(data);
+  } catch (error: any) {
+    console.error('Error forwarding request to Flash Express API:', error);
+    
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อกับบริการ Flash Express',
+    });
+  }
+});
+
 export default router;

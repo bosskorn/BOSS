@@ -19,6 +19,7 @@ import mockShippingRouter from "./routes/mock-shipping";
 import dashboardRouter from "./routes/dashboard";
 import stripeRouter from "./routes/stripe";
 import feeHistoryRouter from "./routes/fee-history";
+import flashExpressRouter from "./routes/flash-express";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -54,6 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/dashboard", dashboardRouter);
   app.use("/api/stripe", stripeRouter);
   app.use("/api/fee-history", feeHistoryRouter);
+  app.use("/api/flash-express", flashExpressRouter);
   // แสดงสถานะการใช้งาน Flash Express API
   app.get("/api/flash-express/status", (req, res) => {
     const hasCredentials = process.env.FLASH_EXPRESS_MERCHANT_ID && process.env.FLASH_EXPRESS_API_KEY;
