@@ -93,99 +93,93 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     if (!MERCHANT_ID || !API_KEY) {
       throw new Error('Flash Express API credentials are missing');
     }
-
-    // ตรวจสอบและเพิ่มฟิลด์ที่จำเป็น
-    const requiredFields = ['srcName', 'srcPhone', 'srcProvinceName', 'srcCityName', 'srcPostalCode', 'srcDetailAddress',
-      'dstName', 'dstPhone', 'dstProvinceName', 'dstCityName', 'dstPostalCode', 'dstDetailAddress',
-      'outTradeNo', 'expressCategory', 'articleCategory', 'weight', 'subItemTypes'];
     
-    const missingFields = requiredFields.filter(field => !orderData[field]);
-    if (missingFields.length > 0) {
-      console.warn(`Missing required fields for Flash Express API: ${missingFields.join(', ')}`);
-    }
-    
-    // สร้างข้อมูลตามรูปแบบที่ Flash Express API ต้องการ ตรงตามตัวอย่าง
-    // ข้อมูลพื้นฐานที่จำเป็นต้องส่ง (Required fields) ตามเอกสาร API
+    // สร้างข้อมูลตามรูปแบบที่ Flash Express API ต้องการ ตรงตามเอกสาร
     const formattedOrderData: Record<string, any> = {
       // ข้อมูลการยืนยันตัวตน (ต้องมี)
-      mchId: MERCHANT_ID,
-      nonceStr: Date.now().toString(),
+      mchId: MERCHANT_ID,                                             // รหัสลูกค้า Flash Express - string(32) - Required
+      nonceStr: Date.now().toString(),                                // random nonce string - string(32) - Required
       
       // รหัสเรเฟอเรนซ์จากร้านค้า (ต้องมี)
-      outTradeNo: orderData.outTradeNo || `SS${Date.now()}`,
+      outTradeNo: orderData.outTradeNo || `SS${Date.now()}`,         // เลขออเดอร์ - string(64) - Required
       
-      // รหัสคลังสินค้า (ต้องมี)
-      warehouseNo: orderData.warehouseNo || `${MERCHANT_ID}_001`,
-      
-      // ข้อมูลผู้ส่งพัสดุ (ต้องมีทั้งหมด)
-      srcName: orderData.srcName,
-      srcPhone: orderData.srcPhone,
-      srcProvinceName: orderData.srcProvinceName,
-      srcCityName: orderData.srcCityName,
-      srcDistrictName: orderData.srcDistrictName || "", 
-      srcPostalCode: orderData.srcPostalCode,
-      srcDetailAddress: orderData.srcDetailAddress,
-      
-      // ข้อมูลผู้รับพัสดุ (ต้องมีทั้งหมด)
-      dstName: orderData.dstName,
-      dstPhone: orderData.dstPhone,
-      dstHomePhone: orderData.dstHomePhone || orderData.dstPhone,
-      dstProvinceName: orderData.dstProvinceName,
-      dstCityName: orderData.dstCityName,
-      dstDistrictName: orderData.dstDistrictName || "",
-      dstPostalCode: orderData.dstPostalCode,
-      dstDetailAddress: orderData.dstDetailAddress,
-      
-      // ข้อมูลการส่งคืนพัสดุ (ต้องมี)
-      returnName: orderData.returnName || orderData.srcName,
-      returnPhone: orderData.returnPhone || orderData.srcPhone,
-      returnProvinceName: orderData.returnProvinceName || orderData.srcProvinceName,
-      returnCityName: orderData.returnCityName || orderData.srcCityName, 
-      returnDistrictName: orderData.returnDistrictName || orderData.srcDistrictName || "",
-      returnPostalCode: orderData.returnPostalCode || orderData.srcPostalCode,
-      returnDetailAddress: orderData.returnDetailAddress || orderData.srcDetailAddress,
+      // ประเภทการจัดส่ง (ต้องมี)
+      expressCategory: orderData.expressCategory,                     // ประเภทการจัดส่ง - integer - Required
       
       // ข้อมูลประเภทพัสดุ (ต้องมี)
-      articleCategory: orderData.articleCategory,  // 1 = ทั่วไป, 2 = เอกสาร
-      expressCategory: orderData.expressCategory,  // 1 = ปกติ, 2 = ด่วน
+      articleCategory: orderData.articleCategory,                     // ประเภทพัสดุ - integer - Required
       
-      // ข้อมูลน้ำหนักและขนาดพัสดุ (ต้องมี)
-      weight: orderData.weight,  // น้ำหนักเป็นกรัม (g) เช่น 1000 = 1kg
-      width: orderData.width || 20,  // ความกว้างเป็นเซนติเมตร (cm)
-      length: orderData.length || 30,  // ความยาวเป็นเซนติเมตร (cm)
-      height: orderData.height || 10,  // ความสูงเป็นเซนติเมตร (cm)
+      // ข้อมูลน้ำหนักและขนาดพัสดุ
+      weight: orderData.weight,                                       // น้ำหนักเป็นกรัม (g) - integer - Required
       
-      // ข้อมูลการประกันพัสดุ
-      insured: orderData.insured || 0,  // 0 = ไม่ประกัน, 1 = ประกัน
-      insureDeclareValue: orderData.insured === 1 ? (orderData.insureDeclareValue || 0) : 0,  // มูลค่าที่ประกัน (สตางค์)
-      opdInsureEnabled: orderData.opdInsureEnabled || 0,  // 0 = ไม่มีประกัน OPD, 1 = มีประกัน OPD
+      // ข้อมูลคลังสินค้า
+      warehouseNo: orderData.warehouseNo || `${MERCHANT_ID}_001`,     // รหัสคลัง - string(32) - Optional
       
-      // ข้อมูลการเก็บเงินปลายทาง
-      codEnabled: orderData.codEnabled || 0,  // 0 = ไม่เก็บเงินปลายทาง, 1 = เก็บเงินปลายทาง
-      codAmount: orderData.codEnabled === 1 ? (orderData.codAmount || 0) : 0,  // จำนวนเงินที่เก็บปลายทาง (สตางค์)
+      // ข้อมูลผู้ส่งพัสดุ (ต้องมีทั้งหมด)
+      srcName: orderData.srcName,                                     // ชื่อผู้ส่ง - string(50) - Required
+      srcPhone: orderData.srcPhone,                                   // เบอร์โทรผู้ส่ง - string(20) - Required
+      srcProvinceName: orderData.srcProvinceName,                     // จังหวัดของผู้ส่ง - string(150) - Required
+      srcCityName: orderData.srcCityName,                             // อำเภอของผู้ส่ง - string(150) - Required
+      srcDistrictName: orderData.srcDistrictName || "",               // ตำบลของผู้ส่ง - string(150) - Optional
+      srcPostalCode: orderData.srcPostalCode,                         // รหัสไปรษณีย์ของผู้ส่ง - string(20) - Required
+      srcDetailAddress: orderData.srcDetailAddress,                   // ที่อยู่โดยละเอียดของผู้ส่ง - string(300) - Required
       
-      // ข้อมูลรายการสินค้าย่อย (ต้องมี)
-      subItemTypes: Array.isArray(orderData.subItemTypes) ? orderData.subItemTypes : [],
+      // ข้อมูลผู้รับพัสดุ (ต้องมีทั้งหมด)
+      dstName: orderData.dstName,                                     // ชื่อผู้รับ - string(50) - Required
+      dstPhone: orderData.dstPhone,                                   // เบอร์โทรผู้รับ - string(20) - Required
+      dstHomePhone: orderData.dstHomePhone || orderData.dstPhone,     // เบอร์โทรศัพท์บ้านผู้รับ - string(20) - Optional
+      dstProvinceName: orderData.dstProvinceName,                     // จังหวัดของผู้รับ - string(150) - Required
+      dstCityName: orderData.dstCityName,                             // อำเภอของผู้รับ - string(150) - Required
+      dstDistrictName: orderData.dstDistrictName || "",               // ตำบลของผู้รับ - string(150) - Optional
+      dstPostalCode: orderData.dstPostalCode,                         // รหัสไปรษณีย์ของผู้รับ - string(20) - Required
+      dstDetailAddress: orderData.dstDetailAddress,                   // ที่อยู่โดยละเอียดของผู้รับ - string(300) - Required
       
-      // หมายเหตุ
-      remark: orderData.remark || "",
-      
-      // ข้อมูลพัสดุย่อย (ถ้ามี)
-      subParcelQuantity: orderData.subParcel ? orderData.subParcel.length : 0,
-      subParcel: orderData.subParcel || [],
-      
-      // ข้อมูลการชำระเงิน (1 = ผู้ส่งเป็นผู้ชำระ, 2 = ผู้รับเป็นผู้ชำระ)
-      payType: orderData.payType || 1,
-      
-      // ข้อมูลประเภทสินค้า (ใช้ค่าเดียวกับ articleCategory ถ้าไม่ได้ระบุ)
-      itemCategory: orderData.itemCategory || orderData.articleCategory || 1
+      // ข้อมูลการส่งคืนพัสดุ (ไม่จำเป็นตามเอกสาร แต่เราใส่ค่าเริ่มต้นไว้)
+      returnName: orderData.returnName || orderData.srcName,                          // ชื่อผู้รับคืน - string(50) - Optional
+      returnPhone: orderData.returnPhone || orderData.srcPhone,                       // เบอร์โทรผู้รับคืน - string(20) - Optional
+      returnProvinceName: orderData.returnProvinceName || orderData.srcProvinceName,  // จังหวัดของผู้รับคืน - string(150) - Optional
+      returnCityName: orderData.returnCityName || orderData.srcCityName,              // อำเภอของผู้รับคืน - string(150) - Optional
+      returnDistrictName: orderData.returnDistrictName || orderData.srcDistrictName || "", // ตำบลของผู้รับคืน - string(150) - Optional
+      returnPostalCode: orderData.returnPostalCode || orderData.srcPostalCode,        // รหัสไปรษณีย์ของผู้รับคืน - string(20) - Optional
+      returnDetailAddress: orderData.returnDetailAddress || orderData.srcDetailAddress, // ที่อยู่โดยละเอียดของผู้รับคืน - string(300) - Optional
     };
     
-    // สร้างลายเซ็นสำหรับตรวจสอบความถูกต้อง
-    const timestamp = Date.now();
-    const signature = createSignature(formattedOrderData, timestamp);
+    // เพิ่มฟิลด์เพิ่มเติมถ้ามี
+    if (orderData.width) formattedOrderData.width = orderData.width;         // ความกว้าง - integer - Optional
+    if (orderData.length) formattedOrderData.length = orderData.length;      // ความยาว - integer - Optional
+    if (orderData.height) formattedOrderData.height = orderData.height;      // ความสูง - integer - Optional
     
-    // เพิ่มลายเซ็นเข้าไปในข้อมูลที่จะส่ง
+    // ข้อมูลการประกันพัสดุ
+    if (orderData.insured !== undefined) formattedOrderData.insured = orderData.insured; // การประกัน - integer - Optional
+    if (orderData.insureDeclareValue !== undefined) formattedOrderData.insureDeclareValue = orderData.insureDeclareValue; // มูลค่าประกัน - integer - Optional
+    if (orderData.opdInsureEnabled !== undefined) formattedOrderData.opdInsureEnabled = orderData.opdInsureEnabled; // การประกัน OPD - integer - Optional
+    
+    // ข้อมูลการเก็บเงินปลายทาง
+    if (orderData.codEnabled !== undefined) formattedOrderData.codEnabled = orderData.codEnabled; // เก็บเงินปลายทาง - integer - Optional
+    if (orderData.codAmount !== undefined) formattedOrderData.codAmount = orderData.codAmount; // จำนวนเงินเก็บปลายทาง - integer - Optional
+    
+    // ข้อมูลรายการสินค้าย่อย
+    if (Array.isArray(orderData.subItemTypes) && orderData.subItemTypes.length > 0) {
+      formattedOrderData.subItemTypes = orderData.subItemTypes; // รายการสินค้า - JSON string - Optional
+    }
+    
+    // ข้อมูลพัสดุย่อย (ถ้ามี)
+    if (Array.isArray(orderData.subParcel) && orderData.subParcel.length > 0) {
+      formattedOrderData.subParcelQuantity = orderData.subParcel.length; // จำนวนพัสดุย่อย - integer - Optional
+      formattedOrderData.subParcel = orderData.subParcel; // ข้อมูลพัสดุย่อย - JSON string - Optional
+    }
+    
+    // ข้อมูลเพิ่มเติม
+    if (orderData.remark) formattedOrderData.remark = orderData.remark; // หมายเหตุ - string - Optional
+    if (orderData.payType !== undefined) formattedOrderData.payType = orderData.payType; // ประเภทการชำระ - integer - Optional
+    if (orderData.itemCategory !== undefined) formattedOrderData.itemCategory = orderData.itemCategory; // ประเภทสินค้า - integer - Optional
+    if (orderData.settlementType !== undefined) formattedOrderData.settlementType = orderData.settlementType; // วิธีชำระค่าขนส่ง - integer - Optional
+    
+    // สร้างลายเซ็นดิจิทัลสำหรับตรวจสอบความถูกต้อง
+    const requestTimestamp = Date.now();
+    const signature = createSignature(formattedOrderData, requestTimestamp);
+    
+    // เพิ่มลายเซ็นเข้าไปในข้อมูลที่จะส่ง (Required)
     const dataWithSign = {
       ...formattedOrderData,
       sign: signature
@@ -194,12 +188,11 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     console.log('Sending order data to Flash Express API:', JSON.stringify(dataWithSign, null, 2));
 
     // สร้าง config สำหรับ axios
-    const axiosConfig = {
+    const basicConfig = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      // เพิ่ม timeout และ maxContentLength
       timeout: 30000,
       maxContentLength: Infinity
     };
@@ -207,22 +200,26 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     console.log(`Sending request to Flash Express API: ${BASE_URL}/v3/orders`);
     
     // ส่งข้อมูลไปยัง Flash Express API
-    const response = await axios.post(`${BASE_URL}/v3/orders`, dataWithSign, axiosConfig);
-    
-    console.log('Flash Express API response:', JSON.stringify(response.data, null, 2));
-    return response.data;
-  } catch (error: any) {
-    console.error('Error creating Flash Express order:');
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', JSON.stringify(error.response.data, null, 2));
-      console.error('Response headers:', JSON.stringify(error.response.headers, null, 2));
-    } else if (error.request) {
-      console.error('No response received. Request details:', error.request);
-    } else {
-      console.error('Error message:', error.message);
+    try {
+      const response = await axios.post(`${BASE_URL}/v3/orders`, dataWithSign, basicConfig);
+      console.log('Flash Express API response:', JSON.stringify(response.data, null, 2));
+      return response.data;
+    } catch (error: any) {
+      console.error('Error creating Flash Express order:');
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', JSON.stringify(error.response.data, null, 2));
+        console.error('Response headers:', JSON.stringify(error.response.headers, null, 2));
+      } else if (error.request) {
+        console.error('No response received. Request details:', error.request);
+      } else {
+        console.error('Error message:', error.message);
+      }
+      console.error('Error config:', JSON.stringify(error.config, null, 2));
+      throw error;
     }
-    console.error('Error config:', JSON.stringify(error.config, null, 2));
+  } catch (error: any) {
+    console.error('Unexpected error in createFlashOrder function:', error.message);
     throw error;
   }
 }
