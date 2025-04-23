@@ -49,7 +49,16 @@ function createSignature(data: any, timestamp: number): string {
       
       // แปลงค่าให้เป็น string ทั้งหมด
       if (typeof value === 'object') {
-        value = JSON.stringify(value);
+        // สำหรับ subItemTypes ต้องระวังเป็นพิเศษเพราะมีผลต่อลายเซ็น
+        if (key === 'subItemTypes') {
+          // ตรวจสอบว่าเป็น array หรือเป็น JSON string อยู่แล้ว
+          if (Array.isArray(value)) {
+            value = JSON.stringify(value);
+          }
+          // ถ้าเป็น string อยู่แล้ว (อาจเป็น JSON string) ให้ใช้ค่าเดิม
+        } else {
+          value = JSON.stringify(value);
+        }
       } else if (typeof value !== 'string') {
         value = String(value);
       }
@@ -60,6 +69,7 @@ function createSignature(data: any, timestamp: number): string {
         continue;
       }
       
+      // ไม่ต้องเข้ารหัส URL ในขั้นตอนการสร้างลายเซ็น
       parts.push(`${key}=${value}`);
     }
     
@@ -79,6 +89,9 @@ function createSignature(data: any, timestamp: number): string {
       .update(stringSignTemp)
       .digest('hex')
       .toUpperCase();
+    
+    console.log('Generated signature (lowercase):', crypto.createHash('sha256').update(stringSignTemp).digest('hex'));
+    console.log('Generated signature (uppercase):', hash);
       
     console.log('Generated signature:', hash);
     return hash;
@@ -214,8 +227,7 @@ export async function createFlashOrder(orderData: any): Promise<any> {
       // ข้อมูลการยืนยัน (ตามตัวอย่างเอกสาร)
       mchId: MERCHANT_ID || "CBE1930", // ใช้ค่าจริงจาก env หรือค่าที่ได้รับจากผู้ใช้
       nonceStr: Date.now().toString(),
-      // เพิ่ม timestamp เผื่อเป็นฟิลด์ที่จำเป็น
-      timestamp: Date.now().toString(),
+      // ตามที่ผู้ใช้แจ้ง ไม่ต้องส่ง timestamp
       
       // ข้อมูลออเดอร์
       outTradeNo: orderData.outTradeNo || `SS${Date.now()}`,
