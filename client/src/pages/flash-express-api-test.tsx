@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Layout } from '../components/Layout';
+import Layout from '../components/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';

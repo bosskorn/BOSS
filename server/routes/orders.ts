@@ -179,15 +179,7 @@ router.get('/:id', auth, async (req, res) => {
     const userId = req.user?.id;
     const orderId = parseInt(req.params.id);
     
-    const order = await prisma.order.findFirst({
-      where: {
-        id: orderId,
-        userId
-      },
-      include: {
-        items: true
-      }
-    });
+    const order = await storage.getOrder(orderId);
     
     if (!order) {
       return res.status(404).json({
@@ -310,7 +302,7 @@ router.patch('/:id/tracking', auth, async (req, res) => {
 });
 
 // ลบออเดอร์
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const orderId = parseInt(req.params.id);
@@ -358,7 +350,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 // ค้นหาออเดอร์จากหมายเลขการติดตาม
-router.get('/tracking/:trackingNumber', authenticateToken, async (req, res) => {
+router.get('/tracking/:trackingNumber', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const trackingNumber = req.params.trackingNumber;
@@ -395,7 +387,7 @@ router.get('/tracking/:trackingNumber', authenticateToken, async (req, res) => {
 });
 
 // ค้นหาออเดอร์จากหมายเลขออเดอร์
-router.get('/order-number/:orderNumber', authenticateToken, async (req, res) => {
+router.get('/order-number/:orderNumber', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const orderNumber = req.params.orderNumber;
@@ -432,7 +424,7 @@ router.get('/order-number/:orderNumber', authenticateToken, async (req, res) => 
 });
 
 // สร้างออเดอร์จำนวนมาก (Bulk)
-router.post('/bulk', authenticateToken, async (req, res) => {
+router.post('/bulk', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -527,7 +519,7 @@ router.post('/bulk', authenticateToken, async (req, res) => {
 });
 
 // เพิ่ม endpoint สำหรับตรวจสอบการค้นหาออเดอร์จากหมายเลขการติดตามของลูกค้า (Merchant Tracking)
-router.get('/merchant-tracking/:merchantTracking', authenticateToken, async (req, res) => {
+router.get('/merchant-tracking/:merchantTracking', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
     const merchantTracking = req.params.merchantTracking;
