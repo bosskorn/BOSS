@@ -496,7 +496,7 @@ export default function FlashExpressAPITest() {
                             <Label htmlFor="merchant-id">Merchant ID</Label>
                             <Input
                               id="merchant-id"
-                              value={process.env.FLASH_EXPRESS_MERCHANT_ID || import.meta.env.VITE_FLASH_EXPRESS_MERCHANT_ID || ""}
+                              value={import.meta.env.VITE_FLASH_EXPRESS_MERCHANT_ID || ""}
                               disabled
                               className="bg-gray-50"
                             />
