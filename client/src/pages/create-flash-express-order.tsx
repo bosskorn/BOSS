@@ -295,6 +295,8 @@ export default function CreateFlashExpressOrderPage() {
   const onSubmit: SubmitHandler<OrderFormValues> = async (values) => {
     try {
       setIsLoading(true);
+      console.log('กำลังสร้างเลขพัสดุ Flash Express...');
+      console.log('ข้อมูลที่จะส่งไปยัง API:', values);
 
       // ส่งข้อมูลไปยัง API
       const response = await fetch('/api/shipping/flash-express-new/create', {
@@ -302,6 +304,7 @@ export default function CreateFlashExpressOrderPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(values),
       });
 
@@ -868,6 +871,7 @@ export default function CreateFlashExpressOrderPage() {
                     type="submit"
                     className="w-full"
                     disabled={isLoading || calculatingRate || !shippingRate}
+                    onClick={() => console.log('ข้อมูลของฟอร์ม:', form.getValues(), 'ข้อผิดพลาด:', form.formState.errors)}
                   >
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     สร้างเลขพัสดุ
