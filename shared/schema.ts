@@ -238,13 +238,40 @@ export const feeHistoryRelations = relations(feeHistory, ({ one }) => ({
   order: one(orders, { fields: [feeHistory.orderId], references: [orders.id] }),
 }));
 
-// อัพเดต usersRelations เพื่อเพิ่มความสัมพันธ์กับ topups
+// ตาราง pickup_requests - ข้อมูลการเรียกรถเข้ารับพัสดุ
+export const pickupRequestStatusEnum = pgEnum('pickup_request_status', ['pending', 'requested', 'completed', 'failed']);
+
+export const pickupRequests = pgTable("pickup_requests", {
+  id: serial("id").primaryKey(),
+  requestId: text("request_id").notNull().unique(), // เลขอ้างอิงการเรียกรถ
+  provider: text("provider").notNull(), // บริษัทขนส่ง (เช่น Flash Express)
+  requestDate: timestamp("request_date").notNull(), // วันที่ต้องการให้เข้ารับ
+  requestTimeSlot: text("request_time_slot"), // ช่วงเวลาที่ต้องการให้เข้ารับ
+  status: pickupRequestStatusEnum("status").default("pending"),
+  trackingNumbers: text("tracking_numbers").array(), // รายการเลขพัสดุที่ต้องการให้เข้ารับ
+  pickupAddress: text("pickup_address").notNull(), // ที่อยู่รับพัสดุ
+  contactName: text("contact_name").notNull(), // ชื่อผู้ติดต่อ
+  contactPhone: text("contact_phone").notNull(), // เบอร์โทรผู้ติดต่อ
+  responseData: json("response_data"), // ข้อมูลตอบกลับจาก API
+  requestedAt: timestamp("requested_at"), // เวลาที่ทำการเรียกรถจริง
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  userId: integer("user_id").references(() => users.id),
+});
+
+export const pickupRequestsRelations = relations(pickupRequests, ({ one, many }) => ({
+  user: one(users, { fields: [pickupRequests.userId], references: [users.id] }),
+}));
+
+// อัพเดต usersRelations เพื่อเพิ่มความสัมพันธ์กับ topups และ pickupRequests
 export const updateUsersRelations = relations(users, ({ many }) => ({
   customers: many(customers),
   products: many(products),
   orders: many(orders),
   categories: many(categories),
   topups: many(topups),
+  pickupRequests: many(pickupRequests),
 }));
 
 // สร้าง schemas สำหรับการ insert ข้อมูล
@@ -272,6 +299,7 @@ export const insertOrderItemSchema = createInsertSchema(orderItems);
 export const insertOrderSchema = createInsertSchema(orders);
 export const insertTopupSchema = createInsertSchema(topups);
 export const insertFeeHistorySchema = createInsertSchema(feeHistory);
+export const insertPickupRequestSchema = createInsertSchema(pickupRequests);
 
 // สร้าง types จาก schemas
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -303,3 +331,6 @@ export type Topup = typeof topups.$inferSelect;
 
 export type InsertFeeHistory = z.infer<typeof insertFeeHistorySchema>;
 export type FeeHistory = typeof feeHistory.$inferSelect;
+
+export type InsertPickupRequest = z.infer<typeof insertPickupRequestSchema>;
+export type PickupRequest = typeof pickupRequests.$inferSelect;
