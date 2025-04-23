@@ -63,7 +63,7 @@ function createSignature(params: Record<string, any>, apiKey: string): string {
 }
 
 /**
- * เรียกดูข้อมูลคลังสินค้า
+ * เรียกดูข้อมูลคลังสินค้า (ผ่าน CORS proxy)
  */
 export async function getWarehouses(): Promise<any> {
   if (!credentials) {
@@ -89,22 +89,29 @@ export async function getWarehouses(): Promise<any> {
     sign: sign
   };
   
-  // ส่งคำขอไปยัง Flash Express API
+  // ส่งคำขอผ่าน CORS proxy ของเรา
   try {
-    const response = await axios.get('https://cnapi-sl.flashexpress.com/open/v1/warehouses', {
-      params: requestParams,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+    console.log('Sending request via CORS proxy with params:', { 
+      mchId: requestParams.mchId,
+      nonceStr: requestParams.nonceStr,
+      timestamp: requestParams.timestamp,
+      sign: requestParams.sign.substring(0, 8) + '...'
+    });
+    
+    const response = await axios.get('/api/cors-proxy/warehouses', {
+      params: {
+        params: JSON.stringify(requestParams)
       }
     });
 
+    console.log('Proxy response received:', response.status);
+    
     return {
       success: true,
-      data: response.data
+      data: response.data.data
     };
   } catch (error: any) {
-    console.error('Error calling Flash Express API:', error);
+    console.error('Error calling Flash Express API via proxy:', error);
     
     const responseData = error.response?.data || {};
     
@@ -118,7 +125,7 @@ export async function getWarehouses(): Promise<any> {
 }
 
 /**
- * ร้องขอรถเข้ารับพัสดุ
+ * ร้องขอรถเข้ารับพัสดุ (ผ่าน CORS proxy)
  */
 export async function requestPickup(
   warehouseNo: string,
@@ -147,24 +154,28 @@ export async function requestPickup(
   // สร้าง signature
   const sign = createSignature(params, credentials!.apiKey);
   
-  // ส่งคำขอไปยัง Flash Express API
+  // ส่งคำขอผ่าน CORS proxy ของเรา
   try {
-    const response = await axios.post('https://cnapi-sl.flashexpress.com/open/v1/notify', 
-      { ...params, sign },
-      {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
+    console.log('Sending pickup request via CORS proxy for warehouse:', warehouseNo);
+    
+    const requestBody = {
+      params: { ...params, sign }
+    };
+    
+    const response = await axios.post('/api/cors-proxy/request-pickup', requestBody, {
+      headers: {
+        'Content-Type': 'application/json'
       }
-    );
+    });
+    
+    console.log('Pickup request response:', response.status);
     
     return {
       success: true,
-      data: response.data
+      data: response.data.data
     };
   } catch (error: any) {
-    console.error('Error requesting pickup:', error);
+    console.error('Error requesting pickup via proxy:', error);
     
     const responseData = error.response?.data || {};
     
