@@ -269,6 +269,10 @@ export async function createFlashShipment(shipmentData: any) {
       dstPostalCode: shipmentData.dstPostalCode,
       dstDetailAddress: shipmentData.dstDetailAddress,
       
+      // ข้อมูลจำเป็นสำหรับการแจ้งเตือน
+      dstEmail: shipmentData.dstEmail || 'noreply@example.com', // จำเป็นในบางกรณี
+      srcEmail: shipmentData.srcEmail || 'noreply@example.com', // จำเป็นในบางกรณี
+      
       // ข้อมูลพัสดุ - ต้องเป็น integer (required)
       weight: parseInt(String(shipmentData.weight)) || 1000, // น้ำหนักเป็น integer (กรัม)
       width: parseInt(String(shipmentData.width)) || 20, // ความกว้างเป็น integer (ซม.) optional
@@ -279,6 +283,10 @@ export async function createFlashShipment(shipmentData: any) {
       parcelKind: shipmentData.parcelKind ? String(shipmentData.parcelKind) : "1", // ประเภทพัสดุ (1=ทั่วไป) - ต้องเป็น string ไม่ใช่ integer
       expressCategory: parseInt(String(shipmentData.expressCategory)) || 1, // 1=ส่งด่วน, 2=ส่งธรรมดา
       articleCategory: parseInt(String(shipmentData.articleCategory)) || 1, // ประเภทสินค้า (1=ทั่วไป)
+      expressTypeId: parseInt(String(shipmentData.expressTypeId)) || 1, // ประเภทการส่ง (1=ส่งด่วน)
+      
+      // พารามิเตอร์ที่จำเป็นสำหรับ Flash Express API
+      payType: 1, // วิธีการชำระเงิน (1=ผู้ส่งจ่าย)
       
       // บริการเสริม (required)
       insured: shipmentData.insured !== undefined ? parseInt(String(shipmentData.insured)) : 0, // 0=ไม่ซื้อ Flash care
