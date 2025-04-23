@@ -363,24 +363,123 @@ export async function trackShipment(trackingNumber: string) {
 export const getFlashExpressShippingOptions = getShippingOptions;
 
 /**
- * ทดสอบการเชื่อมต่อกับ API
+ * ทดสอบการเชื่อมต่อกับ API แบบละเอียด
+ * ตรวจสอบการตั้งค่า API Key, ทดสอบการสร้างลายเซ็น, และทดสอบการเชื่อมต่อกับ API
  */
 export async function testApi() {
   try {
-    const originAddress = { postalCode: '10230' };
-    const destinationAddress = { postalCode: '10110' };
-    const packageDetails = {
+    // 1. ตรวจสอบการตั้งค่า API Key
+    const credentialCheck = {
+      merchantId: MERCHANT_ID ? 'configured' : 'missing',
+      apiKey: API_KEY ? 'configured' : 'missing',
+      hasCredentials: !!MERCHANT_ID && !!API_KEY
+    };
+    
+    if (!credentialCheck.hasCredentials) {
+      return {
+        success: false,
+        statusText: 'API Credentials Missing',
+        credentials: credentialCheck,
+        message: 'ไม่พบข้อมูล API Key หรือ Merchant ID กรุณาตั้งค่า API Key และ Merchant ID ก่อนใช้งาน'
+      };
+    }
+    
+    // 2. ทดสอบการสร้างลายเซ็น
+    const testParams = {
+      mchId: MERCHANT_ID,
+      nonceStr: generateNonceStr(),
+      timestamp: String(Math.floor(Date.now() / 1000)),
+      fromPostalCode: '10230',
+      toPostalCode: '10110',
       weight: '1000',
       width: '10',
       height: '10',
       length: '10'
     };
     
-    const result = await getShippingOptions(originAddress, destinationAddress, packageDetails);
-    console.log('API Test Result:', result);
-    return result;
+    const signature = generateFlashSignature(testParams, API_KEY!);
+    
+    // 3. ทดสอบการเชื่อมต่อกับ API
+    try {
+      const formData = new URLSearchParams();
+      
+      // เพิ่มข้อมูลทั้งหมดลงใน form data
+      for (const [key, value] of Object.entries(testParams)) {
+        if (value !== null && value !== undefined) {
+          formData.append(key, String(value));
+        }
+      }
+      
+      // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
+      formData.append('sign', signature);
+      
+      // ตั้งค่า timeout ให้สั้นลงเพื่อไม่ให้รอนานเกินไป
+      const response = await axios.post(
+        `${BASE_URL}/open/v1/estimate_rate`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'X-Flash-Signature': signature,
+            'X-Flash-Timestamp': testParams.timestamp,
+            'X-Flash-Nonce': testParams.nonceStr
+          },
+          timeout: 5000 // timeout 5 วินาทีสำหรับการทดสอบ
+        }
+      );
+      
+      return {
+        success: true,
+        statusText: 'API Connection Successful',
+        credentials: credentialCheck,
+        signature: {
+          test: true,
+          signatureGenerated: signature.substring(0, 10) + '...',
+          signatureLength: signature.length,
+          expectedLength: 64 // SHA-256 มีความยาว 64 ตัวอักษร
+        },
+        apiResponse: {
+          status: response.status,
+          statusText: response.statusText,
+          data: response.data
+        },
+        message: 'การเชื่อมต่อกับ Flash Express API สำเร็จ'
+      };
+    } catch (apiError: any) {
+      // กรณีเชื่อมต่อ API ไม่สำเร็จ แต่การตั้งค่าและการสร้างลายเซ็นถูกต้อง
+      return {
+        success: false,
+        statusText: 'API Connection Failed',
+        credentials: credentialCheck,
+        signature: {
+          test: true,
+          signatureGenerated: signature.substring(0, 10) + '...',
+          signatureLength: signature.length,
+          expectedLength: 64
+        },
+        error: {
+          message: apiError.message,
+          code: apiError.code || 'UNKNOWN',
+          response: apiError.response ? {
+            status: apiError.response.status,
+            statusText: apiError.response.statusText,
+            data: apiError.response.data
+          } : null
+        },
+        message: `การเชื่อมต่อกับ Flash Express API ไม่สำเร็จ: ${apiError.message}`
+      };
+    }
   } catch (error: any) {
     console.error('API Test Error:', error.message);
-    throw error;
+    return {
+      success: false,
+      statusText: 'Test Function Error',
+      error: {
+        message: error.message,
+        stack: error.stack
+      },
+      message: `เกิดข้อผิดพลาดในการทดสอบ: ${error.message}`
+    };
   }
 }
