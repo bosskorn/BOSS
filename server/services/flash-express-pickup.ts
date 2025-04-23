@@ -112,7 +112,7 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
       estimateParcelNumber: params.trackingNumbers.length > 0 ? params.trackingNumbers.length : 1,
       
       // ข้อมูลเพิ่มเติม
-      remark: "เรียกรถจากระบบอัตโนมัติ"
+      remark: "เรียกรถจากระบบอัตโนมัติ ShipSync"
     };
     
     // สร้างลายเซ็น
@@ -153,8 +153,14 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
         };
       }
       
-      // กรณีมีข้อผิดพลาด
-      throw new Error(response.data.msg || response.data.message || 'ไม่ทราบสาเหตุ');
+      // กรณีมีรหัสข้อผิดพลาด 1001 (ไม่มีข้อมูล) ให้อธิบายเพิ่มเติม
+      if (response.data.code === 1001) {
+        console.warn('Flash Express API returned code 1001 (ไม่มีข้อมูล):', response.data);
+        throw new Error('Flash Express API แจ้งว่าไม่มีข้อมูล (รหัส 1001) - ข้อมูลที่ระบุอาจไม่ถูกต้องหรือไม่ครบถ้วน');
+      }
+      
+      // กรณีมีข้อผิดพลาดอื่นๆ
+      throw new Error(response.data.message || response.data.msg || `รหัสข้อผิดพลาด: ${response.data.code}` || 'ไม่ทราบสาเหตุ');
     } catch (axiosError: any) {
       if (axiosError.response) {
         // ตรวจสอบข้อผิดพลาดจาก Axios
@@ -166,7 +172,33 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
           throw new Error('Flash Express API ตอบกลับด้วยหน้าเว็บแทนที่จะเป็น JSON - โปรดตรวจสอบ API Key และการตั้งค่า');
         }
         
+        // เช็คกรณี 404 Not Found
+        if (axiosError.response.status === 404) {
+          console.error('Flash Express API endpoint not found (404):', axiosError.response.config.url);
+          throw new Error('ไม่พบ Endpoint ของ Flash Express API - กรุณาตรวจสอบ URL');
+        }
+        
+        // เช็คกรณี 401 Unauthorized หรือ 403 Forbidden
+        if (axiosError.response.status === 401 || axiosError.response.status === 403) {
+          console.error('Flash Express API authorization error:', axiosError.response.status, responseData);
+          throw new Error('ไม่สามารถยืนยันตัวตนกับ Flash Express API ได้ - กรุณาตรวจสอบ Merchant ID และ API Key');
+        }
+        
         console.error('Error response from Flash Express Pickup API:', responseData);
+        
+        // จัดการข้อผิดพลาดตามรหัสข้อผิดพลาดที่ Flash Express ส่งกลับมา
+        if (responseData && responseData.code) {
+          const errorCode = responseData.code;
+          const errorMessage = responseData.message || responseData.msg || 'ไม่ทราบข้อผิดพลาด';
+          
+          switch (errorCode) {
+            case 1001:
+              throw new Error(`Flash Express API: ไม่มีข้อมูล (รหัส ${errorCode})`);
+            default:
+              throw new Error(`Flash Express API: ${errorMessage} (รหัส ${errorCode})`);
+          }
+        }
+        
         throw new Error(
           (responseData.msg || responseData.message || 'มีข้อผิดพลาดจาก Flash Express API') + 
           (responseData.code ? ` (รหัสข้อผิดพลาด: ${responseData.code})` : '')

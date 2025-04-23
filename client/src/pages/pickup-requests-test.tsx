@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import {
@@ -26,6 +26,17 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { addDays, format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // สคีมา Zod สำหรับการตรวจสอบข้อมูลฟอร์ม
 const formSchema = z.object({
@@ -40,6 +51,30 @@ export default function PickupRequestsTest() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [showApiKeyWarning, setShowApiKeyWarning] = useState(false);
+  const [apiKeyStatus, setApiKeyStatus] = useState<'unknown' | 'valid' | 'invalid'>('unknown');
+
+  // ตรวจสอบสถานะของ API Key เมื่อโหลดหน้า
+  useEffect(() => {
+    async function checkApiKey() {
+      try {
+        const response = await fetch('/api/flash-express-test/api-key-status');
+        const data = await response.json();
+        
+        if (data.success && data.active) {
+          setApiKeyStatus('valid');
+        } else {
+          setApiKeyStatus('invalid');
+          setShowApiKeyWarning(true);
+        }
+      } catch (error) {
+        console.error('Error checking API key status:', error);
+        setApiKeyStatus('unknown');
+      }
+    }
+    
+    checkApiKey();
+  }, []);
 
   // วันที่ปัจจุบันและวันพรุ่งนี้
   const today = new Date();
@@ -106,6 +141,32 @@ export default function PickupRequestsTest() {
     <Layout>
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-6">ทดสอบการเรียกรถเข้ารับพัสดุ</h1>
+        
+        {apiKeyStatus === 'invalid' && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTitle>แจ้งเตือนเกี่ยวกับ API Key</AlertTitle>
+            <AlertDescription>
+              ระบบตรวจพบว่า API Key ของ Flash Express อาจไม่ถูกต้องหรือหมดอายุ 
+              กรุณาติดต่อผู้ดูแลระบบเพื่อตรวจสอบและอัพเดท API Key
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <AlertDialog open={showApiKeyWarning} onOpenChange={setShowApiKeyWarning}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>ตรวจพบปัญหากับ API Key ของ Flash Express</AlertDialogTitle>
+              <AlertDialogDescription>
+                ระบบตรวจพบว่า API Key ของ Flash Express อาจไม่ถูกต้องหรือหมดอายุ ซึ่งอาจทำให้ไม่สามารถเรียกรถได้
+                <br /><br />
+                กรุณาติดต่อผู้ดูแลระบบเพื่อตรวจสอบและอัพเดท API Key ถ้าต้องการใช้ฟีเจอร์นี้
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction>เข้าใจแล้ว</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
