@@ -6,12 +6,12 @@ import axios from 'axios';
 import { createHmac } from 'crypto';
 
 // ตรวจสอบว่ามีการกำหนดค่าสำหรับ API หรือไม่
-const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
+const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID || "CBE1930";
 const API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 const BASE_URL = 'https://open-api.flashexpress.com/open'; // URL สำหรับ Production
 
-if (!MERCHANT_ID || !API_KEY) {
-  console.warn('Missing Flash Express API credentials!');
+if (!API_KEY) {
+  console.warn('Missing Flash Express API credentials! Using default merchant ID.');
 }
 
 // ฟังก์ชันสร้างลายเซ็นสำหรับส่งข้อมูลให้ Flash Express API
@@ -91,7 +91,7 @@ function createSignature(data: any, timestamp: number): string {
 export function testSignatureWithExampleData() {
   // ตัวอย่างข้อมูลออเดอร์ที่ใช้ในการทดสอบเพื่อให้เห็นรูปแบบชัดเจน
   const testOrder = {
-    mchId: MERCHANT_ID || 'CA5609',
+    mchId: MERCHANT_ID || 'CBE1930',
     nonceStr: '1745395359993',
     outTradeNo: 'SS1745395342808',
     expressCategory: 1,
@@ -130,7 +130,7 @@ export function testSignatureWithExampleData() {
   return {
     exampleData: testOrder,
     signature,
-    merchantId: MERCHANT_ID ? MERCHANT_ID : 'missing (using default: CA5609)',
+    merchantId: MERCHANT_ID ? MERCHANT_ID : 'missing (using default: CBE1930)',
     apiKeyAvailable: API_KEY ? 'configured' : 'missing (using default test key)'
   };
 }
@@ -207,7 +207,7 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     // และมีโครงสร้างตามที่เห็นจากภาพตัวอย่าง
     const formattedOrderData: Record<string, any> = {
       // ข้อมูลการยืนยัน (ตามตัวอย่างเอกสาร)
-      mchId: MERCHANT_ID || "CA5609", // ใช้ค่าจริงจาก env หรือค่าทดสอบ
+      mchId: MERCHANT_ID || "CBE1930", // ใช้ค่าจริงจาก env หรือค่าที่ได้รับจากผู้ใช้
       nonceStr: Date.now().toString(),
       // เพิ่ม timestamp เผื่อเป็นฟิลด์ที่จำเป็น
       timestamp: Date.now().toString(),
