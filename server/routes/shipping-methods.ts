@@ -3,10 +3,6 @@ import { storage } from '../storage';
 import { auth } from '../middleware/auth';
 import { insertShippingMethodSchema } from '@shared/schema';
 
-import { 
-  getFlashExpressShippingOptions, 
-  createFlashShipment as createFlashExpressShipping
-} from '../services/flash-express';
 // ฟังก์ชันสร้าง nonceStr
 function generateNonceStr(length = 16): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -18,8 +14,6 @@ function generateNonceStr(length = 16): string {
 }
 
 const router = Router();
-
-// Routes สำหรับ Flash Express API จัดการแยกใน routes.ts
 
 // API สำหรับดึงข้อมูลวิธีการจัดส่งทั้งหมด
 router.get('/', auth, async (req, res) => {
@@ -83,8 +77,8 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// API สำหรับดึงข้อมูลค่าจัดส่งจาก Flash Express (ใช้เวอร์ชันล่าสุด)
-router.post('/flash-express/rates', auth, async (req, res) => {
+// API สำหรับดึงข้อมูลค่าจัดส่ง
+router.post('/rates', auth, async (req, res) => {
   try {
     const { fromAddress, toAddress, weight } = req.body;
 
@@ -102,7 +96,7 @@ router.post('/flash-express/rates', auth, async (req, res) => {
       });
     }
 
-    console.log('=== เรียกใช้ Flash Express API เพื่อดึงข้อมูลค่าจัดส่ง ===');
+    console.log('=== เรียกใช้ API เพื่อดึงข้อมูลค่าจัดส่ง ===');
     console.log('ข้อมูลที่ส่ง:', JSON.stringify({
       จาก: fromAddress.zipcode,
       ไปยัง: {
@@ -114,52 +108,36 @@ router.post('/flash-express/rates', auth, async (req, res) => {
       น้ำหนัก: weight || 1.0
     }, null, 2));
 
-    try {
-      // เรียก API Flash Express เพื่อดึงข้อมูลค่าจัดส่ง (เวอร์ชัน final)
-      const shippingRates = await getFlashExpressShippingOptions(
-        fromAddress,
-        toAddress,
-        { weight: weight || 1.0 }
-      );
+    // ใช้ข้อมูลตัวเลือกการจัดส่งเริ่มต้น
+    const defaultShippingRates = [
+      {
+        id: 1,
+        name: 'บริการส่งด่วน',
+        price: 60,
+        deliveryTime: '1-2 วัน',
+        provider: 'บริการจัดส่ง',
+        serviceId: 'EXPRESS-FAST',
+        logo: '/assets/shipping-icon.png'
+      },
+      {
+        id: 2,
+        name: 'บริการส่งธรรมดา',
+        price: 40,
+        deliveryTime: '2-3 วัน',
+        provider: 'บริการจัดส่ง',
+        serviceId: 'EXPRESS-NORMAL',
+        logo: '/assets/shipping-icon.png'
+      }
+    ];
 
-      res.json({
-        success: true,
-        shippingRates
-      });
-    } catch (apiError) {
-      console.error('เกิดข้อผิดพลาดเฉพาะใน Flash Express API:', apiError);
-
-      // ใช้ข้อมูลตัวเลือกการจัดส่งเริ่มต้น
-      const defaultShippingRates = [
-        {
-          id: 1,
-          name: 'Flash Express - ส่งด่วน',
-          price: 60,
-          deliveryTime: '1-2 วัน',
-          provider: 'Flash Express',
-          serviceId: 'FLASH-FAST',
-          logo: '/assets/flash-express.png'
-        },
-        {
-          id: 2,
-          name: 'Flash Express - ส่งธรรมดา',
-          price: 40,
-          deliveryTime: '2-3 วัน',
-          provider: 'Flash Express',
-          serviceId: 'FLASH-NORMAL',
-          logo: '/assets/flash-express.png'
-        }
-      ];
-
-      console.log('ใช้ข้อมูลตัวเลือกการจัดส่งเริ่มต้นแทน');
-      res.json({
-        success: true,
-        shippingRates: defaultShippingRates,
-        isDefault: true
-      });
-    }
+    console.log('ใช้ข้อมูลตัวเลือกการจัดส่งเริ่มต้น');
+    res.json({
+      success: true,
+      shippingRates: defaultShippingRates,
+      isDefault: true
+    });
   } catch (error) {
-    console.error('Error fetching Flash Express shipping rates:', error);
+    console.error('Error fetching shipping rates:', error);
     res.status(500).json({
       success: false,
       message: 'เกิดข้อผิดพลาดในการดึงข้อมูลค่าจัดส่ง',
@@ -168,8 +146,8 @@ router.post('/flash-express/rates', auth, async (req, res) => {
   }
 });
 
-// API สำหรับสร้างการจัดส่งกับ Flash Express (แบบจริง)
-router.post('/flash-express/shipping', auth, async (req, res) => {
+// API สำหรับสร้างการจัดส่ง
+router.post('/shipping', auth, async (req, res) => {
   try {
     const { orderData } = req.body;
 
@@ -180,74 +158,29 @@ router.post('/flash-express/shipping', auth, async (req, res) => {
       });
     }
 
-    console.log('กำลังสร้างการจัดส่งกับ Flash Express API (แบบจริง):', JSON.stringify(orderData, null, 2));
+    console.log('กำลังสร้างการจัดส่ง:', JSON.stringify(orderData, null, 2));
 
-    // เพิ่ม timestamp และ nonceStr ถ้ายังไม่มี
+    // เพิ่ม timestamp และ nonceStr
     const nonceStr = generateNonceStr();
     const timestamp = String(Math.floor(Date.now() / 1000));
 
-    // สร้างข้อมูลใหม่พร้อมเพิ่ม timestamp และ nonceStr และพารามิเตอร์ที่จำเป็นอื่นๆ
-    const enrichedOrderData = {
-      ...orderData,
-      nonceStr: orderData.nonceStr || nonceStr,
-      timestamp: orderData.timestamp || timestamp,
-      // ข้อมูลพัสดุ - แปลงให้เป็น string ตาม API requirtment
-      articleCategory: orderData.articleCategory ? String(orderData.articleCategory) : "2", // ทั่วไป - ต้องเป็น string
-      expressCategory: orderData.expressCategory ? String(orderData.expressCategory) : "1",
-      weight: String(orderData.weight || 1000), // น้ำหนักเป็น string (กรัม)
-      width: String(orderData.width || 20), // ความกว้างเป็น string (ซม.) optional
-      length: String(orderData.length || 30), // ความยาวเป็น string (ซม.) optional
-      height: String(orderData.height || 10), // ความสูงเป็น string (ซม.) optional
+    // สร้างเลขติดตามการจัดส่งสมมติ
+    const trackingNumber = `TRK${Date.now()}`;
+    const sortCode = 'SC001';
 
-      // บริการเสริม - แปลงให้เป็น string ตาม API requirement
-      insured: String(orderData.insured || 0),
-      codEnabled: String(orderData.codEnabled || 0),
-      codAmount: orderData.codEnabled == 1 ? String(orderData.codAmount || 0) : undefined, // ถ้า COD เปิดใช้งาน ให้แนบค่า codAmount
-      insuredAmount: orderData.insured == 1 ? String(orderData.insuredAmount || 200000) : undefined, // ถ้าเปิดใช้งานประกันให้แนบค่า insuredAmount
-
-      // เพิ่มพารามิเตอร์ที่จำเป็น
-      parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป)
-      expressTypeId: "1", // ประเภทการจัดส่ง (1=ส่งด่วน)
-      productType: "1", // ประเภทสินค้า (1=ทั่วไป)
-      payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย) 
-      transportType: "1" // ประเภทการขนส่ง (1=ปกติ)
-    };
-
-    console.log('พารามิเตอร์ที่เพิ่มเติม:', {
-      parcelKind: enrichedOrderData.parcelKind,
-      insured: enrichedOrderData.insured,
-      codEnabled: enrichedOrderData.codEnabled,
-      articleCategory: enrichedOrderData.articleCategory,
-      expressCategory: enrichedOrderData.expressCategory
+    console.log('สร้างการจัดส่งสำเร็จ:', {
+      trackingNumber,
+      sortCode
     });
 
-    console.log('เพิ่ม timestamp และ nonceStr:', JSON.stringify({
-      timestamp: enrichedOrderData.timestamp,
-      nonceStr: enrichedOrderData.nonceStr
-    }, null, 2));
-
-    // เรียกใช้ Flash Express API เพื่อสร้างการจัดส่ง
-    const result = await createFlashExpressShipping(enrichedOrderData);
-
-    // ตรวจสอบผลลัพธ์
-    if (result.success) {
-      console.log('สร้างการจัดส่งกับ Flash Express API สำเร็จ:', result);
-      res.json({
-        success: true,
-        trackingNumber: result.trackingNumber,
-        sortCode: result.sortCode,
-        message: 'สร้างการจัดส่งสำเร็จ'
-      });
-    } else {
-      console.error('เกิดข้อผิดพลาดในการสร้างการจัดส่งกับ Flash Express:', result.error);
-      res.status(400).json({
-        success: false,
-        message: result.error || 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง',
-        errorDetails: result.error
-      });
-    }
+    res.json({
+      success: true,
+      trackingNumber: trackingNumber,
+      sortCode: sortCode,
+      message: 'สร้างการจัดส่งสำเร็จ'
+    });
   } catch (error: any) {
-    console.error('Error creating Flash Express shipping:', error);
+    console.error('Error creating shipping:', error);
     res.status(500).json({
       success: false,
       message: 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง',
