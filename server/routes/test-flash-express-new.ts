@@ -144,7 +144,7 @@ router.post("/test-order-v2", auth, async (req: Request, res: Response) => {
     ];
 
     // กำหนดค่าของพารามิเตอร์สำหรับการส่งคำขอไปยัง Flash Express API
-    // ทดลองใช้ชื่อฟิลด์อื่นที่ Flash Express อาจต้องการ
+    // ทดลองใช้ชื่อฟิลด์แบบต่างๆ ที่ Flash Express อาจต้องการ
     const params: Record<string, any> = {
       mchId,
       nonceStr,
@@ -159,25 +159,31 @@ router.post("/test-order-v2", auth, async (req: Request, res: Response) => {
       codAmount: "0", // ยอดเงินที่ต้องเก็บ กรณีเก็บเงินปลายทาง
       remark: "ทดสอบสร้างออเดอร์ Flash Express API รูปแบบใหม่",
       
-      // ข้อมูลผู้ส่งทั้งแบบเดิมและแบบใหม่ (ให้ API เลือกใช้ตัวที่ถูกต้อง)
+      // ข้อมูลผู้ส่ง - ทดลองใช้รูปแบบต่างๆ
       senderName: sender.name,
       senderPhone: sender.phone,
       senderProvinceName: sender.province,
       senderDistrictName: sender.district,
       senderSubdistrictName: sender.subdistrict,
-      senderAddress: sender.address,
-      senderDetailedAddress: sender.address, // เผื่อ API ต้องการชื่อฟิลด์นี้
       senderZipcode: sender.postcode,
+      senderAddress: sender.address, 
+      senderDetailedAddress: sender.address,
+      "sender.address": sender.address, // รูปแบบ dot notation
+      "sender_address": sender.address, // รูปแบบ underscore
+      "sender[address]": sender.address, // รูปแบบ array notation
       
-      // ข้อมูลผู้รับทั้งแบบเดิมและแบบใหม่
+      // ข้อมูลผู้รับ
       receiverName: receiver.name,
       receiverPhone: receiver.phone,
       receiverProvinceName: receiver.province,
       receiverDistrictName: receiver.district,
       receiverSubdistrictName: receiver.subdistrict,
-      receiverAddress: receiver.address,
-      receiverDetailedAddress: receiver.address, // เผื่อ API ต้องการชื่อฟิลด์นี้
       receiverZipcode: receiver.postcode,
+      receiverAddress: receiver.address,
+      receiverDetailedAddress: receiver.address,
+      "receiver.address": receiver.address, // รูปแบบ dot notation
+      "receiver_address": receiver.address, // รูปแบบ underscore
+      "receiver[address]": receiver.address, // รูปแบบ array notation
       
       // ข้อมูลสินค้า
       parcelItems: JSON.stringify(items)
