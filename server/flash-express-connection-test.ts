@@ -21,13 +21,16 @@ async function testServerConnection() {
   try {
     console.log('📡 ทดสอบการเชื่อมต่อกับ:', FLASH_EXPRESS_API_URL);
     
-    // เช็คว่าเซิร์ฟเวอร์ตอบสนองหรือไม่ด้วยการส่ง POST request ไปยัง endpoint ที่ถูกต้อง
-    // ใช้ version endpoint ซึ่งควรตอบกลับง่ายที่สุด
+    // เช็คว่าเซิร์ฟเวอร์ตอบสนองหรือไม่ด้วยการส่ง POST request ไปยัง endpoint หลัก
+    // ใช้ endpoint ที่ใช้จริงในแอปพลิเคชัน
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonceStr = Math.random().toString(36).substring(2, 15);
     
+    // ทดสอบด้วยข้อมูลขั้นต่ำสำหรับการเรียก API
     const requestData = new URLSearchParams({
-      mchId: FLASH_EXPRESS_MCH_ID || 'test'
+      mchId: FLASH_EXPRESS_MCH_ID || 'test',
+      nonceStr: nonceStr,
+      timestamp: timestamp
     });
     
     const headers = {
@@ -37,9 +40,9 @@ async function testServerConnection() {
       'X-Flash-Nonce': nonceStr
     };
     
-    // ใช้ version endpoint ซึ่งควรตอบกลับง่ายที่สุด แม้จะมี error ลายเซ็น
+    // ทดสอบเรียก endpoint หลักสำหรับการสร้าง order
     const response = await axios.post(
-      `${FLASH_EXPRESS_API_URL}/open/v1/common/version`,
+      `${FLASH_EXPRESS_API_URL}/open/v3/orders`,
       requestData.toString(),
       { headers, timeout: API_TIMEOUT }
     );
