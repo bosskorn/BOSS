@@ -58,13 +58,12 @@ export default function PickupRequestsTest() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/pickup-requests/request-after-order", {
+      const response = await fetch("/api/pickup-test/test-pickup-call", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          orderId: 9999, // ใช้ค่า mock สำหรับการทดสอบ
           trackingNumber: data.trackingNumber,
           requestDate: data.requestDate,
           notes: data.notes || "ทดสอบการเรียกรถ",
