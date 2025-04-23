@@ -368,24 +368,68 @@ const CreateFlashExpressOrderNew: React.FC = () => {
   };
   
   // ควบคุมการเปลี่ยนแท็บและตรวจสอบความถูกต้องของข้อมูล
-  const handleTabChange = (value: string) => {
-    // ตรวจสอบว่าสามารถไปยังแท็บถัดไปได้หรือไม่
-    if (value === "receiver" && !form.formState.isValid) {
-      form.trigger(['srcName', 'srcPhone', 'srcProvinceName', 'srcCityName', 'srcPostalCode', 'srcDetailAddress']);
-      return;
+  const handleTabChange = async (value: string) => {
+    try {
+      // ตรวจสอบความถูกต้องของข้อมูลก่อนเปลี่ยนแท็บ
+      if (value === "receiver") {
+        // ตรวจสอบข้อมูลผู้ส่ง
+        const isValid = await form.trigger([
+          'srcName', 
+          'srcPhone', 
+          'srcProvinceName', 
+          'srcCityName', 
+          'srcPostalCode', 
+          'srcDetailAddress'
+        ]);
+        
+        if (!isValid) {
+          toast({
+            title: "กรุณากรอกข้อมูลให้ครบถ้วน",
+            description: "กรุณากรอกข้อมูลผู้ส่งให้ครบถ้วนก่อนไปขั้นตอนถัดไป",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else if (value === "parcel") {
+        // ตรวจสอบข้อมูลผู้รับ
+        const isValid = await form.trigger([
+          'dstName', 
+          'dstPhone', 
+          'dstProvinceName', 
+          'dstCityName', 
+          'dstPostalCode', 
+          'dstDetailAddress'
+        ]);
+        
+        if (!isValid) {
+          toast({
+            title: "กรุณากรอกข้อมูลให้ครบถ้วน",
+            description: "กรุณากรอกข้อมูลผู้รับให้ครบถ้วนก่อนไปขั้นตอนถัดไป",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else if (value === "confirm") {
+        // ตรวจสอบข้อมูลพัสดุ
+        const isValid = await form.trigger(['weight']);
+        
+        if (!isValid) {
+          toast({
+            title: "กรุณากรอกข้อมูลให้ครบถ้วน",
+            description: "กรุณากรอกข้อมูลพัสดุให้ครบถ้วนก่อนไปขั้นตอนถัดไป",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      // ถ้าผ่านการตรวจสอบจึงเปลี่ยนแท็บ
+      setActiveTab(value);
+    } catch (error) {
+      console.error("Error in handleTabChange:", error);
+      // กรณีเกิด error ที่ไม่คาดคิด ให้เปลี่ยนแท็บไปเลย
+      setActiveTab(value);
     }
-    
-    if (value === "parcel" && !form.formState.isValid) {
-      form.trigger(['dstName', 'dstPhone', 'dstProvinceName', 'dstCityName', 'dstPostalCode', 'dstDetailAddress']);
-      return;
-    }
-    
-    if (value === "confirm" && !form.formState.isValid) {
-      form.trigger(['weight']);
-      return;
-    }
-    
-    setActiveTab(value);
   };
   
   // ตรวจสอบว่าผู้ใช้ล็อกอินแล้วหรือยัง
