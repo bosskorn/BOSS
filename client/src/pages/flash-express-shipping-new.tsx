@@ -402,11 +402,32 @@ export default function FlashExpressShippingNew() {
         errorMessage = err.message;
       }
       
+      // แสดงข้อความแจ้งเตือนที่ละเอียดมากขึ้น
+      let detailedError = errorMessage;
+      if (err.response && err.response.data) {
+        const respData = err.response.data;
+        if (respData.error) {
+          detailedError += ` - ${JSON.stringify(respData.error)}`;
+        }
+        if (respData.message) {
+          detailedError += ` - ${respData.message}`;
+        }
+      }
+      
       toast({
         title: "เกิดข้อผิดพลาด",
-        description: errorMessage,
+        description: detailedError,
         variant: "destructive",
       });
+      
+      // เพิ่มแจ้งเตือนอีกอันที่แสดงรายละเอียดเพิ่มเติม
+      setTimeout(() => {
+        toast({
+          title: "รายละเอียดข้อผิดพลาด",
+          description: `API ส่งค่า: ${err.response ? JSON.stringify(err.response.data) : 'ไม่มีข้อมูลเพิ่มเติม'}`,
+          variant: "destructive",
+        });
+      }, 1000);
     } finally {
       setIsLoading(false);
     }
