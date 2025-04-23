@@ -146,7 +146,9 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     const requiredFields = [
       'srcName', 'srcPhone', 'srcProvinceName', 'srcCityName', 'srcPostalCode', 'srcDetailAddress',
       'dstName', 'dstPhone', 'dstProvinceName', 'dstCityName', 'dstPostalCode', 'dstDetailAddress',
-      'expressCategory', 'articleCategory', 'weight'
+      'expressCategory', 'articleCategory', 'weight',
+      // ฟิลด์ที่อาจจำเป็นเพิ่มเติม
+      'payType', 'settlementType', 'itemCategory'
     ];
     
     const missingFields = requiredFields.filter(field => !orderData[field]);
@@ -205,8 +207,10 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     // และมีโครงสร้างตามที่เห็นจากภาพตัวอย่าง
     const formattedOrderData: Record<string, any> = {
       // ข้อมูลการยืนยัน (ตามตัวอย่างเอกสาร)
-      mchId: MERCHANT_ID,
+      mchId: MERCHANT_ID || "CA5609", // ใช้ค่าจริงจาก env หรือค่าทดสอบ
       nonceStr: Date.now().toString(),
+      // เพิ่ม timestamp เผื่อเป็นฟิลด์ที่จำเป็น
+      timestamp: Date.now().toString(),
       
       // ข้อมูลออเดอร์
       outTradeNo: orderData.outTradeNo || `SS${Date.now()}`,
