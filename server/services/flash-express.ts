@@ -17,17 +17,37 @@ if (!MERCHANT_ID || !API_KEY) {
 // ฟังก์ชันสร้างลายเซ็นสำหรับส่งข้อมูลให้ Flash Express API
 function createSignature(data: any, timestamp: number): string {
   try {
-    // แปลงข้อมูลเป็น JSON string และจัดเรียงคีย์ตามลำดับอักษร
-    const sortedData = JSON.stringify(data, Object.keys(data).sort());
-    const message = `${sortedData}${timestamp}`;
+    // ตาม Flash Express API ค่า sign คือลายเซ็นที่สร้างจากข้อมูลทั้งหมดจัดเรียงตาม key
+    const keys = Object.keys(data).sort();
     
-    console.log('Creating signature with data:', sortedData);
-    console.log('Timestamp:', timestamp);
-    console.log('Message for signature:', message);
+    // กรองเอาเฉพาะข้อมูลที่ไม่ใช่ว่าง
+    let signStr = '';
+    keys.forEach(key => {
+      // ข้ามช่อง sign ไม่ต้องเอามารวมในการสร้างลายเซ็น
+      if (key !== 'sign' && data[key] !== undefined && data[key] !== null && data[key] !== '') {
+        if (Array.isArray(data[key]) || typeof data[key] === 'object') {
+          signStr += `${key}=${JSON.stringify(data[key])}&`;
+        } else {
+          signStr += `${key}=${data[key]}&`;
+        }
+      }
+    });
     
+    // ตัด & ตัวสุดท้ายออก
+    if (signStr.endsWith('&')) {
+      signStr = signStr.slice(0, -1);
+    }
+    
+    // เพิ่ม API_KEY เข้าไปเพื่อใช้ในการยืนยันตัวตน
+    signStr += API_KEY;
+    
+    console.log('Raw signature string:', signStr);
+    
+    // สร้างลายเซ็นด้วย SHA-256
     const signature = createHmac('sha256', API_KEY || '')
-      .update(message)
-      .digest('hex');
+      .update(signStr)
+      .digest('hex')
+      .toUpperCase(); // ตัวพิมพ์ใหญ่ทั้งหมด
     
     console.log('Generated signature:', signature);
     return signature;
@@ -35,8 +55,9 @@ function createSignature(data: any, timestamp: number): string {
     console.error('Error creating signature:', error);
     // ในกรณีที่เกิดข้อผิดพลาด ส่งค่าลายเซ็นที่สร้างจากข้อมูลว่างเปล่า
     return createHmac('sha256', API_KEY || '')
-      .update(`{}${timestamp}`)
-      .digest('hex');
+      .update(`${API_KEY}`)
+      .digest('hex')
+      .toUpperCase();
   }
 }
 
@@ -72,31 +93,91 @@ export async function createFlashOrder(orderData: any): Promise<any> {
       console.warn(`Missing required fields for Flash Express API: ${missingFields.join(', ')}`);
     }
     
-    // ตรวจสอบและเพิ่มฟิลด์ payType หากไม่มี
-    if (!orderData.payType) {
-      console.log('Adding default payType: 1 (ชำระโดยผู้ส่ง)');
-      orderData.payType = 1;
-    }
+    // ปรับปรุงข้อมูลให้ตรงตามรูปแบบที่ Flash Express API ต้องการ
+    const formattedOrderData = {
+      // ข้อมูลการยืนยันตัวตน
+      mchId: MERCHANT_ID,
+      nonceStr: Date.now().toString(),
+      
+      // ข้อมูลที่มีอยู่แล้ว
+      outTradeNo: orderData.outTradeNo || `SS${Date.now()}`,
+      
+      // ข้อมูลคลังสินค้า (ถ้าไม่มีใช้ค่าตั้งต้น)
+      warehouseNo: `${MERCHANT_ID}_001`,
+      
+      // ข้อมูลผู้ส่งพัสดุ
+      srcName: orderData.srcName,
+      srcPhone: orderData.srcPhone,
+      srcProvinceName: orderData.srcProvinceName,
+      srcCityName: orderData.srcCityName,
+      srcDistrictName: orderData.srcDistrictName || "", 
+      srcPostalCode: orderData.srcPostalCode,
+      srcDetailAddress: orderData.srcDetailAddress,
+      
+      // ข้อมูลผู้รับพัสดุ
+      dstName: orderData.dstName,
+      dstPhone: orderData.dstPhone,
+      dstHomePhone: orderData.dstHomePhone || orderData.dstPhone,
+      dstProvinceName: orderData.dstProvinceName,
+      dstCityName: orderData.dstCityName,
+      dstDistrictName: orderData.dstDistrictName || "",
+      dstPostalCode: orderData.dstPostalCode,
+      dstDetailAddress: orderData.dstDetailAddress,
+      
+      // ข้อมูลการส่งคืนพัสดุ (ถ้าไม่มีใช้ข้อมูลผู้ส่ง)
+      returnName: orderData.returnName || orderData.srcName,
+      returnPhone: orderData.returnPhone || orderData.srcPhone,
+      returnProvinceName: orderData.returnProvinceName || orderData.srcProvinceName,
+      returnCityName: orderData.returnCityName || orderData.srcCityName,
+      returnPostalCode: orderData.returnPostalCode || orderData.srcPostalCode,
+      returnDetailAddress: orderData.returnDetailAddress || orderData.srcDetailAddress,
+      
+      // ข้อมูลประเภทและน้ำหนักพัสดุ
+      articleCategory: orderData.articleCategory,
+      expressCategory: orderData.expressCategory,
+      weight: orderData.weight,
+      
+      // ข้อมูลขนาดพัสดุ
+      width: orderData.width || 20,
+      length: orderData.length || 30,
+      height: orderData.height || 10,
+      
+      // ข้อมูลการประกันพัสดุ
+      insured: orderData.insured || 0,
+      insureDeclareValue: orderData.insured === 1 ? (orderData.insureDeclareValue || 0) : 0,
+      opdInsureEnabled: orderData.opdInsureEnabled || 0,
+      
+      // ข้อมูลการเก็บเงินปลายทาง
+      codEnabled: orderData.codEnabled || 0,
+      codAmount: orderData.codEnabled === 1 ? (orderData.codAmount || 0) : 0,
+      
+      // ข้อมูลเพิ่มเติม
+      remark: orderData.remark || "",
+      
+      // ข้อมูลรายการสินค้าย่อย
+      subItemTypes: Array.isArray(orderData.subItemTypes) ? orderData.subItemTypes : [],
+      
+      // ข้อมูลอื่นๆ ที่อาจจำเป็น
+      payType: orderData.payType || 1,
+      itemCategory: orderData.itemCategory || orderData.articleCategory || 1
+    };
     
-    // ตรวจสอบและเพิ่มฟิลด์ itemCategory หากไม่มี
-    if (!orderData.itemCategory) {
-      console.log('Adding default itemCategory based on articleCategory');
-      orderData.itemCategory = orderData.articleCategory || 1;
-    }
-
-    console.log('Sending order data to Flash Express API:', JSON.stringify(orderData, null, 2));
-
-    // กำหนดค่า timestamp เพื่อสร้างลายเซ็น
+    // สร้างลายเซ็นสำหรับตรวจสอบความถูกต้อง
     const timestamp = Date.now();
-    const signature = createSignature(orderData, timestamp);
+    const signature = createSignature(formattedOrderData, timestamp);
+    
+    // เพิ่มลายเซ็นเข้าไปในข้อมูลที่จะส่ง
+    const dataWithSign = {
+      ...formattedOrderData,
+      sign: signature
+    };
+
+    console.log('Sending order data to Flash Express API:', JSON.stringify(dataWithSign, null, 2));
 
     // สร้าง config สำหรับ axios
     const axiosConfig = {
       headers: {
         'Content-Type': 'application/json',
-        'X-Flash-Merchant-Id': MERCHANT_ID,
-        'X-Flash-Timestamp': timestamp.toString(),
-        'X-Flash-Signature': signature,
         'Accept': 'application/json'
       },
       // เพิ่ม timeout และ maxContentLength
@@ -105,10 +186,9 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     };
 
     console.log(`Sending request to Flash Express API: ${BASE_URL}/v3/orders`);
-    console.log('Request headers:', JSON.stringify(axiosConfig.headers, null, 2));
     
     // ส่งข้อมูลไปยัง Flash Express API
-    const response = await axios.post(`${BASE_URL}/v3/orders`, orderData, axiosConfig);
+    const response = await axios.post(`${BASE_URL}/v3/orders`, dataWithSign, axiosConfig);
     
     console.log('Flash Express API response:', JSON.stringify(response.data, null, 2));
     return response.data;
