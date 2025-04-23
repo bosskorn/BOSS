@@ -144,10 +144,18 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
     // ปรับรูปแบบข้อมูลให้ตรงกับที่ Flash Express API ต้องการ
     // สร้าง object params สำหรับ Flash Express API
 
-    // ทดลองใช้ชื่อฟิลด์แบบเป็นมาตรฐานของ Flash Express
+    // ใช้ชื่อฟิลด์ตามตัวอย่าง Flash Express API ที่ทำงานได้
+    const nonceStr = Date.now().toString();
+    const outTradeNo = orderNumber || `SS${Date.now()}`;
+
     const params: Record<string, any> = {
-      merchantID: process.env.FLASH_EXPRESS_MERCHANT_ID,
-      // ข้อมูลผู้ส่งในรูปแบบปกติ
+      // ข้อมูลพื้นฐานตามตัวอย่าง
+      mchId: process.env.FLASH_EXPRESS_MERCHANT_ID,
+      nonceStr: nonceStr,
+      outTradeNo: outTradeNo,
+      warehouseNo: `${process.env.FLASH_EXPRESS_MERCHANT_ID}_001`,
+      
+      // ข้อมูลผู้ส่ง
       srcName: senderName,
       srcPhone: senderPhone,
       srcProvinceName: senderProvince, 
@@ -156,57 +164,59 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
       srcPostalCode: senderPostcode,
       srcDetailAddress: senderAddress,
       
-      // ข้อมูลผู้ส่งในรูปแบบที่ Flash Express อาจต้องการ
-      snd_name: senderName,
-      snd_phone: senderPhone,
-      snd_province: senderProvince,
-      snd_district: senderCity,
-      snd_subdistrict: senderDistrict,
-      snd_zipcode: senderPostcode,
-      snd_address: senderAddress,
-      
-      // ข้อมูลผู้รับในรูปแบบปกติ
+      // ข้อมูลผู้รับ
       dstName: receiverName,
       dstPhone: receiverPhone,
+      dstHomePhone: receiverPhone, // เพิ่มเติมตามตัวอย่าง
       dstProvinceName: receiverProvince,
       dstCityName: receiverCity,
       dstDistrictName: receiverDistrict,
       dstPostalCode: receiverPostcode,
       dstDetailAddress: receiverAddress,
       
-      // ข้อมูลผู้รับในรูปแบบที่ Flash Express อาจต้องการ
-      rcv_name: receiverName,
-      rcv_phone: receiverPhone,
-      rcv_province: receiverProvince,
-      rcv_district: receiverCity,
-      rcv_subdistrict: receiverDistrict,
-      rcv_zipcode: receiverPostcode,
-      rcv_address: receiverAddress,
+      // ข้อมูลการส่งคืน (ใช้ข้อมูลผู้ส่ง)
+      returnName: senderName,
+      returnPhone: senderPhone,
+      returnProvinceName: senderProvince,
+      returnCityName: senderCity,
+      returnPostalCode: senderPostcode,
+      returnDetailAddress: senderAddress,
       
-      // ข้อมูลพัสดุ
-      weight: Math.round(weight), // แปลงเป็นจำนวนเต็ม
-      width: Math.round(width),
-      length: Math.round(length),
-      height: Math.round(height),
-      
-      // ประเภทการจัดส่ง
+      // ข้อมูลพัสดุและประเภทการจัดส่ง
+      articleCategory: articleCategory || 1, // ตามตัวอย่างใช้ 1
       expressCategory: expressCategory || 1, // 1 = ธรรมดา, 2 = ด่วน
-      articleCategory: articleCategory || 99, // 99 = อื่นๆ
-      itemCategory: itemCategory || 100, // 100 = อื่นๆ
+      weight: Math.round(weight), // แปลงเป็นจำนวนเต็ม
+      
+      // ข้อมูลประกัน
+      insured: (hasInsurance || insuranceAmount > 0) ? 1 : 0,
+      insureDeclareValue: (hasInsurance || insuranceAmount > 0) ? Math.round(insuranceAmount || 10000) : 0,
+      opdInsureEnabled: (hasInsurance || insuranceAmount > 0) ? 1 : 0,
       
       // ข้อมูล COD
       codEnabled: codEnabled || 0,
       codAmount: codEnabled ? Math.round(codAmount) : 0,
       
-      // ข้อมูลการชำระเงิน
-      settlementType: settlementType || 1, // 1 = ผู้ส่งเป็นผู้ชำระ
-      payType: payType || 1, // 1 = เงินสด
+      // ข้อมูลพัสดุย่อย
+      subParcelQuantity: 1,
+      subParcel: JSON.stringify([{
+        outTradeNo: outTradeNo + "1",
+        weight: Math.round(weight),
+        width: Math.round(width),
+        length: Math.round(length),
+        height: Math.round(height),
+        remark: ""
+      }]),
       
-      // เลขที่อ้างอิง
-      merchantNo: orderNumber || `SS${Date.now()}`,
+      // ข้อมูลสินค้า
+      subItemTypes: JSON.stringify(subItemTypes || [{
+        itemName: "สินค้า",
+        itemWeightSize: `${Math.round(width)}*${Math.round(length)}*${Math.round(height)} ${Math.round(weight)/1000}Kg`,
+        itemColor: "",
+        itemQuantity: "1"
+      }]),
       
-      // ข้อมูลสินค้า (ต้องเป็น JSON string)
-      subItemTypes: JSON.stringify(subItemTypes || [{ itemName: "สินค้า", itemQuantity: 1 }])
+      // หมายเหตุ
+      remark: ""
     };
 
     // สร้างลายเซ็น

@@ -1,252 +1,193 @@
-import { Router, Request, Response } from "express";
-import axios from "axios";
-import crypto from "crypto";
-import querystring from "querystring";
-import { auth } from "../auth";
+import { Router, Request, Response } from 'express';
+import axios from 'axios';
+import crypto from 'crypto';
 
 const router = Router();
-const BASE_URL = "https://open-api.flashexpress.com/open";
+const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com/open';
 
-/**
- * สร้างลายเซ็นสำหรับ Flash Express API
- * @param params พารามิเตอร์ที่ใช้ในการคำนวณลายเซ็น
- * @returns ลายเซ็นที่สร้างขึ้น
- */
-function createSignature(params: Record<string, any>): string {
-  // ตรวจสอบว่ามี API Key หรือไม่
-  if (!process.env.FLASH_EXPRESS_API_KEY) {
-    throw new Error("Flash Express API key is not configured");
-  }
-
-  // คัดลอกพารามิเตอร์และกรองค่า null, undefined, และ empty strings ออก
-  const filteredParams: Record<string, any> = {};
-  for (const key in params) {
-    if (params[key] !== null && params[key] !== undefined && params[key] !== "") {
-      filteredParams[key] = params[key];
-    }
-  }
-
-  // เรียงลำดับคีย์ตามรหัส ASCII
-  const sortedKeys = Object.keys(filteredParams).sort();
+// ฟังก์ชันสร้างลายเซ็น
+function createSignature(params: Record<string, any>, apiKey: string): string {
+  // คัดลอกพารามิเตอร์ทั้งหมดเพื่อสร้าง signature
+  const paramsForSign = { ...params };
   
-  // สร้าง string ที่จะใช้ในการคำนวณลายเซ็น
-  let signatureStr = "";
-  sortedKeys.forEach((key) => {
-    // หลีกเลี่ยงการใช้ key 'sign' ในการคำนวณลายเซ็น
-    if (key !== "sign") {
-      let value = filteredParams[key];
-      // แปลงค่า object หรือ array เป็น JSON string
-      if (typeof value === "object") {
-        value = JSON.stringify(value);
-      }
-      signatureStr += `${key}=${value}&`;
+  // ลบฟิลด์ที่ไม่ต้องใช้ในการสร้าง signature
+  delete paramsForSign.sign;
+  
+  // เรียงฟิลด์ตามรหัส ASCII
+  const sortedKeys = Object.keys(paramsForSign).sort();
+  
+  // สร้าง string จากชื่อและค่าของทุกฟิลด์ที่เรียงลำดับแล้ว
+  let signString = '';
+  
+  for (const key of sortedKeys) {
+    const value = paramsForSign[key];
+    
+    // ข้ามฟิลด์ที่เป็น undefined หรือ null
+    if (value === undefined || value === null) {
+      continue;
     }
-  });
-
-  // เพิ่ม API key ต่อท้าย
-  signatureStr += `key=${process.env.FLASH_EXPRESS_API_KEY}`;
-
-  console.log("[Flash Express] String for signature calculation:", signatureStr);
-
-  // คำนวณ SHA-256 hash และแปลงเป็นตัวพิมพ์ใหญ่
-  return crypto.createHash("sha256").update(signatureStr).digest("hex").toUpperCase();
+    
+    // ข้ามฟิลด์ที่เป็นชื่อที่ขึ้นต้นด้วยเครื่องหมาย @ (ตามข้อกำหนดของ API)
+    if (key.startsWith('@')) {
+      continue;
+    }
+    
+    // เพิ่มชื่อฟิลด์และค่าลงใน string
+    signString += key + value;
+  }
+  
+  // เพิ่ม API Key ต่อท้าย
+  signString += apiKey;
+  
+  // สร้าง signature ด้วย SHA-256
+  return crypto.createHash('sha256').update(signString).digest('hex').toUpperCase();
 }
 
-/**
- * ตรวจสอบข้อมูลเชื่อมต่อกับ Flash Express API
- */
-router.get("/check-credentials", auth, async (req: Request, res: Response) => {
+// เส้นทางสำหรับทดสอบการสร้างออเดอร์ใหม่
+router.post('/create-order', async (req: Request, res: Response) => {
   try {
-    const merchantId = process.env.FLASH_EXPRESS_MERCHANT_ID;
-    const apiKey = process.env.FLASH_EXPRESS_API_KEY;
-
-    if (!merchantId || !apiKey) {
-      return res.json({
-        success: false,
-        merchantId: merchantId || "missing",
-        apiKeyConfigured: !!apiKey,
-        message: "Flash Express API credentials are not fully configured"
-      });
-    }
-
-    res.json({
-      success: true,
-      merchantId,
-      apiKeyConfigured: true,
-      message: "Flash Express API credentials are configured"
-    });
-  } catch (error: any) {
-    console.error("[Flash Express] Error checking credentials:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Error checking Flash Express API credentials"
-    });
-  }
-});
-
-/**
- * ทดสอบสร้างออเดอร์กับ Flash Express API ในรูปแบบใหม่
- */
-router.post("/test-order-v2", auth, async (req: Request, res: Response) => {
-  try {
-    const user = req.user;
-    if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "User not authenticated" 
-      });
-    }
-
-    // ตรวจสอบค่า environment variables
-    const mchId = process.env.FLASH_EXPRESS_MERCHANT_ID;
-    const apiKey = process.env.FLASH_EXPRESS_API_KEY;
-
-    if (!mchId || !apiKey) {
-      return res.status(400).json({
-        success: false,
-        message: "Flash Express API credentials are not configured"
-      });
-    }
-
-    // สร้าง timestamp และ nonce string
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const nonceStr = crypto.randomUUID().replace(/-/g, "");
-
-    // ข้อมูลผู้ส่ง (จากข้อมูลผู้ใช้)
-    const sender = {
-      name: user.fullname || "ทดสอบ ผู้ส่ง",
-      phone: user.phone || "0812345678",
-      address: user.address || "123 ทดสอบ",
-      province: user.province || "กรุงเทพมหานคร",
-      district: user.district || "บางรัก",
-      subdistrict: user.subdistrict || "สีลม",
-      postcode: user.zipcode || "10500"
-    };
-
-    // ข้อมูลผู้รับ (ข้อมูลทดสอบ)
-    const receiver = {
-      name: "ทดสอบ ผู้รับ",
-      phone: "0987654321",
-      address: "456 ถนนฉลองกรุง แขวงลาดกระบัง", // เพิ่มรายละเอียดที่อยู่ให้ชัดเจนขึ้น
-      province: "กรุงเทพมหานคร",
-      district: "ลาดกระบัง",
-      subdistrict: "ลาดกระบัง",
-      postcode: "10520"
-    };
-
-    // รายการสินค้า
-    const items = [
-      {
-        itemName: "สินค้าทดสอบ",
-        itemValue: "1000.00",
-        itemQuantity: "1"
-      }
-    ];
-
-    // กำหนดค่าของพารามิเตอร์สำหรับการส่งคำขอไปยัง Flash Express API
-    // ทดลองใช้ชื่อฟิลด์ที่ตรงกับ API v1 ของ Flash Express
-    const params: Record<string, any> = {
-      mchId,
-      nonceStr,
-      timestamp,
-      orderno: `TEST${Date.now()}`, // เลขที่ออเดอร์ต้องไม่ซ้ำ
-      expressCategory: "1", // 1 = ธรรมดา, 2 = ด่วนพิเศษ
-      weight: "1", // น้ำหนักในหน่วยกิโลกรัม
-      itemCategory: "1", // 1 = ไม่ใช่สินค้าอันตราย, 99 = อื่นๆ
-      settlementType: "1", // 1 = ผู้ส่งจ่ายค่าส่ง, 2 = ผู้รับจ่ายค่าส่ง
-      insured: "0", // 0 = ไม่ประกัน, 1 = ประกัน
-      codEnabled: "0", // 0 = ไม่เก็บเงินปลายทาง, 1 = เก็บเงินปลายทาง
-      codAmount: "0", // ยอดเงินที่ต้องเก็บ กรณีเก็บเงินปลายทาง
-      remark: "ทดสอบสร้างออเดอร์ Flash Express API รูปแบบใหม่",
+    // ตัวอย่างข้อมูลจาก user ที่สมบูรณ์
+    const testData = {
+      // ข้อมูลพื้นฐานตามตัวอย่าง API
+      mchId: process.env.FLASH_EXPRESS_MERCHANT_ID,
+      nonceStr: Date.now().toString(),
+      outTradeNo: `TEST${Date.now()}`,
+      warehouseNo: `${process.env.FLASH_EXPRESS_MERCHANT_ID}_001`,
       
-      // ทดลองใช้ชุดข้อมูลผู้ส่งและผู้รับในรูปแบบของ Flash Express แบบดั้งเดิม
       // ข้อมูลผู้ส่ง
-      snd_name: sender.name,
-      snd_phone: sender.phone,
-      snd_province: sender.province,
-      snd_district: sender.district,
-      snd_subdistrict: sender.subdistrict,
-      snd_zipcode: sender.postcode,
-      snd_address: sender.address,
+      srcName: 'หอมรวม create order test name',
+      srcPhone: '0899999999',
+      srcProvinceName: 'อุบลราชธานี',
+      srcCityName: 'เมืองอุบลราชธานี',
+      srcDistrictName: 'ในเมือง',
+      srcPostalCode: '34000',
+      srcDetailAddress: 'ที่อยู่ทดสอบต้นทาง',
       
       // ข้อมูลผู้รับ
-      rcv_name: receiver.name,
-      rcv_phone: receiver.phone,
-      rcv_province: receiver.province,
-      rcv_district: receiver.district,
-      rcv_subdistrict: receiver.subdistrict,
-      rcv_zipcode: receiver.postcode,
-      rcv_address: receiver.address,
+      dstName: 'น้ำพริกแม่อำพร',
+      dstPhone: '0888888888',
+      dstHomePhone: '0888888888',
+      dstProvinceName: 'เชียงใหม่',
+      dstCityName: 'สันทราย',
+      dstDistrictName: 'สันพระเนตร',
+      dstPostalCode: '50210',
+      dstDetailAddress: 'ที่อยู่ทดสอบปลายทาง',
       
-      // ยังคงเก็บฟิลด์แบบเดิมไว้เผื่อ API ต้องการ
-      senderName: sender.name,
-      senderPhone: sender.phone,
-      senderProvinceName: sender.province,
-      senderDistrictName: sender.district,
-      senderSubdistrictName: sender.subdistrict,
-      senderZipcode: sender.postcode,
-      senderAddress: sender.address,
+      // ข้อมูลการคืนพัสดุ
+      returnName: 'น้ำพริกแม่อำพร',
+      returnPhone: '0899999999',
+      returnProvinceName: 'อุบลราชธานี',
+      returnCityName: 'เมืองอุบลราชธานี',
+      returnPostalCode: '34000',
+      returnDetailAddress: 'ที่อยู่ทดสอบการคืน',
       
-      receiverName: receiver.name,
-      receiverPhone: receiver.phone,
-      receiverProvinceName: receiver.province,
-      receiverDistrictName: receiver.district,
-      receiverSubdistrictName: receiver.subdistrict,
-      receiverZipcode: receiver.postcode,
-      receiverAddress: receiver.address,
+      // ข้อมูลพัสดุและประเภทการจัดส่ง
+      articleCategory: 1,
+      expressCategory: 1,
+      weight: 1000,
+      
+      // ข้อมูลประกัน
+      insured: 1,
+      insureDeclareValue: 10000,
+      opdInsureEnabled: 1,
+      
+      // ข้อมูล COD
+      codEnabled: 1,
+      codAmount: 10000,
+      
+      // ข้อมูลพัสดุย่อย
+      subParcelQuantity: 2,
+      subParcel: [
+        {
+          outTradeNo: `TEST${Date.now()}1`,
+          weight: 500,
+          width: 20,
+          length: 30,
+          height: 10,
+          remark: "กล่องที่ 1"
+        },
+        {
+          outTradeNo: `TEST${Date.now()}2`,
+          weight: 500,
+          width: 15,
+          length: 25,
+          height: 10,
+          remark: "กล่องที่ 2"
+        }
+      ],
       
       // ข้อมูลสินค้า
-      parcelItems: JSON.stringify(items)
+      subItemTypes: [
+        {
+          itemName: "น้ำพริกเผา",
+          itemWeightSize: "15*25*10 0.5Kg",
+          itemColor: "แดง",
+          itemQuantity: "5"
+        },
+        {
+          itemName: "น้ำพริกตาแดง",
+          itemWeightSize: "20*30*10 0.5Kg",
+          itemColor: "เหลือง",
+          itemQuantity: "3"
+        }
+      ],
+      
+      // หมายเหตุ
+      remark: "ขึ้นบันได"
     };
 
-    // คำนวณลายเซ็น
-    const sign = createSignature(params);
-    params.sign = sign;
+    // แปลง subParcel และ subItemTypes เป็น JSON string
+    const params = {
+      ...testData,
+      subParcel: JSON.stringify(testData.subParcel),
+      subItemTypes: JSON.stringify(testData.subItemTypes)
+    };
 
-    console.log("[Flash Express] Request parameters:", JSON.stringify(params, null, 2));
+    // สร้างลายเซ็น
+    const signature = createSignature(params, process.env.FLASH_EXPRESS_API_KEY || '');
+    params.sign = signature;
+
+    console.log('Test params to Flash Express API:', JSON.stringify(params, null, 2));
 
     // ส่งคำขอไปยัง Flash Express API
-    const endpoint = `${BASE_URL}/v3/orders`;
-    
-    // ใช้ Content-Type เป็น application/x-www-form-urlencoded เท่านั้น
-    const response = await axios.post(endpoint, querystring.stringify(params), {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      }
-    });
+    const apiUrl = `${FLASH_EXPRESS_API_URL}/v3/orders`;
+    console.log('POST request to Flash Express API (test):', apiUrl);
 
-    console.log("[Flash Express] API response:", JSON.stringify(response.data, null, 2));
+    try {
+      // ส่งคำขอไปยัง Flash Express API แบบ x-www-form-urlencoded
+      const querystring = require('querystring');
+      const response = await axios.post(apiUrl, querystring.stringify(params), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        }
+      });
 
-    // ตรวจสอบผลลัพธ์
-    if (response.data.code === "0000") {
+      console.log('Flash Express API test response:', response.data);
+
       return res.json({
         success: true,
-        trackingNumber: response.data.data.pno,
-        sortCode: response.data.data.sortCode,
-        originalResponse: response.data
+        message: 'ส่งข้อมูลทดสอบสำเร็จ',
+        request: params,
+        response: response.data
       });
-    } else {
-      return res.json({
+    } catch (apiError: any) {
+      console.error('Error from Flash Express API test:', apiError.response?.data || apiError.message);
+
+      return res.status(400).json({
         success: false,
-        message: `Error from Flash Express API: ${response.data.code} - ${response.data.message}`,
-        originalResponse: response.data
+        message: 'เกิดข้อผิดพลาดในการทดสอบ API',
+        request: params,
+        error: apiError.response?.data || apiError.message
       });
     }
   } catch (error: any) {
-    console.error("[Flash Express] Error creating test order:", error);
-    
-    // ตรวจสอบว่าเป็น error ที่มีการตอบกลับจาก API หรือไม่
-    if (error.response) {
-      return res.status(error.response.status).json({
-        success: false,
-        message: `API Error: ${error.response.status} - ${error.message}`,
-        data: error.response.data
-      });
-    }
-    
-    res.status(500).json({
+    console.error('Error testing Flash Express API:', error);
+
+    return res.status(500).json({
       success: false,
-      message: error.message || "Unknown error occurred"
+      message: 'เกิดข้อผิดพลาดในการทดสอบ',
+      error: error.message
     });
   }
 });
