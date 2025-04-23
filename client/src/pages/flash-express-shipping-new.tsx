@@ -493,9 +493,44 @@ export default function FlashExpressShippingNew() {
                   <div className="space-y-6">
                     {/* ส่วนข้อมูลผู้ส่ง */}
                     <div>
-                      <div className="flex items-center mb-4">
-                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 mr-2">ผู้ส่ง</Badge>
-                        <h3 className="text-lg font-medium">ข้อมูลผู้ส่ง</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 mr-2">ผู้ส่ง</Badge>
+                          <h3 className="text-lg font-medium">ข้อมูลผู้ส่ง</h3>
+                        </div>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            if (user) {
+                              setOrderData((prevData) => ({
+                                ...prevData,
+                                srcName: user.fullname || "",
+                                srcPhone: user.phone || "",
+                                srcProvinceName: user.province || "กรุงเทพมหานคร",
+                                srcCityName: user.district || "",
+                                srcDistrictName: user.subdistrict || "",
+                                srcPostalCode: user.zipcode || "",
+                                srcDetailAddress: user.address || "",
+                              }));
+                              toast({
+                                title: "ดึงข้อมูลสำเร็จ",
+                                description: "ดึงข้อมูลผู้ส่งจากโปรไฟล์เรียบร้อยแล้ว",
+                              });
+                            } else {
+                              toast({
+                                title: "ไม่พบข้อมูลผู้ใช้",
+                                description: "กรุณาเข้าสู่ระบบเพื่อใช้งานฟีเจอร์นี้",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                        >
+                          <LuInfo className="mr-1 h-4 w-4" />
+                          ใช้ข้อมูลจากโปรไฟล์
+                        </Button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
