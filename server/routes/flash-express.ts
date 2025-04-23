@@ -266,30 +266,78 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
       console.log('Flash Express API response:', response.data);
 
       // ตรวจสอบว่าเป็นการตอบกลับที่สำเร็จหรือไม่
-      if (response.data.code === 1 && response.data.msg === 'success' && response.data.pno) {
+      // ปรับปรุงให้รองรับทั้ง message และ msg และการมี pno ในรูปแบบต่างๆ
+      if (response.data.code === 1 && 
+         (response.data.msg === 'success' || response.data.message === 'success') && 
+         (response.data.pno || (response.data.data && response.data.data.pno))) {
+        
+        // รองรับทั้งกรณีที่เลขพัสดุอยู่ที่ root level และอยู่ใน data object
+        const trackingNumber = response.data.pno || (response.data.data && response.data.data.pno);
+        const sortCode = response.data.sortingCode || (response.data.data && response.data.data.sortCode) || '00';
+        
         // บันทึกข้อมูลเลขพัสดุลงในฐานข้อมูล หากต้องการ
         
         // ส่งข้อมูลกลับไปยังไคลเอนต์
         return res.json({
           success: true,
           message: 'สร้างเลขพัสดุสำเร็จ',
-          trackingNumber: response.data.pno,
-          sortCode: response.data.sortingCode || '00',
+          trackingNumber: trackingNumber,
+          sortCode: sortCode,
           pdfUrl: response.data.pdfUrl || null,
-          orderNumber: params.merchantNo,
+          orderNumber: params.outTradeNo, // แก้ไขจาก params.merchantNo เป็น params.outTradeNo
           response: response.data
         });
       } else {
         // กรณีมีข้อผิดพลาดจาก Flash Express API หรือข้อความแจ้งจาก API
         // ถ้า code = 0 อาจหมายถึงว่า API รับข้อมูลได้แต่มีปัญหาบางอย่าง
         let errorMessage = '';
+        let isSuccess = false;
+        
+        // ตรวจสอบว่าเป็นการตอบกลับที่สำเร็จแต่ API ไม่ตรงรูปแบบที่คาดหวังหรือไม่
+        if (response.data.code === 1 && 
+            (response.data.msg === 'success' || response.data.message === 'success') &&
+            response.data.data) {
+          
+          isSuccess = true;
+          errorMessage = 'success';
+          
+          // กรณีสำเร็จแต่ข้อมูลอยู่ในรูปแบบต่างไปจากที่คาดหวัง
+          return res.json({
+            success: true,
+            message: 'สร้างเลขพัสดุสำเร็จ',
+            trackingNumber: response.data.data.pno || 'ไม่ระบุ',
+            sortCode: response.data.data.sortCode || '00',
+            pdfUrl: response.data.pdfUrl || null,
+            orderNumber: params.outTradeNo,
+            response: response.data
+          });
+        }
         
         if (response.data.message) {
           errorMessage = response.data.message;
+          // ตรวจสอบว่าข้อความระบุว่าสำเร็จหรือไม่
+          if (errorMessage.toLowerCase() === 'success') {
+            isSuccess = true;
+          }
         } else if (response.data.msg) {
           errorMessage = response.data.msg;
+          // ตรวจสอบว่าข้อความระบุว่าสำเร็จหรือไม่
+          if (errorMessage.toLowerCase() === 'success') {
+            isSuccess = true;
+          }
         } else {
           errorMessage = 'ไม่ทราบสาเหตุ';
+        }
+        
+        // กรณีที่ API ตอบกลับว่าสำเร็จแต่ไม่มีข้อมูลที่จำเป็น
+        if (isSuccess) {
+          return res.json({
+            success: true,
+            message: 'สร้างเลขพัสดุสำเร็จ แต่ไม่มีข้อมูลเลขพัสดุกลับมา',
+            trackingNumber: 'ไม่ระบุ',
+            orderNumber: params.outTradeNo,
+            response: response.data
+          });
         }
         
         return res.status(400).json({
