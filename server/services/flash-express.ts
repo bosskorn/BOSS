@@ -565,6 +565,9 @@ export function testSignatureWithExampleData() {
     // 3. สร้างลายเซ็นจากโค้ดของเรา
     const ourSignature = generateFlashSignature(testParams, testApiKey);
 
+    // แสดงข้อมูลที่ใช้สร้างลายเซ็นเพื่อการตรวจสอบ
+    console.log('ข้อมูลที่ใช้สร้างลายเซ็น (ทดสอบ):', JSON.stringify(testParams));
+    
     // 4. ลายเซ็นที่ถูกต้องจากเอกสาร
     const expectedSignature = 'CD03E4D230D0824E804D2AB013879E39A75238C1230214840C6A31C9DF169BF5';
 

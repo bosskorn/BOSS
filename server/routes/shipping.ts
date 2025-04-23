@@ -197,6 +197,24 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
         dstDistrictName: orderData.dstDistrictName || '',
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
+        
+        // ข้อมูลพัสดุ (เพิ่มเลย เพื่อให้แน่ใจว่าการคำนวณลายเซ็นมีฟิลด์เหล่านี้ด้วย)
+        articleCategory: orderData.articleCategory || "2",
+        expressCategory: orderData.expressCategory || "1",
+        weight: orderData.weight || "1000",
+        width: orderData.width || "20",
+        length: orderData.length || "30", 
+        height: orderData.height || "10",
+        pricingType: "1",
+        pricingTable: "1",
+        payType: "1",
+        transportType: "1",
+        expressTypeId: "1",
+        productType: "1",
+        parcelKind: "1",
+        insured: "0",
+        opdInsureEnabled: "0",
+        codEnabled: orderData.codEnabled || "0",
       };
 
       console.log('Flash Express API request data:', apiData);
