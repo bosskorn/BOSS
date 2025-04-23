@@ -36,6 +36,10 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
       insured: 0,
       opdInsureEnabled: 0,
       
+      // ข้อมูลประเภทพัสดุและบริการ (ฟิลด์ที่จำเป็นต้องมี)
+      expressCategory: 1, // 1 = ส่งแบบด่วน (Flash Express)
+      articleCategory: 1, // 1 = สินค้าทั่วไป
+      
       // ข้อมูลการชำระเงิน
       settlementType: 1, // 1 = ผู้ส่งเป็นผู้ชำระ
       payType: 1, // เพิ่ม payType ด้วย
