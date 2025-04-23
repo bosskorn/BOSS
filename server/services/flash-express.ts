@@ -6,10 +6,8 @@ import axios from 'axios';
 import crypto from 'crypto';
 
 // กำหนดค่าคงที่
-// ใช้ URL จริงแทน URL ทดสอบ (ทดลองสลับกลับไปใช้ URL ทดสอบ)
-const BASE_URL = 'https://open-api-tra.flashexpress.com';
-// ถ้าไม่สำเร็จ ลองใช้ URL จริง
-// const BASE_URL = 'https://open-api.flashexpress.com'; 
+// ใช้ URL จริงเท่านั้น ตามที่ผู้ใช้ระบุ
+const BASE_URL = 'https://open-api.flashexpress.com';
 const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
@@ -519,13 +517,19 @@ export async function testFlashApi() {
       
       // เพิ่มข้อมูลทั้งหมดลงใน form data
       for (const [key, value] of Object.entries(testParams)) {
-        if (value !== null && value !== undefined) {
+        if (value !== null && value !== undefined && value !== '') {
           formData.append(key, String(value));
         }
       }
       
+      // เพิ่มฟิลด์บังคับที่ Flash Express API ต้องการ
+      formData.append('insured', '0');
+      formData.append('warehouseNo', `${MERCHANT_ID}_001`);
+      
       // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
       formData.append('sign', signature);
+      
+      const formDataString = formData.toString();
       
       // ตั้งค่า timeout ให้สั้นลงเพื่อไม่ให้รอนานเกินไป
       console.log('Flash Express API Test Request:', {
@@ -534,25 +538,26 @@ export async function testFlashApi() {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json',
-          'X-Flash-Signature': signature,
-          'X-Flash-Timestamp': testParams.timestamp,
-          'X-Flash-Nonce': testParams.nonceStr
         },
-        data: formData.toString()
+        data: formDataString
       });
+      
+      // แสดงค่า form data ทั้งหมดเพื่อแก้ไขปัญหา
+      console.log('Flash Express API Test - Form Data:', formDataString);
+      
+      // แสดงค่า API key และ merchant ID ที่ใช้ (เข้ารหัสบางส่วนเพื่อความปลอดภัย)
+      console.log(`Flash Express API Test - Using merchant ID: ${MERCHANT_ID}`);
+      console.log(`Flash Express API Test - Using API key: ${API_KEY?.substring(0, 3)}...${API_KEY?.substring(API_KEY.length - 3)}`);
       
       const response = await axios.post(
         `${BASE_URL}/open/v1/estimate_rate`,
-        formData.toString(),
+        formDataString,
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json',
-            'X-Flash-Signature': signature,
-            'X-Flash-Timestamp': testParams.timestamp,
-            'X-Flash-Nonce': testParams.nonceStr
+            'Accept': 'application/json'
           },
-          timeout: 5000, // timeout 5 วินาทีสำหรับการทดสอบ
+          timeout: 10000, // timeout 10 วินาทีสำหรับการทดสอบ
           maxRedirects: 0, // ป้องกันการ redirect
           validateStatus: (status) => status < 500 // ยอมรับสถานะ 400-499 เพื่อดูข้อความผิดพลาด
         }
