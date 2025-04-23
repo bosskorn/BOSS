@@ -11,39 +11,58 @@ function generateNonceStr(length = 16) {
   return result;
 }
 
-// สร้างลายเซ็น Flash Express (ปรับปรุงตามวิธีการของ Flash Express)
+// สร้างลายเซ็น Flash Express (ปรับปรุงตามวิธีการของไฟล์ working)
 function generateFlashSignature(params, apiKey) {
-  // แปลงค่าให้เป็น string ทุกค่า
+  console.log('⚙️ สร้างลายเซ็น Flash Express API...');
+  console.log('⚙️ ข้อมูลเริ่มต้น:', JSON.stringify(params, null, 2));
+  
+  // 1. แปลงทุกค่าเป็น string และกรองพารามิเตอร์
   const stringParams = {};
   for (const key in params) {
-    if (params[key] !== undefined && params[key] !== null) {
-      stringParams[key] = String(params[key]);
+    // Flash Express API มีพารามิเตอร์ที่ต้องข้ามในการคำนวณลายเซ็น
+    const skipParams = [
+      'sign', 
+      'subItemTypes', 
+      'merchantId',  // ใช้ mchId แทน
+      'subParcel',   // ไม่รวมในการคำนวณลายเซ็น
+      'subParcelQuantity', // ไม่รวมในการคำนวณลายเซ็น
+      'remark'       // ห้ามรวมในการคำนวณลายเซ็น (สำคัญมาก)
+    ];
+    
+    if (skipParams.includes(key)) {
+      console.log(`🚫 ข้ามพารามิเตอร์ "${key}" ในการคำนวณลายเซ็น`);
+      continue;
     }
+    
+    // ข้ามค่าที่เป็น null, undefined หรือช่องว่าง
+    if (params[key] === null || params[key] === undefined || params[key] === '') {
+      console.log(`⚠️ ข้ามพารามิเตอร์ "${key}" เนื่องจากค่าเป็น null, undefined หรือค่าว่าง`);
+      continue;
+    }
+    
+    // แปลงทุกค่าเป็น string
+    stringParams[key] = String(params[key]);
   }
-  
-  // 1. เรียงลำดับพารามิเตอร์ตามตัวอักษร
+
+  // 2. จัดเรียงคีย์ตามลำดับตัวอักษร ASCII
   const sortedKeys = Object.keys(stringParams).sort();
+  console.log('📝 คีย์ที่เรียงลำดับแล้ว:', sortedKeys);
+
+  // 3. สร้างสตริงสำหรับลายเซ็น
+  const stringToSign = sortedKeys
+    .map(key => `${key}=${stringParams[key]}`)
+    .join('&') + `&key=${apiKey}`;
   
-  // 2. สร้างสตริงสำหรับเซ็น
-  const pairs = [];
-  for (const key of sortedKeys) {
-    const value = stringParams[key];
-    if (value !== '') {
-      pairs.push(`${key}=${value}`);
-    }
-  }
-  const stringToSign = pairs.join('&');
+  console.log('🔑 สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
   
-  // 3. เพิ่ม API key
-  const finalString = `${stringToSign}&key=${apiKey}`;
+  // 4. คำนวณค่า SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
+  const sign = crypto.createHash('sha256')
+    .update(stringToSign)
+    .digest('hex')
+    .toUpperCase();
   
-  // 4. คำนวณ SHA-256
-  const signature = crypto.createHash('sha256').update(finalString).digest('hex').toUpperCase();
-  
-  console.log('String to sign:', finalString);
-  console.log('Generated signature:', signature);
-  
-  return signature;
+  console.log('🔒 ลายเซ็นที่สร้าง:', sign);
+  return sign;
 }
 
 // ทดสอบดึงข้อมูลค่าจัดส่ง
@@ -67,33 +86,42 @@ async function testShippingRate() {
     const requestParams = {
       fromPostalCode: '10230',
       toPostalCode: '10400',
-      weight: '1.0',
+      weight: '1000', // เปลี่ยนจาก 1.0 กิโลกรัม เป็น 1000 กรัม
       height: '10',
       length: '10',
       width: '10',
       mchId: mchId,
       nonceStr: nonceStr,
-      timestamp: timestamp
+      timestamp: timestamp,
+      warehouseNo: `${mchId}_001`, // รูปแบบมาตรฐานของ Flash Express
+      insured: '0' // จำเป็นต้องระบุเพื่อความสมบูรณ์ของการเรียก API
     };
     
     // คำนวณลายเซ็น
     const signature = generateFlashSignature(requestParams, apiKey);
     
+    // เพิ่ม sign ในข้อมูลที่ส่ง (สำคัญ)
+    const requestWithSign = { ...requestParams, sign: signature };
+    
+    // แปลงเป็น URL-encoded string
+    const encodedPayload = new URLSearchParams(requestWithSign).toString();
+    
     // สร้าง headers
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
       'X-Flash-Signature': signature,
       'X-Flash-Timestamp': timestamp,
       'X-Flash-Nonce': nonceStr
     };
     
     console.log('Request headers:', headers);
-    console.log('Request params:', requestParams);
+    console.log('Request params:', requestWithSign);
     
     // ส่ง request
     const response = await axios.post(
       'https://open-api-tra.flashexpress.com/open/v1/orders/estimate_rate',
-      new URLSearchParams(requestParams),
+      encodedPayload,
       { headers }
     );
     
