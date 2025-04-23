@@ -270,6 +270,7 @@ const CreateFlashExpressOrderNew: React.FC = () => {
   // ตรวจสอบและส่งข้อมูลฟอร์ม
   const onSubmit = async (data: CreateFlashOrderFormValues) => {
     try {
+      console.log("เริ่มการสร้างออเดอร์...", data);
       setIsLoading(true);
       
       // ถ้าเป็น COD ตรวจสอบว่าได้กรอก codAmount หรือไม่
@@ -292,29 +293,30 @@ const CreateFlashExpressOrderNew: React.FC = () => {
         return;
       }
       
-      // แปลงค่า codAmount เป็นสตางค์ (บาท x 100)
-      if (data.codEnabled === 1 && data.codAmount) {
-        data.codAmount = Math.floor(data.codAmount * 100);
-      }
+      // แปลงค่าต่างๆ เป็นรูปแบบที่ API ต้องการ
+      const orderData = {
+        ...data,
+        // แปลงค่า codAmount เป็นสตางค์ (บาท x 100)
+        codAmount: data.codEnabled === 1 && data.codAmount ? Math.floor(data.codAmount * 100) : undefined,
+        
+        // แปลงค่า insureDeclareValue เป็นสตางค์ (บาท x 100)
+        insureDeclareValue: data.insured === 1 && data.insureDeclareValue ? Math.floor(data.insureDeclareValue * 100) : undefined,
+        
+        // แปลง subItemTypes เป็น JSON string
+        subItemTypes: JSON.stringify(data.subItemTypes ? data.subItemTypes.map(item => ({
+          ...item,
+          itemQuantity: String(item.itemQuantity)
+        })) : [])
+      };
       
-      // แปลงค่า insureDeclareValue เป็นสตางค์ (บาท x 100)
-      if (data.insured === 1 && data.insureDeclareValue) {
-        data.insureDeclareValue = Math.floor(data.insureDeclareValue * 100);
-      }
-      
-      // แปลง subItemTypes เป็น JSON
-      const subItemTypes = data.subItemTypes ? data.subItemTypes.map(item => ({
-        ...item,
-        itemQuantity: String(item.itemQuantity)
-      })) : [];
+      console.log("ส่งข้อมูลไปยัง API:", orderData);
       
       // ส่งข้อมูลไปยัง API
-      const response = await api.post('/api/shipping-methods/flash-express/shipping', {
-        orderData: {
-          ...data,
-          subItemTypes: JSON.stringify(subItemTypes)
-        }
+      const response = await api.post('/api/flash-express/shipping', {
+        orderData
       });
+      
+      console.log("ได้รับการตอบกลับจาก API:", response.data);
       
       if (response.data.success) {
         toast({
@@ -328,7 +330,7 @@ const CreateFlashExpressOrderNew: React.FC = () => {
           title: 'สร้างออเดอร์สำเร็จ',
           description: 'ออเดอร์ของคุณได้ถูกสร้างเรียบร้อยแล้ว',
           trackingNumber: response.data.trackingNumber,
-          sortCode: response.data.sortCode
+          sortCode: response.data.sortCode || '-'
         });
         
         // เคลียร์ฟอร์ม
@@ -344,17 +346,18 @@ const CreateFlashExpressOrderNew: React.FC = () => {
       let errorDetails = '';
       
       if (error.response) {
-        errorMessage = error.response.data.message || 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์';
+        errorMessage = error.response.data?.message || 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์';
         errorDetails = JSON.stringify(error.response.data, null, 2);
       } else if (error.message) {
         errorMessage = error.message;
       }
       
+      // แสดงรายละเอียดข้อผิดพลาดใน Dialog
       setAlertDialog({
         open: true,
         title: 'เกิดข้อผิดพลาด',
         description: errorMessage,
-        errorDetails: errorDetails
+        errorDetails: errorDetails || JSON.stringify(error, null, 2)
       });
       
       toast({
@@ -491,7 +494,10 @@ const CreateFlashExpressOrderNew: React.FC = () => {
           </TabsList>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={(e) => {
+              console.log("Form submitted!");
+              return form.handleSubmit(onSubmit)(e);
+            }} className="space-y-8">
               {/* ขั้นตอนที่ 1: ข้อมูลผู้ส่ง */}
               <TabsContent value="sender">
                 <Card className="border border-purple-100 shadow-lg shadow-purple-100/20 overflow-hidden">
@@ -1377,9 +1383,14 @@ const CreateFlashExpressOrderNew: React.FC = () => {
                         <ChevronLeft className="mr-2 h-4 w-4" /> ย้อนกลับ
                       </Button>
                       <Button 
-                        type="submit"
+                        type="button"
                         className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white"
                         disabled={isLoading}
+                        onClick={() => {
+                          console.log("Create order button clicked!");
+                          const formData = form.getValues();
+                          onSubmit(formData);
+                        }}
                       >
                         {isLoading ? 'กำลังสร้างออเดอร์...' : 'สร้างออเดอร์'}
                       </Button>
