@@ -309,10 +309,9 @@ router.get('/track/:trackingNumber', async (req: Request, res: Response) => {
     console.log('POST request to Flash Express API for tracking:', apiUrl);
     
     try {
-      const querystring = require("querystring");
-      const response = await axios.post(apiUrl, querystring.stringify(params), {
+      const response = await axios.post(apiUrl, params, {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       });
@@ -416,10 +415,9 @@ router.get('/find-by-merchant-number/:merchantNumber', async (req: Request, res:
     console.log('POST request to Flash Express API for finding parcel:', apiUrl);
     
     try {
-      const querystring = require("querystring");
-      const response = await axios.post(apiUrl, querystring.stringify(params), {
+      const response = await axios.post(apiUrl, params, {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       });
@@ -509,10 +507,9 @@ router.get('/print-label/:trackingNumber', async (req: Request, res: Response) =
     console.log('POST request to Flash Express API for printing label:', apiUrl);
     
     try {
-      const querystring = require("querystring");
-      const response = await axios.post(apiUrl, querystring.stringify(params), {
+      const response = await axios.post(apiUrl, params, {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       });
