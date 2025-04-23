@@ -103,3 +103,15 @@ export const apiRequest = async (
 
 // Export API functions
 export default api
+/**
+ * ค้นหาพัสดุโดย Merchant Tracking Number (รหัสอ้างอิงร้านค้า)
+ */
+export const findOrderByMerchantTracking = async (merchantTrackingNumber: string) => {
+  try {
+    const response = await api.get(`/api/shipping/flash-express/find-by-merchant-tracking/${merchantTrackingNumber}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error finding order by merchant tracking:', error);
+    throw error;
+  }
+};

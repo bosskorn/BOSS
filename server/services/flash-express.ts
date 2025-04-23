@@ -707,3 +707,72 @@ async function testFlashApi() {
     };
   }
 }
+
+/**
+ * ค้นหาออเดอร์โดยใช้ Merchant Tracking Number (outTradeNo)
+ * ใช้สำหรับค้นหาพัสดุที่สร้างไปแล้วโดยใช้รหัสอ้างอิงของร้านค้า
+ */
+export async function findOrderByMerchantTrackingNumber(merchantTrackingNumber: string) {
+  try {
+    // 1. สร้างข้อมูลพื้นฐาน
+    const baseParams = createBaseRequestParams();
+    
+    // 2. เพิ่มเลขติดตามของร้านค้า
+    const requestParams = {
+      ...baseParams,
+      outTradeNo: merchantTrackingNumber
+    };
+    
+    // 3. สร้างลายเซ็น
+    const signature = generateFlashSignature(requestParams, API_KEY!);
+    
+    // 4. สร้าง form data
+    const formData = new URLSearchParams();
+    
+    // เพิ่มข้อมูลทั้งหมดลงใน form data
+    for (const [key, value] of Object.entries(requestParams)) {
+      if (value !== null && value !== undefined) {
+        formData.append(key, String(value));
+      }
+    }
+    
+    // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
+    formData.append('sign', signature);
+    
+    // 5. ส่งคำขอไปยัง Flash Express API
+    const response = await axios.post(
+      `${BASE_URL}/open/v1/ordersByMchPno`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          'X-Flash-Signature': signature,
+          'X-Flash-Timestamp': baseParams.timestamp,
+          'X-Flash-Nonce': baseParams.nonceStr
+        },
+        timeout: 15000
+      }
+    );
+    
+    if (response.data.code === 1) {
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } else {
+      return {
+        success: false,
+        message: response.data.message || 'ไม่พบข้อมูลพัสดุ',
+        data: null
+      };
+    }
+  } catch (error: any) {
+    console.error('Flash Express API error (findOrderByMerchantTrackingNumber):', error.message);
+    return {
+      success: false,
+      message: `ไม่สามารถค้นหาข้อมูลพัสดุได้: ${error.message}`,
+      data: null
+    };
+  }
+}

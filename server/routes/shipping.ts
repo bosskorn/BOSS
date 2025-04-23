@@ -641,3 +641,39 @@ function parseAddress(text: string): any {
 }
 
 export default router;
+/**
+ * API สำหรับค้นหาพัสดุโดย Merchant Tracking Number
+ */
+router.get('/flash-express/find-by-merchant-tracking/:trackingNumber', auth, async (req: Request, res: Response) => {
+  try {
+    const merchantTrackingNumber = req.params.trackingNumber;
+    
+    if (!merchantTrackingNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุเลข Merchant Tracking Number'
+      });
+    }
+    
+    // เรียกใช้ฟังก์ชันค้นหาออเดอร์
+    const result = await findOrderByMerchantTrackingNumber(merchantTrackingNumber);
+    
+    if (result.success) {
+      return res.json({
+        success: true,
+        data: result.data
+      });
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: result.message
+      });
+    }
+  } catch (error: any) {
+    console.error('Error finding order by merchant tracking:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'ไม่สามารถค้นหาข้อมูลพัสดุได้'
+    });
+  }
+});
