@@ -29,7 +29,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // สคีมา Zod สำหรับการตรวจสอบข้อมูลฟอร์ม
 const formSchema = z.object({
-  trackingNumber: z.string().min(1, "กรุณาระบุเลขพัสดุ"),
+  trackingNumber: z.string().optional(),
   requestDate: z.string().min(1, "กรุณาระบุวันที่ต้องการให้เข้ารับพัสดุ"),
   notes: z.string().optional(),
 });
@@ -127,15 +127,15 @@ export default function PickupRequestsTest() {
                     name="trackingNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>เลขพัสดุ</FormLabel>
+                        <FormLabel>เลขพัสดุ (ไม่บังคับ)</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="ระบุเลขพัสดุที่ต้องการให้เข้ารับ"
+                            placeholder="ระบุเลขพัสดุที่ต้องการให้เข้ารับ (ถ้ามี)"
                             {...field}
                           />
                         </FormControl>
                         <FormDescription>
-                          เลขพัสดุที่ต้องการเรียกรถเข้ารับ
+                          เลขพัสดุที่ต้องการเรียกรถเข้ารับ (สามารถเรียกรถได้โดยไม่ระบุเลขพัสดุ)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

@@ -276,14 +276,17 @@ router.post('/request-after-order', auth, async (req: Request, res: Response) =>
     }
 
     // ข้อมูลคำขอจากคำขอ
-    const { orderId, trackingNumber } = req.body;
+    const { orderId, trackingNumber, requestDate: customRequestDate, notes } = req.body;
 
-    if (!orderId || !trackingNumber) {
+    if (!orderId) {
       return res.status(400).json({ 
         success: false, 
-        message: 'ข้อมูลไม่ครบถ้วน กรุณาระบุรหัสออเดอร์และเลขพัสดุ' 
+        message: 'ข้อมูลไม่ครบถ้วน กรุณาระบุรหัสออเดอร์' 
       });
     }
+
+    // หากไม่มีเลขพัสดุ ให้ใช้อาร์เรย์ว่าง
+    const trackingNumberArray = trackingNumber ? [trackingNumber] : [];
 
     // ดึงข้อมูลออเดอร์
     const order = await db.query.orders.findFirst({
@@ -312,14 +315,20 @@ router.post('/request-after-order', auth, async (req: Request, res: Response) =>
     // สร้างเลขอ้างอิงการเรียกรถ
     const requestId = `PICK${Date.now()}`;
 
+    // ถ้ามีการระบุวันที่เรียกรถเข้ามา ให้ใช้วันที่ที่ระบุแทน
+    let finalRequestDate = requestDate;
+    if (customRequestDate) {
+      finalRequestDate = new Date(customRequestDate);
+    }
+
     // เตรียมข้อมูลสำหรับบันทึกลงฐานข้อมูล
     const pickupRequestData = {
       requestId,
       provider: 'Flash Express',
-      requestDate,
+      requestDate: finalRequestDate,
       requestTimeSlot,
       status: "pending" as const,
-      trackingNumbers: [trackingNumber],
+      trackingNumbers: trackingNumberArray,
       pickupAddress: user.address || '',
       contactName: user.fullname || '',
       contactPhone: user.phone || '',
@@ -330,11 +339,22 @@ router.post('/request-after-order', auth, async (req: Request, res: Response) =>
     // บันทึกข้อมูลลงฐานข้อมูล
     await db.insert(pickupRequests).values([pickupRequestData]);
 
+    // ถ้ามีการระบุหมายเหตุเพิ่มเติม
+    let noteText = `สร้างอัตโนมัติจากออเดอร์ #${order.orderNumber}`;
+    if (notes) {
+      noteText = notes;
+    }
+    
+    // อัพเดตหมายเหตุในข้อมูลคำขอเรียกรถ
+    await db.update(pickupRequests)
+      .set({ notes: noteText })
+      .where(eq(pickupRequests.requestId, requestId));
+
     // ส่งคำขอเรียกรถไปที่ Flash Express ทันที
     try {
       const pickupResponse = await flashExpressPickupRequest({
-        trackingNumbers: [trackingNumber],
-        requestDate,
+        trackingNumbers: trackingNumberArray,
+        requestDate: finalRequestDate,
         requestTimeSlot,
         pickupAddress: user.address || '',
         contactName: user.fullname || '',
@@ -358,8 +378,8 @@ router.post('/request-after-order', auth, async (req: Request, res: Response) =>
         success: true,
         message: 'บันทึกคำขอเรียกรถเข้ารับพัสดุสำเร็จและทำการร้องขอแล้ว',
         requestId,
-        requestDate,
-        trackingNumbers: [trackingNumber],
+        requestDate: finalRequestDate,
+        trackingNumbers: trackingNumberArray,
         response: pickupResponse
       });
     } catch (apiError: any) {
