@@ -121,6 +121,12 @@ function createBaseRequestParams() {
   const nonceStr = generateNonceStr();
   const timestamp = String(Math.floor(Date.now() / 1000));
   
+  // ตรวจสอบว่ามี MERCHANT_ID หรือไม่
+  if (!MERCHANT_ID) {
+    console.error('FLASH_EXPRESS_MERCHANT_ID is not set in environment variables');
+    throw new Error('FLASH_EXPRESS_MERCHANT_ID is required');
+  }
+  
   return {
     mchId: MERCHANT_ID,
     nonceStr,
@@ -246,53 +252,58 @@ export async function createFlashShipment(shipmentData: any) {
     delete shipmentData.items;
     
     // 3. รวมข้อมูลทั้งหมดและกำหนดค่าเริ่มต้นสำหรับฟิลด์ที่จำเป็น
+    // แปลงข้อมูลเป็น string ตามมาตรฐานของ Flash Express
     const requestData = {
       ...baseParams,
-      outTradeNo: shipmentData.outTradeNo,
-      warehouseNo: baseParams.warehouseNo,
+      outTradeNo: String(shipmentData.outTradeNo),
+      warehouseNo: String(baseParams.warehouseNo),
       
       // ข้อมูลผู้ส่ง (required)
-      srcName: shipmentData.srcName,
-      srcPhone: shipmentData.srcPhone,
-      srcProvinceName: shipmentData.srcProvinceName,
-      srcCityName: shipmentData.srcCityName,
-      srcDistrictName: shipmentData.srcDistrictName || '', // optional แต่ให้ใส่ไว้เป็นค่าว่าง
-      srcPostalCode: shipmentData.srcPostalCode,
-      srcDetailAddress: shipmentData.srcDetailAddress,
+      srcName: String(shipmentData.srcName),
+      srcPhone: String(shipmentData.srcPhone),
+      srcProvinceName: String(shipmentData.srcProvinceName),
+      srcCityName: String(shipmentData.srcCityName),
+      srcDistrictName: shipmentData.srcDistrictName ? String(shipmentData.srcDistrictName) : '', // optional แต่ให้ใส่ไว้เป็นค่าว่าง
+      srcPostalCode: String(shipmentData.srcPostalCode),
+      srcDetailAddress: String(shipmentData.srcDetailAddress),
       
       // ข้อมูลผู้รับ (required)
-      dstName: shipmentData.dstName,
-      dstPhone: shipmentData.dstPhone,
-      dstProvinceName: shipmentData.dstProvinceName,
-      dstCityName: shipmentData.dstCityName,
-      dstDistrictName: shipmentData.dstDistrictName || '', // optional แต่ให้ใส่ไว้เป็นค่าว่าง
-      dstPostalCode: shipmentData.dstPostalCode,
-      dstDetailAddress: shipmentData.dstDetailAddress,
+      dstName: String(shipmentData.dstName),
+      dstPhone: String(shipmentData.dstPhone),
+      dstProvinceName: String(shipmentData.dstProvinceName),
+      dstCityName: String(shipmentData.dstCityName),
+      dstDistrictName: shipmentData.dstDistrictName ? String(shipmentData.dstDistrictName) : '', // optional แต่ให้ใส่ไว้เป็นค่าว่าง
+      dstPostalCode: String(shipmentData.dstPostalCode),
+      dstDetailAddress: String(shipmentData.dstDetailAddress),
       
       // ข้อมูลจำเป็นสำหรับการแจ้งเตือน
-      dstEmail: shipmentData.dstEmail || 'noreply@example.com', // จำเป็นในบางกรณี
-      srcEmail: shipmentData.srcEmail || 'noreply@example.com', // จำเป็นในบางกรณี
+      dstEmail: shipmentData.dstEmail ? String(shipmentData.dstEmail) : '', // จำเป็นในบางกรณี
+      srcEmail: shipmentData.srcEmail ? String(shipmentData.srcEmail) : '', // จำเป็นในบางกรณี
       
-      // ข้อมูลพัสดุ - ต้องเป็น integer (required)
-      weight: parseInt(String(shipmentData.weight)) || 1000, // น้ำหนักเป็น integer (กรัม)
-      width: parseInt(String(shipmentData.width)) || 20, // ความกว้างเป็น integer (ซม.) optional
-      length: parseInt(String(shipmentData.length)) || 30, // ความยาวเป็น integer (ซม.) optional
-      height: parseInt(String(shipmentData.height)) || 10, // ความสูงเป็น integer (ซม.) optional
+      // ข้อมูลพัสดุ - ต้องเป็น string (required)
+      weight: String(parseInt(String(shipmentData.weight)) || 1000), // น้ำหนักเป็น string (กรัม)
+      width: String(parseInt(String(shipmentData.width)) || 20), // ความกว้างเป็น string (ซม.) optional
+      length: String(parseInt(String(shipmentData.length)) || 30), // ความยาวเป็น string (ซม.) optional
+      height: String(parseInt(String(shipmentData.height)) || 10), // ความสูงเป็น string (ซม.) optional
       
       // ประเภทพัสดุและการจัดส่ง (required) - ตามฟอร์แมตที่เคยทำงานได้
       parcelKind: shipmentData.parcelKind ? String(shipmentData.parcelKind) : "1", // ประเภทพัสดุ (1=ทั่วไป) - ต้องเป็น string ไม่ใช่ integer
-      expressCategory: parseInt(String(shipmentData.expressCategory)) || 1, // 1=ส่งด่วน, 2=ส่งธรรมดา
-      articleCategory: parseInt(String(shipmentData.articleCategory)) || 1, // ประเภทสินค้า (1=ทั่วไป)
-      expressTypeId: parseInt(String(shipmentData.expressTypeId)) || 1, // ประเภทการส่ง (1=ส่งด่วน)
+      expressCategory: String(parseInt(String(shipmentData.expressCategory)) || 1), // 1=ส่งด่วน, 2=ส่งธรรมดา
+      articleCategory: String(parseInt(String(shipmentData.articleCategory)) || 1), // ประเภทสินค้า (1=ทั่วไป)
+      expressTypeId: String(parseInt(String(shipmentData.expressTypeId)) || 1), // ประเภทการส่ง (1=ส่งด่วน)
+      productType: "1", // ประเภทสินค้า (1=ทั่วไป) - เพิ่มเติมจากเอกสาร
       
       // พารามิเตอร์ที่จำเป็นสำหรับ Flash Express API
-      payType: 1, // วิธีการชำระเงิน (1=ผู้ส่งจ่าย)
+      payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย) ต้องเป็น string
+      transportType: "1", // ประเภทการขนส่ง (1=ปกติ) ต้องเป็น string
       
-      // บริการเสริม (required)
-      insured: shipmentData.insured !== undefined ? parseInt(String(shipmentData.insured)) : 0, // 0=ไม่ซื้อ Flash care
-      codEnabled: shipmentData.codEnabled !== undefined ? parseInt(String(shipmentData.codEnabled)) : 0, // 0=ไม่ใช่ COD
-      codAmount: shipmentData.codEnabled && shipmentData.codEnabled !== 0 && shipmentData.codAmount ? parseInt(String(shipmentData.codAmount)) : 0, // จำนวนเงิน COD (ถ้ามี)
-      insuredAmount: shipmentData.insured && shipmentData.insured !== 0 && shipmentData.insuredAmount ? parseInt(String(shipmentData.insuredAmount)) : 0 // จำนวนเงินประกัน (ถ้ามี)
+      // บริการเสริม (required) - ต้องเป็น string ทั้งหมด
+      insured: shipmentData.insured !== undefined ? String(parseInt(String(shipmentData.insured))) : "0", // 0=ไม่ซื้อ Flash care
+      codEnabled: shipmentData.codEnabled !== undefined ? String(parseInt(String(shipmentData.codEnabled))) : "0", // 0=ไม่ใช่ COD
+      codAmount: shipmentData.codEnabled && shipmentData.codEnabled !== 0 && shipmentData.codAmount ? 
+                String(parseInt(String(shipmentData.codAmount))) : "0", // จำนวนเงิน COD (ถ้ามี)
+      insuredAmount: shipmentData.insured && shipmentData.insured !== 0 && shipmentData.insuredAmount ? 
+                    String(parseInt(String(shipmentData.insuredAmount))) : "0" // จำนวนเงินประกัน (ถ้ามี)
     };
     
     // เพิ่มข้อมูล COD ถ้าเปิดใช้งาน

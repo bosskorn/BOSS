@@ -191,11 +191,21 @@ router.post('/flash-express/shipping', auth, async (req, res) => {
       ...orderData,
       nonceStr: orderData.nonceStr || nonceStr,
       timestamp: orderData.timestamp || timestamp,
-      parcelKind: orderData.parcelKind || 1, // ค่า default ของพัสดุทั่วไป
-      insured: orderData.insured === 0 ? 0 : (orderData.insured || 0), // ไม่ทำประกัน (default)
-      codEnabled: orderData.codEnabled === 0 ? 0 : (orderData.codEnabled || 0), // ไม่เก็บเงินปลายทาง (default)
-      articleCategory: orderData.articleCategory || 1, // ประเภทสินค้า (default: สินค้าทั่วไป)
-      expressCategory: orderData.expressCategory || 1 // ประเภทการจัดส่ง (default: ธรรมดา)
+      // ค่า default ของพัสดุทั่วไป - ต้องเป็น string
+      parcelKind: "1", 
+      // ไม่ทำประกัน (default) - ต้องเป็น string
+      insured: "0", 
+      // ไม่เก็บเงินปลายทาง (default) - ต้องเป็น string
+      codEnabled: "0", 
+      // ประเภทสินค้า (default: สินค้าทั่วไป) - ต้องเป็น string
+      articleCategory: "1", 
+      // ประเภทการจัดส่ง (default: ธรรมดา) - ต้องเป็น string
+      expressCategory: "1",
+      // เพิ่มข้อมูลที่จำเป็นตามข้อกำหนดของ Flash Express API
+      expressTypeId: "1", // ประเภทการจัดส่ง (1=ส่งด่วน)
+      productType: "1", // ประเภทสินค้า (1=ทั่วไป)
+      payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย) 
+      transportType: "1" // ประเภทการขนส่ง (1=ปกติ)
     };
     
     console.log('พารามิเตอร์ที่เพิ่มเติม:', {
