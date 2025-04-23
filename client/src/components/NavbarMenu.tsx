@@ -147,15 +147,7 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
                 <i className="fas fa-list-ul"></i> คำสั่งซื้อทั้งหมด
               </Link>
             </li>
-            <li>
-              <Link 
-                href="/create-order" 
-                className={isCreateOrder ? 'active' : ''}
-                onClick={handleMenuLinkClick}
-              >
-                <i className="fas fa-plus-circle"></i> สร้างออเดอร์
-              </Link>
-            </li>
+            {/* เมนูสร้างออเดอร์ถูกลบตามความต้องการของผู้ใช้ */}
             <li>
               <Link href="/parcel-list" className={isParcelList ? 'active' : ''}>
                 <i className="fas fa-box-open"></i> รายการพัสดุ
