@@ -94,7 +94,7 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
     // แปลงรูปแบบวันที่ให้เป็น YYYY-MM-DD
     const formattedDate = params.requestDate.toISOString().split('T')[0];
     
-    // สร้างข้อมูลสำหรับส่งไปยัง Flash Express API ตามเอกสารและตัวอย่างล่าสุด
+    // สร้างข้อมูลสำหรับส่งไปยัง Flash Express API ตามเอกสารและตัวอย่างล่าสุดที่ได้รับ
     const apiParams: Record<string, any> = {
       mchId: process.env.FLASH_EXPRESS_MERCHANT_ID,
       nonceStr: nonceStr,
@@ -111,13 +111,6 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
       
       // จำนวนพัสดุโดยประมาณ - ใช้ค่า fix 100 ตามตัวอย่าง
       estimateParcelNumber: 100,
-      
-      // เพิ่มข้อมูลวันที่และช่วงเวลาที่ต้องการให้เข้ารับ
-      pickupDate: formattedDate,
-      pickupTimeSlot: params.requestTimeSlot,
-      
-      // เพิ่มข้อมูลหมายเลขพัสดุ (ถ้ามี)
-      pno: params.trackingNumbers.length > 0 ? params.trackingNumbers.join(',') : undefined,
       
       // ข้อมูลเพิ่มเติม - ใช้ตามตัวอย่าง
       remark: "ASAP"
@@ -140,14 +133,21 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
     try {
       // ส่งคำขอไปยัง Flash Express API
       console.log('Sending request to Flash Express Pickup API...');
+      
+      // แสดงค่า URL ที่ใช้
+      console.log(`API URL: ${apiUrl}`);
+      
+      // ตัวอย่างคำขอจากเอกสาร API
+      console.log('Example API params from documentation:');
+      console.log(`mchId=AAXXXX&nonceStr=1536749937115&sign=3E750D747981D6175EBB4E1F581DCD9246E60E7E82F8126C8091B27664FCD625&warehouseNo=AAXXXX_001&srcName=%E0%B8%AB%E0%B8%AD%E0%B8%A1%E0%B8%A3%E0%B8%A7%E0%B8%A1++nofity+test+name&srcPhone=0123456789&srcProvinceName=%E0%B8%AD%E0%B8%B8%E0%B8%9A%E0%B8%A5%E0%B8%A3%E0%B8%B2%E0%B8%8A%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%B5&srcCityName=%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B8%AD%E0%B8%B8%E0%B8%9A%E0%B8%A5%E0%B8%A3%E0%B8%B2%E0%B8%8A%E0%B8%98%E0%B8%B2%E0%B8%99%E0%B8%B5&srcDistrictName=%E0%B9%83%E0%B8%99%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87&srcPostalCode=34000&srcDetailAddress=example%20detail%20address&estimateParcelNumber=100&remark=ASAP`);
+      
+      // ทำการส่งคำขอแบบใช้ responseType เป็น 'text' เพื่อป้องกันการแปลง response ผิดรูปแบบ
       const response = await axios.post(apiUrl, querystring.stringify(apiParams), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-          'User-Agent': 'ShipSync/1.0',
-          'X-API-Key': process.env.FLASH_EXPRESS_API_KEY || ''
+          'Accept': 'application/json'
         },
-        responseType: 'json',
+        responseType: 'text', // เปลี่ยนเป็น text เพื่อจะได้ตรวจสอบก่อนแปลงเป็น JSON
         validateStatus: (status) => status < 500, // ยอมรับการตอบกลับที่มี status code น้อยกว่า 500
         timeout: 15000, // เพิ่ม timeout เป็น 15 วินาที
         maxRedirects: 0 // ป้องกันการ redirect ที่อาจนำไปสู่การได้รับ HTML
@@ -161,25 +161,68 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
       
       console.log('Flash Express Pickup API response:', response.data);
       
+      // พยายามแปลงข้อมูลเป็น JSON ถ้าการตอบกลับเป็น string
+      let jsonResponse;
+      if (typeof response.data === 'string') {
+        try {
+          console.log('Converting string response to JSON...');
+          jsonResponse = JSON.parse(response.data);
+          console.log('Successfully converted response to JSON:', jsonResponse);
+        } catch (jsonError) {
+          console.error('Failed to parse response as JSON:', jsonError);
+          // ถ้าการตอบกลับเป็น HTML หรือไม่ใช่ JSON ที่ถูกต้อง
+          if (response.data.includes('<!DOCTYPE') || response.data.includes('<html')) {
+            console.error('Response appears to be HTML, not JSON');
+            return {
+              success: false,
+              error: 'API ตอบกลับด้วยรูปแบบที่ไม่ถูกต้อง (HTML)',
+              referenceId,
+              rawResponse: response.data.substring(0, 200) + "..." // แสดงเฉพาะส่วนต้นของการตอบกลับ
+            };
+          } else {
+            console.error('Response is not valid JSON or HTML:', response.data);
+            return {
+              success: false,
+              error: 'API ตอบกลับด้วยรูปแบบที่ไม่ถูกต้อง',
+              referenceId,
+              rawResponse: response.data
+            };
+          }
+        }
+      } else {
+        // ถ้า response.data เป็น object อยู่แล้ว
+        jsonResponse = response.data;
+      }
+      
       // ตรวจสอบการตอบกลับจาก API
-      if (response.data.code === 1 || response.data.msg === 'success' || response.data.message === 'success') {
+      if (jsonResponse && (jsonResponse.code === 1 || jsonResponse.msg === 'success' || jsonResponse.message === 'success')) {
         return {
           success: true,
           referenceId,
           pickupDate: formattedDate,
           timeSlot: params.requestTimeSlot,
-          response: response.data
+          response: jsonResponse
         };
       }
       
-      // กรณีมีรหัสข้อผิดพลาด 1001 (ไม่มีข้อมูล) ให้อธิบายเพิ่มเติม
-      if (response.data.code === 1001) {
-        console.warn('Flash Express API returned code 1001 (ไม่มีข้อมูล):', response.data);
-        throw new Error('Flash Express API แจ้งว่าไม่มีข้อมูล (รหัส 1001) - ข้อมูลที่ระบุอาจไม่ถูกต้องหรือไม่ครบถ้วน');
+      // ถ้าการตอบกลับมีข้อผิดพลาด ให้ส่งค่ากลับโดยไม่โยน error
+      if (jsonResponse && jsonResponse.code !== 1 && jsonResponse.code !== undefined) {
+        console.warn(`Flash Express API returned error code: ${jsonResponse.code}`);
+        return {
+          success: false,
+          error: jsonResponse.message || jsonResponse.msg || `รหัสข้อผิดพลาด: ${jsonResponse.code}`,
+          referenceId,
+          response: jsonResponse
+        };
       }
       
-      // กรณีมีข้อผิดพลาดอื่นๆ
-      throw new Error(response.data.message || response.data.msg || `รหัสข้อผิดพลาด: ${response.data.code}` || 'ไม่ทราบสาเหตุ');
+      // ถ้าไม่มีข้อมูลการตอบกลับที่ชัดเจน ส่งค่ากลับโดยใช้ข้อมูลที่มี
+      return {
+        success: false,
+        error: 'ไม่สามารถตรวจสอบผลการเรียกรถได้ โปรดติดต่อ Flash Express เพื่อยืนยันสถานะ',
+        referenceId,
+        response: jsonResponse || response.data
+      };
     } catch (axiosError: any) {
       if (axiosError.response) {
         // ตรวจสอบข้อผิดพลาดจาก Axios
