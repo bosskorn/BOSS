@@ -68,10 +68,10 @@ function generateFlashSignature(params, apiKey) {
   return signature;
 }
 
-// ทดสอบดึงข้อมูลค่าจัดส่ง
-async function testShippingRate() {
+// ทดสอบการสร้างเลขพัสดุใหม่
+async function testCreateShipping() {
   try {
-    console.log('=== ทดสอบดึงข้อมูลค่าจัดส่ง ===');
+    console.log('=== ทดสอบการสร้างเลขพัสดุ Flash Express ===');
     
     const apiKey = process.env.FLASH_EXPRESS_API_KEY;
     const mchId = process.env.FLASH_EXPRESS_MERCHANT_ID;
@@ -84,6 +84,7 @@ async function testShippingRate() {
     // สร้างข้อมูลพื้นฐาน
     const timestamp = String(Math.floor(Date.now() / 1000));
     const nonceStr = generateNonceStr();
+    const outTradeNo = `TEST${Date.now()}`; // เลขที่คำสั่งซื้อที่ไม่ซ้ำกัน
     
     // สร้าง request data
     const requestParams = {
@@ -92,32 +93,58 @@ async function testShippingRate() {
       nonceStr: nonceStr,
       timestamp: timestamp,
       warehouseNo: `${mchId}_001`, // รูปแบบมาตรฐานของ Flash Express
+      outTradeNo: outTradeNo,
       
-      // ข้อมูลต้นทาง
-      srcProvinceName: 'กรุงเทพมหานคร',
-      srcCityName: 'ลาดพร้าว',
-      srcDistrictName: 'จรเข้บัว',
-      srcPostalCode: '10230',
+      // ข้อมูลผู้ส่ง (ค่าตั้งต้นจากคนสร้างระบบ)
+      srcName: "กรธนภัทร นาคคงคำ", 
+      srcPhone: "0829327325",
+      srcProvinceName: "กรุงเทพมหานคร",
+      srcCityName: "ลาดพร้าว",
+      srcDistrictName: "จรเข้บัว",
+      srcPostalCode: "10230",
+      srcDetailAddress: "26 ลาดปลาเค้า 24 แยก 8",
       
-      // ข้อมูลปลายทาง
-      dstProvinceName: 'กรุงเทพมหานคร',
-      dstCityName: 'ปทุมวัน',
-      dstDistrictName: 'ลุมพินี', 
-      dstPostalCode: '10330',
+      // ข้อมูลผู้รับ (ข้อมูลที่ได้รับจากคุณ)
+      dstName: "ธัญลักษณ์ ภาคภูมิ",
+      dstPhone: "0869972410",
+      dstProvinceName: "พระนครศรีอยุธยา",
+      dstCityName: "บางปะอิน",
+      dstDistrictName: "เชียงรากน้อย",
+      dstPostalCode: "13160",
+      dstDetailAddress: "138/348 ม.7 ซ.20 ต.เชียงรากน้อย อ.บางปะอิน",
       
       // ข้อมูลพัสดุ
-      weight: '1000', // หน่วยกรัม
-      height: '10',
-      length: '10',
-      width: '10',
-      insured: '0' // จำเป็นต้องระบุเพื่อความสมบูรณ์ของการเรียก API
+      weight: "1000", // น้ำหนัก 1 กก. ในหน่วยกรัม
+      width: "10",
+      length: "10",
+      height: "10",
+      parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป)
+      expressCategory: "1", // ประเภทการจัดส่ง (1=ปกติ)
+      articleCategory: "2", // ประเภทสินค้า (2=อื่นๆ)
+      insured: "0", // ประกันพัสดุ (0=ไม่มี)
+      codEnabled: "0", // COD (0=ไม่มี)
+      userNote: "ทดสอบส่งพัสดุ Flash Express"
     };
     
-    // คำนวณลายเซ็น
+    // รายการสินค้า (จำเป็นต้องมี)
+    const subItemTypes = [
+      {
+        name: "สินค้าทดสอบ", 
+        quantity: "1"
+      }
+    ];
+    
+    // สร้างลายเซ็น (ต้องข้าม remark ในการคำนวณลายเซ็น)
+    const remark = "ทดสอบการส่งพัสดุ"; // เก็บไว้ใช้ทีหลัง
     const signature = generateFlashSignature(requestParams, apiKey);
     
-    // เพิ่ม sign ในข้อมูลที่ส่ง (สำคัญ)
-    const requestWithSign = { ...requestParams, sign: signature };
+    // เพิ่มข้อมูลที่ต้องใส่หลังจากคำนวณลายเซ็นแล้ว
+    const requestWithSign = { 
+      ...requestParams, 
+      sign: signature,
+      remark: remark, // เพิ่ม remark หลังจากคำนวณลายเซ็นแล้ว
+      subItemTypes: JSON.stringify(subItemTypes) // เปลี่ยนเป็น string
+    };
     
     // แปลงเป็น URL-encoded string
     const encodedPayload = new URLSearchParams(requestWithSign).toString();
@@ -136,7 +163,7 @@ async function testShippingRate() {
     
     // ส่ง request
     const response = await axios.post(
-      'https://open-api-tra.flashexpress.com/open/v1/orders/estimate_rate',
+      'https://open-api-tra.flashexpress.com/open/v3/orders',
       encodedPayload,
       { headers }
     );
@@ -154,5 +181,5 @@ async function testShippingRate() {
   }
 }
 
-// รันการทดสอบ
-testShippingRate();
+// รันการทดสอบการสร้างเลขพัสดุ
+testCreateShipping();
