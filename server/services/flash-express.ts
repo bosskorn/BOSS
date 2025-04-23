@@ -245,40 +245,43 @@ export async function createFlashShipment(shipmentData: any) {
     const items = shipmentData.items || [];
     delete shipmentData.items;
     
-    // 3. รวมข้อมูลทั้งหมด
+    // 3. รวมข้อมูลทั้งหมดและกำหนดค่าเริ่มต้นสำหรับฟิลด์ที่จำเป็น
     const requestData = {
       ...baseParams,
       outTradeNo: shipmentData.outTradeNo,
       warehouseNo: baseParams.warehouseNo,
       
-      // ข้อมูลผู้ส่ง
+      // ข้อมูลผู้ส่ง (required)
       srcName: shipmentData.srcName,
       srcPhone: shipmentData.srcPhone,
       srcProvinceName: shipmentData.srcProvinceName,
       srcCityName: shipmentData.srcCityName,
-      srcDistrictName: shipmentData.srcDistrictName,
+      srcDistrictName: shipmentData.srcDistrictName || '', // optional แต่ให้ใส่ไว้เป็นค่าว่าง
       srcPostalCode: shipmentData.srcPostalCode,
       srcDetailAddress: shipmentData.srcDetailAddress,
       
-      // ข้อมูลผู้รับ
+      // ข้อมูลผู้รับ (required)
       dstName: shipmentData.dstName,
       dstPhone: shipmentData.dstPhone,
       dstProvinceName: shipmentData.dstProvinceName,
       dstCityName: shipmentData.dstCityName,
-      dstDistrictName: shipmentData.dstDistrictName,
+      dstDistrictName: shipmentData.dstDistrictName || '', // optional แต่ให้ใส่ไว้เป็นค่าว่าง
       dstPostalCode: shipmentData.dstPostalCode,
       dstDetailAddress: shipmentData.dstDetailAddress,
       
-      // ข้อมูลพัสดุ
-      weight: shipmentData.weight,
-      width: shipmentData.width,
-      length: shipmentData.length,
-      height: shipmentData.height,
-      parcelKind: shipmentData.parcelKind,
-      expressCategory: shipmentData.expressCategory,
-      articleCategory: shipmentData.articleCategory,
-      insured: shipmentData.insured,
-      codEnabled: shipmentData.codEnabled || '0',
+      // ข้อมูลพัสดุ - ต้องเป็น integer (required)
+      weight: parseInt(String(shipmentData.weight)) || 1000, // น้ำหนักเป็น integer (กรัม)
+      width: parseInt(String(shipmentData.width)) || 20, // ความกว้างเป็น integer (ซม.) optional
+      length: parseInt(String(shipmentData.length)) || 30, // ความยาวเป็น integer (ซม.) optional
+      height: parseInt(String(shipmentData.height)) || 10, // ความสูงเป็น integer (ซม.) optional
+      
+      // ประเภทการจัดส่งและสินค้า (required)
+      expressCategory: parseInt(String(shipmentData.expressCategory)) || 1, // 1=ส่งด่วน, 2=ส่งธรรมดา
+      articleCategory: parseInt(String(shipmentData.articleCategory)) || 1, // ประเภทสินค้า (1=ทั่วไป)
+      
+      // บริการเสริม (required)
+      insured: shipmentData.insured !== undefined ? parseInt(String(shipmentData.insured)) : 0, // 0=ไม่ซื้อ Flash care
+      codEnabled: shipmentData.codEnabled !== undefined ? parseInt(String(shipmentData.codEnabled)) : 0, // 0=ไม่ใช่ COD
     };
     
     // เพิ่มข้อมูล COD ถ้าเปิดใช้งาน
@@ -573,7 +576,7 @@ async function testFlashApi() {
       };
       
       const response = await axios.post(
-        `${BASE_URL}/open/v3/orders/create`,
+        `${BASE_URL}/open/v3/orders`,
         formDataString,
         requestOptions
       );
