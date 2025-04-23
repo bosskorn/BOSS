@@ -1124,24 +1124,12 @@ const CreateOrderTabsPage: React.FC = () => {
             console.log("กำลังดึงข้อมูลการจัดส่ง Flash Express...");
 
             // เรียกใช้ API ขนส่ง Flash Express
-            const response = await api.post('/api/flash-express/shipping-rates', {
-              srcProvinceName: fromAddress.province,
-              srcCityName: fromAddress.district,
-              srcDistrictName: fromAddress.subdistrict,
-              srcPostalCode: fromAddress.zipcode,
-              srcDetailAddress: fromAddress.address,
-              
-              dstProvinceName: toAddress.province,
-              dstCityName: toAddress.district,
-              dstDistrictName: toAddress.subdistrict,
-              dstPostalCode: toAddress.zipcode,
-              dstDetailAddress: toAddress.address,
-              
-              // ข้อมูลพัสดุ
-              weight: 1000, // น้ำหนัก 1 กิโลกรัม (1000 กรัม)
-              width: 20,    // ความกว้าง 20 ซม.
-              length: 30,   // ความยาว 30 ซม.
-              height: 10    // ความสูง 10 ซม.
+            const response = await api.get('/api/flash-express/shipping-rates', {
+              params: {
+                weight: 1, // น้ำหนัก 1 กิโลกรัม
+                srcPostalCode: fromAddress.zipcode,
+                dstPostalCode: toAddress.zipcode
+              }
             });
 
             if (response.data && response.data.success) {
@@ -1151,39 +1139,9 @@ const CreateOrderTabsPage: React.FC = () => {
               const shippingRates = [];
               
               // ตรวจสอบว่ามีข้อมูลบริการส่งธรรมดา (Express Category = 1)
-              if (response.data.normalRate !== undefined) {
-                shippingRates.push({
-                  id: 'flash_express_normal',
-                  name: 'Flash Express - ส่งธรรมดา',
-                  price: response.data.normalRate || 40,
-                  deliveryTime: '2-3 วัน',
-                  provider: 'Flash Express',
-                  serviceId: 'FLASH-NORMAL',
-                  logo: '/assets/flash-express.png',
-                  icon: '🚚',
-                  isPopular: true,
-                  isCODAvailable: true,
-                  maxCODAmount: 20000,
-                  expressCategory: 1
-                });
-              }
-              
-              // ตรวจสอบว่ามีข้อมูลบริการส่งด่วน (Express Category = 2)
-              if (response.data.expressRate !== undefined) {
-                shippingRates.push({
-                  id: 'flash_express_fast',
-                  name: 'Flash Express - ส่งด่วน',
-                  price: response.data.expressRate || 60,
-                  deliveryTime: '1-2 วัน',
-                  provider: 'Flash Express',
-                  serviceId: 'FLASH-FAST',
-                  logo: '/assets/flash-express.png',
-                  icon: '⚡',
-                  isPopular: true,
-                  isCODAvailable: true,
-                  maxCODAmount: 20000,
-                  expressCategory: 2
-                });
+              if (response.data.shippingOptions?.length > 0) {
+                // ใช้ข้อมูลตัวเลือกการจัดส่งที่ได้รับจาก API โดยตรง
+                shippingRates.push(...response.data.shippingOptions);
               }
 
               // ถ้ามีข้อมูล ให้ใช้ข้อมูลจาก API
@@ -1422,7 +1380,7 @@ const CreateOrderTabsPage: React.FC = () => {
 
         // ใช้ API การขนส่งที่ปรับปรุงใหม่เพื่อส่งข้อมูลไปยัง Flash Express โดยตรง
         const response = await api.post('/api/flash-express/create-order', flashExpressData);
-        console.log('API response:', response.data);
+        console.log('Flash Express API response:', response.data);
 
         if (response.data.success && response.data.trackingNumber) {
           console.log('สร้างเลขพัสดุสำเร็จ:', response.data.trackingNumber);
