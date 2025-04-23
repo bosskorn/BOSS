@@ -52,6 +52,7 @@ import CreateOrderTest from './pages/create-order-test';
 import TestFlashExpress from './pages/test-flash-express';
 import FlashExpressShippingNew from './pages/flash-express-shipping-new';
 import FlashExpressTestV2 from './pages/flash-express-test-v2';
+import PickupRequestsHistory from './pages/pickup-requests-history';
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -112,6 +113,7 @@ function Router() {
 
       {/* พัสดุและการจัดส่ง - protected */}
       <ProtectedRoute path="/parcel-list" component={ShipmentList} />
+      <ProtectedRoute path="/pickup-requests" component={PickupRequestsHistory} />
 
       {/* รายงาน - protected */}
       <ProtectedRoute path="/reports/overview" component={ReportsOverview} />

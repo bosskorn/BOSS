@@ -154,7 +154,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
                 <span>ประวัติค่าธรรมเนียม</span>
               </Link>
             </li>
-            {/* Add new menu item here */}
+            {/* เมนูค้นหาพัสดุด้วยเลขอ้างอิง */}
             <li>
               <Link
                 href="/orders/find-by-merchant-tracking"
@@ -165,6 +165,20 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
               >
                 <i className={`fa-solid fa-magnifying-glass w-5 mr-3 ${location === '/orders/find-by-merchant-tracking' ? 'text-blue-600' : 'text-gray-500'}`}></i>
                 <span>ค้นหาพัสดุด้วยเลขอ้างอิง</span>
+              </Link>
+            </li>
+            
+            {/* เมนูประวัติการเรียกรถ */}
+            <li>
+              <Link
+                href="/pickup-requests"
+                className={`flex items-center px-4 py-2 text-sm hover:bg-blue-50 ${
+                  location === '/pickup-requests' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                }`}
+                onClick={onClose}
+              >
+                <i className={`fa-solid fa-truck w-5 mr-3 ${location === '/pickup-requests' ? 'text-blue-600' : 'text-gray-500'}`}></i>
+                <span>ประวัติการเรียกรถเข้ารับพัสดุ</span>
               </Link>
             </li>
             {/* เมนูออกจากระบบ */}
