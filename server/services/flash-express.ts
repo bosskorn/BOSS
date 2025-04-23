@@ -15,20 +15,31 @@ if (!MERCHANT_ID || !API_KEY) {
 }
 
 // ฟังก์ชันสร้างลายเซ็นสำหรับส่งข้อมูลให้ Flash Express API
+/**
+ * สร้างลายเซ็นสำหรับส่งข้อมูลให้ Flash Express API
+ * @param data ข้อมูลที่จะใช้ในการสร้างลายเซ็น
+ * @param timestamp เวลาที่ใช้ในการสร้างลายเซ็น (ไม่ได้ใช้ในกรณีของ Flash Express)
+ * @returns ลายเซ็นที่สร้างขึ้น
+ */
 function createSignature(data: any, timestamp: number): string {
   try {
-    // ตาม Flash Express API ค่า sign คือลายเซ็นที่สร้างจากข้อมูลทั้งหมดจัดเรียงตาม key
-    const keys = Object.keys(data).sort();
+    // ลบฟิลด์ sign ออก (ถ้ามี) เพราะไม่ควรรวมในการคำนวณลายเซ็น
+    const dataForSigning = { ...data };
+    delete dataForSigning.sign;
     
-    // กรองเอาเฉพาะข้อมูลที่ไม่ใช่ว่าง
+    // จัดเรียง key ตามลำดับอักษร
+    const keys = Object.keys(dataForSigning).sort();
+    
+    // สร้าง string สำหรับการคำนวณลายเซ็น
     let signStr = '';
     keys.forEach(key => {
-      // ข้ามช่อง sign ไม่ต้องเอามารวมในการสร้างลายเซ็น
-      if (key !== 'sign' && data[key] !== undefined && data[key] !== null && data[key] !== '') {
-        if (Array.isArray(data[key]) || typeof data[key] === 'object') {
-          signStr += `${key}=${JSON.stringify(data[key])}&`;
+      // ถ้าค่าไม่ใช่ undefined, null หรือว่างเปล่า ให้เพิ่มเข้าไปในสตริง
+      if (dataForSigning[key] !== undefined && dataForSigning[key] !== null && dataForSigning[key] !== '') {
+        // ถ้าเป็น array หรือ object ให้แปลงเป็น JSON string
+        if (Array.isArray(dataForSigning[key]) || typeof dataForSigning[key] === 'object') {
+          signStr += `${key}=${JSON.stringify(dataForSigning[key])}&`;
         } else {
-          signStr += `${key}=${data[key]}&`;
+          signStr += `${key}=${dataForSigning[key]}&`;
         }
       }
     });
@@ -38,16 +49,16 @@ function createSignature(data: any, timestamp: number): string {
       signStr = signStr.slice(0, -1);
     }
     
-    // เพิ่ม API_KEY เข้าไปเพื่อใช้ในการยืนยันตัวตน
+    // เพิ่ม API_KEY ต่อท้าย (ตามเอกสาร Flash Express)
     signStr += API_KEY;
     
     console.log('Raw signature string:', signStr);
     
-    // สร้างลายเซ็นด้วย SHA-256
+    // ใช้ SHA-256 สร้างลายเซ็น
     const signature = createHmac('sha256', API_KEY || '')
       .update(signStr)
       .digest('hex')
-      .toUpperCase(); // ตัวพิมพ์ใหญ่ทั้งหมด
+      .toUpperCase(); // ตัวพิมพ์ใหญ่ทั้งหมดตามที่ Flash Express ต้องการ
     
     console.log('Generated signature:', signature);
     return signature;
@@ -93,19 +104,20 @@ export async function createFlashOrder(orderData: any): Promise<any> {
       console.warn(`Missing required fields for Flash Express API: ${missingFields.join(', ')}`);
     }
     
-    // ปรับปรุงข้อมูลให้ตรงตามรูปแบบที่ Flash Express API ต้องการ
-    const formattedOrderData = {
-      // ข้อมูลการยืนยันตัวตน
+    // สร้างข้อมูลตามรูปแบบที่ Flash Express API ต้องการ ตรงตามตัวอย่าง
+    // ข้อมูลพื้นฐานที่จำเป็นต้องส่ง (Required fields) ตามเอกสาร API
+    const formattedOrderData: Record<string, any> = {
+      // ข้อมูลการยืนยันตัวตน (ต้องมี)
       mchId: MERCHANT_ID,
       nonceStr: Date.now().toString(),
       
-      // ข้อมูลที่มีอยู่แล้ว
+      // รหัสเรเฟอเรนซ์จากร้านค้า (ต้องมี)
       outTradeNo: orderData.outTradeNo || `SS${Date.now()}`,
       
-      // ข้อมูลคลังสินค้า (ถ้าไม่มีใช้ค่าตั้งต้น)
-      warehouseNo: `${MERCHANT_ID}_001`,
+      // รหัสคลังสินค้า (ต้องมี)
+      warehouseNo: orderData.warehouseNo || `${MERCHANT_ID}_001`,
       
-      // ข้อมูลผู้ส่งพัสดุ
+      // ข้อมูลผู้ส่งพัสดุ (ต้องมีทั้งหมด)
       srcName: orderData.srcName,
       srcPhone: orderData.srcPhone,
       srcProvinceName: orderData.srcProvinceName,
@@ -114,7 +126,7 @@ export async function createFlashOrder(orderData: any): Promise<any> {
       srcPostalCode: orderData.srcPostalCode,
       srcDetailAddress: orderData.srcDetailAddress,
       
-      // ข้อมูลผู้รับพัสดุ
+      // ข้อมูลผู้รับพัสดุ (ต้องมีทั้งหมด)
       dstName: orderData.dstName,
       dstPhone: orderData.dstPhone,
       dstHomePhone: orderData.dstHomePhone || orderData.dstPhone,
@@ -124,41 +136,48 @@ export async function createFlashOrder(orderData: any): Promise<any> {
       dstPostalCode: orderData.dstPostalCode,
       dstDetailAddress: orderData.dstDetailAddress,
       
-      // ข้อมูลการส่งคืนพัสดุ (ถ้าไม่มีใช้ข้อมูลผู้ส่ง)
+      // ข้อมูลการส่งคืนพัสดุ (ต้องมี)
       returnName: orderData.returnName || orderData.srcName,
       returnPhone: orderData.returnPhone || orderData.srcPhone,
       returnProvinceName: orderData.returnProvinceName || orderData.srcProvinceName,
-      returnCityName: orderData.returnCityName || orderData.srcCityName,
+      returnCityName: orderData.returnCityName || orderData.srcCityName, 
+      returnDistrictName: orderData.returnDistrictName || orderData.srcDistrictName || "",
       returnPostalCode: orderData.returnPostalCode || orderData.srcPostalCode,
       returnDetailAddress: orderData.returnDetailAddress || orderData.srcDetailAddress,
       
-      // ข้อมูลประเภทและน้ำหนักพัสดุ
-      articleCategory: orderData.articleCategory,
-      expressCategory: orderData.expressCategory,
-      weight: orderData.weight,
+      // ข้อมูลประเภทพัสดุ (ต้องมี)
+      articleCategory: orderData.articleCategory,  // 1 = ทั่วไป, 2 = เอกสาร
+      expressCategory: orderData.expressCategory,  // 1 = ปกติ, 2 = ด่วน
       
-      // ข้อมูลขนาดพัสดุ
-      width: orderData.width || 20,
-      length: orderData.length || 30,
-      height: orderData.height || 10,
+      // ข้อมูลน้ำหนักและขนาดพัสดุ (ต้องมี)
+      weight: orderData.weight,  // น้ำหนักเป็นกรัม (g) เช่น 1000 = 1kg
+      width: orderData.width || 20,  // ความกว้างเป็นเซนติเมตร (cm)
+      length: orderData.length || 30,  // ความยาวเป็นเซนติเมตร (cm)
+      height: orderData.height || 10,  // ความสูงเป็นเซนติเมตร (cm)
       
       // ข้อมูลการประกันพัสดุ
-      insured: orderData.insured || 0,
-      insureDeclareValue: orderData.insured === 1 ? (orderData.insureDeclareValue || 0) : 0,
-      opdInsureEnabled: orderData.opdInsureEnabled || 0,
+      insured: orderData.insured || 0,  // 0 = ไม่ประกัน, 1 = ประกัน
+      insureDeclareValue: orderData.insured === 1 ? (orderData.insureDeclareValue || 0) : 0,  // มูลค่าที่ประกัน (สตางค์)
+      opdInsureEnabled: orderData.opdInsureEnabled || 0,  // 0 = ไม่มีประกัน OPD, 1 = มีประกัน OPD
       
       // ข้อมูลการเก็บเงินปลายทาง
-      codEnabled: orderData.codEnabled || 0,
-      codAmount: orderData.codEnabled === 1 ? (orderData.codAmount || 0) : 0,
+      codEnabled: orderData.codEnabled || 0,  // 0 = ไม่เก็บเงินปลายทาง, 1 = เก็บเงินปลายทาง
+      codAmount: orderData.codEnabled === 1 ? (orderData.codAmount || 0) : 0,  // จำนวนเงินที่เก็บปลายทาง (สตางค์)
       
-      // ข้อมูลเพิ่มเติม
-      remark: orderData.remark || "",
-      
-      // ข้อมูลรายการสินค้าย่อย
+      // ข้อมูลรายการสินค้าย่อย (ต้องมี)
       subItemTypes: Array.isArray(orderData.subItemTypes) ? orderData.subItemTypes : [],
       
-      // ข้อมูลอื่นๆ ที่อาจจำเป็น
+      // หมายเหตุ
+      remark: orderData.remark || "",
+      
+      // ข้อมูลพัสดุย่อย (ถ้ามี)
+      subParcelQuantity: orderData.subParcel ? orderData.subParcel.length : 0,
+      subParcel: orderData.subParcel || [],
+      
+      // ข้อมูลการชำระเงิน (1 = ผู้ส่งเป็นผู้ชำระ, 2 = ผู้รับเป็นผู้ชำระ)
       payType: orderData.payType || 1,
+      
+      // ข้อมูลประเภทสินค้า (ใช้ค่าเดียวกับ articleCategory ถ้าไม่ได้ระบุ)
       itemCategory: orderData.itemCategory || orderData.articleCategory || 1
     };
     
