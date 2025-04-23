@@ -168,13 +168,13 @@ async function testCreateShipping() {
       'X-Flash-Nonce': baseParams.nonceStr
     };
     
-    console.log('Request URL:', 'https://open-api-tra.flashexpress.com/open/v3/orders');
+    console.log('Request URL:', 'https://open-api.flashexpress.com/open/v3/orders');
     console.log('Request headers:', headers);
     console.log('Request form data:', formData.toString());
     
     // 7. ส่ง request
     const response = await axios.post(
-      'https://open-api-tra.flashexpress.com/open/v3/orders',
+      'https://open-api.flashexpress.com/open/v3/orders',
       formData,
       { headers, timeout: 15000 } // เพิ่ม timeout เป็น 15 วินาที
     );

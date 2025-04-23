@@ -6,8 +6,8 @@ import axios from 'axios';
 import crypto from 'crypto';
 
 // กำหนดค่าคงที่
-// ใช้ URL สำหรับทดสอบเพื่อให้มั่นใจว่าระบบทำงานได้
-const BASE_URL = 'https://open-api-tra.flashexpress.com'; // URL ทดสอบที่ทำงานได้
+// ใช้ URL จริงเท่านั้น ตามที่ผู้ใช้ระบุ
+const BASE_URL = 'https://open-api.flashexpress.com';
 const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
