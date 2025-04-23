@@ -275,4 +275,28 @@ router.get('/tracking/:trackingNumber', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * ทดสอบการเชื่อมต่อกับ Flash Express API
+ */
+router.get('/test', async (req: Request, res: Response) => {
+  try {
+    console.log('เริ่มทดสอบการเชื่อมต่อกับ Flash Express API...');
+    const result = await testApi();
+    
+    return res.json({
+      success: true,
+      message: 'การเชื่อมต่อกับ Flash Express API สำเร็จ',
+      data: result
+    });
+    
+  } catch (error: any) {
+    console.error('Error testing Flash Express API:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'เกิดข้อผิดพลาดในการเชื่อมต่อกับ Flash Express API',
+      error: error.message
+    });
+  }
+});
+
 export default router;
