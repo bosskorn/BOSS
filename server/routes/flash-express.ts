@@ -40,7 +40,7 @@ router.post('/shipping', auth, async (req, res) => {
     const result = await createFlashOrder(orderData);
     
     // ตรวจสอบผลลัพธ์
-    if (result && result.code === 0 && result.data) {
+    if (result && (result.code === 0 || result.code === 1) && result.data) {
       // บันทึกข้อมูลออเดอร์ลงในฐานข้อมูล
       if (req.user && req.user.id) {
         try {
@@ -339,7 +339,7 @@ router.post('/create-order', auth, async (req, res) => {
     console.log('Flash Express API Response:', JSON.stringify(result, null, 2));
     
     // ตรวจสอบผลลัพธ์
-    if (result && result.code === 0 && result.data) {
+    if (result && (result.code === 0 || result.code === 1) && result.data) {
       // บันทึกข้อมูลออเดอร์ลงในฐานข้อมูล
       try {
         // สร้างข้อมูลออเดอร์ขนส่ง
