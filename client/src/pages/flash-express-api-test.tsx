@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { LuInfo, LuServer, LuCheck, LuX, LuAlert, LuPackage, LuTruck } from 'react-icons/lu';
+import { LuInfo, LuServer, LuCheck, LuX, LuTriangle, LuPackage, LuTruck } from 'react-icons/lu';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -327,7 +327,7 @@ export default function FlashExpressAPITest() {
         <Alert variant={orderResponse.success ? "default" : "destructive"}>
           <div className="flex items-center gap-2">
             {orderResponse.success ? (
-              <LuCheckCircle className="h-5 w-5" />
+              <LuCheck className="h-5 w-5" />
             ) : (
               <LuXCircle className="h-5 w-5" />
             )}
@@ -579,7 +579,7 @@ export default function FlashExpressAPITest() {
                     <Card>
                       <CardContent className="pt-6">
                         <Alert variant="warning" className="mb-4">
-                          <LuAlertTriangle className="h-4 w-4" />
+                          <LuTriangle className="h-4 w-4" />
                           <AlertTitle>ข้อควรระวัง</AlertTitle>
                           <AlertDescription>
                             การทดสอบนี้จะสร้างเลขพัสดุจริงในระบบ Flash Express โดยใช้ข้อมูลตัวอย่าง
