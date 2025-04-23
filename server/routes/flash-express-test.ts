@@ -148,6 +148,104 @@ router.get('/connection-test', async (req: Request, res: Response) => {
   }
 });
 
+// ตรวจสอบสถานะของ API Key
+router.get('/api-key-status', async (req: Request, res: Response) => {
+  try {
+    // ตรวจสอบว่ามีค่า API Key และ Merchant ID หรือไม่
+    if (!process.env.FLASH_EXPRESS_API_KEY || !process.env.FLASH_EXPRESS_MERCHANT_ID) {
+      return res.json({
+        success: false,
+        active: false,
+        message: 'ไม่พบการตั้งค่า API Key หรือ Merchant ID กรุณาตรวจสอบการตั้งค่า',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // สร้าง params สำหรับทดสอบ API Key
+    const timestamp = Date.now().toString();
+    const params: Record<string, any> = {
+      mchId: process.env.FLASH_EXPRESS_MERCHANT_ID,
+      nonceStr: timestamp,
+    };
+    
+    // สร้างลายเซ็น
+    const signature = createSignature(params, process.env.FLASH_EXPRESS_API_KEY);
+    params.sign = signature;
+    
+    // ส่งคำขอไปยัง Flash Express API แบบง่ายที่สุดเพื่อตรวจสอบ API Key
+    const apiUrl = `${FLASH_EXPRESS_API_URL}/api/fee`;
+    console.log('Testing API Key status with endpoint:', apiUrl);
+    
+    try {
+      const response = await axios.post(apiUrl, querystring.stringify(params), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        timeout: 5000 // ตั้งค่า timeout ที่ 5 วินาที
+      });
+      
+      // ตรวจสอบการตอบกลับ
+      if (response.data && (response.data.code === 1 || response.data.code === 0)) {
+        return res.json({
+          success: true,
+          active: true,
+          message: 'API Key ใช้งานได้ปกติ',
+          merchant_id: process.env.FLASH_EXPRESS_MERCHANT_ID,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        // กรณีมีการตอบกลับแต่ไม่สำเร็จ
+        return res.json({
+          success: false,
+          active: false,
+          message: `API Key อาจมีปัญหา: ${response.data.msg || response.data.message || 'ไม่ทราบสาเหตุ'}`,
+          code: response.data.code,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (apiError: any) {
+      console.error('API Key validation error:', apiError);
+      
+      // ตรวจสอบข้อความผิดพลาดที่เฉพาะเจาะจง
+      let errorMessage = 'API Key หรือ Merchant ID อาจไม่ถูกต้อง';
+      
+      if (apiError.response) {
+        const status = apiError.response.status;
+        
+        // ตรวจสอบเงื่อนไขเฉพาะ
+        if (status === 401 || status === 403) {
+          errorMessage = 'API Key ไม่ถูกต้องหรือหมดอายุ';
+        } else if (status === 404) {
+          errorMessage = 'ไม่พบ API Endpoint (อาจมีการเปลี่ยนแปลง URL)';
+        } else if (apiError.response.data && (apiError.response.data.msg || apiError.response.data.message)) {
+          errorMessage = apiError.response.data.msg || apiError.response.data.message;
+        }
+      } else if (apiError.code === 'ECONNABORTED') {
+        errorMessage = 'การเชื่อมต่อกับ Flash Express API หมดเวลา';
+      } else if (apiError.code === 'ECONNREFUSED') {
+        errorMessage = 'ไม่สามารถเชื่อมต่อกับ Flash Express API';
+      }
+      
+      return res.json({
+        success: false,
+        active: false,
+        message: errorMessage,
+        timestamp: new Date().toISOString()
+      });
+    }
+  } catch (error: any) {
+    console.error('Error checking API key status:', error);
+    
+    return res.json({
+      success: false,
+      active: false,
+      message: `เกิดข้อผิดพลาดในการตรวจสอบ API Key: ${error.message}`,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // ทดสอบการคำนวณค่าจัดส่ง
 router.get('/shipping-rate-test', async (req: Request, res: Response) => {
   try {
