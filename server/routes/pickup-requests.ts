@@ -62,7 +62,7 @@ router.post('/auto-schedule', auth, async (req: Request, res: Response) => {
       provider: 'Flash Express',
       requestDate,
       requestTimeSlot,
-      status: 'pending',
+      status: "pending" as const,
       trackingNumbers,
       pickupAddress: user.address || '',
       contactName: user.fullname || '',
@@ -72,7 +72,7 @@ router.post('/auto-schedule', auth, async (req: Request, res: Response) => {
     };
 
     // บันทึกข้อมูลลงฐานข้อมูล
-    await db.insert(pickupRequests).values(pickupRequestData);
+    await db.insert(pickupRequests).values([pickupRequestData]);
 
     // ส่งคำขอเรียกรถไปที่ Flash Express ทันที
     try {
@@ -318,7 +318,7 @@ router.post('/request-after-order', auth, async (req: Request, res: Response) =>
       provider: 'Flash Express',
       requestDate,
       requestTimeSlot,
-      status: 'pending',
+      status: "pending" as const,
       trackingNumbers: [trackingNumber],
       pickupAddress: user.address || '',
       contactName: user.fullname || '',
@@ -328,7 +328,7 @@ router.post('/request-after-order', auth, async (req: Request, res: Response) =>
     };
 
     // บันทึกข้อมูลลงฐานข้อมูล
-    await db.insert(pickupRequests).values(pickupRequestData);
+    await db.insert(pickupRequests).values([pickupRequestData]);
 
     // ส่งคำขอเรียกรถไปที่ Flash Express ทันที
     try {

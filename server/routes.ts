@@ -23,6 +23,7 @@ import flashExpressRouter from "./routes/flash-express";
 import testFlashExpressRouter from "./routes/test-flash-express";
 import testSimpleSignatureRouter from "./routes/test-simple-signature";
 import testFlashExpressNewRouter from "./routes/test-flash-express-new";
+import pickupRequestsRouter from "./routes/pickup-requests";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -61,6 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/flash-express", flashExpressRouter);
   app.use("/api/flash-express-test", testFlashExpressRouter);
   app.use("/api/flash-express-test-v2", testFlashExpressNewRouter);
+  app.use("/api/pickup-requests", pickupRequestsRouter);
   app.use("/api", testSimpleSignatureRouter);
   // แสดงสถานะการใช้งาน Flash Express API
   app.get("/api/flash-express/status", (req, res) => {
