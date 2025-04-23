@@ -169,7 +169,7 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
     
     // 5. ส่งคำขอไปยัง Flash Express API
     console.log('Flash Express API Request:', {
-      url: `${BASE_URL}/open/v1/estimate_rate`,
+      url: `${BASE_URL}/open/v1/orders/estimate_rate`, // แก้ไข endpoint ตามที่ถูกต้อง
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -200,7 +200,7 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
     console.log('Flash Express API complete request data:', formData.toString());
     
     const response = await axios.post(
-      `${BASE_URL}/open/v1/estimate_rate`,
+      `${BASE_URL}/open/v1/orders/estimate_rate`, // แก้ไข endpoint ตามที่ถูกต้อง
       formData.toString(),
       axiosConfig
     );
@@ -329,7 +329,7 @@ export async function createFlashShipment(shipmentData: any) {
     
     // 8. ส่งคำขอไปยัง Flash Express API
     // แสดงข้อมูลที่ส่งให้กับ API อย่างละเอียดเพื่อช่วยในการดีบัก
-    console.log('Flash Express URL:', `${BASE_URL}/open/v3/orders`);
+    console.log('Flash Express URL:', `${BASE_URL}/orders/open/v3/orders`); // แก้ไข endpoint ตามที่ถูกต้อง
     console.log('Flash Express request headers:', {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Accept': 'application/json',
@@ -340,7 +340,7 @@ export async function createFlashShipment(shipmentData: any) {
     console.log('Flash Express request data (formData):', formData.toString());
     
     const response = await axios.post(
-      `${BASE_URL}/open/v3/orders`,
+      `${BASE_URL}/orders/open/v3/orders`, // แก้ไข endpoint ตามที่ถูกต้อง
       formData,
       {
         headers: {
