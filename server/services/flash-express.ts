@@ -252,6 +252,11 @@ export async function createFlashShipment(shipmentData: any) {
     const items = shipmentData.subItemTypes || [];
     delete shipmentData.subItemTypes;
 
+    // 2.1 แยกข้อมูล subParcel ถ้ามี
+    const subParcelData = shipmentData.subParcel || [];
+    const hasSubParcel = Array.isArray(subParcelData) && subParcelData.length > 0;
+    delete shipmentData.subParcel;
+
     // 3. รวมข้อมูลทั้งหมดและกำหนดค่าเริ่มต้นสำหรับฟิลด์ที่จำเป็น
     // แปลงข้อมูลเป็น string ตามมาตรฐานของ Flash Express
     const requestData = {
@@ -276,70 +281,105 @@ export async function createFlashShipment(shipmentData: any) {
       dstDistrictName: shipmentData.dstDistrictName ? String(shipmentData.dstDistrictName) : '', // optional แต่ให้ใส่ไว้เป็นค่าว่าง
       dstPostalCode: String(shipmentData.dstPostalCode),
       dstDetailAddress: String(shipmentData.dstDetailAddress),
-
-      // ข้อมูลจำเป็นสำหรับการแจ้งเตือน
-      dstEmail: shipmentData.dstEmail ? String(shipmentData.dstEmail) : '', // จำเป็นในบางกรณี
-      srcEmail: shipmentData.srcEmail ? String(shipmentData.srcEmail) : '', // จำเป็นในบางกรณี
-
-      // ข้อมูลพัสดุ - ต้องเป็น string (required)
-      weight: String(parseInt(String(shipmentData.weight)) || 1000), // น้ำหนักเป็น string (กรัม)
-      width: String(parseInt(String(shipmentData.width)) || 20), // ความกว้างเป็น string (ซม.) optional
-      length: String(parseInt(String(shipmentData.length)) || 30), // ความยาวเป็น string (ซม.) optional
-      height: String(parseInt(String(shipmentData.height)) || 10), // ความสูงเป็น string (ซม.) optional
-
-      // ประเภทพัสดุและการจัดส่ง (required) - ตามฟอร์แมตที่ต้องเป็น string และมีค่าตามที่ Flash Express กำหนด
-      // ใช้ค่าที่ส่งมาจาก client หรือค่า default ถ้าไม่มี
-      parcelKind: shipmentData.parcelKind || "1", // ประเภทพัสดุ (1=ทั่วไป) - ต้องเป็น string ไม่ใช่ integer
-      expressCategory: shipmentData.expressCategory || "1", // 1=ส่งด่วน, 2=ส่งธรรมดา - ต้องเป็น string
-      articleCategory: shipmentData.articleCategory || "2", // ประเภทสินค้า (1=ทั่วไป, 2=อื่นๆ) - ต้องเป็น string
-      expressTypeId: shipmentData.expressTypeId || "1", // ประเภทการส่ง (1=ส่งด่วน) - ต้องเป็น string
-      productType: shipmentData.productType || "1", // ประเภทสินค้า (1=ทั่วไป) - ต้องเป็น string
-
-      // พารามิเตอร์ที่จำเป็นสำหรับ Flash Express API
-      payType: shipmentData.payType || "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย) ต้องเป็น string
-      transportType: shipmentData.transportType || "1", // ประเภทการขนส่ง (1=ปกติ) ต้องเป็น string
-
-      // บริการเสริม (required) - ต้องเป็น string ทั้งหมด
-      insured: shipmentData.insured || "0", // 0=ไม่ซื้อ Flash care (ต้องเป็น string)
-      codEnabled: shipmentData.codEnabled || "0", // 0=ไม่ใช่ COD (ต้องเป็น string)
-      codAmount: shipmentData.codAmount || "0", // จำนวนเงิน COD (ต้องเป็น string)
-      insuredAmount: shipmentData.insuredAmount || "0" // จำนวนเงินประกัน (ต้องเป็น string)
     };
 
+    // เพิ่มข้อมูล dstHomePhone ถ้าระบุมา หรือใช้ dstPhone แทน
+    requestData.dstHomePhone = shipmentData.dstHomePhone ? String(shipmentData.dstHomePhone) : String(shipmentData.dstPhone);
+
+    // เพิ่มข้อมูลจำเป็นสำหรับการแจ้งเตือน (ไม่จำเป็นต้องมีในการสร้างออเดอร์)
+    if (shipmentData.dstEmail) {
+      requestData.dstEmail = String(shipmentData.dstEmail);
+    }
+    if (shipmentData.srcEmail) {
+      requestData.srcEmail = String(shipmentData.srcEmail);
+    }
+
+    // ข้อมูลพัสดุ - ต้องเป็น string (required)
+    requestData.weight = String(parseInt(String(shipmentData.weight)) || 1000); // น้ำหนักเป็น string (กรัม)
+    
+    // ขนาดพัสดุ (optional)
+    if (shipmentData.width) {
+      requestData.width = String(parseInt(String(shipmentData.width)) || 20);
+    }
+    if (shipmentData.length) {
+      requestData.length = String(parseInt(String(shipmentData.length)) || 30);
+    }
+    if (shipmentData.height) {
+      requestData.height = String(parseInt(String(shipmentData.height)) || 10);
+    }
+
+    // ประเภทพัสดุและการจัดส่ง (required) - ตามฟอร์แมตที่ต้องเป็น string และมีค่าตามที่ Flash Express กำหนด
+    requestData.parcelKind = String(shipmentData.parcelKind || "1"); // ประเภทพัสดุ (1=ทั่วไป)
+    requestData.expressCategory = String(shipmentData.expressCategory || "1"); // 1=ส่งด่วน, 2=ส่งธรรมดา
+    requestData.articleCategory = String(shipmentData.articleCategory || "2"); // ประเภทสินค้า (1=ทั่วไป, 2=อื่นๆ)
+    requestData.expressTypeId = String(shipmentData.expressTypeId || "1"); // ประเภทการส่ง (1=ส่งด่วน)
+    requestData.productType = String(shipmentData.productType || "1"); // ประเภทสินค้า (1=ทั่วไป)
+
+    // พารามิเตอร์ที่จำเป็นสำหรับ Flash Express API
+    requestData.payType = String(shipmentData.payType || "1"); // วิธีการชำระเงิน (1=ผู้ส่งจ่าย)
+    requestData.transportType = String(shipmentData.transportType || "1"); // ประเภทการขนส่ง (1=ปกติ)
+
+    // ถ้ามีการระบุ pricingType และ pricingTable ให้ใช้ค่าที่ระบุมา
+    if (shipmentData.pricingType) {
+      requestData.pricingType = String(shipmentData.pricingType);
+    }
+    if (shipmentData.pricingTable) {
+      requestData.pricingTable = String(shipmentData.pricingTable);
+    }
+
+    // บริการเสริม (required) - ต้องเป็น string ทั้งหมด
+    requestData.insured = String(shipmentData.insured || "0"); // 0=ไม่ซื้อ Flash care
+    requestData.codEnabled = String(shipmentData.codEnabled || "0"); // 0=ไม่ใช่ COD
+    requestData.opdInsureEnabled = String(shipmentData.opdInsureEnabled || "0"); // 0=ไม่ใช้บริการ OPD
+   
     // เพิ่มข้อมูล COD ถ้าเปิดใช้งาน
     if (shipmentData.codEnabled === '1' || shipmentData.codEnabled === 1) {
-      requestData.codAmount = shipmentData.codAmount;
+      requestData.codAmount = String(shipmentData.codAmount || "0");
     }
 
     // เพิ่มข้อมูลประกันถ้าเปิดใช้งาน
     if (shipmentData.insured === '1' || shipmentData.insured === 1) {
-      requestData.insuredAmount = shipmentData.insuranceAmount || shipmentData.insuredAmount;
+      requestData.insureDeclareValue = String(shipmentData.insureDeclareValue || shipmentData.insuredAmount || "0");
     }
 
-    // 4. สร้างลายเซ็น (ก่อนเพิ่ม remark และ subItemTypes)
+    // ตั้งค่า subParcelQuantity ถ้ามีการส่ง subParcel มา
+    if (hasSubParcel) {
+      requestData.subParcelQuantity = String(subParcelData.length);
+    }
+
+    // เพิ่ม returnXXX ถ้ามีในข้อมูล
+    if (shipmentData.returnName) {
+      requestData.returnName = String(shipmentData.returnName);
+      requestData.returnPhone = String(shipmentData.returnPhone || shipmentData.srcPhone);
+      requestData.returnProvinceName = String(shipmentData.returnProvinceName || shipmentData.srcProvinceName);
+      requestData.returnCityName = String(shipmentData.returnCityName || shipmentData.srcCityName);
+      requestData.returnPostalCode = String(shipmentData.returnPostalCode || shipmentData.srcPostalCode);
+      requestData.returnDetailAddress = String(shipmentData.returnDetailAddress || shipmentData.srcDetailAddress);
+    }
+
+    // 4. สร้างลายเซ็น (ก่อนเพิ่ม remark, subItemTypes และ subParcel)
     const signature = generateFlashSignature(requestData, API_KEY!);
 
     // 5. เพิ่มฟิลด์ที่ไม่นำมาคำนวณลายเซ็น
-    // ไม่เพิ่ม sign ลงใน requestData แต่จะเพิ่มในขั้นตอนการสร้าง form data
     const remark = shipmentData.remark || '';
 
     // 6. แปลงข้อมูลรายการสินค้า
     // ถ้าไม่มีข้อมูลสินค้า ให้ใส่ข้อมูลตัวอย่าง (จำเป็นต้องมี)
     const subItemTypes = items.length > 0
       ? items.map((item: any) => ({
-          itemName: item.itemName || "สินค้าทดสอบ",
+          itemName: item.itemName || "สินค้า",
           itemQuantity: String(item.itemQuantity || 1),
-          itemWeightSize: item.itemWeightSize || "1kg",
+          itemWeightSize: item.itemWeightSize || "1Kg",
           itemColor: item.itemColor || "-"
         }))
       : [{ 
-          itemName: "สินค้าทดสอบ", 
+          itemName: "สินค้า", 
           itemQuantity: "1",
-          itemWeightSize: "1kg",
+          itemWeightSize: "1Kg",
           itemColor: "-"
         }];
 
-    // 7. สร้าง form data (ไม่รวม subItemTypes และ remark ในการคำนวณลายเซ็น)
+    // 7. สร้าง form data
     const formData = new URLSearchParams();
 
     // เพิ่มข้อมูลทั้งหมดลงใน form data
@@ -355,31 +395,30 @@ export async function createFlashShipment(shipmentData: any) {
     // เพิ่มข้อมูลที่ไม่เกี่ยวข้องกับการคำนวณลายเซ็น
     formData.append('remark', remark);
     formData.append('subItemTypes', JSON.stringify(subItemTypes));
+    
+    // เพิ่ม subParcel ถ้ามี
+    if (hasSubParcel) {
+      formData.append('subParcel', JSON.stringify(subParcelData));
+    }
 
     // 8. ส่งคำขอไปยัง Flash Express API
-    // แสดงข้อมูลที่ส่งให้กับ API อย่างละเอียดเพื่อช่วยในการดีบัก
-    console.log('Flash Express URL:', `${BASE_URL}/open/v3/orders`); // แก้ไข endpoint ตามที่ถูกต้อง
+    console.log('Flash Express URL:', `${BASE_URL}/open/v3/orders`);
     console.log('Flash Express request headers:', {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json',
-      'X-Flash-Signature': signature,
-      'X-Flash-Timestamp': baseParams.timestamp,
-      'X-Flash-Nonce': baseParams.nonceStr
+      'Accept': 'application/json'
     });
     console.log('Flash Express request data (formData):', formData.toString());
 
+    // ส่งคำขอไปยัง Flash Express API
     const response = await axios.post(
-      `${BASE_URL}/open/v3/orders`, // ใช้ v3 เนื่องจากข้อมูลที่ส่งอยู่ในรูปแบบ v3
+      `${BASE_URL}/open/v3/orders`,
       formData,
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-          'X-Flash-Signature': signature,
-          'X-Flash-Timestamp': baseParams.timestamp,
-          'X-Flash-Nonce': baseParams.nonceStr
+          'Accept': 'application/json'
         },
-        timeout: 15000,
+        timeout: 30000, // เพิ่ม timeout เป็น 30 วินาที
         validateStatus: function (status) {
           // ยอมรับทุกสถานะโค้ดเพื่อให้อ่านข้อความผิดพลาดได้
           return true;
@@ -387,28 +426,42 @@ export async function createFlashShipment(shipmentData: any) {
       }
     );
 
-    // แสดงข้อมูลการตอบกลับจาก API เพื่อช่วยในการดีบัก
+    // แสดงข้อมูลการตอบกลับจาก API
     console.log('Flash Express response status:', response.status);
-    console.log('Flash Express response headers:', response.headers);
     console.log('Flash Express response data:', response.data);
 
-    return response.data;
+    // ตรวจสอบผลลัพธ์
+    if (response.data.code === 1 && response.data.data && response.data.data.pno) {
+      return {
+        success: true,
+        trackingNumber: response.data.data.pno,
+        sortCode: response.data.data.sortCode || "",
+        message: 'สร้างเลขพัสดุสำเร็จ'
+      };
+    } else {
+      return {
+        success: false,
+        error: response.data.message || 'ไม่สามารถสร้างเลขพัสดุได้',
+        details: response.data
+      };
+    }
+
   } catch (error: any) {
     console.error('Flash Express API error (createShipment):', error.message);
 
     // ถ้ามีข้อมูลตอบกลับจาก API แสดงรายละเอียดเพิ่มเติม
     if (error.response && error.response.data) {
       return {
-        code: error.response.status,
-        message: `ไม่สามารถสร้างเลขพัสดุได้: ${error.message}`,
-        data: error.response.data
+        success: false,
+        error: `ไม่สามารถสร้างเลขพัสดุได้: ${error.message}`,
+        details: error.response.data
       };
     }
 
     return {
-      code: 500,
-      message: `ไม่สามารถสร้างเลขพัสดุได้: ${error.message}`,
-      data: null
+      success: false,
+      error: `ไม่สามารถสร้างเลขพัสดุได้: ${error.message}`,
+      details: null
     };
   }
 }

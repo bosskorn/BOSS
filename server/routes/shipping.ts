@@ -5,9 +5,7 @@ import {
   createFlashShipment as createFlashExpressShipping,
   trackFlashShipment as getFlashExpressTrackingStatus,
   testFlashApi,
-  debugCreateShipment,
-  findOrderByMerchantTrackingNumber,
-  generateFlashSignature
+  findOrderByMerchantTrackingNumber
 } from '../services/flash-express';
 import axios from 'axios';
 import crypto from 'crypto';
@@ -702,13 +700,16 @@ router.post('/flash-express/debug-create', auth, async (req: Request, res: Respo
       req.body.outTradeNo = `DEBUG${Date.now()}`;
     }
 
-    // เรียกใช้ฟังก์ชันทดสอบละเอียด
-    const debugResult = await debugCreateShipment(req.body);
+    // ทดสอบการสร้างพัสดุโดยตรงโดยใช้ createFlashExpressShipping
+    const result = await createFlashExpressShipping(req.body);
+    
+    // บันทึกข้อมูลละเอียดลงในคอนโซล
+    console.log('Debug createFlashExpressShipping result:', JSON.stringify(result, null, 2));
 
     res.json({
       success: true,
       message: 'ทดสอบการสร้างเลขพัสดุแบบละเอียดเสร็จสิ้น กรุณาตรวจสอบ log ในคอนโซล',
-      debugInfo: debugResult
+      debugInfo: result
     });
   } catch (error: any) {
     console.error('Error in debug create:', error);
