@@ -324,10 +324,13 @@ export async function createFlashShipment(shipmentData: any) {
     const remark = shipmentData.remark || '';
     
     // 6. แปลงข้อมูลรายการสินค้า
-    const subItemTypes = items.map((item: any) => ({
-      itemName: item.itemName,
-      itemQuantity: String(item.itemQuantity)
-    }));
+    // ถ้าไม่มีข้อมูลสินค้า ให้ใส่ข้อมูลตัวอย่าง (จำเป็นต้องมี)
+    const subItemTypes = items.length > 0 
+      ? items.map((item: any) => ({
+          itemName: item.itemName,
+          itemQuantity: String(item.itemQuantity)
+        }))
+      : [{ itemName: "สินค้าทดสอบ", itemQuantity: "1" }];
     
     // 7. สร้าง form data (ไม่รวม subItemTypes และ remark ในการคำนวณลายเซ็น)
     const formData = new URLSearchParams();
