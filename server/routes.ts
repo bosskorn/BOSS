@@ -21,6 +21,7 @@ import stripeRouter from "./routes/stripe";
 import feeHistoryRouter from "./routes/fee-history";
 import flashExpressRouter from "./routes/flash-express";
 import testFlashExpressRouter from "./routes/test-flash-express";
+import testSimpleSignatureRouter from "./routes/test-simple-signature";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -58,6 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/fee-history", feeHistoryRouter);
   app.use("/api/flash-express", flashExpressRouter);
   app.use("/api/flash-express-test", testFlashExpressRouter);
+  app.use("/api", testSimpleSignatureRouter);
   // แสดงสถานะการใช้งาน Flash Express API
   app.get("/api/flash-express/status", (req, res) => {
     const hasCredentials = process.env.FLASH_EXPRESS_MERCHANT_ID && process.env.FLASH_EXPRESS_API_KEY;
