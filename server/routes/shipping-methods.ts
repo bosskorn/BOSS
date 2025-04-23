@@ -4,8 +4,8 @@ import { auth } from '../middleware/auth';
 import { insertShippingMethodSchema } from '@shared/schema';
 import { getFlashExpressShippingOptions as getFlashExpressShippingOptionsOriginal } from '../services/flash-express';
 import { 
-  getFlashExpressShippingOptions, 
-  createFlashExpressShipping
+  getShippingOptions as getFlashExpressShippingOptions, 
+  createShipment as createFlashExpressShipping
 } from '../services/flash-express-final';
 import flashExpressRoutes from './flash-express-routes';
 

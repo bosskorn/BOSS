@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { getShippingOptions, createShipment, trackShipment } from "../services/flash-express-working";
+import { getShippingOptions, createShipment, trackShipment } from "../services/flash-express-final";
 import { auth } from "../middleware/auth";
 import { storage } from "../storage";
 
@@ -135,7 +135,7 @@ router.post("/create", auth, async (req, res) => {
     }
     
     // คำนวณค่าบริการทั้งหมด (ค่าส่ง + ประกัน + COD)
-    let totalFee = shippingRate.price;
+    let totalFee = parseFloat(shippingRate.estimatePrice || "0");
     if (insured === 1) {
       totalFee += 20; // ค่าประกัน 20 บาท
     }
@@ -193,7 +193,7 @@ router.post("/create", auth, async (req, res) => {
       shippingMethod: "Flash Express",
       status: "pending",
       amount: totalFee,
-      weight: weight,
+      weight: String(weight),
       shippingData: JSON.stringify(shipmentResult),
       remark: validationResult.data.remark || "",
     });
