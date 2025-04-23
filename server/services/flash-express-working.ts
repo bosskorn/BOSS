@@ -256,18 +256,17 @@ export async function createShipment(shipmentData: any) {
     
     console.log('🔒 ลายเซ็นที่สร้างเสร็จ:', signature);
     
-    // เพิ่มลายเซ็นเข้าไปในข้อมูล
+    // เพิ่มลายเซ็นเข้าไปในข้อมูล (วิธีเดียวกับที่ทำงานในไฟล์ fixed-final)
     // ใช้วิธี casting เพื่อหลีกเลี่ยงการเกิด LSP errors
-    const requestWithSignature = { ...requestParams, sign: signature } as any;
+    (requestParams as any).sign = signature;
     
     // เพิ่ม remark หลังจากคำนวณลายเซ็นเสร็จเรียบร้อยแล้ว
-    const requestWithSign = { 
-      ...requestWithSignature, 
-      remark: shipmentData.remark || '' 
-    };
+    (requestParams as any).remark = shipmentData.remark || '';
+    
+    console.log('📦 ข้อมูลที่จะส่งไป API:', JSON.stringify(requestParams, null, 2));
     
     // แปลงเป็น URL-encoded string
-    const encodedPayload = new URLSearchParams(requestWithSign as Record<string, string>).toString();
+    const encodedPayload = new URLSearchParams(requestParams as Record<string, string>).toString();
     
     // ตั้งค่า headers
     const headers = {
