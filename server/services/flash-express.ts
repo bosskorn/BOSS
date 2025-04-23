@@ -114,11 +114,14 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       ...baseParams,
       fromPostalCode: originAddress.postalCode || originAddress.zipcode,
       toPostalCode: destinationAddress.postalCode || destinationAddress.zipcode,
-      weight: packageDetails.weight,
-      height: packageDetails.height,
-      length: packageDetails.length,
-      width: packageDetails.width,
+      // แปลงน้ำหนักเป็นกรัม (gram) หากมีหน่วยเป็น kg
+      weight: packageDetails.weight < 100 ? packageDetails.weight * 1000 : packageDetails.weight,
     };
+    
+    // เพิ่มขนาดหากมี
+    if (packageDetails.height) requestParams.height = packageDetails.height;
+    if (packageDetails.length) requestParams.length = packageDetails.length;
+    if (packageDetails.width) requestParams.width = packageDetails.width;
     
     // 3. สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, API_KEY!);
@@ -150,21 +153,25 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       data: formData.toString()
     });
     
+    // ตั้งค่า config สำหรับ axios
+    const axiosConfig = {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'X-Flash-Signature': signature,
+        'X-Flash-Timestamp': baseParams.timestamp,
+        'X-Flash-Nonce': baseParams.nonceStr
+      },
+      timeout: 15000,
+      maxRedirects: 0, // ป้องกันการ redirect
+      validateStatus: (status) => status < 500 // ยอมรับสถานะ 400-499 เพื่อดูข้อความผิดพลาด
+    };
+    
+    // ส่งคำขอไปยัง Flash Express API
     const response = await axios.post(
       `${BASE_URL}/open/v1/estimate_rate`,
       formData.toString(),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-          'X-Flash-Signature': signature,
-          'X-Flash-Timestamp': baseParams.timestamp,
-          'X-Flash-Nonce': baseParams.nonceStr
-        },
-        timeout: 15000,
-        maxRedirects: 0, // ป้องกันการ redirect
-        validateStatus: (status) => status < 500 // ยอมรับสถานะ 400-499 เพื่อดูข้อความผิดพลาด
-      }
+      axiosConfig
     );
     
     // 6. แปลงข้อมูลที่ได้รับและส่งกลับ
