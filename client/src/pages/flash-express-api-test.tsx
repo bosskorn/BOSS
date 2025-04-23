@@ -209,15 +209,29 @@ export default function FlashExpressAPITest() {
         null
       );
       
-      const data = await response.json();
-      console.log('ผลการทดสอบการเชื่อมต่อ:', data);
-      setConnectionTestResult(data);
-      
-      toast({
-        title: data.success ? 'การเชื่อมต่อสำเร็จ' : 'การเชื่อมต่อไม่สำเร็จ',
-        description: data.message || (data.success ? 'สามารถเชื่อมต่อกับ Flash Express API ได้' : 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้'),
-        variant: data.success ? 'default' : 'destructive',
-      });
+      try {
+        // พยายามแปลงข้อมูลเป็น JSON
+        const data = await response.json();
+        console.log('ผลการทดสอบการเชื่อมต่อ:', data);
+        setConnectionTestResult(data);
+        
+        toast({
+          title: data.success ? 'การเชื่อมต่อสำเร็จ' : 'การเชื่อมต่อไม่สำเร็จ',
+          description: data.message || (data.success ? 'สามารถเชื่อมต่อกับ Flash Express API ได้' : 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้'),
+          variant: data.success ? 'default' : 'destructive',
+        });
+      } catch (jsonError) {
+        // หากไม่สามารถแปลงเป็น JSON ได้ แสดงว่าอาจได้รับ HTML แทน
+        const text = await response.text();
+        console.log('ผลการทดสอบการเชื่อมต่อ:', text.substring(0, 500) + '...');
+        setConnectionTestResult(text);
+        
+        toast({
+          title: 'เกิดข้อผิดพลาดรูปแบบข้อมูล',
+          description: 'ได้รับข้อมูล HTML แทน JSON ซึ่งอาจเกิดจากปัญหา CORS หรือการเชื่อมต่อ',
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการทดสอบการเชื่อมต่อ:', error);
       setConnectionTestResult({ success: false, error: String(error) });
@@ -392,6 +406,20 @@ export default function FlashExpressAPITest() {
                       </AlertDescription>
                     </Alert>
                     
+                    <Alert className="bg-amber-50 border-amber-200">
+                      <AlertTitle className="text-amber-800">การวิเคราะห์ปัญหา</AlertTitle>
+                      <AlertDescription className="text-amber-700">
+                        หากมีปัญหาในการเชื่อมต่อกับ Flash Express API อาจมีสาเหตุจาก:
+                        <ul className="list-disc pl-5 mt-2 space-y-1">
+                          <li>การตั้งค่า API Key หรือ Merchant ID ไม่ถูกต้อง</li>
+                          <li>การสร้างลายเซ็นสำหรับ API ไม่ถูกต้อง</li>
+                          <li>รูปแบบของคำขอไม่ตรงตามที่ Flash Express API กำหนด</li>
+                          <li>การตั้งค่า Content-Type ไม่ถูกต้อง (ต้องเป็น application/x-www-form-urlencoded)</li>
+                          <li>ปัญหาการเชื่อมต่อจาก Replit ไปยัง Flash Express API</li>
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+                    
                     <Button 
                       onClick={testConnection} 
                       disabled={loading}
@@ -412,23 +440,56 @@ export default function FlashExpressAPITest() {
                   {connectionTestResult ? (
                     <div>
                       {connectionTestResult.success ? (
-                        <Alert className="mb-4">
+                        <Alert className="mb-4 bg-green-50 border-green-200">
                           <AlertTitle className="text-green-600">เชื่อมต่อสำเร็จ</AlertTitle>
-                          <AlertDescription>
+                          <AlertDescription className="text-green-700">
                             สามารถเชื่อมต่อกับ Flash Express API ได้
                           </AlertDescription>
                         </Alert>
                       ) : (
-                        <Alert className="mb-4" variant="destructive">
-                          <AlertTitle>เชื่อมต่อไม่สำเร็จ</AlertTitle>
-                          <AlertDescription>
+                        <Alert className="mb-4 bg-red-50 border-red-200">
+                          <AlertTitle className="text-red-600">เชื่อมต่อไม่สำเร็จ</AlertTitle>
+                          <AlertDescription className="text-red-700">
                             {connectionTestResult.message || 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้'}
+                            {connectionTestResult.statusText && (
+                              <div className="mt-2">
+                                <span className="font-semibold">สถานะ:</span> {connectionTestResult.statusText}
+                              </div>
+                            )}
+                            {connectionTestResult.error && connectionTestResult.error.response && (
+                              <div className="mt-2">
+                                <span className="font-semibold">รหัสข้อผิดพลาด:</span> {connectionTestResult.error.response.status}
+                                <br />
+                                <span className="font-semibold">ข้อความจาก API:</span> {connectionTestResult.error.response.statusText}
+                              </div>
+                            )}
                           </AlertDescription>
                         </Alert>
                       )}
-                      
-                      <div className="bg-muted p-4 rounded-md whitespace-pre-wrap h-[500px] overflow-auto">
-                        <pre>{JSON.stringify(connectionTestResult, null, 2)}</pre>
+
+                      {typeof connectionTestResult === 'string' ? (
+                        <div className="bg-muted p-4 rounded-md mb-4">
+                          <div className="font-medium text-red-500 mb-2">ปัญหาการแสดงผลข้อมูล HTML แทน JSON</div>
+                          <p className="text-sm mb-4">ระบบได้รับการตอบกลับในรูปแบบ HTML แทนที่จะเป็น JSON ซึ่งอาจเกิดจากปัญหาการเชื่อมต่อหรือการตั้งค่า CORS</p>
+                          <div className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-[400px]">
+                            {connectionTestResult.substring(0, 500)}...
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-muted p-4 rounded-md whitespace-pre-wrap h-[380px] overflow-auto mb-4">
+                          <pre>{JSON.stringify(connectionTestResult, null, 2)}</pre>
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <h3 className="font-medium text-sm">การแก้ไขปัญหา:</h3>
+                        <ul className="list-disc pl-5 text-sm space-y-1">
+                          <li>ตรวจสอบว่าตั้งค่า API Key และ Merchant ID ถูกต้อง</li>
+                          <li>ตรวจสอบว่าการสร้างลายเซ็นถูกต้องตามเอกสารของ Flash Express API</li>
+                          <li>ตรวจสอบว่า Content-Type เป็น application/x-www-form-urlencoded</li>
+                          <li>ตรวจสอบการเรียงลำดับของพารามิเตอร์ตามที่ API กำหนด</li>
+                          <li>ทดสอบจาก Postman หรือเครื่องมืออื่นเพื่อยืนยันว่า API ใช้งานได้จริง</li>
+                        </ul>
                       </div>
                     </div>
                   ) : (

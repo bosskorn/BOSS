@@ -283,14 +283,23 @@ router.get('/test', async (req: Request, res: Response) => {
     console.log('เริ่มทดสอบการเชื่อมต่อกับ Flash Express API...');
     const result = await testApi();
     
-    return res.json({
-      success: true,
-      message: 'การเชื่อมต่อกับ Flash Express API สำเร็จ',
-      data: result
-    });
-    
+    // ตรวจสอบว่าผลลัพธ์เป็นออบเจ็กต์ที่มีข้อมูลครบถ้วนหรือไม่
+    if (typeof result === 'object') {
+      // ผลลัพธ์เป็นออบเจ็กต์ตามที่คาดหวัง
+      res.setHeader('Content-Type', 'application/json');
+      return res.json(result);
+    } else {
+      // ผลลัพธ์ไม่เป็นไปตามที่คาดหวัง
+      res.setHeader('Content-Type', 'application/json');
+      return res.json({
+        success: false,
+        message: 'รูปแบบผลลัพธ์ไม่ถูกต้อง',
+        data: result
+      });
+    }
   } catch (error: any) {
     console.error('Error testing Flash Express API:', error);
+    res.setHeader('Content-Type', 'application/json');
     return res.status(500).json({ 
       success: false, 
       message: 'เกิดข้อผิดพลาดในการเชื่อมต่อกับ Flash Express API',
