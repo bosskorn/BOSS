@@ -23,7 +23,7 @@ import flashExpressRouter from "./routes/flash-express";
 import testFlashExpressRouter from "./routes/test-flash-express";
 import testSimpleSignatureRouter from "./routes/test-simple-signature";
 import testFlashExpressNewRouter from "./routes/test-flash-express-new";
-import pickupRequestsRouter from "./routes/pickup-requests";
+import pickupRequestsRouter from "./routes/pickup-requests-fixed";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
