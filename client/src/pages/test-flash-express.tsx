@@ -72,6 +72,7 @@ export default function FlashExpressOrder() {
     // ข้อมูลเกี่ยวกับบริการ
     expressCategory: "1", // ประเภทการจัดส่ง (1 = ธรรมดา)
     articleCategory: "99", // ประเภทสินค้า (99 = อื่นๆ)
+    itemCategory: "100", // ประเภทสินค้า (100 = อื่นๆ)
     
     // ข้อมูล COD
     codAmount: "0", // จำนวนเงิน COD
@@ -110,6 +111,7 @@ export default function FlashExpressOrder() {
       
       expressCategory: "1",
       articleCategory: "99",
+      itemCategory: "100",
       
       codAmount: "0",
       
@@ -204,6 +206,7 @@ export default function FlashExpressOrder() {
         // ข้อมูลเกี่ยวกับการจัดส่ง
         expressCategory: parseInt(orderData.expressCategory),
         articleCategory: parseInt(orderData.articleCategory),
+        itemCategory: 100, // ต้องเพิ่มฟิลด์นี้เพื่อให้ Flash Express API ทำงานได้
         
         // ข้อมูลการชำระเงิน
         codEnabled: hasCOD ? 1 : 0,
@@ -291,6 +294,7 @@ export default function FlashExpressOrder() {
       
       expressCategory: "1",
       articleCategory: "99",
+      itemCategory: "100",
       
       codAmount: "0",
       
