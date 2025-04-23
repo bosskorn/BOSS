@@ -15,6 +15,8 @@ import testFlashExpressRoutes from './test-flash-express';
 import flashExpressRoutes from './flash-express'; // เพิ่มเส้นทาง Flash Express
 import flashExpressTestRoutes from './flash-express-test'; // เพิ่มเส้นทางทดสอบ Flash Express
 import pickupTestRoutes from './pickup-test'; // เพิ่มเส้นทางทดสอบการเรียกรถ
+import warehouseRoutes from './flash-express-warehouse'; // เพิ่มเส้นทางเรียกดูข้อมูลคลังสินค้า
+import apiTestRoutes from './api-test'; // เพิ่มเส้นทางทดสอบ API
 
 const router = Router();
 
@@ -35,6 +37,8 @@ router.use('/flash-express-test', flashExpressTestRoutes); // เส้นทา
 router.use('/flash-express', flashExpressRoutes); // เส้นทาง Flash Express API
 router.use('/test-flash-express', testFlashExpressRoutes); // เส้นทางทดสอบเก่าสำหรับความเข้ากันได้
 router.use('/pickup-test', pickupTestRoutes); // เพิ่มเส้นทางทดสอบการเรียกรถเข้ารับพัสดุ
+router.use('/warehouses', warehouseRoutes); // เพิ่มเส้นทางเรียกดูข้อมูลคลังสินค้า
+router.use('/api-test', apiTestRoutes); // เพิ่มเส้นทางทดสอบ API
 
 // Base API route
 router.get('/', (req, res) => {
