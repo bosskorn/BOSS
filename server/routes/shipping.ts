@@ -640,6 +640,35 @@ function parseAddress(text: string): any {
   return components;
 }
 
+/**
+ * API สำหรับทดสอบการสร้างเลขพัสดุแบบละเอียด
+ */
+router.post('/flash-express/debug-create', auth, async (req: Request, res: Response) => {
+  try {
+    console.log('ได้รับคำขอทดสอบละเอียด:', req.body);
+    
+    if (!req.body.outTradeNo) {
+      req.body.outTradeNo = `DEBUG${Date.now()}`;
+    }
+    
+    // เรียกใช้ฟังก์ชันทดสอบละเอียด
+    const debugResult = await debugCreateShipment(req.body);
+    
+    res.json({
+      success: true,
+      message: 'ทดสอบการสร้างเลขพัสดุแบบละเอียดเสร็จสิ้น กรุณาตรวจสอบ log ในคอนโซล',
+      debugInfo: debugResult
+    });
+  } catch (error: any) {
+    console.error('Error in debug create:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'เกิดข้อผิดพลาดในการทดสอบ',
+      stack: error.stack
+    });
+  }
+});
+
 export default router;
 /**
  * API สำหรับค้นหาพัสดุโดย Merchant Tracking Number

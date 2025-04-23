@@ -362,7 +362,7 @@ export async function createFlashShipment(shipmentData: any) {
     console.log('Flash Express request data (formData):', formData.toString());
     
     const response = await axios.post(
-      `${BASE_URL}/open/v3/orders`, // แก้ไข endpoint ตามที่ถูกต้อง
+      `${BASE_URL}/open/v1/orders`, // เปลี่ยนเป็น v1 แทน v3
       formData,
       {
         headers: {
@@ -773,6 +773,116 @@ export async function findOrderByMerchantTrackingNumber(merchantTrackingNumber: 
       success: false,
       message: `ไม่สามารถค้นหาข้อมูลพัสดุได้: ${error.message}`,
       data: null
+    };
+  }
+}
+
+
+/**
+ * ฟังก์ชันทดสอบการสร้างเลขพัสดุอย่างละเอียด
+ * ใช้สำหรับดูข้อมูลจริงทั้งหมดที่ส่งไป
+ */
+export async function debugCreateShipment(orderData: any) {
+  try {
+    console.log('====== DEBUG CREATE SHIPMENT ======');
+    console.log('ข้อมูลที่ได้รับ:', JSON.stringify(orderData, null, 2));
+    
+    // 1. สร้างข้อมูลพื้นฐาน
+    const baseParams = createBaseRequestParams();
+    console.log('baseParams:', baseParams);
+    
+    // 2. แปลงข้อมูลทั้งหมดเป็น string
+    const stringData: Record<string, string> = {};
+    for (const [key, value] of Object.entries(orderData)) {
+      if (value !== null && value !== undefined && key !== 'subItemTypes' && key !== 'remark') {
+        stringData[key] = String(value);
+      }
+    }
+    console.log('stringData (ข้อมูลหลังแปลงเป็น string):', stringData);
+    
+    // 3. รวมข้อมูลพื้นฐานกับข้อมูลออเดอร์
+    const requestData = {
+      ...baseParams,
+      ...stringData,
+      warehouseNo: String(baseParams.warehouseNo)
+    };
+    console.log('requestData (รวมข้อมูลพื้นฐานกับข้อมูลออเดอร์):', requestData);
+    
+    // 4. สร้างลายเซ็น
+    const signature = generateFlashSignature(requestData, API_KEY!);
+    console.log('signature:', signature);
+    
+    // 5. สร้าง URL-encoded string สำหรับส่ง API
+    const formData = new URLSearchParams();
+    for (const [key, value] of Object.entries(requestData)) {
+      if (value !== null && value !== undefined) {
+        formData.append(key, String(value));
+      }
+    }
+    
+    // เพิ่มข้อมูลที่ไม่ถูกใช้ในการคำนวณ signature แต่ต้องส่งไปกับ API
+    formData.append('sign', signature);
+    
+    // เพิ่ม remark และ subItemTypes (ถ้ามี)
+    if (orderData.remark) {
+      formData.append('remark', orderData.remark);
+    }
+    
+    // กำหนด subItemTypes default ถ้าไม่มี
+    const subItemTypes = orderData.subItemTypes || [{
+      itemName: 'สินค้าทดสอบ',
+      itemQuantity: '1'
+    }];
+    formData.append('subItemTypes', JSON.stringify(subItemTypes));
+    
+    console.log('formData (URL-encoded):', formData.toString());
+    
+    // 6. ส่งคำขอไปยัง API (ทดสอบหลาย endpoint)
+    const endpoints = [
+      '/open/v1/orders',
+      '/open/v3/orders',
+      '/open/v5/orders'
+    ];
+    
+    for (const endpoint of endpoints) {
+      console.log(`\nทดสอบ endpoint: ${endpoint}`);
+      try {
+        const response = await axios.post(
+          `${BASE_URL}${endpoint}`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/json',
+              'X-Flash-Signature': signature,
+              'X-Flash-Timestamp': baseParams.timestamp,
+              'X-Flash-Nonce': baseParams.nonceStr
+            },
+            timeout: 15000
+          }
+        );
+        
+        console.log(`ผลลัพธ์จาก ${endpoint}:`, {
+          status: response.status,
+          data: response.data
+        });
+      } catch (endpointError: any) {
+        console.error(`เกิดข้อผิดพลาดที่ endpoint ${endpoint}:`, {
+          message: endpointError.message,
+          response: endpointError.response?.data
+        });
+      }
+    }
+    
+    return {
+      success: false,
+      message: 'นี่เป็นโหมดทดสอบเท่านั้น ไม่ได้สร้างเลขพัสดุจริง'
+    };
+  } catch (error: any) {
+    console.error('Flash Express API debug error:', error.message);
+    return {
+      success: false,
+      message: `เกิดข้อผิดพลาดในการทดสอบ: ${error.message}`
     };
   }
 }

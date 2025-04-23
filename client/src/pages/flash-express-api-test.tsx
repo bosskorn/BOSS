@@ -63,7 +63,7 @@ export default function FlashExpressAPITest() {
   const [rateResponse, setRateResponse] = useState<any>(null);
   const [shippingResponse, setShippingResponse] = useState<any>(null);
   const [connectionTestResult, setConnectionTestResult] = useState<any>(null);
-  
+
   // ฟังก์ชันที่จะทำงานเมื่อคอมโพเนนต์โหลดเสร็จ
   useEffect(() => {
     // สร้างเลขอ้างอิงใหม่ทุกครั้งที่โหลดหน้า
@@ -71,7 +71,7 @@ export default function FlashExpressAPITest() {
       ...prev,
       outTradeNo: `TEST${Date.now()}`
     }));
-    
+
     // ดึงข้อมูลผู้ใช้ถ้ามี
     if (user) {
       setShippingData(prev => ({
@@ -81,7 +81,7 @@ export default function FlashExpressAPITest() {
         srcDetailAddress: user.address || prev.srcDetailAddress
       }));
     }
-    
+
     // ถ้ามี tab parameter ให้เปลี่ยนไปที่แท็บนั้น
     if (location.includes('?tab=')) {
       const tabParam = location.split('?tab=')[1];
@@ -91,7 +91,7 @@ export default function FlashExpressAPITest() {
       }
     }
   }, [user]);
-  
+
   // ข้อมูลที่อยู่สำหรับดึงอัตราค่าขนส่ง
   const [fromAddress, setFromAddress] = useState<AddressData>({
     province: 'กรุงเทพมหานคร',
@@ -99,16 +99,16 @@ export default function FlashExpressAPITest() {
     subdistrict: 'จรเข้บัว',
     zipcode: '10230'
   });
-  
+
   const [toAddress, setToAddress] = useState<AddressData>({
     province: 'เชียงใหม่',
     district: 'เมืองเชียงใหม่',
     subdistrict: 'ช้างคลาน',
     zipcode: '50100'
   });
-  
+
   const [weight, setWeight] = useState(1.0);
-  
+
   // ข้อมูลสำหรับสร้างการจัดส่ง
   const [shippingData, setShippingData] = useState<ShippingData>({
     outTradeNo: `TEST${Date.now()}`,
@@ -144,18 +144,18 @@ export default function FlashExpressAPITest() {
     insuredAmount: "0", // จำนวนเงินประกัน (ถ้ามี)
     remark: "ทดสอบการส่งพัสดุ", // หมายเหตุ
   });
-  
+
   // ดึงข้อมูลค่าจัดส่ง
   const getShippingRates = async () => {
     try {
       setLoading(true);
-      
+
       console.log('กำลังเรียก API เพื่อดึงข้อมูลค่าจัดส่ง:', {
         fromAddress,
         toAddress,
         weight
       });
-      
+
       const response = await apiRequest(
         'POST',
         '/api/shipping-methods/flash-express/rates',
@@ -165,11 +165,11 @@ export default function FlashExpressAPITest() {
           weight
         }
       );
-      
+
       const data = await response.json();
       console.log('ข้อมูลค่าจัดส่งที่ได้รับ:', data);
       setRateResponse(data);
-      
+
       toast({
         title: 'ดึงข้อมูลสำเร็จ',
         description: 'ได้รับข้อมูลค่าจัดส่งจาก Flash Express API แล้ว',
@@ -185,16 +185,16 @@ export default function FlashExpressAPITest() {
       setLoading(false);
     }
   };
-  
+
   // สร้างการจัดส่ง
   const createShipping = async () => {
     try {
       setLoading(true);
-      
+
       console.log('กำลังเรียก API เพื่อสร้างการจัดส่ง:', {
         orderData: shippingData
       });
-      
+
       const response = await apiRequest(
         'POST',
         '/api/shipping-methods/flash-express/shipping',
@@ -202,11 +202,11 @@ export default function FlashExpressAPITest() {
           orderData: shippingData
         }
       );
-      
+
       const data = await response.json();
       console.log('ข้อมูลการจัดส่งที่ได้รับ:', data);
       setShippingResponse(data);
-      
+
       if (data.success) {
         toast({
           title: 'สร้างการจัดส่งสำเร็จ',
@@ -230,59 +230,59 @@ export default function FlashExpressAPITest() {
       setLoading(false);
     }
   };
-  
+
   // อัพเดตข้อมูลที่อยู่ต้นทาง
   const updateFromAddress = (key: keyof AddressData, value: string) => {
     setFromAddress(prev => ({ ...prev, [key]: value }));
   };
-  
+
   // อัพเดตข้อมูลที่อยู่ปลายทาง
   const updateToAddress = (key: keyof AddressData, value: string) => {
     setToAddress(prev => ({ ...prev, [key]: value }));
   };
-  
+
   // อัพเดตข้อมูลการจัดส่ง
   const updateShippingData = (key: keyof ShippingData, value: any) => {
     setShippingData(prev => ({ ...prev, [key]: value }));
   };
-  
+
   // ทดสอบการเชื่อมต่อกับ Flash Express API โดยตรง
   const testConnection = async () => {
     try {
       setLoading(true);
-      
+
       console.log('กำลังทดสอบการเชื่อมต่อกับ Flash Express API... (URL: https://open-api.flashexpress.com)');
-      
+
       // เปลี่ยนมาใช้ endpoint ใหม่ที่เราเพิ่งสร้าง
       const response = await apiRequest(
         'GET',
         '/api/shipping/test-connection',
         null
       );
-      
+
       try {
         // พยายามแปลงข้อมูลเป็น JSON
         const data = await response.json();
         console.log('ผลการทดสอบการเชื่อมต่อ Flash Express API:', data);
         setConnectionTestResult(data);
-        
+
         let description = data.message || (data.success ? 'สามารถเชื่อมต่อกับ Flash Express API ได้' : 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้');
-        
+
         // เพิ่มรายละเอียดหากมีข้อมูล API response
         if (data.apiResponse) {
           console.log('รายละเอียดการตอบกลับจาก API:', data.apiResponse);
-          
+
           if (data.apiResponse.data) {
             description += ` (API Response Code: ${data.apiResponse.data.code || 'N/A'})`;
           }
         }
-        
+
         // เพิ่มข้อมูล HTML response หากได้รับการตอบกลับเป็น HTML
         if (data.htmlAnalysis) {
           console.log('ได้รับการตอบกลับเป็น HTML:', data.htmlAnalysis);
           description += ' - เซิร์ฟเวอร์ตอบกลับด้วย HTML แทน JSON ซึ่งอาจเกิดจากการเปลี่ยนเส้นทาง';
         }
-        
+
         toast({
           title: data.success ? 'การเชื่อมต่อสำเร็จ' : 'การเชื่อมต่อไม่สำเร็จ',
           description: description,
@@ -291,12 +291,12 @@ export default function FlashExpressAPITest() {
       } catch (jsonError) {
         // หากไม่สามารถแปลงเป็น JSON ได้ แสดงว่าอาจได้รับ HTML แทน
         console.error('เกิดข้อผิดพลาดในการแปลงข้อมูล JSON:', jsonError);
-        
+
         try {
           const text = await response.text();
           console.log('ข้อมูลการตอบกลับ (ไม่ใช่ JSON):', text.substring(0, 500) + '...');
           setConnectionTestResult({ success: false, rawResponse: text });
-          
+
           toast({
             title: 'เกิดข้อผิดพลาดรูปแบบข้อมูล',
             description: 'ได้รับข้อมูลที่ไม่ใช่ JSON ซึ่งอาจเกิดจากปัญหาในการเชื่อมต่อ',
@@ -318,7 +318,7 @@ export default function FlashExpressAPITest() {
         error: String(error),
         message: error.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'
       });
-      
+
       toast({
         title: 'เกิดข้อผิดพลาด',
         description: `ไม่สามารถเชื่อมต่อกับ Flash Express API ได้: ${error.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'}`,
@@ -328,19 +328,19 @@ export default function FlashExpressAPITest() {
       setLoading(false);
     }
   };
-  
+
   return (
     <Layout>
       <div className="container mx-auto py-6">
         <h1 className="text-2xl font-bold mb-6">ทดสอบการเชื่อมต่อ Flash Express API</h1>
-        
+
         <Tabs defaultValue="connection">
           <TabsList className="mb-4">
             <TabsTrigger value="connection">ทดสอบการเชื่อมต่อ</TabsTrigger>
             <TabsTrigger value="rates">ทดสอบดึงข้อมูลค่าจัดส่ง</TabsTrigger>
             <TabsTrigger value="shipping">ทดสอบสร้างการจัดส่ง</TabsTrigger>
           </TabsList>
-          
+
           {/* แท็บทดสอบดึงข้อมูลค่าจัดส่ง */}
           <TabsContent value="rates">
             <div className="grid md:grid-cols-2 gap-6">
@@ -388,9 +388,9 @@ export default function FlashExpressAPITest() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <h3 className="text-lg font-medium">ที่อยู่ปลายทาง</h3>
                       <div className="grid grid-cols-2 gap-4 mt-2">
@@ -428,7 +428,7 @@ export default function FlashExpressAPITest() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="weight">น้ำหนัก (กิโลกรัม)</Label>
                       <Input 
@@ -440,7 +440,7 @@ export default function FlashExpressAPITest() {
                         onChange={(e) => setWeight(parseFloat(e.target.value))}
                       />
                     </div>
-                    
+
                     <Button 
                       onClick={getShippingRates} 
                       disabled={loading}
@@ -451,7 +451,7 @@ export default function FlashExpressAPITest() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* แสดงผลข้อมูลที่ได้รับ */}
               <Card>
                 <CardHeader>
@@ -471,7 +471,7 @@ export default function FlashExpressAPITest() {
               </Card>
             </div>
           </TabsContent>
-          
+
           {/* แท็บทดสอบการเชื่อมต่อ */}
           <TabsContent value="connection">
             <div className="grid md:grid-cols-2 gap-6">
@@ -489,7 +489,7 @@ export default function FlashExpressAPITest() {
                         การทดสอบนี้จะส่งคำขอตรวจสอบไปยัง Flash Express API โดยตรง
                       </AlertDescription>
                     </Alert>
-                    
+
                     <Alert className="bg-amber-50 border-amber-200">
                       <AlertTitle className="text-amber-800">การวิเคราะห์ปัญหา</AlertTitle>
                       <AlertDescription className="text-amber-700">
@@ -503,7 +503,7 @@ export default function FlashExpressAPITest() {
                         </ul>
                       </AlertDescription>
                     </Alert>
-                    
+
                     <Button 
                       onClick={testConnection} 
                       disabled={loading}
@@ -514,7 +514,7 @@ export default function FlashExpressAPITest() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* แสดงผลลัพธ์การทดสอบ */}
               <Card>
                 <CardHeader>
@@ -585,7 +585,7 @@ export default function FlashExpressAPITest() {
               </Card>
             </div>
           </TabsContent>
-          
+
           {/* แท็บทดสอบสร้างการจัดส่ง */}
           <TabsContent value="shipping">
             <div className="grid md:grid-cols-2 gap-6">
@@ -604,9 +604,9 @@ export default function FlashExpressAPITest() {
                         onChange={(e) => updateShippingData('outTradeNo', e.target.value)}
                       />
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <h3 className="text-lg font-medium">ข้อมูลผู้ส่ง</h3>
                       <div className="space-y-3 mt-2">
@@ -672,9 +672,9 @@ export default function FlashExpressAPITest() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <h3 className="text-lg font-medium">ข้อมูลผู้รับ</h3>
                       <div className="space-y-3 mt-2">
@@ -740,9 +740,9 @@ export default function FlashExpressAPITest() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <h3 className="text-lg font-medium">ข้อมูลพัสดุ</h3>
                       <div className="space-y-3 mt-2">
@@ -859,7 +859,7 @@ export default function FlashExpressAPITest() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <Button 
                       onClick={createShipping} 
                       disabled={loading}
@@ -867,10 +867,50 @@ export default function FlashExpressAPITest() {
                     >
                       {loading ? 'กำลังดำเนินการ...' : 'สร้างการจัดส่ง'}
                     </Button>
+
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="mt-2 w-full"
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          console.log('กำลังทดสอบการสร้างเลขพัสดุแบบละเอียด:', shippingData);
+
+                          const response = await fetch('/api/shipping/flash-express/debug-create', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(shippingData)
+                          });
+
+                          const data = await response.json();
+                          console.log('ผลลัพธ์การทดสอบละเอียด:', data);
+
+                          toast({
+                            title: 'การทดสอบเสร็จสิ้น',
+                            description: 'กรุณาตรวจสอบข้อมูลในคอนโซล',
+                          });
+                        } catch (error) {
+                          console.error('เกิดข้อผิดพลาดในการทดสอบละเอียด:', error);
+                          toast({
+                            title: 'เกิดข้อผิดพลาด',
+                            description: 'ไม่สามารถทดสอบได้ กรุณาลองอีกครั้ง',
+                            variant: 'destructive',
+                          });
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
+                    >
+                      ทดสอบแบบละเอียด (Debug)
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* แสดงผลข้อมูลที่ได้รับ */}
               <Card>
                 <CardHeader>
