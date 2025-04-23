@@ -321,7 +321,7 @@ const CreateFlashExpressOrderNew: React.FC = () => {
         })) : [{itemName: "สินค้า", itemQuantity: 1}],
         
         // เพิ่มฟิลด์ที่อาจจำเป็นสำหรับ Flash Express API
-        payType: 1, // 1 = ชำระโดยผู้ส่ง (default)
+        settlementType: 1, // 1 = ผู้ส่งเป็นผู้ชำระ, 2 = ผู้รับเป็นผู้ชำระ (ตามเอกสาร Flash Express)
         itemCategory: data.articleCategory || 1, // ใช้ articleCategory ที่เลือกหรือค่าเริ่มต้น
       };
       
