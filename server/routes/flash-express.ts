@@ -21,43 +21,69 @@ if (!process.env.FLASH_EXPRESS_MERCHANT_ID || !process.env.FLASH_EXPRESS_API_KEY
 const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com/open';
 
 // ฟังก์ชันสำหรับสร้างลายเซ็นดิจิตอล (signature) สำหรับ Flash Express API
+// การสร้างลายเซ็นตามเอกสาร Flash Express API:
+// 1. จัดเรียง key ตามลำดับ ASCII
+// 2. แปลงข้อมูลเป็นรูปแบบ key=value คั่นด้วย & เพื่อสร้าง stringA
+// 3. นำ stringA มาต่อกับ "&key=API_KEY" เพื่อสร้าง stringSignTemp
+// 4. คำนวณ SHA-256 ของ stringSignTemp
+// 5. แปลงผลลัพธ์เป็นตัวพิมพ์ใหญ่ทั้งหมด
 function createSignature(params: Record<string, any>, apiKey: string): string {
-  // คัดลอกพารามิเตอร์ทั้งหมดเพื่อสร้าง signature
-  const paramsForSign = { ...params };
-  
-  // ลบฟิลด์ที่ไม่ต้องใช้ในการสร้าง signature
-  delete paramsForSign.sign;
-  
-  // เรียงฟิลด์ตามรหัส ASCII
-  const sortedKeys = Object.keys(paramsForSign).sort();
-  
-  // สร้าง string จากชื่อและค่าของทุกฟิลด์ที่เรียงลำดับแล้ว
-  let signString = '';
-  
-  for (const key of sortedKeys) {
-    const value = paramsForSign[key];
+  try {
+    console.log('Starting signature creation for Flash Express API');
     
-    // ข้ามฟิลด์ที่เป็น undefined หรือ null
-    if (value === undefined || value === null) {
-      continue;
+    // คัดลอกพารามิเตอร์ทั้งหมดเพื่อสร้าง signature
+    const paramsForSign = { ...params };
+    
+    // ลบฟิลด์ที่ไม่ต้องใช้ในการสร้าง signature
+    delete paramsForSign.sign;
+    
+    // เรียงฟิลด์ตามรหัส ASCII
+    const sortedKeys = Object.keys(paramsForSign).sort();
+    
+    // สร้าง string จากชื่อและค่าของทุกฟิลด์ที่เรียงลำดับแล้ว
+    const parts: string[] = [];
+    
+    for (const key of sortedKeys) {
+      let value = paramsForSign[key];
+      
+      // ข้ามฟิลด์ที่เป็น undefined หรือ null
+      if (value === undefined || value === null) {
+        continue;
+      }
+      
+      // แปลงข้อมูลเป็น string ถ้าจำเป็น
+      if (typeof value === 'object') {
+        value = JSON.stringify(value);
+      } else if (typeof value !== 'string') {
+        value = String(value);
+      }
+      
+      // ข้ามค่าว่าง
+      if (value.trim() === '') {
+        continue;
+      }
+      
+      // เพิ่มเข้าไปในรายการสำหรับการสร้าง stringA
+      parts.push(`${key}=${value}`);
     }
     
-    // ข้ามฟิลด์ที่เป็นชื่อที่ขึ้นต้นด้วยเครื่องหมาย @ (ตามข้อกำหนดของ API)
-    if (key.startsWith('@')) {
-      continue;
-    }
+    // รวม key=value คั่นด้วย & เพื่อสร้าง stringA
+    const stringA = parts.join('&');
     
-    // เพิ่มชื่อฟิลด์และค่าลงใน string
-    signString += key + value;
+    // ต่อ stringA ด้วย &key=API_KEY เพื่อสร้าง stringSignTemp
+    const stringSignTemp = `${stringA}&key=${apiKey}`;
+    
+    console.log('Flash Express signature stringSignTemp:', stringSignTemp); // เพื่อดีบัก
+    
+    // สร้าง signature ด้วย SHA-256
+    const signature = crypto.createHash('sha256').update(stringSignTemp).digest('hex').toUpperCase();
+    console.log('Flash Express signature result:', signature);
+    
+    return signature;
+  } catch (error) {
+    console.error('Error creating Flash Express signature:', error);
+    throw new Error('Failed to create signature for Flash Express API');
   }
-  
-  // เพิ่ม API Key ต่อท้าย
-  signString += apiKey;
-  
-  console.log('Flash Express signature string:', signString); // เพื่อดีบัก
-  
-  // สร้าง signature ด้วย SHA-256
-  return crypto.createHash('sha256').update(signString).digest('hex').toUpperCase();
 }
 
 // สร้างคำสั่งจัดส่งใหม่ผ่าน Flash Express API
