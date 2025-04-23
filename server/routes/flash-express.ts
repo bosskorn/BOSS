@@ -240,6 +240,95 @@ router.get('/test', async (req, res) => {
 });
 
 /**
+ * API ดึงอัตราค่าจัดส่ง Flash Express
+ */
+router.post('/shipping-rates', auth, async (req, res) => {
+  try {
+    // ตรวจสอบว่ามีข้อมูลที่จำเป็น
+    const {
+      srcProvinceName, srcCityName, srcDistrictName, srcPostalCode,
+      dstProvinceName, dstCityName, dstDistrictName, dstPostalCode,
+      weight, width, length, height
+    } = req.body;
+    
+    // ตรวจสอบข้อมูลที่จำเป็น
+    if (!srcPostalCode || !dstPostalCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'ต้องระบุรหัสไปรษณีย์ต้นทางและปลายทาง'
+      });
+    }
+
+    console.log('ข้อมูลคำขอรับอัตราค่าจัดส่ง Flash Express:', {
+      srcProvinceName, srcCityName, srcPostalCode,
+      dstProvinceName, dstCityName, dstPostalCode,
+      weight, dimensions: { width, length, height }
+    });
+    
+    // ในช่วงแรกนี้ เราจะใช้วิธีคำนวณอย่างง่ายตามระยะทางโดยใช้รหัสไปรษณีย์เป็นหลัก
+    // ในกรณีจริงควรเรียกใช้ API ของ Flash Express (ถ้ามี) หรือฐานข้อมูลแท้จริง
+
+    // คำนวณราคาอย่างง่าย
+    let baseRate = 30; // ราคาเริ่มต้น 30 บาท
+    const weightKg = (weight || 1000) / 1000; // แปลงเป็น kg (ถ้าระบุเป็นกรัม)
+    
+    // ถ้าน้ำหนักมากกว่า 1 กก. เพิ่มราคาตามน้ำหนัก
+    if (weightKg > 1) {
+      baseRate += Math.min(Math.ceil(weightKg - 1), 10) * 10;
+    }
+    
+    // เพิ่มค่าบริการตามระยะทาง (ใช้รหัสไปรษณีย์อย่างง่าย)
+    let distanceFactor = 0;
+    const srcPrefix = srcPostalCode.substring(0, 2);
+    const dstPrefix = dstPostalCode.substring(0, 2);
+    
+    if (srcPrefix === dstPrefix) {
+      // ส่งในเขตเดียวกัน
+      distanceFactor = 0;
+    } else if (
+      // กรุงเทพและปริมณฑล
+      (srcPrefix === '10' && ['11', '12', '13', '73', '74'].includes(dstPrefix)) ||
+      (dstPrefix === '10' && ['11', '12', '13', '73', '74'].includes(srcPrefix))
+    ) {
+      distanceFactor = 10;
+    } else {
+      // ต่างภูมิภาค
+      distanceFactor = 20;
+    }
+    
+    // คำนวณราคาสุทธิ
+    const normalRate = baseRate + distanceFactor;
+    const expressRate = normalRate * 1.5; // บริการด่วนแพงกว่า 1.5 เท่า
+    
+    // ตอบกลับข้อมูลอัตราค่าจัดส่ง
+    return res.json({
+      success: true,
+      normalRate, // ส่งธรรมดา
+      expressRate, // ส่งด่วน
+      details: {
+        baseRate,
+        distanceFactor,
+        weight: weightKg,
+        dimensions: {
+          width: width || 20,
+          length: length || 30, 
+          height: height || 10
+        }
+      },
+      message: 'คำนวณอัตราค่าจัดส่งสำเร็จ'
+    });
+  } catch (error: any) {
+    console.error('เกิดข้อผิดพลาดในการคำนวณอัตราค่าจัดส่ง:', error);
+    
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'เกิดข้อผิดพลาดในการคำนวณอัตราค่าจัดส่ง',
+      error: error.message
+    });
+  }
+});
+
+/**
  * API ทดสอบพื้นที่ให้บริการของ Flash Express
  */
 router.post('/validate-area', async (req, res) => {
