@@ -2,7 +2,7 @@
 import express, { Request, Response } from 'express';
 import { auth } from '../middleware/auth';
 import { storage } from '../storage'; 
-import { getShippingOptions, createShipment, trackShipment } from '../services/flash-express';
+import { getShippingOptions, createShipment, trackShipment, testApi } from '../services/flash-express';
 
 const router = express.Router();
 
