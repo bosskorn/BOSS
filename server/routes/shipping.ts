@@ -492,6 +492,23 @@ router.get('/test-connection', auth, async (req: Request, res: Response) => {
     console.log(`ใช้ Merchant ID: ${merchantId}`);
     console.log(`ใช้ API Key: ${flashApiKey?.substring(0, 3)}...${flashApiKey?.substring(flashApiKey.length - 3) || ''}`);
     
+    // ตรวจสอบความถูกต้องของ API key และ merchant ID
+    if (!flashApiKey || flashApiKey.length < 10) {
+      return res.json({
+        success: false,
+        error: 'API key ไม่ถูกต้องหรือมีความยาวไม่เพียงพอ',
+        apiKeyLength: flashApiKey ? flashApiKey.length : 0
+      });
+    }
+    
+    if (!merchantId || merchantId.length < 5) {
+      return res.json({
+        success: false,
+        error: 'Merchant ID ไม่ถูกต้องหรือมีความยาวไม่เพียงพอ',
+        merchantIdLength: merchantId ? merchantId.length : 0
+      });
+    }
+    
     // ทดสอบการเชื่อมต่อ
     const testResult = await testFlashApi();
     

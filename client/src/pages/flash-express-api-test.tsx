@@ -219,11 +219,24 @@ export default function FlashExpressAPITest() {
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('เกิดข้อผิดพลาดในการสร้างการจัดส่ง:', error);
+      
+      // แสดงข้อมูลข้อผิดพลาดเพิ่มเติมถ้ามี response data
+      const errorDetail = error.response?.data 
+        ? JSON.stringify(error.response.data, null, 2) 
+        : error.message;
+        
+      setShippingResponse({
+        success: false,
+        error: error.message,
+        details: error.response?.data || {},
+        status: error.response?.status || 'unknown'
+      });
+      
       toast({
         title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถสร้างการจัดส่งได้',
+        description: `ไม่สามารถสร้างการจัดส่งได้: ${error.message}`,
         variant: 'destructive',
       });
     } finally {

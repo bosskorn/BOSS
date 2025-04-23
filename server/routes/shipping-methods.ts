@@ -191,7 +191,16 @@ router.post('/flash-express/shipping', auth, async (req, res) => {
       ...orderData,
       nonceStr: orderData.nonceStr || nonceStr,
       timestamp: orderData.timestamp || timestamp,
-      // ค่า default ของพัสดุทั่วไป - ต้องเป็น string
+      // แปลงฟิลด์ให้เป็น string
+      weight: String(orderData.weight),
+      width: String(orderData.width || 20),
+      length: String(orderData.length || 30),
+      height: String(orderData.height || 10),
+      insured: String(orderData.insured || 0),
+      codEnabled: String(orderData.codEnabled || 0),
+      codAmount: orderData.codEnabled == 1 ? String(orderData.codAmount || 0) : '0',
+      expressCategory: String(orderData.expressCategory || 1),
+      articleCategory: String(orderData.articleCategory || 2),วไป - ต้องเป็น string
       parcelKind: "1", 
       // ไม่ทำประกัน (default) - ต้องเป็น string
       insured: "0", 

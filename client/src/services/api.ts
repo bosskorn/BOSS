@@ -108,10 +108,17 @@ export default api
  */
 export const findOrderByMerchantTracking = async (merchantTrackingNumber: string) => {
   try {
+    console.log('กำลังเรียกใช้ API เพื่อค้นหาพัสดุด้วย Merchant Tracking Number:', merchantTrackingNumber);
     const response = await api.get(`/api/shipping/flash-express/find-by-merchant-tracking/${merchantTrackingNumber}`);
+    console.log('ผลการค้นหาพัสดุ:', response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error finding order by merchant tracking:', error);
-    throw error;
+    // ส่งคืนข้อมูลข้อผิดพลาดในรูปแบบที่ง่ายต่อการแสดงผล
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'ไม่สามารถค้นหาพัสดุได้',
+      error: error.message
+    };
   }
 };

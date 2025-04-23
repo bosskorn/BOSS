@@ -325,7 +325,7 @@ export async function createFlashShipment(shipmentData: any) {
 
     // 6. แปลงข้อมูลรายการสินค้า
     // ถ้าไม่มีข้อมูลสินค้า ให้ใส่ข้อมูลตัวอย่าง (จำเป็นต้องมี)
-    const subItemTypes = items.length > 0 
+    const subItemTypes = items.length > 0
       ? items.map((item: any) => ({
           itemName: item.itemName,
           itemQuantity: String(item.itemQuantity)
@@ -362,7 +362,7 @@ export async function createFlashShipment(shipmentData: any) {
     console.log('Flash Express request data (formData):', formData.toString());
 
     const response = await axios.post(
-      `${BASE_URL}/open/v3/orders`, // แก้ไข endpoint ตามที่ถูกต้อง
+      `${BASE_URL}/open/v3/orders`, // ใช้ v3 เนื่องจากข้อมูลที่ส่งอยู่ในรูปแบบ v3
       formData,
       {
         headers: {
@@ -523,8 +523,8 @@ export function testSignatureWithExampleData() {
         match: signatureMatches,
         length: ourSignature.length
       },
-      message: signatureMatches 
-        ? 'การสร้างลายเซ็นตรงกับตัวอย่างในเอกสาร! ✓' 
+      message: signatureMatches
+        ? 'การสร้างลายเซ็นตรงกับตัวอย่างในเอกสาร! ✓'
         : 'ลายเซ็นที่สร้างไม่ตรงกับตัวอย่างในเอกสาร ✗'
     };
   } catch (error: any) {
@@ -605,7 +605,7 @@ async function testFlashApi() {
             obj[key] = testParams[key];
           }
           return obj;
-        }, 
+        },
         {}
       );
 
@@ -671,9 +671,9 @@ async function testFlashApi() {
       console.error('API Response Data:', apiError.response?.data);
 
       // ตรวจสอบว่าเป็น HTML response หรือไม่
-      const isHtmlResponse = 
-        apiError.response?.data && 
-        typeof apiError.response.data === 'string' && 
+      const isHtmlResponse =
+        apiError.response?.data &&
+        typeof apiError.response.data === 'string' &&
         apiError.response.data.includes('<!DOCTYPE html>');
 
       if (isHtmlResponse) {
