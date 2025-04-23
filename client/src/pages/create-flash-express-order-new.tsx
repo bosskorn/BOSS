@@ -193,10 +193,10 @@ const CreateFlashExpressOrderNew: React.FC = () => {
       codEnabled: 0,
       codAmount: 0,
       
-      // รายละเอียดสินค้า
+      // รายละเอียดสินค้า - ต้องระบุชื่อสินค้าไม่เป็นค่าว่าง
       subItemTypes: [
         {
-          itemName: '',
+          itemName: 'สินค้า',
           itemWeightSize: 'กลาง',
           itemColor: 'ขาว',
           itemQuantity: 1
@@ -233,7 +233,7 @@ const CreateFlashExpressOrderNew: React.FC = () => {
     form.setValue('subItemTypes', [
       ...subItemTypes,
       {
-        itemName: '',
+        itemName: 'สินค้า',  // ต้องระบุค่าไม่เป็นค่าว่าง (ตามเอกสาร Flash Express)
         itemWeightSize: 'กลาง',
         itemColor: 'ขาว',
         itemQuantity: 1
@@ -302,11 +302,23 @@ const CreateFlashExpressOrderNew: React.FC = () => {
         // แปลงค่า insureDeclareValue เป็นสตางค์ (บาท x 100)
         insureDeclareValue: data.insured === 1 && data.insureDeclareValue ? Math.floor(data.insureDeclareValue * 100) : undefined,
         
-        // ส่ง subItemTypes เป็น array ไม่ใช่ JSON string (เปลี่ยนตามข้อกำหนดของ API)
+        // subItemTypes ตามเอกสารของ Flash Express ต้องมีการกำหนดค่าที่ถูกต้อง
+        // itemName: string(200) [บังคับ] ชื่อสินค้า
+        // itemWeightSize: string(128) [ไม่บังคับ] ขนาด/ประเภทของสินค้า
+        // itemColor: string(128) [ไม่บังคับ] สีของสินค้า
+        // itemQuantity: integer [บังคับ] จำนวนสินค้า (ค่าต้องมากกว่า 1, สูงสุดคือ 999)
         subItemTypes: data.subItemTypes ? data.subItemTypes.map(item => ({
-          ...item,
-          itemQuantity: String(item.itemQuantity)
-        })) : [],
+          // ต้องมี itemName ไม่เป็นค่าว่าง (จำกัดความยาวไม่เกิน 200 ตัวอักษร)
+          itemName: (item.itemName || "สินค้า").substring(0, 200),
+          // ถ้ามีข้อมูลขนาด/ประเภทของสินค้า ใช้ค่านั้น (จำกัดความยาวไม่เกิน 128 ตัวอักษร)
+          itemWeightSize: item.itemWeightSize ? String(item.itemWeightSize).substring(0, 128) : undefined,
+          // ถ้ามีข้อมูลสีของสินค้า ใช้ค่านั้น (จำกัดความยาวไม่เกิน 128 ตัวอักษร)
+          itemColor: item.itemColor ? String(item.itemColor).substring(0, 128) : undefined,
+          // itemQuantity ต้องเป็นตัวเลขระหว่าง 1-999 (แปลงจาก string เป็น number)
+          itemQuantity: typeof item.itemQuantity === 'string' 
+            ? Math.min(Math.max(parseInt(item.itemQuantity) || 1, 1), 999)
+            : Math.min(Math.max(item.itemQuantity || 1, 1), 999)
+        })) : [{itemName: "สินค้า", itemQuantity: 1}],
         
         // เพิ่มฟิลด์ที่อาจจำเป็นสำหรับ Flash Express API
         payType: 1, // 1 = ชำระโดยผู้ส่ง (default)

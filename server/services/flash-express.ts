@@ -157,34 +157,49 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     // แปลงข้อมูลให้ตรงตามที่ Flash Express API ต้องการ
     // - ทำให้แน่ใจว่าข้อมูลตัวเลขส่งเป็น integer จริงๆ (ไม่ใช่ string)
     // - ทำให้แน่ใจว่า subItemTypes อยู่ในรูปแบบที่ถูกต้อง
-    // จากภาพที่ผู้ใช้ส่งมาให้ดู Flash Express API ส่ง subItemTypes เป็น Array(1) แบบนี้
-    // รูปแบบที่ถูกต้องคือมี itemName (บังคับ), itemQuantity (บังคับ, เป็นตัวเลข)
-    // อาจมี itemWeightSize, itemColor เป็นตัวเลือก
-    let subItemTypes = [];
+    // จากภาพที่ผู้ใช้ส่งมาให้ดู Flash Express API ต้องมีการกำหนดค่าที่ถูกต้องสำหรับ subItemTypes
+    // ตามเอกสาร subItemTypes ต้องเป็น JSON string และมีโครงสร้างดังนี้:
+    // - itemName: string(200) [บังคับ] ชื่อสินค้า
+    // - itemWeightSize: string(128) [ไม่บังคับ] ขนาด/ประเภทของสินค้า
+    // - itemColor: string(128) [ไม่บังคับ] สีของสินค้า
+    // - itemQuantity: integer [บังคับ] จำนวนสินค้า (ค่าต้องมากกว่า 1, สูงสุดคือ 999)
+    let subItemTypeArray = [];
     
     if (Array.isArray(orderData.subItemTypes) && orderData.subItemTypes.length > 0) {
       // แปลง subItemTypes ให้อยู่ในรูปแบบที่ถูกต้อง
-      subItemTypes = orderData.subItemTypes.map(item => {
-        // สร้าง Object ใหม่ที่มีเฉพาะข้อมูลที่จำเป็น
+      subItemTypeArray = orderData.subItemTypes.map(item => {
+        // สร้าง Object ใหม่ที่มีเฉพาะข้อมูลที่จำเป็นและประเภทข้อมูลถูกต้อง
         const cleanItem: Record<string, any> = {
-          // ต้องมี itemName และต้องเป็น string
-          itemName: item.itemName || 'สินค้า',
-          // ต้องมี itemQuantity และต้องเป็นตัวเลข
-          itemQuantity: typeof item.itemQuantity === 'string' ? parseInt(item.itemQuantity) : (item.itemQuantity || 1)
+          // ต้องมี itemName และต้องเป็น string(200)
+          itemName: (item.itemName || 'สินค้า').substring(0, 200),
+          
+          // ต้องมี itemQuantity และต้องเป็น integer
+          // แปลงเป็นตัวเลขเต็มและตรวจสอบให้อยู่ในช่วง 1-999
+          itemQuantity: typeof item.itemQuantity === 'string' 
+            ? Math.min(Math.max(parseInt(item.itemQuantity) || 1, 1), 999)
+            : Math.min(Math.max(item.itemQuantity || 1, 1), 999)
         };
         
-        // เพิ่มฟิลด์เสริมเฉพาะเมื่อมีข้อมูล
-        if (item.itemWeightSize) cleanItem.itemWeightSize = item.itemWeightSize;
-        if (item.itemColor) cleanItem.itemColor = item.itemColor;
+        // เพิ่มฟิลด์เสริมเฉพาะเมื่อมีข้อมูล - ตามเอกสาร API
+        if (item.itemWeightSize) {
+          cleanItem.itemWeightSize = String(item.itemWeightSize).substring(0, 128);
+        }
+        
+        if (item.itemColor) {
+          cleanItem.itemColor = String(item.itemColor).substring(0, 128);
+        }
         
         return cleanItem;
       });
     } else {
-      // ถ้าไม่มีข้อมูล ใช้ค่าเริ่มต้น
-      subItemTypes = [{ itemName: 'สินค้า', itemQuantity: 1 }];
+      // ถ้าไม่มีข้อมูล ใช้ค่าเริ่มต้นที่ถูกต้องตามเอกสาร
+      subItemTypeArray = [{ itemName: 'สินค้า', itemQuantity: 1 }];
     }
     
-    console.log('Formatted subItemTypes:', JSON.stringify(subItemTypes, null, 2));
+    console.log('Formatted subItemTypes array:', JSON.stringify(subItemTypeArray, null, 2));
+    
+    // อย่าลืมว่า subItemTypes ต้องส่งเป็น JSON string ไม่ใช่ array ตามเอกสาร Flash Express
+    const subItemTypes = JSON.stringify(subItemTypeArray);
 
     // สร้างข้อมูลตามรูปแบบที่ Flash Express API ต้องการ ตรงตามเอกสาร
     // และมีโครงสร้างตามที่เห็นจากภาพตัวอย่าง
