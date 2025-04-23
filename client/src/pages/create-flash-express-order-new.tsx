@@ -306,7 +306,11 @@ const CreateFlashExpressOrderNew: React.FC = () => {
         subItemTypes: JSON.stringify(data.subItemTypes ? data.subItemTypes.map(item => ({
           ...item,
           itemQuantity: String(item.itemQuantity)
-        })) : [])
+        })) : []),
+        
+        // เพิ่มฟิลด์ที่อาจจำเป็นสำหรับ Flash Express API
+        payType: 1, // 1 = ชำระโดยผู้ส่ง (default)
+        itemCategory: data.articleCategory || 1, // ใช้ articleCategory ที่เลือกหรือค่าเริ่มต้น
       };
       
       console.log("ส่งข้อมูลไปยัง API:", orderData);
