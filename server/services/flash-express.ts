@@ -46,7 +46,13 @@ function createSignature(data: any, timestamp: number): string {
         
         // ถ้าเป็น array หรือ object ให้แปลงเป็น JSON string
         if (typeof value === 'object') {
-          value = JSON.stringify(value);
+          // ตรวจสอบให้แน่ใจว่า value ไม่เป็น null ก่อนแปลงเป็น JSON
+          value = value !== null ? JSON.stringify(value) : '';
+        }
+        
+        // แปลงตัวเลขเป็น string
+        if (typeof value === 'number') {
+          value = value.toString();
         }
         
         parts.push(`${key}=${value}`);
@@ -57,11 +63,13 @@ function createSignature(data: any, timestamp: number): string {
     const queryString = parts.join('&');
     
     // 5. เพิ่ม API_KEY ต่อท้าย (ตามเอกสาร Flash Express)
+    // ใช้ API_KEY โดยตรงไม่มี & คั่น
     const signStr = queryString + API_KEY;
     
     console.log('Raw signature string:', signStr);
     
     // 6. ใช้ SHA-256 สร้างลายเซ็น
+    // ใช้ API_KEY เป็น secret key สำหรับ HMAC
     const hash = createHmac('sha256', API_KEY || '')
       .update(signStr)
       .digest('hex')
@@ -149,12 +157,14 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     // แปลงข้อมูลให้ตรงตามที่ Flash Express API ต้องการ
     // - ทำให้แน่ใจว่าข้อมูลตัวเลขส่งเป็น integer จริงๆ (ไม่ใช่ string)
     // - ทำให้แน่ใจว่า subItemTypes อยู่ในรูปแบบที่ถูกต้อง
+    // Flash Express API ต้องการ subItemTypes ในรูปแบบที่เฉพาะเจาะจง
+    // คือต้องมี itemName และ itemQuantity (เป็นตัวเลข) เท่านั้น
     const subItemTypes = Array.isArray(orderData.subItemTypes) ? orderData.subItemTypes.map(item => {
       return {
-        ...item,
-        itemQuantity: item.itemQuantity ? parseInt(item.itemQuantity) : 1  // แปลงเป็นตัวเลข
+        itemName: item.itemName || 'สินค้า',
+        itemQuantity: typeof item.itemQuantity === 'string' ? parseInt(item.itemQuantity) : (item.itemQuantity || 1)
       };
-    }) : [];
+    }) : [{ itemName: 'สินค้า', itemQuantity: 1 }];
 
     // สร้างข้อมูลตามรูปแบบที่ Flash Express API ต้องการ ตรงตามเอกสาร
     const formattedOrderData: Record<string, any> = {
@@ -238,74 +248,61 @@ export async function createFlashOrder(orderData: any): Promise<any> {
 
     console.log('Sending order data to Flash Express API:', JSON.stringify(formattedOrderData, null, 2));
 
-    // ลอง 3 วิธีในการส่งข้อมูล - เพื่อทดสอบว่าวิธีไหนใช้ได้
+    // ตามเอกสาร Flash Express API ล่าสุด การส่งข้อมูลควรเป็นแบบ form-urlencoded
     try {
-      // วิธีที่ 1: ส่งเป็น JSON
-      const response1 = await axios.post(`${BASE_URL}/v3/orders`, formattedOrderData, {
-        headers: { 'Content-Type': 'application/json' }
-      });
-      console.log('Method 1 success:', JSON.stringify(response1.data, null, 2));
-      return response1.data;
-    } catch (error1) {
-      console.log('Method 1 failed. Trying method 2...');
+      // ส่งเป็น form data ตามที่ Flash Express API ต้องการ
+      const formData = new URLSearchParams();
       
-      try {
-        // วิธีที่ 2: ส่งเป็น form data
-        const formData = new URLSearchParams();
-        Object.entries(formattedOrderData).forEach(([key, value]) => {
-          if (typeof value === 'object') {
-            formData.append(key, JSON.stringify(value));
-          } else {
-            formData.append(key, String(value));
-          }
-        });
-        
-        const response2 = await axios.post(`${BASE_URL}/v3/orders`, formData, {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        });
-        console.log('Method 2 success:', JSON.stringify(response2.data, null, 2));
-        return response2.data;
-      } catch (error2) {
-        console.log('Method 2 failed. Trying method 3...');
-        
-        try {
-          // วิธีที่ 3: ส่งเป็น query string
-          const queryParams = new URLSearchParams();
-          Object.entries(formattedOrderData).forEach(([key, value]) => {
-            if (typeof value === 'object') {
-              queryParams.append(key, JSON.stringify(value));
-            } else {
-              queryParams.append(key, String(value));
-            }
-          });
-          
-          const response3 = await axios.post(`${BASE_URL}/v3/orders?${queryParams.toString()}`, null, {
-            headers: { 'Content-Type': 'application/json' }
-          });
-          console.log('Method 3 success:', JSON.stringify(response3.data, null, 2));
-          return response3.data;
-        } catch (error3: any) {
-          console.error('All methods failed');
-          
-          // แสดงข้อมูลข้อผิดพลาดที่ละเอียดขึ้น
-          let errorDetail = 'Unknown error';
-          
-          if (error3.response) {
-            console.error('Response status:', error3.response.status);
-            console.error('Response data:', JSON.stringify(error3.response.data, null, 2));
-            console.error('Response headers:', JSON.stringify(error3.response.headers, null, 2));
-            errorDetail = `Status ${error3.response.status}: ${error3.response.data?.message || 'No error message'}`;
-          } else if (error3.request) {
-            console.error('No response received. Request details:', error3.request);
-            errorDetail = 'No response received from server';
-          } else {
-            console.error('Error message:', error3.message);
-            errorDetail = error3.message;
-          }
-          
-          throw new Error(`Flash Express API error: ${errorDetail}`);
+      // วนลูปเพื่อแปลงข้อมูลทุกฟิลด์ให้อยู่ในรูปแบบที่ถูกต้อง
+      Object.entries(formattedOrderData).forEach(([key, value]) => {
+        // ถ้าเป็น object หรือ array ให้แปลงเป็น JSON string
+        if (typeof value === 'object' && value !== null) {
+          formData.append(key, JSON.stringify(value));
+        } 
+        // สำหรับค่าที่เป็น primitive (string, number, boolean) ให้แปลงเป็น string
+        else if (value !== null && value !== undefined) {
+          formData.append(key, String(value));
         }
+      });
+      
+      console.log('Sending data as form-urlencoded:', formData.toString());
+      
+      // ส่งข้อมูลไปยัง Flash Express API
+      const response = await axios.post(`${BASE_URL}/v3/orders`, formData, {
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        }
+      });
+      
+      console.log('Flash Express API Response:', JSON.stringify(response.data, null, 2));
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to create Flash Express order');
+      
+      // แสดงข้อมูลข้อผิดพลาดที่ละเอียด
+      let errorDetail = 'Unknown error';
+      let errorResponse = null;
+      
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', JSON.stringify(error.response.data, null, 2));
+        console.error('Response headers:', JSON.stringify(error.response.headers, null, 2));
+        errorDetail = `Status ${error.response.status}: ${error.response.data?.message || error.response.data?.error_msg || 'No error message'}`;
+        errorResponse = error.response.data;
+      } else if (error.request) {
+        console.error('No response received. Request details:', error.request);
+        errorDetail = 'No response received from server';
+      } else {
+        console.error('Error message:', error.message);
+        errorDetail = error.message;
       }
+      
+      // สร้าง error object ที่มีข้อมูลครบถ้วน
+      const enhancedError = new Error(`Flash Express API error: ${errorDetail}`);
+      (enhancedError as any).originalError = error;
+      (enhancedError as any).response = errorResponse;
+      throw enhancedError;
     }
   } catch (error: any) {
     console.error('Unexpected error in createFlashOrder function:', error.message);
