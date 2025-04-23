@@ -475,10 +475,16 @@ router.get('/test-connection', auth, async (req: Request, res: Response) => {
       console.log('ได้รับ HTML response แทน JSON - อาจมีการ redirect');
       
       // วิเคราะห์สาเหตุ
-      testResult.htmlResponse = {
+      const htmlAnalysis = {
         snippet: testResult.error.response.data.substring(0, 200) + '...',
         analysis: 'ได้รับการตอบกลับเป็น HTML แทนที่จะเป็น JSON ซึ่งอาจเกิดจากการ redirect ไปยังหน้าเว็บหรือ endpoint ที่ไม่ถูกต้อง'
       };
+      
+      // เพิ่มข้อมูลลงใน response แบบปลอดภัย (ไม่มีการเปลี่ยนแปลงโครงสร้างข้อมูลเดิม)
+      return res.json({
+        ...testResult,
+        htmlAnalysis
+      });
     }
     
     res.json(testResult);

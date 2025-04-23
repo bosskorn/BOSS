@@ -477,99 +477,124 @@ export function testSignatureWithExampleData() {
  * ทดสอบการเชื่อมต่อกับ API แบบละเอียด
  * ตรวจสอบการตั้งค่า API Key, ทดสอบการสร้างลายเซ็น, และทดสอบการเชื่อมต่อกับ API
  */
-// เปลี่ยนชื่อฟังก์ชันเพื่อป้องกันการขัดแย้ง
-export async function testFlashApi() {
+// ทดสอบการเชื่อมต่อกับ Flash Express API
+export
+async function testFlashApi() {
   try {
-    // 1. ตรวจสอบการตั้งค่า API Key
+    console.log('======= เริ่มทดสอบการเชื่อมต่อกับ Flash Express API =======');
+    console.log(`Base URL: ${BASE_URL}`);
+    
+    // 1. ตรวจสอบการตั้งค่า API Key และ Merchant ID
     const credentialCheck = {
+      merchantId: MERCHANT_ID || 'missing',
+      apiKey: API_KEY ? `${API_KEY.substring(0, 3)}...${API_KEY.substring(API_KEY.length - 3)}` : 'missing',
+      hasCredentials: !!MERCHANT_ID && !!API_KEY
+    };
+    
+    console.log('API Credentials:', {
       merchantId: MERCHANT_ID ? 'configured' : 'missing',
       apiKey: API_KEY ? 'configured' : 'missing',
       hasCredentials: !!MERCHANT_ID && !!API_KEY
-    };
+    });
     
     if (!credentialCheck.hasCredentials) {
       return {
         success: false,
         statusText: 'API Credentials Missing',
-        credentials: credentialCheck,
+        credentials: {
+          merchantId: MERCHANT_ID ? 'configured' : 'missing',
+          apiKey: API_KEY ? 'configured' : 'missing',
+          hasCredentials: !!MERCHANT_ID && !!API_KEY
+        },
         message: 'ไม่พบข้อมูล API Key หรือ Merchant ID กรุณาตั้งค่า API Key และ Merchant ID ก่อนใช้งาน'
       };
     }
     
     // 2. ทดสอบการสร้างลายเซ็น
-    const testParams = {
-      mchId: MERCHANT_ID,
-      nonceStr: generateNonceStr(),
-      timestamp: String(Math.floor(Date.now() / 1000)),
+    console.log('ขั้นตอนที่ 2: ทดสอบการสร้างลายเซ็น');
+    const nonceStr = generateNonceStr();
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    
+    const testParams: Record<string, string> = {
+      mchId: MERCHANT_ID as string,
+      nonceStr: nonceStr,
+      timestamp: timestamp,
       fromPostalCode: '10230',
       toPostalCode: '10110',
       weight: '1000',
-      width: '10',
-      height: '10',
-      length: '10'
+      warehouseNo: `${MERCHANT_ID}_001`,
+      insured: '0'
     };
     
-    const signature = generateFlashSignature(testParams, API_KEY!);
+    console.log('Test Parameters:', testParams);
     
-    // 3. ทดสอบการเชื่อมต่อกับ API
+    const signature = generateFlashSignature(testParams, API_KEY as string);
+    console.log('Generated Signature:', signature.substring(0, 10) + '...' + signature.substring(signature.length - 10));
+    console.log('Signature Length:', signature.length, '(ควรเป็น 64 ตัวอักษร)');
+    
+    // 3. ทดสอบเรียก API
+    console.log('ขั้นตอนที่ 3: ทดสอบการเชื่อมต่อกับ Flash Express API');
+    
     try {
+      // สร้าง URLSearchParams แทนการใช้ object
       const formData = new URLSearchParams();
       
-      // เพิ่มข้อมูลทั้งหมดลงใน form data
-      for (const [key, value] of Object.entries(testParams)) {
-        if (value !== null && value !== undefined && value !== '') {
-          formData.append(key, String(value));
-        }
-      }
+      // เรียงลำดับพารามิเตอร์ตามตัวอักษรก่อนใส่ใน formData
+      const sortedParams = Object.keys(testParams).sort().reduce(
+        (obj: Record<string, string>, key) => {
+          if (testParams[key] !== null && testParams[key] !== undefined && testParams[key] !== '') {
+            obj[key] = testParams[key];
+          }
+          return obj;
+        }, 
+        {}
+      );
       
-      // เพิ่มฟิลด์บังคับที่ Flash Express API ต้องการ
-      formData.append('insured', '0');
-      formData.append('warehouseNo', `${MERCHANT_ID}_001`);
+      // เพิ่มข้อมูลทั้งหมดลงใน form data
+      for (const [key, value] of Object.entries(sortedParams)) {
+        formData.append(key, String(value));
+      }
       
       // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
       formData.append('sign', signature);
       
       const formDataString = formData.toString();
+      console.log('Form Data String:', formDataString);
       
-      // ตั้งค่า timeout ให้สั้นลงเพื่อไม่ให้รอนานเกินไป
-      console.log('Flash Express API Test Request:', {
-        url: `${BASE_URL}/open/v1/estimate_rate`,
-        method: 'POST',
+      // ขั้นตอนที่ 3.1: ทดสอบด้วย endpoint เฉพาะ
+      console.log('ทดสอบเชื่อมต่อกับ endpoint: /open/v1/estimate_rate');
+            
+      // ตั้งค่าตัวเลือกการส่งคำขอ
+      const requestOptions = {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
+          'Accept': 'application/json'
         },
-        data: formDataString
-      });
-      
-      // แสดงค่า form data ทั้งหมดเพื่อแก้ไขปัญหา
-      console.log('Flash Express API Test - Form Data:', formDataString);
-      
-      // แสดงค่า API key และ merchant ID ที่ใช้ (เข้ารหัสบางส่วนเพื่อความปลอดภัย)
-      console.log(`Flash Express API Test - Using merchant ID: ${MERCHANT_ID}`);
-      console.log(`Flash Express API Test - Using API key: ${API_KEY?.substring(0, 3)}...${API_KEY?.substring(API_KEY.length - 3)}`);
+        timeout: 15000, // timeout 15 วินาทีสำหรับการทดสอบ
+        maxRedirects: 0, // ป้องกันการ redirect
+        validateStatus: (status: number) => status < 500 // ยอมรับสถานะ 400-499 เพื่อดูข้อความผิดพลาด
+      };
       
       const response = await axios.post(
         `${BASE_URL}/open/v1/estimate_rate`,
         formDataString,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-          },
-          timeout: 10000, // timeout 10 วินาทีสำหรับการทดสอบ
-          maxRedirects: 0, // ป้องกันการ redirect
-          validateStatus: (status) => status < 500 // ยอมรับสถานะ 400-499 เพื่อดูข้อความผิดพลาด
-        }
+        requestOptions
       );
+      
+      console.log('API Response Status:', response.status, response.statusText);
+      console.log('API Response Data:', JSON.stringify(response.data).substring(0, 200) + '...');
       
       return {
         success: true,
         statusText: 'API Connection Successful',
-        credentials: credentialCheck,
+        credentials: {
+          merchantId: MERCHANT_ID ? 'configured' : 'missing',
+          apiKey: API_KEY ? 'configured' : 'missing',
+          hasCredentials: !!MERCHANT_ID && !!API_KEY
+        },
         signature: {
           test: true,
-          signatureGenerated: signature.substring(0, 10) + '...',
+          signatureGenerated: signature.substring(0, 10) + '...' + signature.substring(signature.length - 10),
           signatureLength: signature.length,
           expectedLength: 64 // SHA-256 มีความยาว 64 ตัวอักษร
         },
@@ -580,15 +605,34 @@ export async function testFlashApi() {
         },
         message: 'การเชื่อมต่อกับ Flash Express API สำเร็จ'
       };
+      
     } catch (apiError: any) {
+      console.error('Flash Express API Error:', apiError.message);
+      console.error('API Response Data:', apiError.response?.data);
+      
+      // ตรวจสอบว่าเป็น HTML response หรือไม่
+      const isHtmlResponse = 
+        apiError.response?.data && 
+        typeof apiError.response.data === 'string' && 
+        apiError.response.data.includes('<!DOCTYPE html>');
+      
+      if (isHtmlResponse) {
+        console.error('ได้รับการตอบกลับเป็น HTML แทน JSON');
+        console.error('HTML snippet:', apiError.response.data.substring(0, 200) + '...');
+      }
+      
       // กรณีเชื่อมต่อ API ไม่สำเร็จ แต่การตั้งค่าและการสร้างลายเซ็นถูกต้อง
       return {
         success: false,
         statusText: 'API Connection Failed',
-        credentials: credentialCheck,
+        credentials: {
+          merchantId: MERCHANT_ID ? 'configured' : 'missing',
+          apiKey: API_KEY ? 'configured' : 'missing',
+          hasCredentials: !!MERCHANT_ID && !!API_KEY
+        },
         signature: {
           test: true,
-          signatureGenerated: signature.substring(0, 10) + '...',
+          signatureGenerated: signature.substring(0, 10) + '...' + signature.substring(signature.length - 10),
           signatureLength: signature.length,
           expectedLength: 64
         },
@@ -598,7 +642,8 @@ export async function testFlashApi() {
           response: apiError.response ? {
             status: apiError.response.status,
             statusText: apiError.response.statusText,
-            data: apiError.response.data
+            data: apiError.response.data,
+            isHtml: isHtmlResponse
           } : null
         },
         message: `การเชื่อมต่อกับ Flash Express API ไม่สำเร็จ: ${apiError.message}`
