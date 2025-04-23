@@ -119,14 +119,14 @@ export default function FlashExpressShippingNew() {
   
   // ข้อมูลฟอร์ม
   const [orderData, setOrderData] = useState<OrderFormData>({
-    // ข้อมูลผู้ส่ง
-    srcName: "",
-    srcPhone: "",
-    srcProvinceName: "กรุงเทพมหานคร",
-    srcCityName: "",
-    srcDistrictName: "",
-    srcPostalCode: "",
-    srcDetailAddress: "",
+    // ข้อมูลผู้ส่ง (จะใช้ข้อมูลจากผู้ใช้งานโดยอัตโนมัติ)
+    srcName: user?.fullname || "",
+    srcPhone: user?.phone || "",
+    srcProvinceName: user?.province || "กรุงเทพมหานคร",
+    srcCityName: user?.district || "",
+    srcDistrictName: user?.subdistrict || "",
+    srcPostalCode: user?.zipcode || "",
+    srcDetailAddress: user?.address || "",
     
     // ข้อมูลผู้รับ
     dstName: "",
@@ -162,14 +162,16 @@ export default function FlashExpressShippingNew() {
   // รีเซ็ตฟอร์ม
   const resetForm = () => {
     setOrderData({
-      srcName: "",
-      srcPhone: "",
-      srcProvinceName: "กรุงเทพมหานคร",
-      srcCityName: "",
-      srcDistrictName: "",
-      srcPostalCode: "",
-      srcDetailAddress: "",
+      // คงข้อมูลผู้ส่งจากโปรไฟล์ผู้ใช้
+      srcName: user?.fullname || "",
+      srcPhone: user?.phone || "",
+      srcProvinceName: user?.province || "กรุงเทพมหานคร",
+      srcCityName: user?.district || "",
+      srcDistrictName: user?.subdistrict || "",
+      srcPostalCode: user?.zipcode || "",
+      srcDetailAddress: user?.address || "",
       
+      // รีเซ็ตข้อมูลผู้รับ
       dstName: "",
       dstPhone: "",
       dstProvinceName: "กรุงเทพมหานคร",
@@ -491,124 +493,38 @@ export default function FlashExpressShippingNew() {
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="space-y-6">
-                    {/* ส่วนข้อมูลผู้ส่ง */}
+                    {/* ส่วนข้อมูลผู้ส่ง - ซ่อนฟอร์ม แต่แสดงข้อมูลผู้ส่งที่ใช้ */}
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                           <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 mr-2">ผู้ส่ง</Badge>
-                          <h3 className="text-lg font-medium">ข้อมูลผู้ส่ง</h3>
+                          <h3 className="text-lg font-medium">ข้อมูลผู้ส่ง (ใช้ข้อมูลจากโปรไฟล์ของคุณ)</h3>
                         </div>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            if (user) {
-                              setOrderData((prevData) => ({
-                                ...prevData,
-                                srcName: user.fullname || "",
-                                srcPhone: user.phone || "",
-                                srcProvinceName: user.province || "กรุงเทพมหานคร",
-                                srcCityName: user.district || "",
-                                srcDistrictName: user.subdistrict || "",
-                                srcPostalCode: user.zipcode || "",
-                                srcDetailAddress: user.address || "",
-                              }));
-                              toast({
-                                title: "ดึงข้อมูลสำเร็จ",
-                                description: "ดึงข้อมูลผู้ส่งจากโปรไฟล์เรียบร้อยแล้ว",
-                              });
-                            } else {
-                              toast({
-                                title: "ไม่พบข้อมูลผู้ใช้",
-                                description: "กรุณาเข้าสู่ระบบเพื่อใช้งานฟีเจอร์นี้",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          className="text-purple-600 border-purple-200 hover:bg-purple-50"
-                        >
-                          <LuInfo className="mr-1 h-4 w-4" />
-                          ใช้ข้อมูลจากโปรไฟล์
-                        </Button>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="srcName">ชื่อผู้ส่ง *</Label>
-                          <Input 
-                            id="srcName" 
-                            name="srcName" 
-                            value={orderData.srcName} 
-                            onChange={handleInputChange} 
-                            placeholder="กรอกชื่อผู้ส่ง" 
-                            required 
-                          />
+                      <div className="bg-purple-50 p-4 rounded-md mb-4 border border-purple-100">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <span className="text-sm font-medium text-gray-500">ชื่อผู้ส่ง:</span>
+                            <p className="text-gray-700">{orderData.srcName}</p>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-500">เบอร์โทรศัพท์:</span>
+                            <p className="text-gray-700">{orderData.srcPhone}</p>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-500">ที่อยู่:</span>
+                            <p className="text-gray-700">
+                              {orderData.srcDetailAddress} {orderData.srcDistrictName ? `ต.${orderData.srcDistrictName}` : ''} {orderData.srcCityName ? `อ.${orderData.srcCityName}` : ''} {orderData.srcProvinceName} {orderData.srcPostalCode}
+                            </p>
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="srcPhone">เบอร์โทรผู้ส่ง *</Label>
-                          <Input 
-                            id="srcPhone" 
-                            name="srcPhone" 
-                            value={orderData.srcPhone} 
-                            onChange={handleInputChange} 
-                            placeholder="0xxxxxxxxx" 
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="srcProvinceName">จังหวัด *</Label>
-                          <Input 
-                            id="srcProvinceName" 
-                            name="srcProvinceName" 
-                            value={orderData.srcProvinceName} 
-                            onChange={handleInputChange} 
-                            placeholder="กรุงเทพมหานคร" 
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="srcCityName">เขต/อำเภอ *</Label>
-                          <Input 
-                            id="srcCityName" 
-                            name="srcCityName" 
-                            value={orderData.srcCityName} 
-                            onChange={handleInputChange} 
-                            placeholder="เขต/อำเภอ" 
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="srcDistrictName">แขวง/ตำบล</Label>
-                          <Input 
-                            id="srcDistrictName" 
-                            name="srcDistrictName" 
-                            value={orderData.srcDistrictName} 
-                            onChange={handleInputChange} 
-                            placeholder="แขวง/ตำบล" 
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="srcPostalCode">รหัสไปรษณีย์ *</Label>
-                          <Input 
-                            id="srcPostalCode" 
-                            name="srcPostalCode" 
-                            value={orderData.srcPostalCode} 
-                            onChange={handleInputChange} 
-                            placeholder="รหัสไปรษณีย์" 
-                            required 
-                          />
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
-                          <Label htmlFor="srcDetailAddress">ที่อยู่ *</Label>
-                          <Input 
-                            id="srcDetailAddress" 
-                            name="srcDetailAddress" 
-                            value={orderData.srcDetailAddress} 
-                            onChange={handleInputChange} 
-                            placeholder="บ้านเลขที่ ถนน ซอย หมู่" 
-                            required 
-                          />
-                        </div>
+                        <input type="hidden" name="srcName" value={orderData.srcName} />
+                        <input type="hidden" name="srcPhone" value={orderData.srcPhone} />
+                        <input type="hidden" name="srcProvinceName" value={orderData.srcProvinceName} />
+                        <input type="hidden" name="srcCityName" value={orderData.srcCityName} />
+                        <input type="hidden" name="srcDistrictName" value={orderData.srcDistrictName} />
+                        <input type="hidden" name="srcPostalCode" value={orderData.srcPostalCode} />
+                        <input type="hidden" name="srcDetailAddress" value={orderData.srcDetailAddress} />
                       </div>
                     </div>
 
