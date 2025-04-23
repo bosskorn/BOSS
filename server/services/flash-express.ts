@@ -10,6 +10,10 @@ const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID || "CBE1930";
 const API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 const BASE_URL = 'https://open-api.flashexpress.com/open'; // URL สำหรับ Production
 
+// แสดงค่าที่ใช้จริง (ไม่แสดง API key เต็ม)
+console.log(`Using Flash Express MerchantID: ${MERCHANT_ID}`);
+console.log(`Flash Express API key is ${API_KEY ? 'set' : 'NOT SET'}`);
+
 if (!API_KEY) {
   console.warn('Missing Flash Express API credentials! Using default merchant ID.');
 }
@@ -36,15 +40,34 @@ if (!API_KEY) {
 async function createSignature(data: any, timestamp: number): Promise<string> {
   try {
     console.log('=== สร้างลายเซ็นสำหรับข้อมูล ===');
-    console.log('ข้อมูลเริ่มต้น:', JSON.stringify(data, null, 2));
     
     // 1. ลบฟิลด์ sign ออก (ถ้ามี) เพราะไม่ควรรวมในการคำนวณลายเซ็น
     const dataForSigning = { ...data };
     delete dataForSigning.sign;
     
+    // จัดการกับ subItemTypes และ subParcel ที่อาจมีรูปแบบไม่ถูกต้อง
+    if (dataForSigning.subItemTypes) {
+      // ถ้า subItemTypes เป็น string ที่มีเครื่องหมายอัญประกาศซ้อนกัน
+      if (typeof dataForSigning.subItemTypes === 'string' && dataForSigning.subItemTypes.startsWith('"[')) {
+        // ลบเครื่องหมายอัญประกาศซ้อนออก
+        dataForSigning.subItemTypes = JSON.parse(dataForSigning.subItemTypes);
+      }
+      
+      // ถ้า subItemTypes เป็น array แปลงเป็น string
+      if (Array.isArray(dataForSigning.subItemTypes)) {
+        dataForSigning.subItemTypes = JSON.stringify(dataForSigning.subItemTypes);
+      }
+    }
+    
+    if (dataForSigning.subParcel) {
+      // ตรวจสอบว่า subParcel เป็น string หรือไม่
+      if (typeof dataForSigning.subParcel !== 'string') {
+        dataForSigning.subParcel = JSON.stringify(dataForSigning.subParcel);
+      }
+    }
+    
     // 2. จัดเรียง key ตามลำดับอักษร (ASCII code)
     const keys = Object.keys(dataForSigning).sort();
-    console.log('Keys เรียงตาม ASCII:', keys);
     
     // 3. สร้าง string สำหรับการคำนวณลายเซ็น
     const parts: string[] = [];
@@ -53,77 +76,42 @@ async function createSignature(data: any, timestamp: number): Promise<string> {
       // ข้ามค่า undefined, null และช่องว่าง ตามเอกสาร Flash Express
       let value = dataForSigning[key];
       if (value === undefined || value === null) {
-        console.log(`ข้าม key ${key} เนื่องจากค่าเป็น undefined หรือ null`);
         continue;
       }
       
       // แปลงค่าให้เป็น string ที่เหมาะสม
       if (typeof value === 'object') {
-        // กรณีพิเศษสำหรับ subItemTypes ตามตัวอย่างที่คุณให้มา
-        if (key === 'subItemTypes') {
-          // ตรวจสอบว่าเป็น array และแปลงเป็น JSON string
-          if (Array.isArray(value)) {
-            value = JSON.stringify(value);
-            console.log(`แปลง subItemTypes array เป็น JSON string: ${value}`);
-          } else if (typeof value === 'string') {
-            // ถ้าเป็น string อยู่แล้ว (อาจเป็น JSON string) ให้ใช้ค่าเดิม
-            console.log(`subItemTypes เป็น string อยู่แล้ว: ${value}`);
-          } else {
-            // กรณีอื่นๆ ให้แปลงเป็น JSON string
-            value = JSON.stringify(value);
-            console.log(`แปลง subItemTypes เป็น JSON string: ${value}`);
-          }
-        } else {
-          // สำหรับ object อื่นๆ ที่ไม่ใช่ subItemTypes
-          value = JSON.stringify(value);
-          console.log(`แปลง object key=${key} เป็น JSON string: ${value}`);
-        }
+        value = JSON.stringify(value);
       } else if (typeof value !== 'string') {
-        // แปลงค่าที่ไม่ใช่ string (เช่น number, boolean) เป็น string
         value = String(value);
-        console.log(`แปลงค่า key=${key} type=${typeof dataForSigning[key]} เป็น string: ${value}`);
       }
       
-      // ตรวจสอบว่าเป็นสตริงว่างหรือไม่ตามคำนิยามของ Flash Express
+      // ข้ามค่าว่าง
       if (value.trim() === '') {
-        console.log(`ข้าม key ${key} เนื่องจากค่าเป็นสตริงว่าง`);
         continue;
       }
       
       // เพิ่มเข้าไปในรายการสำหรับการสร้าง stringA
-      // สำคัญ: ไม่ต้อง URL encode ในขั้นตอนการสร้างลายเซ็น
       parts.push(`${key}=${value}`);
     }
     
     // 4. รวม key=value คั่นด้วย & เพื่อสร้าง stringA
     const stringA = parts.join('&');
-    console.log('stringA (ก่อนต่อกับ key):', stringA);
     
     // 5. ต่อ stringA ด้วย &key=API_KEY เพื่อสร้าง stringSignTemp
-    // ตามเอกสาร Flash Express: stringSignTemp=stringA+"&key=secret_key"
     const stringSignTemp = `${stringA}&key=${API_KEY}`;
-    console.log('stringSignTemp (stringA+"&key=API_KEY"):', stringSignTemp);
     
     // 6. คำนวณ SHA-256 ของ stringSignTemp และแปลงเป็นตัวพิมพ์ใหญ่
-    // ตามเอกสาร Flash Express: sign=sha256(stringSignTemp).toUpperCase()
-    const { createHash } = await import('crypto');
-    const hash = createHash('sha256')
+    const hash = createHmac('sha256', API_KEY || '')
       .update(stringSignTemp)
       .digest('hex')
       .toUpperCase();
     
-    console.log('ลายเซ็นที่ได้ (SHA-256, ตัวพิมพ์ใหญ่):', hash);
-    console.log('=== จบการสร้างลายเซ็น ===');
-      
-    console.log('Generated signature:', hash);
+    console.log('เสร็จสิ้นการสร้างลายเซ็น:', hash);
     return hash;
   } catch (error) {
     console.error('Error creating signature:', error);
-    // ในกรณีที่เกิดข้อผิดพลาด ส่งค่าลายเซ็นที่สร้างจากข้อมูลว่างเปล่า
-    return createHmac('sha256', API_KEY || '')
-      .update(`${API_KEY}`)
-      .digest('hex')
-      .toUpperCase();
+    throw new Error(`Failed to create signature: ${error.message}`);
   }
 }
 
