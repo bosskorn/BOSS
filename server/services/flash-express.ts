@@ -8,7 +8,7 @@ import { createHmac } from 'crypto';
 // ตรวจสอบว่ามีการกำหนดค่าสำหรับ API หรือไม่
 const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const API_KEY = process.env.FLASH_EXPRESS_API_KEY;
-const BASE_URL = 'https://api.flash-express.com/open-api'; // URL สำหรับ Production
+const BASE_URL = 'https://open-api.flashexpress.com'; // URL สำหรับ Production
 
 if (!MERCHANT_ID || !API_KEY) {
   console.warn('Missing Flash Express API credentials!');
