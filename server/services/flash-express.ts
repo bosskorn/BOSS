@@ -288,21 +288,22 @@ export async function createFlashShipment(shipmentData: any) {
       height: String(parseInt(String(shipmentData.height)) || 10), // ความสูงเป็น string (ซม.) optional
       
       // ประเภทพัสดุและการจัดส่ง (required) - ตามฟอร์แมตที่ต้องเป็น string และมีค่าตามที่ Flash Express กำหนด
-      parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป) - ต้องเป็น string ไม่ใช่ integer
-      expressCategory: "1", // 1=ส่งด่วน, 2=ส่งธรรมดา - ต้องเป็น string
-      articleCategory: "1", // ประเภทสินค้า (1=ทั่วไป) - ต้องเป็น string
-      expressTypeId: "1", // ประเภทการส่ง (1=ส่งด่วน) - ต้องเป็น string
-      productType: "1", // ประเภทสินค้า (1=ทั่วไป) - ต้องเป็น string
+      // ใช้ค่าที่ส่งมาจาก client หรือค่า default ถ้าไม่มี
+      parcelKind: shipmentData.parcelKind || "1", // ประเภทพัสดุ (1=ทั่วไป) - ต้องเป็น string ไม่ใช่ integer
+      expressCategory: shipmentData.expressCategory || "1", // 1=ส่งด่วน, 2=ส่งธรรมดา - ต้องเป็น string
+      articleCategory: shipmentData.articleCategory || "1", // ประเภทสินค้า (1=ทั่วไป, 2=อื่นๆ) - ต้องเป็น string
+      expressTypeId: shipmentData.expressTypeId || "1", // ประเภทการส่ง (1=ส่งด่วน) - ต้องเป็น string
+      productType: shipmentData.productType || "1", // ประเภทสินค้า (1=ทั่วไป) - ต้องเป็น string
       
       // พารามิเตอร์ที่จำเป็นสำหรับ Flash Express API
-      payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย) ต้องเป็น string
-      transportType: "1", // ประเภทการขนส่ง (1=ปกติ) ต้องเป็น string
+      payType: shipmentData.payType || "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย) ต้องเป็น string
+      transportType: shipmentData.transportType || "1", // ประเภทการขนส่ง (1=ปกติ) ต้องเป็น string
       
       // บริการเสริม (required) - ต้องเป็น string ทั้งหมด
-      insured: "0", // 0=ไม่ซื้อ Flash care (ต้องเป็น string)
-      codEnabled: "0", // 0=ไม่ใช่ COD (ต้องเป็น string)
-      codAmount: "0", // จำนวนเงิน COD (ต้องเป็น string)
-      insuredAmount: "0" // จำนวนเงินประกัน (ต้องเป็น string)
+      insured: shipmentData.insured || "0", // 0=ไม่ซื้อ Flash care (ต้องเป็น string)
+      codEnabled: shipmentData.codEnabled || "0", // 0=ไม่ใช่ COD (ต้องเป็น string)
+      codAmount: shipmentData.codAmount || "0", // จำนวนเงิน COD (ต้องเป็น string)
+      insuredAmount: shipmentData.insuredAmount || "0" // จำนวนเงินประกัน (ต้องเป็น string)
     };
     
     // เพิ่มข้อมูล COD ถ้าเปิดใช้งาน
