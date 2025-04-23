@@ -22,30 +22,42 @@ const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com/open';
 
 // ฟังก์ชันสำหรับสร้างลายเซ็นดิจิตอล (signature) สำหรับ Flash Express API
 function createSignature(params: Record<string, any>, apiKey: string): string {
-  // 1. เรียงพารามิเตอร์ตามตัวอักษร (ให้ตรงกับวิธีของ Flash Express API)
-  const keys = Object.keys(params).sort();
+  // คัดลอกพารามิเตอร์ทั้งหมดเพื่อสร้าง signature
+  const paramsForSign = { ...params };
   
-  // 2. สร้าง query string แบบไม่มี URL encoding
-  let queryString = '';
-  for(const key of keys) {
-    if (params[key] === undefined || params[key] === null || params[key] === '') {
+  // ลบฟิลด์ที่ไม่ต้องใช้ในการสร้าง signature
+  delete paramsForSign.sign;
+  
+  // เรียงฟิลด์ตามรหัส ASCII
+  const sortedKeys = Object.keys(paramsForSign).sort();
+  
+  // สร้าง string จากชื่อและค่าของทุกฟิลด์ที่เรียงลำดับแล้ว
+  let signString = '';
+  
+  for (const key of sortedKeys) {
+    const value = paramsForSign[key];
+    
+    // ข้ามฟิลด์ที่เป็น undefined หรือ null
+    if (value === undefined || value === null) {
       continue;
     }
-    // เพิ่ม parameter เข้าไปใน query string โดยไม่ encode
-    queryString += `${key}=${params[key]}&`;
+    
+    // ข้ามฟิลด์ที่เป็นชื่อที่ขึ้นต้นด้วยเครื่องหมาย @ (ตามข้อกำหนดของ API)
+    if (key.startsWith('@')) {
+      continue;
+    }
+    
+    // เพิ่มชื่อฟิลด์และค่าลงใน string
+    signString += key + value;
   }
   
-  // ตัด & ตัวสุดท้ายออกถ้ามี
-  if (queryString.endsWith('&')) {
-    queryString = queryString.slice(0, -1);
-  }
-
-  // 3. เพิ่ม API key และสร้างลายเซ็นด้วย SHA-256
-  const dataToSign = queryString + apiKey;
-  console.log('Data to sign:', dataToSign); // เพื่อดีบัก
-  const signature = crypto.createHash('sha256').update(dataToSign).digest('hex');
+  // เพิ่ม API Key ต่อท้าย
+  signString += apiKey;
   
-  return signature;
+  console.log('Flash Express signature string:', signString); // เพื่อดีบัก
+  
+  // สร้าง signature ด้วย SHA-256
+  return crypto.createHash('sha256').update(signString).digest('hex').toUpperCase();
 }
 
 // สร้างคำสั่งจัดส่งใหม่ผ่าน Flash Express API

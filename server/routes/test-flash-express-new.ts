@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import axios from 'axios';
 import crypto from 'crypto';
+import querystring from 'querystring';
 
 const router = Router();
 const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com/open';
@@ -155,7 +156,6 @@ router.post('/create-order', async (req: Request, res: Response) => {
 
     try {
       // ส่งคำขอไปยัง Flash Express API แบบ x-www-form-urlencoded
-      const querystring = require('querystring');
       const response = await axios.post(apiUrl, querystring.stringify(params), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

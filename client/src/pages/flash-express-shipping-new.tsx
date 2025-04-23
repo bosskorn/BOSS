@@ -312,22 +312,26 @@ export default function FlashExpressShippingNew() {
         
         // ข้อมูลพัสดุย่อย
         subParcelQuantity: 1,
-        subParcel: JSON.stringify([{
-          outTradeNo: outTradeNo + "1",
-          weight: parseFloat(orderData.weight) * 1000,
-          width: parseInt(orderData.width),
-          length: parseInt(orderData.length),
-          height: parseInt(orderData.height),
-          remark: ""
-        }]),
+        subParcel: [
+          {
+            outTradeNo: outTradeNo + "1",
+            weight: parseFloat(orderData.weight) * 1000,
+            width: parseInt(orderData.width),
+            length: parseInt(orderData.length),
+            height: parseInt(orderData.height),
+            remark: ""
+          }
+        ],
         
         // ข้อมูลสินค้า
-        subItemTypes: JSON.stringify([{
-          itemName: orderData.itemName || "สินค้า",
-          itemWeightSize: `${orderData.width}*${orderData.length}*${orderData.height} ${orderData.weight}Kg`,
-          itemColor: "",
-          itemQuantity: orderData.itemQuantity || "1"
-        }]),
+        subItemTypes: [
+          {
+            itemName: orderData.itemName || "สินค้า",
+            itemWeightSize: `${orderData.width}*${orderData.length}*${orderData.height} ${orderData.weight}Kg`,
+            itemColor: "",
+            itemQuantity: orderData.itemQuantity || "1"
+          }
+        ],
         
         // หมายเหตุ
         remark: ""
