@@ -195,11 +195,27 @@ export default function FlashExpressAPITest() {
         orderData: shippingData
       });
 
+      // แปลงข้อมูลเพื่อให้มั่นใจว่าส่งตามฟอร์แมตที่ถูกต้อง
+      const formattedShippingData = {
+        ...shippingData,
+        // แปลงค่าทุกอย่างให้เป็น string ตามข้อกำหนดของ Flash Express API
+        weight: String(shippingData.weight),
+        width: String(shippingData.width || 20),
+        length: String(shippingData.length || 30),
+        height: String(shippingData.height || 10),
+        insured: String(shippingData.insured || 0),
+        codEnabled: String(shippingData.codEnabled || 0),
+        codAmount: String(shippingData.codAmount || 0),
+        insuredAmount: String(shippingData.insuredAmount || 0),
+        expressCategory: String(shippingData.expressCategory || 1),
+        articleCategory: String(shippingData.articleCategory || 2)
+      };
+
       const response = await apiRequest(
         'POST',
         '/api/shipping-methods/flash-express/shipping',
         {
-          orderData: shippingData
+          orderData: formattedShippingData
         }
       );
 

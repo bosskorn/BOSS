@@ -200,7 +200,7 @@ router.post('/flash-express/shipping', auth, async (req, res) => {
       codEnabled: String(orderData.codEnabled || 0),
       codAmount: orderData.codEnabled == 1 ? String(orderData.codAmount || 0) : '0',
       expressCategory: String(orderData.expressCategory || 1),
-      articleCategory: String(orderData.articleCategory || 2),วไป - ต้องเป็น string
+      articleCategory: String(orderData.articleCategory || 2), // ทั่วไป - ต้องเป็น string
       parcelKind: "1", 
       // ไม่ทำประกัน (default) - ต้องเป็น string
       insured: "0", 

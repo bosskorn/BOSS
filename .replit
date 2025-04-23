@@ -16,7 +16,7 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Start with Stripe"
+runButton = "Run Application"
 
 [[workflows.workflow]]
 name = "Project"
@@ -54,3 +54,12 @@ args = "npm run build"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "NODE_ENV=production STRIPE_SECRET_KEY=sk_test_dummy npm run start"
+
+[[workflows.workflow]]
+name = "Run Application"
+author = 41350845
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"

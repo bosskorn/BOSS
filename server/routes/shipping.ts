@@ -197,6 +197,115 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
         
+
+/**
+ * API สำหรับทดสอบการเชื่อมต่อกับ Flash Express API
+ */
+router.get('/test-connection', auth, async (req: Request, res: Response) => {
+  try {
+    console.log('Starting Flash Express API connection test');
+    
+    // เรียกใช้ฟังก์ชัน testFlashApi จาก service
+    const { testFlashApi } = require('../services/flash-express');
+    const result = await testFlashApi();
+    
+    console.log('Flash Express API test result:', JSON.stringify(result, null, 2));
+    
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Error testing Flash Express API connection:', error);
+    return res.status(500).json({
+      success: false,
+      statusText: 'Test Function Error',
+      error: {
+        message: error.message,
+        stack: error.stack
+      },
+      message: `เกิดข้อผิดพลาดในการทดสอบ: ${error.message}`
+    });
+  }
+});
+
+/**
+ * API สำหรับการทดสอบการสร้างเลขพัสดุแบบละเอียด
+ */
+router.post('/flash-express/debug-create', auth, async (req: Request, res: Response) => {
+  try {
+    console.log('Received debug create request with data:', req.body);
+    
+    // Import Flash Express service
+    const { createFlashShipment, generateFlashSignature } = require('../services/flash-express');
+    
+    // ข้อมูลทดสอบจาก client
+    const orderData = req.body;
+    
+    // สร้าง signature
+    const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
+    const API_KEY = process.env.FLASH_EXPRESS_API_KEY;
+    
+    // Log configuration
+    console.log('Flash Express Configuration:', {
+      merchantId: MERCHANT_ID ? 'Set' : 'Not set',
+      apiKey: API_KEY ? 'Set' : 'Not set',
+      baseUrl: 'https://open-api.flashexpress.com'
+    });
+    
+    // เพิ่ม parameters ที่จำเป็น
+    const nonceStr = orderData.nonceStr || require('crypto').randomBytes(8).toString('hex');
+    const timestamp = orderData.timestamp || String(Math.floor(Date.now() / 1000));
+    
+    // สร้างข้อมูลใหม่พร้อมเพิ่ม parameters ที่จำเป็น
+    const enrichedData = {
+      ...orderData,
+      nonceStr,
+      timestamp,
+      weight: String(orderData.weight || 1000),
+      width: String(orderData.width || 20),
+      length: String(orderData.length || 30),
+      height: String(orderData.height || 10),
+      mchId: MERCHANT_ID,
+      warehouseNo: `${MERCHANT_ID}_001`
+    };
+    
+    // Generate signature
+    const signature = generateFlashSignature(enrichedData, API_KEY);
+    
+    console.log('Debug info:', {
+      nonceStr,
+      timestamp,
+      signature: signature?.substring(0, 10) + '...' + signature?.substring(signature.length - 10),
+      signatureLength: signature?.length
+    });
+    
+    // Call createFlashShipment
+    const result = await createFlashShipment(enrichedData);
+    
+    console.log('Flash Express debug create result:', result);
+    
+    return res.json({
+      success: !!result.success,
+      debug: {
+        enrichedData: { ...enrichedData, sign: signature },
+        signatureInfo: {
+          generated: signature,
+          length: signature?.length
+        }
+      },
+      result
+    });
+  } catch (error: any) {
+    console.error('Error in debug create:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Debug test failed: ${error.message}`,
+      error: {
+        message: error.message,
+        stack: error.stack
+      }
+    });
+  }
+});
+
         // ข้อมูลพัสดุ
         articleCategory: orderData.articleCategory || "2",
         expressCategory: orderData.expressCategory || "1",
