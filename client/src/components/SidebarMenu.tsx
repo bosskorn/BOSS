@@ -168,6 +168,20 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
               </Link>
             </li>
             
+            {/* เมนูเรียกรถเข้ารับพัสดุ */}
+            <li>
+              <Link
+                href="/pickup-requests-test"
+                className={`flex items-center px-4 py-2 text-sm hover:bg-blue-50 ${
+                  location === '/pickup-requests-test' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                }`}
+                onClick={onClose}
+              >
+                <i className={`fa-solid fa-truck-loading w-5 mr-3 ${location === '/pickup-requests-test' ? 'text-blue-600' : 'text-gray-500'}`}></i>
+                <span>เรียกรถเข้ารับพัสดุ</span>
+              </Link>
+            </li>
+            
             {/* เมนูประวัติการเรียกรถ */}
             <li>
               <Link
