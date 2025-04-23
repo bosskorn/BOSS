@@ -50,6 +50,7 @@ import FeeHistory from './pages/fee-history';
 import LandingPage from './pages/landing';
 import FlashExpressAPITest from './pages/flash-express-api-test';
 import CreateFlashExpressOrder from './pages/create-flash-express-order';
+import FindByMerchantTracking from './pages/orders/find-by-merchant-tracking';
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -103,6 +104,7 @@ function Router() {
       {/* คำสั่งซื้อ - protected */}
       <ProtectedRoute path="/orders-all" component={OrderList} />
       <ProtectedRoute path="/order-detail/:id" component={OrderDetail} />
+      <ProtectedRoute path="/orders/find-by-merchant-tracking" component={FindByMerchantTracking} />
 
       {/* พัสดุและการจัดส่ง - protected */}
       <ProtectedRoute path="/parcel-list" component={ShipmentList} />

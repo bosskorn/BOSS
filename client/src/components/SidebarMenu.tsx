@@ -31,7 +31,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen, onClose]);
-  
+
   // เพิ่ม/ลบ class ในเวลาเปิด/ปิด sidebar
   useEffect(() => {
     if (isOpen) {
@@ -39,7 +39,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
     } else {
       document.body.classList.remove('sidebar-open');
     }
-    
+
     return () => {
       document.body.classList.remove('sidebar-open');
     };
@@ -57,7 +57,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
       portalContainer.style.zIndex = '9999';
       document.body.appendChild(portalContainer);
     }
-    
+
     return () => {
       // ทำความสะอาดเมื่อ unmount
       if (portalContainer && !isOpen) {
@@ -99,7 +99,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
               <p className="text-sm opacity-80">{userData?.role === 'admin' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งาน'}</p>
             </div>
           </div>
-          
+
           <p className="text-sm opacity-80 text-white mt-2 text-center">ระบบจัดการขนส่ง ShipSync</p>
 
           <div className="mt-3 px-3 py-2 bg-white bg-opacity-10 rounded-md">
@@ -126,7 +126,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
                 <span>ตั้งค่า</span>
               </Link>
             </li>
-            
+
             {/* เมนูเติมเครดิต */}
             <li>
               <Link 
@@ -140,7 +140,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
                 <span>เติมเครดิต</span>
               </Link>
             </li>
-            
+
             {/* เมนูประวัติค่าธรรมเนียม */}
             <li>
               <Link 
@@ -154,7 +154,19 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ isOpen, onClose, userData }) 
                 <span>ประวัติค่าธรรมเนียม</span>
               </Link>
             </li>
-            
+            {/* Add new menu item here */}
+            <li>
+              <Link
+                href="/orders/find-by-merchant-tracking"
+                className={`flex items-center px-4 py-2 text-sm hover:bg-blue-50 ${
+                  location === '/orders/find-by-merchant-tracking' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                }`}
+                onClick={onClose}
+              >
+                <i className={`fa-solid fa-magnifying-glass w-5 mr-3 ${location === '/orders/find-by-merchant-tracking' ? 'text-blue-600' : 'text-gray-500'}`}></i>
+                <span>ค้นหาพัสดุด้วยเลขอ้างอิง</span>
+              </Link>
+            </li>
             {/* เมนูออกจากระบบ */}
             <li>
               <Link 
