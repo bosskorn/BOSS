@@ -190,7 +190,7 @@ export default function CreateFlashExpressOrderPage() {
       // ใช้ข้อมูลจริงจากตัวแปร districtData ที่กำหนดไว้
       const availableDistricts = Object.keys(districtData[senderProvince] || {});
       setDistricts(availableDistricts);
-      
+
       // รีเซ็ตค่าที่เกี่ยวข้อง
       form.setValue('senderAddress.district', '');
       form.setValue('senderAddress.subdistrict', '');
@@ -204,7 +204,7 @@ export default function CreateFlashExpressOrderPage() {
       // ใช้ข้อมูลจริงจากตัวแปร districtData ที่กำหนดไว้
       const availableSubdistricts = districtData[senderProvince]?.[senderDistrict] || [];
       setSubdistricts(availableSubdistricts);
-      
+
       // รีเซ็ตค่าที่เกี่ยวข้อง
       form.setValue('senderAddress.subdistrict', '');
 
@@ -239,7 +239,7 @@ export default function CreateFlashExpressOrderPage() {
       // ใช้ข้อมูลจริงจากตัวแปร districtData ที่กำหนดไว้
       const availableDistricts = Object.keys(districtData[recipientProvince] || {});
       setRecipientDistricts(availableDistricts);
-      
+
       // รีเซ็ตค่าที่เกี่ยวข้อง
       form.setValue('recipientAddress.district', '');
       form.setValue('recipientAddress.subdistrict', '');
@@ -253,7 +253,7 @@ export default function CreateFlashExpressOrderPage() {
       // ใช้ข้อมูลจริงจากตัวแปร districtData ที่กำหนดไว้
       const availableSubdistricts = districtData[recipientProvince]?.[recipientDistrict] || [];
       setRecipientSubdistricts(availableSubdistricts);
-      
+
       // รีเซ็ตค่าที่เกี่ยวข้อง
       form.setValue('recipientAddress.subdistrict', '');
 
@@ -347,7 +347,7 @@ export default function CreateFlashExpressOrderPage() {
       const senderDistrict = form.getValues('senderAddress.district');
       const senderSubdistrict = form.getValues('senderAddress.subdistrict');
       const senderZipcode = form.getValues('senderAddress.zipcode');
-      
+
       const recipientProvince = form.getValues('recipientAddress.province');
       const recipientDistrict = form.getValues('recipientAddress.district');
       const recipientSubdistrict = form.getValues('recipientAddress.subdistrict');
@@ -359,7 +359,7 @@ export default function CreateFlashExpressOrderPage() {
         subdistrict: senderSubdistrict,
         zipcode: senderZipcode
       });
-      
+
       console.log('ข้อมูลปลายทาง:', {
         province: recipientProvince,
         district: recipientDistrict,
@@ -388,7 +388,7 @@ export default function CreateFlashExpressOrderPage() {
         length: form.getValues('length'),
         height: form.getValues('height'),
       };
-      
+
       console.log('ส่งข้อมูลไปยัง API:', {
         originAddress,
         destinationAddress,
@@ -461,21 +461,61 @@ export default function CreateFlashExpressOrderPage() {
       console.log('กำลังสร้างเลขพัสดุ Flash Express...');
 
       // แปลงข้อมูลให้ตรงกับที่ Flash Express API ต้องการ
-      const modifiedValues = {
-        ...values,
-        senderAddress: {
-          ...values.senderAddress,
-          district: formatDistrictName(values.senderAddress.district),
-          subdistrict: formatSubdistrictName(values.senderAddress.subdistrict),
-        },
-        recipientAddress: {
-          ...values.recipientAddress,
-          district: formatDistrictName(values.recipientAddress.district),
-          subdistrict: formatSubdistrictName(values.recipientAddress.subdistrict),
-        }
+      const senderInfo = values.senderAddress;
+      const receiverInfo = values.recipientAddress;
+      const packageInfo = {
+        weight: values.weight,
+        width: values.width,
+        length: values.length,
+        height: values.height,
       };
 
-      console.log('ข้อมูลที่จะส่งไปยัง API (หลังการแปลง):', modifiedValues);
+      const orderData = {
+        outTradeNo: `TEST${Date.now()}`,
+        srcName: senderInfo.name,
+        srcPhone: senderInfo.phone,
+        srcProvinceName: senderInfo.province,
+        srcCityName: senderInfo.district,
+        srcDistrictName: senderInfo.subdistrict,
+        srcPostalCode: senderInfo.zipcode,
+        srcDetailAddress: senderInfo.address,
+        dstName: receiverInfo.name,
+        dstPhone: receiverInfo.phone,
+        dstHomePhone: receiverInfo.phone, 
+        dstProvinceName: receiverInfo.province,
+        dstCityName: receiverInfo.district,
+        dstDistrictName: receiverInfo.subdistrict,
+        dstPostalCode: receiverInfo.zipcode,
+        dstDetailAddress: receiverInfo.address,
+        weight: packageInfo.weight || "1000",
+        width: "10",
+        length: "10",
+        height: "10",
+        parcelKind: "1",
+        expressCategory: "1",
+        articleCategory: "2",
+        expressTypeId: "1",
+        productType: "1",
+        payType: "1",
+        transportType: "1",
+        insured: "0",
+        codEnabled: "0",
+        codAmount: "0",
+        insuredAmount: "0",
+        pricingType: "1", 
+        pricingTable: "1", 
+        opdInsureEnabled: "0", 
+        remark: values.remark || "ทดสอบการส่งพัสดุ",
+        subItemTypes: [{
+          itemName: "สินค้าทดสอบ",
+          itemQuantity: "1",
+          itemWeightSize: "1kg",
+          itemColor: "-"
+        }]
+      };
+
+
+      console.log('ข้อมูลที่จะส่งไปยัง API (หลังการแปลง):', orderData);
 
       // ส่งข้อมูลไปยัง API
       const response = await fetch('/api/shipping/flash-express-new/create', {
@@ -484,7 +524,7 @@ export default function CreateFlashExpressOrderPage() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(modifiedValues),
+        body: JSON.stringify(orderData),
       });
 
       const data = await response.json();
@@ -1056,7 +1096,7 @@ export default function CreateFlashExpressOrderPage() {
                         const values = form.getValues();
                         console.log('ข้อมูลของฟอร์ม:', values);
                         setIsLoading(true);
-                        
+
                         // ส่งข้อมูลไปยัง API
                         const response = await fetch('/api/shipping/flash-express-new/create', {
                           method: 'POST',

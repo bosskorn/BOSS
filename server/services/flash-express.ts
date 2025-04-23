@@ -67,16 +67,16 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
   if (!apiKey) {
     throw new Error('API key ไม่ถูกระบุ');
   }
-  
+
   // 1. คัดลอกข้อมูลแบบ deep copy เพื่อป้องกันการเปลี่ยนค่าในพารามิเตอร์ต้นฉบับ
   const paramsClone = JSON.parse(JSON.stringify(params));
-  
+
   // 2. ลบฟิลด์ที่ไม่ควรรวมในการคำนวณลายเซ็น
   const excludeFields = ['sign', 'subItemTypes', 'merchantId', 'subParcel', 'subParcelQuantity', 'remark'];
   for (const field of excludeFields) {
     delete paramsClone[field];
   }
-  
+
   // 3. แปลงทุกค่าเป็น string
   const stringParams: Record<string, string> = {};
   for (const key in paramsClone) {
@@ -86,31 +86,31 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
     }
     stringParams[key] = String(paramsClone[key]);
   }
-  
+
   // 4. เรียงลำดับคีย์ตาม ASCII
   const sortedKeys = Object.keys(stringParams).sort();
-  
+
   // 5. สร้างสตริงสำหรับการลงนาม
   let stringToSign = '';
   for (let i = 0; i < sortedKeys.length; i++) {
     const key = sortedKeys[i];
     stringToSign += `${key}=${stringParams[key]}`;
-    
+
     // เพิ่ม '&' ระหว่างคีย์ (ยกเว้นคีย์สุดท้าย)
     if (i < sortedKeys.length - 1) {
       stringToSign += '&';
     }
   }
-  
+
   // 6. เพิ่ม API key
   const signString = `${stringToSign}&key=${apiKey}`;
-  
+
   // 7. คำนวณ SHA-256 hash
   const signature = crypto.createHash('sha256')
     .update(signString)
     .digest('hex')
     .toUpperCase();
-  
+
   return signature;
 }
 
@@ -120,13 +120,13 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
 function createBaseRequestParams() {
   const nonceStr = generateNonceStr();
   const timestamp = String(Math.floor(Date.now() / 1000));
-  
+
   // ตรวจสอบว่ามี MERCHANT_ID หรือไม่
   if (!MERCHANT_ID) {
     console.error('FLASH_EXPRESS_MERCHANT_ID is not set in environment variables');
     throw new Error('FLASH_EXPRESS_MERCHANT_ID is required');
   }
-  
+
   return {
     mchId: MERCHANT_ID,
     nonceStr,
@@ -142,7 +142,7 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
   try {
     // 1. สร้างข้อมูลพื้นฐาน
     const baseParams = createBaseRequestParams();
-    
+
     // 2. รวมข้อมูลทั้งหมด
     const requestParams = {
       ...baseParams,
@@ -151,29 +151,29 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       // แปลงน้ำหนักเป็นกรัม (gram) หากมีหน่วยเป็น kg
       weight: packageDetails.weight < 100 ? packageDetails.weight * 1000 : packageDetails.weight,
     };
-    
+
     // เพิ่มขนาดหากมี - แก้ไข TypeScript error ด้วยการกำหนดประเภทก่อน
     const paramsWithDimensions = requestParams as any;
     if (packageDetails.height) paramsWithDimensions.height = packageDetails.height;
     if (packageDetails.length) paramsWithDimensions.length = packageDetails.length;
     if (packageDetails.width) paramsWithDimensions.width = packageDetails.width;
-    
+
     // 3. สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, API_KEY!);
-    
+
     // 4. สร้าง form data
     const formData = new URLSearchParams();
-    
+
     // เพิ่มข้อมูลทั้งหมดลงใน form data
     for (const [key, value] of Object.entries(requestParams)) {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     }
-    
+
     // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
     formData.append('sign', signature);
-    
+
     // 5. ส่งคำขอไปยัง Flash Express API
     console.log('Flash Express API Request:', {
       url: `${BASE_URL}/open/v1/orders/estimate_rate`, // แก้ไข endpoint ตามที่ถูกต้อง
@@ -187,7 +187,7 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       },
       data: formData.toString()
     });
-    
+
     // ตั้งค่า config สำหรับ axios
     const axiosConfig = {
       headers: {
@@ -201,17 +201,17 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       maxRedirects: 0, // ป้องกันการ redirect
       validateStatus: (status) => status < 500 // ยอมรับสถานะ 400-499 เพื่อดูข้อความผิดพลาด
     };
-    
+
     // ส่งคำขอไปยัง Flash Express API
     // เพิ่มการบันทึกข้อมูลทั้งหมดที่ส่งไปยัง API
     console.log('Flash Express API complete request data:', formData.toString());
-    
+
     const response = await axios.post(
       `${BASE_URL}/open/v1/orders/estimate_rate`, // แก้ไข endpoint ตามที่ถูกต้อง
       formData.toString(),
       axiosConfig
     );
-    
+
     // เพิ่มการแสดงผลการตอบกลับแบบละเอียดเพื่อการแก้ไขปัญหา
     console.log('Flash Express API response:', {
       status: response.status,
@@ -219,7 +219,7 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       headers: response.headers,
       data: response.data
     });
-    
+
     // 6. แปลงข้อมูลที่ได้รับและส่งกลับ
     if (response.data.code === 1 && response.data.data) {
       return response.data.data.map((option: any) => ({
@@ -247,18 +247,18 @@ export async function createFlashShipment(shipmentData: any) {
   try {
     // 1. สร้างข้อมูลพื้นฐาน
     const baseParams = createBaseRequestParams();
-    
+
     // 2. แยกรายการสินค้าออกจากข้อมูลหลัก
     const items = shipmentData.items || [];
     delete shipmentData.items;
-    
+
     // 3. รวมข้อมูลทั้งหมดและกำหนดค่าเริ่มต้นสำหรับฟิลด์ที่จำเป็น
     // แปลงข้อมูลเป็น string ตามมาตรฐานของ Flash Express
     const requestData = {
       ...baseParams,
       outTradeNo: String(shipmentData.outTradeNo),
       warehouseNo: String(baseParams.warehouseNo),
-      
+
       // ข้อมูลผู้ส่ง (required)
       srcName: String(shipmentData.srcName),
       srcPhone: String(shipmentData.srcPhone),
@@ -267,7 +267,7 @@ export async function createFlashShipment(shipmentData: any) {
       srcDistrictName: shipmentData.srcDistrictName ? String(shipmentData.srcDistrictName) : '', // optional แต่ให้ใส่ไว้เป็นค่าว่าง
       srcPostalCode: String(shipmentData.srcPostalCode),
       srcDetailAddress: String(shipmentData.srcDetailAddress),
-      
+
       // ข้อมูลผู้รับ (required)
       dstName: String(shipmentData.dstName),
       dstPhone: String(shipmentData.dstPhone),
@@ -276,17 +276,17 @@ export async function createFlashShipment(shipmentData: any) {
       dstDistrictName: shipmentData.dstDistrictName ? String(shipmentData.dstDistrictName) : '', // optional แต่ให้ใส่ไว้เป็นค่าว่าง
       dstPostalCode: String(shipmentData.dstPostalCode),
       dstDetailAddress: String(shipmentData.dstDetailAddress),
-      
+
       // ข้อมูลจำเป็นสำหรับการแจ้งเตือน
       dstEmail: shipmentData.dstEmail ? String(shipmentData.dstEmail) : '', // จำเป็นในบางกรณี
       srcEmail: shipmentData.srcEmail ? String(shipmentData.srcEmail) : '', // จำเป็นในบางกรณี
-      
+
       // ข้อมูลพัสดุ - ต้องเป็น string (required)
       weight: String(parseInt(String(shipmentData.weight)) || 1000), // น้ำหนักเป็น string (กรัม)
       width: String(parseInt(String(shipmentData.width)) || 20), // ความกว้างเป็น string (ซม.) optional
       length: String(parseInt(String(shipmentData.length)) || 30), // ความยาวเป็น string (ซม.) optional
       height: String(parseInt(String(shipmentData.height)) || 10), // ความสูงเป็น string (ซม.) optional
-      
+
       // ประเภทพัสดุและการจัดส่ง (required) - ตามฟอร์แมตที่ต้องเป็น string และมีค่าตามที่ Flash Express กำหนด
       // ใช้ค่าที่ส่งมาจาก client หรือค่า default ถ้าไม่มี
       parcelKind: shipmentData.parcelKind || "1", // ประเภทพัสดุ (1=ทั่วไป) - ต้องเป็น string ไม่ใช่ integer
@@ -294,35 +294,35 @@ export async function createFlashShipment(shipmentData: any) {
       articleCategory: shipmentData.articleCategory || "2", // ประเภทสินค้า (1=ทั่วไป, 2=อื่นๆ) - ต้องเป็น string
       expressTypeId: shipmentData.expressTypeId || "1", // ประเภทการส่ง (1=ส่งด่วน) - ต้องเป็น string
       productType: shipmentData.productType || "1", // ประเภทสินค้า (1=ทั่วไป) - ต้องเป็น string
-      
+
       // พารามิเตอร์ที่จำเป็นสำหรับ Flash Express API
       payType: shipmentData.payType || "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย) ต้องเป็น string
       transportType: shipmentData.transportType || "1", // ประเภทการขนส่ง (1=ปกติ) ต้องเป็น string
-      
+
       // บริการเสริม (required) - ต้องเป็น string ทั้งหมด
       insured: shipmentData.insured || "0", // 0=ไม่ซื้อ Flash care (ต้องเป็น string)
       codEnabled: shipmentData.codEnabled || "0", // 0=ไม่ใช่ COD (ต้องเป็น string)
       codAmount: shipmentData.codAmount || "0", // จำนวนเงิน COD (ต้องเป็น string)
       insuredAmount: shipmentData.insuredAmount || "0" // จำนวนเงินประกัน (ต้องเป็น string)
     };
-    
+
     // เพิ่มข้อมูล COD ถ้าเปิดใช้งาน
     if (shipmentData.codEnabled === '1' || shipmentData.codEnabled === 1) {
       requestData.codAmount = shipmentData.codAmount;
     }
-    
+
     // เพิ่มข้อมูลประกันถ้าเปิดใช้งาน
     if (shipmentData.insured === '1' || shipmentData.insured === 1) {
       requestData.insuredAmount = shipmentData.insuranceAmount || shipmentData.insuredAmount;
     }
-    
+
     // 4. สร้างลายเซ็น (ก่อนเพิ่ม remark และ subItemTypes)
     const signature = generateFlashSignature(requestData, API_KEY!);
-    
+
     // 5. เพิ่มฟิลด์ที่ไม่นำมาคำนวณลายเซ็น
     // ไม่เพิ่ม sign ลงใน requestData แต่จะเพิ่มในขั้นตอนการสร้าง form data
     const remark = shipmentData.remark || '';
-    
+
     // 6. แปลงข้อมูลรายการสินค้า
     // ถ้าไม่มีข้อมูลสินค้า ให้ใส่ข้อมูลตัวอย่าง (จำเป็นต้องมี)
     const subItemTypes = items.length > 0 
@@ -331,24 +331,24 @@ export async function createFlashShipment(shipmentData: any) {
           itemQuantity: String(item.itemQuantity)
         }))
       : [{ itemName: "สินค้าทดสอบ", itemQuantity: "1" }];
-    
+
     // 7. สร้าง form data (ไม่รวม subItemTypes และ remark ในการคำนวณลายเซ็น)
     const formData = new URLSearchParams();
-    
+
     // เพิ่มข้อมูลทั้งหมดลงใน form data
     for (const [key, value] of Object.entries(requestData)) {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     }
-    
+
     // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
     formData.append('sign', signature);
-    
+
     // เพิ่มข้อมูลที่ไม่เกี่ยวข้องกับการคำนวณลายเซ็น
     formData.append('remark', remark);
     formData.append('subItemTypes', JSON.stringify(subItemTypes));
-    
+
     // 8. ส่งคำขอไปยัง Flash Express API
     // แสดงข้อมูลที่ส่งให้กับ API อย่างละเอียดเพื่อช่วยในการดีบัก
     console.log('Flash Express URL:', `${BASE_URL}/open/v3/orders`); // แก้ไข endpoint ตามที่ถูกต้อง
@@ -360,9 +360,9 @@ export async function createFlashShipment(shipmentData: any) {
       'X-Flash-Nonce': baseParams.nonceStr
     });
     console.log('Flash Express request data (formData):', formData.toString());
-    
+
     const response = await axios.post(
-      `${BASE_URL}/open/v1/orders`, // เปลี่ยนเป็น v1 แทน v3
+      `${BASE_URL}/open/v3/orders`, // แก้ไข endpoint ตามที่ถูกต้อง
       formData,
       {
         headers: {
@@ -379,16 +379,16 @@ export async function createFlashShipment(shipmentData: any) {
         }
       }
     );
-    
+
     // แสดงข้อมูลการตอบกลับจาก API เพื่อช่วยในการดีบัก
     console.log('Flash Express response status:', response.status);
     console.log('Flash Express response headers:', response.headers);
     console.log('Flash Express response data:', response.data);
-    
+
     return response.data;
   } catch (error: any) {
     console.error('Flash Express API error (createShipment):', error.message);
-    
+
     // ถ้ามีข้อมูลตอบกลับจาก API แสดงรายละเอียดเพิ่มเติม
     if (error.response && error.response.data) {
       return {
@@ -397,7 +397,7 @@ export async function createFlashShipment(shipmentData: any) {
         data: error.response.data
       };
     }
-    
+
     return {
       code: 500,
       message: `ไม่สามารถสร้างเลขพัสดุได้: ${error.message}`,
@@ -414,29 +414,29 @@ export async function trackFlashShipment(trackingNumber: string) {
   try {
     // 1. สร้างข้อมูลพื้นฐาน
     const baseParams = createBaseRequestParams();
-    
+
     // 2. เพิ่มเลขพัสดุ
     const requestParams = {
       ...baseParams,
       pno: trackingNumber
     };
-    
+
     // 3. สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, API_KEY!);
-    
+
     // 4. สร้าง form data
     const formData = new URLSearchParams();
-    
+
     // เพิ่มข้อมูลทั้งหมดลงใน form data
     for (const [key, value] of Object.entries(requestParams)) {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     }
-    
+
     // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
     formData.append('sign', signature);
-    
+
     // 5. ส่งคำขอไปยัง Flash Express API
     const response = await axios.post(
       `${BASE_URL}/open/v5/tracking`,
@@ -452,14 +452,29 @@ export async function trackFlashShipment(trackingNumber: string) {
         timeout: 15000
       }
     );
-    
+
+    console.log('Flash Express track response data:', response.data);
+
     if (response.data.code === 1) {
-      return response.data.data;
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } else if (response.data.code === 1001) {
+      // แก้ไขเพื่อรองรับกรณี code 1001 (ไม่มีข้อมูล)
+      console.log('Flash Express API: ไม่พบข้อมูลพัสดุ (code 1001)');
+      return {
+        success: false,
+        message: 'ไม่พบข้อมูลพัสดุในระบบ Flash Express',
+        code: 1001,
+        data: null
+      };
     } else {
       return {
-        status: 'not_found',
+        success: false,
         message: response.data.message || 'ไม่พบข้อมูลพัสดุ',
-        trackingDetails: []
+        code: response.data.code,
+        data: null
       };
     }
   } catch (error: any) {
@@ -483,19 +498,19 @@ export function testSignatureWithExampleData() {
   try {
     // 1. ใช้ข้อมูลตัวอย่างจากเอกสาร
     const testParams = { ...EXAMPLE_DATA };
-    
+
     // 2. ใช้ apiKey ตัวอย่างสำหรับการทดสอบ (เนื่องจากไม่มีในตัวอย่าง ให้ใช้ค่าสมมติ)
     const testApiKey = 'test_api_key_for_signature_verification';
-    
+
     // 3. สร้างลายเซ็นจากโค้ดของเรา
     const ourSignature = generateFlashSignature(testParams, testApiKey);
-    
+
     // 4. ลายเซ็นที่ถูกต้องจากเอกสาร
     const expectedSignature = 'CD03E4D230D0824E804D2AB013879E39A75238C1230214840C6A31C9DF169BF5';
-    
+
     // 5. เปรียบเทียบผลลัพธ์
     const signatureMatches = (ourSignature === expectedSignature);
-    
+
     return {
       success: signatureMatches,
       testData: {
@@ -531,20 +546,20 @@ async function testFlashApi() {
   try {
     console.log('======= เริ่มทดสอบการเชื่อมต่อกับ Flash Express API =======');
     console.log(`Base URL: ${BASE_URL}`);
-    
+
     // 1. ตรวจสอบการตั้งค่า API Key และ Merchant ID
     const credentialCheck = {
       merchantId: MERCHANT_ID || 'missing',
       apiKey: API_KEY ? `${API_KEY.substring(0, 3)}...${API_KEY.substring(API_KEY.length - 3)}` : 'missing',
       hasCredentials: !!MERCHANT_ID && !!API_KEY
     };
-    
+
     console.log('API Credentials:', {
       merchantId: MERCHANT_ID ? 'configured' : 'missing',
       apiKey: API_KEY ? 'configured' : 'missing',
       hasCredentials: !!MERCHANT_ID && !!API_KEY
     });
-    
+
     if (!credentialCheck.hasCredentials) {
       return {
         success: false,
@@ -557,32 +572,32 @@ async function testFlashApi() {
         message: 'ไม่พบข้อมูล API Key หรือ Merchant ID กรุณาตั้งค่า API Key และ Merchant ID ก่อนใช้งาน'
       };
     }
-    
+
     // 2. ทดสอบการสร้างลายเซ็น
     console.log('ขั้นตอนที่ 2: ทดสอบการสร้างลายเซ็น');
     const nonceStr = generateNonceStr();
     const timestamp = String(Math.floor(Date.now() / 1000));
-    
+
     const testParams: Record<string, string> = {
       mchId: MERCHANT_ID as string,
       nonceStr: nonceStr,
       timestamp: timestamp,
       warehouseNo: `${MERCHANT_ID}_001`
     };
-    
+
     console.log('Test Parameters:', testParams);
-    
+
     const signature = generateFlashSignature(testParams, API_KEY as string);
     console.log('Generated Signature:', signature.substring(0, 10) + '...' + signature.substring(signature.length - 10));
     console.log('Signature Length:', signature.length, '(ควรเป็น 64 ตัวอักษร)');
-    
+
     // 3. ทดสอบเรียก API
     console.log('ขั้นตอนที่ 3: ทดสอบการเชื่อมต่อกับ Flash Express API');
-    
+
     try {
       // สร้าง URLSearchParams แทนการใช้ object
       const formData = new URLSearchParams();
-      
+
       // เรียงลำดับพารามิเตอร์ตามตัวอักษรก่อนใส่ใน formData
       const sortedParams = Object.keys(testParams).sort().reduce(
         (obj: Record<string, string>, key) => {
@@ -593,22 +608,22 @@ async function testFlashApi() {
         }, 
         {}
       );
-      
+
       // เพิ่มข้อมูลทั้งหมดลงใน form data
       for (const [key, value] of Object.entries(sortedParams)) {
         formData.append(key, String(value));
       }
-      
+
       // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
       formData.append('sign', signature);
-      
+
       const formDataString = formData.toString();
       console.log('Form Data String:', formDataString);
-      
+
       // ขั้นตอนที่ 3.1: ทดสอบด้วย endpoint เฉพาะ
       // กลับมาใช้ endpoint เดิมเนื่องจากในประวัติการใช้งานเคยสำเร็จกับ endpoint นี้
       console.log('ทดสอบเชื่อมต่อกับ endpoint: /open/v3/orders');
-            
+
       // ตั้งค่าตัวเลือกการส่งคำขอ
       const requestOptions = {
         headers: {
@@ -619,16 +634,16 @@ async function testFlashApi() {
         maxRedirects: 0, // ป้องกันการ redirect
         validateStatus: (status: number) => status < 500 // ยอมรับสถานะ 400-499 เพื่อดูข้อความผิดพลาด
       };
-      
+
       const response = await axios.post(
         `${BASE_URL}/open/v3/orders`,
         formDataString,
         requestOptions
       );
-      
+
       console.log('API Response Status:', response.status, response.statusText);
       console.log('API Response Data:', JSON.stringify(response.data).substring(0, 200) + '...');
-      
+
       return {
         success: true,
         statusText: 'API Connection Successful',
@@ -650,22 +665,22 @@ async function testFlashApi() {
         },
         message: 'การเชื่อมต่อกับ Flash Express API สำเร็จ'
       };
-      
+
     } catch (apiError: any) {
       console.error('Flash Express API Error:', apiError.message);
       console.error('API Response Data:', apiError.response?.data);
-      
+
       // ตรวจสอบว่าเป็น HTML response หรือไม่
       const isHtmlResponse = 
         apiError.response?.data && 
         typeof apiError.response.data === 'string' && 
         apiError.response.data.includes('<!DOCTYPE html>');
-      
+
       if (isHtmlResponse) {
         console.error('ได้รับการตอบกลับเป็น HTML แทน JSON');
         console.error('HTML snippet:', apiError.response.data.substring(0, 200) + '...');
       }
-      
+
       // กรณีเชื่อมต่อ API ไม่สำเร็จ แต่การตั้งค่าและการสร้างลายเซ็นถูกต้อง
       return {
         success: false,
@@ -716,29 +731,29 @@ export async function findOrderByMerchantTrackingNumber(merchantTrackingNumber: 
   try {
     // 1. สร้างข้อมูลพื้นฐาน
     const baseParams = createBaseRequestParams();
-    
+
     // 2. เพิ่มเลขติดตามของร้านค้า
     const requestParams = {
       ...baseParams,
       outTradeNo: merchantTrackingNumber
     };
-    
+
     // 3. สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, API_KEY!);
-    
+
     // 4. สร้าง form data
     const formData = new URLSearchParams();
-    
+
     // เพิ่มข้อมูลทั้งหมดลงใน form data
     for (const [key, value] of Object.entries(requestParams)) {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     }
-    
+
     // เพิ่มลายเซ็นหลังจากได้คำนวณแล้ว
     formData.append('sign', signature);
-    
+
     // 5. ส่งคำขอไปยัง Flash Express API
     const response = await axios.post(
       `${BASE_URL}/open/v1/ordersByMchPno`,
@@ -754,7 +769,7 @@ export async function findOrderByMerchantTrackingNumber(merchantTrackingNumber: 
         timeout: 15000
       }
     );
-    
+
     if (response.data.code === 1) {
       return {
         success: true,
@@ -773,116 +788,6 @@ export async function findOrderByMerchantTrackingNumber(merchantTrackingNumber: 
       success: false,
       message: `ไม่สามารถค้นหาข้อมูลพัสดุได้: ${error.message}`,
       data: null
-    };
-  }
-}
-
-
-/**
- * ฟังก์ชันทดสอบการสร้างเลขพัสดุอย่างละเอียด
- * ใช้สำหรับดูข้อมูลจริงทั้งหมดที่ส่งไป
- */
-export async function debugCreateShipment(orderData: any) {
-  try {
-    console.log('====== DEBUG CREATE SHIPMENT ======');
-    console.log('ข้อมูลที่ได้รับ:', JSON.stringify(orderData, null, 2));
-    
-    // 1. สร้างข้อมูลพื้นฐาน
-    const baseParams = createBaseRequestParams();
-    console.log('baseParams:', baseParams);
-    
-    // 2. แปลงข้อมูลทั้งหมดเป็น string
-    const stringData: Record<string, string> = {};
-    for (const [key, value] of Object.entries(orderData)) {
-      if (value !== null && value !== undefined && key !== 'subItemTypes' && key !== 'remark') {
-        stringData[key] = String(value);
-      }
-    }
-    console.log('stringData (ข้อมูลหลังแปลงเป็น string):', stringData);
-    
-    // 3. รวมข้อมูลพื้นฐานกับข้อมูลออเดอร์
-    const requestData = {
-      ...baseParams,
-      ...stringData,
-      warehouseNo: String(baseParams.warehouseNo)
-    };
-    console.log('requestData (รวมข้อมูลพื้นฐานกับข้อมูลออเดอร์):', requestData);
-    
-    // 4. สร้างลายเซ็น
-    const signature = generateFlashSignature(requestData, API_KEY!);
-    console.log('signature:', signature);
-    
-    // 5. สร้าง URL-encoded string สำหรับส่ง API
-    const formData = new URLSearchParams();
-    for (const [key, value] of Object.entries(requestData)) {
-      if (value !== null && value !== undefined) {
-        formData.append(key, String(value));
-      }
-    }
-    
-    // เพิ่มข้อมูลที่ไม่ถูกใช้ในการคำนวณ signature แต่ต้องส่งไปกับ API
-    formData.append('sign', signature);
-    
-    // เพิ่ม remark และ subItemTypes (ถ้ามี)
-    if (orderData.remark) {
-      formData.append('remark', orderData.remark);
-    }
-    
-    // กำหนด subItemTypes default ถ้าไม่มี
-    const subItemTypes = orderData.subItemTypes || [{
-      itemName: 'สินค้าทดสอบ',
-      itemQuantity: '1'
-    }];
-    formData.append('subItemTypes', JSON.stringify(subItemTypes));
-    
-    console.log('formData (URL-encoded):', formData.toString());
-    
-    // 6. ส่งคำขอไปยัง API (ทดสอบหลาย endpoint)
-    const endpoints = [
-      '/open/v1/orders',
-      '/open/v3/orders',
-      '/open/v5/orders'
-    ];
-    
-    for (const endpoint of endpoints) {
-      console.log(`\nทดสอบ endpoint: ${endpoint}`);
-      try {
-        const response = await axios.post(
-          `${BASE_URL}${endpoint}`,
-          formData,
-          {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'Accept': 'application/json',
-              'X-Flash-Signature': signature,
-              'X-Flash-Timestamp': baseParams.timestamp,
-              'X-Flash-Nonce': baseParams.nonceStr
-            },
-            timeout: 15000
-          }
-        );
-        
-        console.log(`ผลลัพธ์จาก ${endpoint}:`, {
-          status: response.status,
-          data: response.data
-        });
-      } catch (endpointError: any) {
-        console.error(`เกิดข้อผิดพลาดที่ endpoint ${endpoint}:`, {
-          message: endpointError.message,
-          response: endpointError.response?.data
-        });
-      }
-    }
-    
-    return {
-      success: false,
-      message: 'นี่เป็นโหมดทดสอบเท่านั้น ไม่ได้สร้างเลขพัสดุจริง'
-    };
-  } catch (error: any) {
-    console.error('Flash Express API debug error:', error.message);
-    return {
-      success: false,
-      message: `เกิดข้อผิดพลาดในการทดสอบ: ${error.message}`
     };
   }
 }

@@ -168,29 +168,59 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
     try {
       // สร้าง nonce string
       const nonceStr = generateNonceStr();
+      const timestamp = String(Math.floor(Date.now() / 1000));
       
-      // ข้อมูลสำหรับส่ง API
+      // ข้อมูลสำหรับส่ง API (ตามเอกสาร API รุ่น V3 ล่าสุด)
       const apiData: Record<string, any> = {
         mchId: flashExpressMerchantId,
         nonceStr: nonceStr,
+        timestamp: timestamp,
+        warehouseNo: `${flashExpressMerchantId}_001`,
         outTradeNo: orderData.outTradeNo,
+        
+        // ข้อมูลผู้ส่ง
         srcName: orderData.srcName,
-        srcPhone: orderData.srcPhone,
+        srcPhone: orderData.srcPhone.replace(/[-\s]/g, ''),
         srcProvinceName: orderData.srcProvinceName,
-        srcCityName: orderData.srcCityName,
+        srcCityName: orderData.srcCityName, 
+        srcDistrictName: orderData.srcDistrictName || '',
         srcPostalCode: orderData.srcPostalCode,
         srcDetailAddress: orderData.srcDetailAddress,
+        
+        // ข้อมูลผู้รับ
         dstName: orderData.dstName,
-        dstPhone: orderData.dstPhone,
+        dstPhone: orderData.dstPhone.replace(/[-\s]/g, ''),
+        dstHomePhone: orderData.dstPhone.replace(/[-\s]/g, ''), // จำเป็นสำหรับ API V3
         dstProvinceName: orderData.dstProvinceName,
         dstCityName: orderData.dstCityName,
+        dstDistrictName: orderData.dstDistrictName || '',
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
-        articleCategory: orderData.articleCategory,
-        expressCategory: orderData.expressCategory,
-        weight: orderData.weight,
-        codEnabled: orderData.codEnabled || 0
+        
+        // ข้อมูลพัสดุ
+        articleCategory: orderData.articleCategory || "2",
+        expressCategory: orderData.expressCategory || "1",
+        weight: orderData.weight || "1000",
+        width: orderData.width || "20",
+        length: orderData.length || "30", 
+        height: orderData.height || "10",
+        
+        // ข้อมูลเพิ่มเติมที่จำเป็นสำหรับ API V3
+        pricingType: "1",
+        pricingTable: "1",
+        payType: "1",
+        transportType: "1",
+        expressTypeId: "1",
+        productType: "1",
+        parcelKind: "1",
+        
+        // ข้อมูล COD และประกัน
+        insured: "0",
+        opdInsureEnabled: "0",
+        codEnabled: orderData.codEnabled || "0"
       };
+      
+      console.log('Flash Express API request data:', apiData);
       
       // เพิ่ม codAmount เฉพาะถ้า codEnabled เป็น 1
       if (orderData.codEnabled == 1 && orderData.codAmount) {
