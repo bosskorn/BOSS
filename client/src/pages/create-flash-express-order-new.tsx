@@ -302,11 +302,11 @@ const CreateFlashExpressOrderNew: React.FC = () => {
         // แปลงค่า insureDeclareValue เป็นสตางค์ (บาท x 100)
         insureDeclareValue: data.insured === 1 && data.insureDeclareValue ? Math.floor(data.insureDeclareValue * 100) : undefined,
         
-        // แปลง subItemTypes เป็น JSON string
-        subItemTypes: JSON.stringify(data.subItemTypes ? data.subItemTypes.map(item => ({
+        // ส่ง subItemTypes เป็น array ไม่ใช่ JSON string (เปลี่ยนตามข้อกำหนดของ API)
+        subItemTypes: data.subItemTypes ? data.subItemTypes.map(item => ({
           ...item,
           itemQuantity: String(item.itemQuantity)
-        })) : []),
+        })) : [],
         
         // เพิ่มฟิลด์ที่อาจจำเป็นสำหรับ Flash Express API
         payType: 1, // 1 = ชำระโดยผู้ส่ง (default)
