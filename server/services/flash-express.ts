@@ -519,11 +519,7 @@ async function testFlashApi() {
       mchId: MERCHANT_ID as string,
       nonceStr: nonceStr,
       timestamp: timestamp,
-      fromPostalCode: '10230',
-      toPostalCode: '10110',
-      weight: '1000',
-      warehouseNo: `${MERCHANT_ID}_001`,
-      insured: '0'
+      warehouseNo: `${MERCHANT_ID}_001`
     };
     
     console.log('Test Parameters:', testParams);
@@ -562,7 +558,8 @@ async function testFlashApi() {
       console.log('Form Data String:', formDataString);
       
       // ขั้นตอนที่ 3.1: ทดสอบด้วย endpoint เฉพาะ
-      console.log('ทดสอบเชื่อมต่อกับ endpoint: /open/v1/estimate_rate');
+      // เปลี่ยนมาใช้ endpoint ที่รองรับในเวอร์ชันปัจจุบัน: /open/v3/merchant/info
+      console.log('ทดสอบเชื่อมต่อกับ endpoint: /open/v3/merchant/info');
             
       // ตั้งค่าตัวเลือกการส่งคำขอ
       const requestOptions = {
@@ -576,7 +573,7 @@ async function testFlashApi() {
       };
       
       const response = await axios.post(
-        `${BASE_URL}/open/v1/estimate_rate`,
+        `${BASE_URL}/open/v3/merchant/info`,
         formDataString,
         requestOptions
       );
