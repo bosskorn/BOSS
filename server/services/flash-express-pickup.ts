@@ -98,6 +98,7 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
     const apiParams: Record<string, any> = {
       mchId: process.env.FLASH_EXPRESS_MERCHANT_ID,
       nonceStr: nonceStr,
+      warehouseNo: `${process.env.FLASH_EXPRESS_MERCHANT_ID}_001`, // เพิ่ม warehouseNo ตามรูปแบบในตัวอย่าง
       
       // ข้อมูลที่อยู่รับพัสดุ (แบบแยกข้อมูล)
       srcName: params.contactName,
@@ -108,11 +109,11 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
       srcPostalCode: params.zipcode,
       srcDetailAddress: params.pickupAddress,
       
-      // จำนวนพัสดุโดยประมาณ
-      estimateParcelNumber: params.trackingNumbers.length > 0 ? params.trackingNumbers.length : 1,
+      // จำนวนพัสดุโดยประมาณ - ใช้ค่า fix 100 ตามตัวอย่าง
+      estimateParcelNumber: 100,
       
-      // ข้อมูลเพิ่มเติม
-      remark: "เรียกรถจากระบบอัตโนมัติ ShipSync"
+      // ข้อมูลเพิ่มเติม - ใช้ตามตัวอย่าง
+      remark: "ASAP"
     };
     
     // สร้างลายเซ็น
