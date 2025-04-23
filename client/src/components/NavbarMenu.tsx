@@ -177,6 +177,14 @@ const NavbarMenu: React.FC<NavbarMenuProps> = ({ onToggleSidebar }) => {
                 <i className="fas fa-file-import"></i> นำเข้าออเดอร์ด้วยไฟล์ Excel
               </Link>
             </li>
+            <li>
+              <Link 
+                href="/flash-express-shipping-new" 
+                onClick={handleMenuLinkClick}
+              >
+                <i className="fas fa-shipping-fast"></i> สร้างออเดอร์ Flash Express
+              </Link>
+            </li>
           </ul>
         </li>
         

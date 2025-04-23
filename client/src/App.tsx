@@ -86,7 +86,8 @@ function Router() {
       <Route path="/create-flash-express-order-new" component={CreateFlashExpressOrderNew} />
       <Route path="/create-order-form" component={CreateOrderForm} />
       <Route path="/test-flash-express" component={TestFlashExpress} />
-      <Route path="/flash-express-shipping-new" component={FlashExpressShippingNew} />
+      {/* เปลี่ยนเป็น ProtectedRoute เพื่อให้ต้องล็อกอินก่อนเข้าใช้งาน */}
+      <ProtectedRoute path="/flash-express-shipping-new" component={FlashExpressShippingNew} />
       <Route path="/flash-express-test-v2" component={FlashExpressTestV2} />
       <Route path="/create-flash-express-order" component={CreateFlashExpressOrder} />
       <Route path="/flash-express-direct" component={FlashExpressDirectTest} />
