@@ -112,6 +112,13 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
       // จำนวนพัสดุโดยประมาณ - ใช้ค่า fix 100 ตามตัวอย่าง
       estimateParcelNumber: 100,
       
+      // เพิ่มข้อมูลวันที่และช่วงเวลาที่ต้องการให้เข้ารับ
+      pickupDate: formattedDate,
+      pickupTimeSlot: params.requestTimeSlot,
+      
+      // เพิ่มข้อมูลหมายเลขพัสดุ (ถ้ามี)
+      pno: params.trackingNumbers.length > 0 ? params.trackingNumbers.join(',') : undefined,
+      
       // ข้อมูลเพิ่มเติม - ใช้ตามตัวอย่าง
       remark: "ASAP"
     };
@@ -136,7 +143,9 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
       const response = await axios.post(apiUrl, querystring.stringify(apiParams), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'User-Agent': 'ShipSync/1.0',
+          'X-API-Key': process.env.FLASH_EXPRESS_API_KEY || ''
         },
         responseType: 'json',
         validateStatus: (status) => status < 500, // ยอมรับการตอบกลับที่มี status code น้อยกว่า 500
