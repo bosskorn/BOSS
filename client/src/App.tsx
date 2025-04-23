@@ -49,6 +49,7 @@ import CreateFlashExpressOrderNew from './pages/create-flash-express-order-new';
 import CreateOrderForm from './pages/create-order-form';
 import FindByMerchantTracking from './pages/orders/find-by-merchant-tracking';
 import CreateOrderTest from './pages/create-order-test';
+import TestFlashExpress from './pages/test-flash-express';
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -79,6 +80,7 @@ function Router() {
       <Route path="/flash-express-api-test" component={FlashExpressAPITest} />
       <Route path="/create-flash-express-order-new" component={CreateFlashExpressOrderNew} />
       <Route path="/create-order-form" component={CreateOrderForm} />
+      <Route path="/test-flash-express" component={TestFlashExpress} />
       {/* Flash Express routes have been updated */}
 
       {/* Protected routes - require authentication */}
