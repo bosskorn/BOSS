@@ -295,6 +295,7 @@ export default function FlashExpressShippingNew() {
         returnPhone: orderData.srcPhone,
         returnProvinceName: orderData.srcProvinceName,
         returnCityName: orderData.srcCityName,
+        returnDistrictName: orderData.srcDistrictName,
         returnPostalCode: orderData.srcPostalCode,
         returnDetailAddress: orderData.srcDetailAddress,
         
