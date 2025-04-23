@@ -48,6 +48,7 @@ import CreateFlashExpressOrder from './pages/create-flash-express-order';
 import CreateFlashExpressOrderNew from './pages/create-flash-express-order-new';
 import CreateOrderForm from './pages/create-order-form';
 import FindByMerchantTracking from './pages/orders/find-by-merchant-tracking';
+import CreateOrderTest from './pages/create-order-test';
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -99,6 +100,7 @@ function Router() {
       <ProtectedRoute path="/orders-all" component={OrderList} />
       <ProtectedRoute path="/order-detail/:id" component={OrderDetail} />
       <ProtectedRoute path="/orders/find-by-merchant-tracking" component={FindByMerchantTracking} />
+      <ProtectedRoute path="/create-order-test" component={CreateOrderTest} />
 
       {/* พัสดุและการจัดส่ง - protected */}
       <ProtectedRoute path="/parcel-list" component={ShipmentList} />
