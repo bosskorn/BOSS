@@ -186,12 +186,25 @@ router.post('/flash-express/shipping', auth, async (req, res) => {
     const nonceStr = generateNonceStr();
     const timestamp = String(Math.floor(Date.now() / 1000));
     
-    // สร้างข้อมูลใหม่พร้อมเพิ่ม timestamp และ nonceStr
+    // สร้างข้อมูลใหม่พร้อมเพิ่ม timestamp และ nonceStr และพารามิเตอร์ที่จำเป็นอื่นๆ
     const enrichedOrderData = {
       ...orderData,
       nonceStr: orderData.nonceStr || nonceStr,
-      timestamp: orderData.timestamp || timestamp
+      timestamp: orderData.timestamp || timestamp,
+      parcelKind: orderData.parcelKind || 1, // ค่า default ของพัสดุทั่วไป
+      insured: orderData.insured === 0 ? 0 : (orderData.insured || 0), // ไม่ทำประกัน (default)
+      codEnabled: orderData.codEnabled === 0 ? 0 : (orderData.codEnabled || 0), // ไม่เก็บเงินปลายทาง (default)
+      articleCategory: orderData.articleCategory || 1, // ประเภทสินค้า (default: สินค้าทั่วไป)
+      expressCategory: orderData.expressCategory || 1 // ประเภทการจัดส่ง (default: ธรรมดา)
     };
+    
+    console.log('พารามิเตอร์ที่เพิ่มเติม:', {
+      parcelKind: enrichedOrderData.parcelKind,
+      insured: enrichedOrderData.insured,
+      codEnabled: enrichedOrderData.codEnabled,
+      articleCategory: enrichedOrderData.articleCategory,
+      expressCategory: enrichedOrderData.expressCategory
+    });
     
     console.log('เพิ่ม timestamp และ nonceStr:', JSON.stringify({
       timestamp: enrichedOrderData.timestamp,

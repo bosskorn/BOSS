@@ -276,13 +276,15 @@ export async function createFlashShipment(shipmentData: any) {
       height: parseInt(String(shipmentData.height)) || 10, // ความสูงเป็น integer (ซม.) optional
       
       // ประเภทพัสดุและการจัดส่ง (required) - ตามฟอร์แมตที่เคยทำงานได้
-      parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป)
+      parcelKind: shipmentData.parcelKind ? String(shipmentData.parcelKind) : "1", // ประเภทพัสดุ (1=ทั่วไป) - ต้องเป็น string ไม่ใช่ integer
       expressCategory: parseInt(String(shipmentData.expressCategory)) || 1, // 1=ส่งด่วน, 2=ส่งธรรมดา
       articleCategory: parseInt(String(shipmentData.articleCategory)) || 1, // ประเภทสินค้า (1=ทั่วไป)
       
       // บริการเสริม (required)
       insured: shipmentData.insured !== undefined ? parseInt(String(shipmentData.insured)) : 0, // 0=ไม่ซื้อ Flash care
-      codEnabled: shipmentData.codEnabled !== undefined ? parseInt(String(shipmentData.codEnabled)) : 0 // 0=ไม่ใช่ COD
+      codEnabled: shipmentData.codEnabled !== undefined ? parseInt(String(shipmentData.codEnabled)) : 0, // 0=ไม่ใช่ COD
+      codAmount: shipmentData.codEnabled && shipmentData.codEnabled !== 0 && shipmentData.codAmount ? parseInt(String(shipmentData.codAmount)) : 0, // จำนวนเงิน COD (ถ้ามี)
+      insuredAmount: shipmentData.insured && shipmentData.insured !== 0 && shipmentData.insuredAmount ? parseInt(String(shipmentData.insuredAmount)) : 0 // จำนวนเงินประกัน (ถ้ามี)
     };
     
     // เพิ่มข้อมูล COD ถ้าเปิดใช้งาน
@@ -326,6 +328,17 @@ export async function createFlashShipment(shipmentData: any) {
     formData.append('subItemTypes', JSON.stringify(subItemTypes));
     
     // 8. ส่งคำขอไปยัง Flash Express API
+    // แสดงข้อมูลที่ส่งให้กับ API อย่างละเอียดเพื่อช่วยในการดีบัก
+    console.log('Flash Express URL:', `${BASE_URL}/open/v3/orders`);
+    console.log('Flash Express request headers:', {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+      'X-Flash-Signature': signature,
+      'X-Flash-Timestamp': baseParams.timestamp,
+      'X-Flash-Nonce': baseParams.nonceStr
+    });
+    console.log('Flash Express request data (formData):', formData.toString());
+    
     const response = await axios.post(
       `${BASE_URL}/open/v3/orders`,
       formData,
@@ -337,9 +350,18 @@ export async function createFlashShipment(shipmentData: any) {
           'X-Flash-Timestamp': baseParams.timestamp,
           'X-Flash-Nonce': baseParams.nonceStr
         },
-        timeout: 15000
+        timeout: 15000,
+        validateStatus: function (status) {
+          // ยอมรับทุกสถานะโค้ดเพื่อให้อ่านข้อความผิดพลาดได้
+          return true;
+        }
       }
     );
+    
+    // แสดงข้อมูลการตอบกลับจาก API เพื่อช่วยในการดีบัก
+    console.log('Flash Express response status:', response.status);
+    console.log('Flash Express response headers:', response.headers);
+    console.log('Flash Express response data:', response.data);
     
     return response.data;
   } catch (error: any) {
