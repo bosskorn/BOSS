@@ -51,6 +51,7 @@ import FindByMerchantTracking from './pages/orders/find-by-merchant-tracking';
 import CreateOrderTest from './pages/create-order-test';
 import TestFlashExpress from './pages/test-flash-express';
 import FlashExpressShippingNew from './pages/flash-express-shipping-new';
+import FlashExpressTestV2 from './pages/flash-express-test-v2';
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -83,6 +84,7 @@ function Router() {
       <Route path="/create-order-form" component={CreateOrderForm} />
       <Route path="/test-flash-express" component={TestFlashExpress} />
       <Route path="/flash-express-shipping-new" component={FlashExpressShippingNew} />
+      <Route path="/flash-express-test-v2" component={FlashExpressTestV2} />
       {/* Flash Express routes have been updated */}
 
       {/* Protected routes - require authentication */}

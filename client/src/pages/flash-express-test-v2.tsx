@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { LuPackageCheck, LuArrowRight, LuPrinter, LuRotateCw, LuAlertCircle } from 'react-icons/lu';
+import { LuPackageCheck, LuArrowRight, LuPrinter, LuRotateCw, LuBellRing } from 'react-icons/lu';
 
 export default function FlashExpressTestV2() {
   const { user } = useAuth();
@@ -209,7 +209,7 @@ export default function FlashExpressTestV2() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">สถานะ:</span>
-                      <Badge variant={credentials.success ? "success" : "destructive"}>
+                      <Badge className={credentials.success ? "bg-green-500" : "bg-red-500"}>
                         {credentials.success ? 'พร้อมใช้งาน' : 'ไม่พร้อมใช้งาน'}
                       </Badge>
                     </div>
@@ -294,7 +294,7 @@ export default function FlashExpressTestV2() {
               {error && (
                 <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-md">
                   <div className="flex items-center text-red-800 mb-2">
-                    <LuAlertCircle className="h-5 w-5 mr-2" />
+                    <LuBellRing className="h-5 w-5 mr-2" />
                     <h3 className="font-medium">เกิดข้อผิดพลาด</h3>
                   </div>
                   <p className="text-sm text-red-700">{error}</p>
