@@ -64,10 +64,10 @@ export default function PickupRequestsTest() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          orderId: 1, // ใช้ค่า mock สำหรับการทดสอบ
+          orderId: 9999, // ใช้ค่า mock สำหรับการทดสอบ
           trackingNumber: data.trackingNumber,
           requestDate: data.requestDate,
-          notes: data.notes,
+          notes: data.notes || "ทดสอบการเรียกรถ",
         }),
         credentials: "include",
       });
