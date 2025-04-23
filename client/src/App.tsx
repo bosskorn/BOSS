@@ -49,6 +49,7 @@ import JntExpressLabel from './pages/jnt-express-label';
 import FeeHistory from './pages/fee-history';
 import LandingPage from './pages/landing';
 import FlashExpressAPITest from './pages/flash-express-api-test';
+import CreateFlashExpressOrder from './pages/create-flash-express-order';
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -81,6 +82,7 @@ function Router() {
       <Route path="/flash-express-label-fixed" component={FlashExpressLabelFixed} />
       <Route path="/landing" component={LandingPage} />
       <Route path="/flash-express-api-test" component={FlashExpressAPITest} />
+      <Route path="/create-flash-express-order" component={CreateFlashExpressOrder} />
 
 
       {/* Protected routes - require authentication */}

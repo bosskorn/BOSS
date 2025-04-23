@@ -7,6 +7,7 @@ import {
   getFlashExpressShippingOptions, 
   createFlashExpressShipping
 } from '../services/flash-express-final';
+import flashExpressRoutes from './flash-express-routes';
 
 // ฟังก์ชันสร้าง nonceStr (ทำซ้ำจาก flash-express-final.ts)
 function generateNonceStr(length = 16): string {
@@ -19,6 +20,9 @@ function generateNonceStr(length = 16): string {
 }
 
 const router = Router();
+
+// เพิ่ม Routes สำหรับ Flash Express API ใหม่
+router.use("/flash-express-new", flashExpressRoutes);
 
 // API สำหรับดึงข้อมูลวิธีการจัดส่งทั้งหมด
 router.get('/', auth, async (req, res) => {
