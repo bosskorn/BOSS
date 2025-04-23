@@ -6,7 +6,8 @@ import { auth } from '../auth';
 import { 
   createFlashOrder, 
   trackFlashOrder, 
-  findByMerchantTracking 
+  findByMerchantTracking,
+  testSignatureWithExampleData
 } from '../services/flash-express';
 import { storage } from '../storage';
 
@@ -172,6 +173,87 @@ router.get('/find-by-merchant-tracking/:merchantTrackingNumber', async (req, res
       message: error.response?.data?.message || error.message || 'เกิดข้อผิดพลาดในการค้นหาพัสดุ',
       error: error.response?.data || error.message
     });
+  }
+});
+
+/**
+ * API ทดสอบการเชื่อมต่อกับ Flash Express API
+ */
+router.get('/test', async (req, res) => {
+  try {
+    const testResult = testSignatureWithExampleData();
+    res.json({
+      success: true,
+      test: testResult,
+      env: {
+        merchantId: process.env.FLASH_EXPRESS_MERCHANT_ID ? 'configured' : 'missing',
+        apiKeyStatus: process.env.FLASH_EXPRESS_API_KEY ? 'configured' : 'missing',
+        apiKeyLength: process.env.FLASH_EXPRESS_API_KEY ? process.env.FLASH_EXPRESS_API_KEY.length : 0
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'เกิดข้อผิดพลาดในการทดสอบการเชื่อมต่อ',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * API ทดสอบพื้นที่ให้บริการของ Flash Express
+ */
+router.post('/validate-area', async (req, res) => {
+  try {
+    const { postalCode, provinceName, cityName } = req.body;
+    
+    // ตรวจสอบว่าข้อมูลครบถ้วนหรือไม่
+    if (!postalCode && !provinceName && !cityName) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'ต้องระบุรหัสไปรษณีย์ จังหวัด หรืออำเภอ อย่างน้อยหนึ่งอย่าง' 
+      });
+    }
+    
+    // ทดลองตรวจสอบกับข้อมูลที่ทราบว่าถูกต้องแน่นอน
+    const knownValidAreas = [
+      { postalCode: '10230', provinceName: 'กรุงเทพมหานคร', cityName: 'ลาดพร้าว', isValid: true },
+      { postalCode: '10400', provinceName: 'กรุงเทพมหานคร', cityName: 'พญาไท', isValid: true },
+      { postalCode: '10310', provinceName: 'กรุงเทพมหานคร', cityName: 'ห้วยขวาง', isValid: true },
+      { postalCode: '50000', provinceName: 'เชียงใหม่', cityName: 'เมืองเชียงใหม่', isValid: true }
+    ];
+    
+    // ตรวจสอบว่าข้อมูลที่ส่งมาตรงกับข้อมูลที่ทราบว่าถูกต้องหรือไม่
+    const matchingArea = knownValidAreas.find(area => {
+      if (postalCode && area.postalCode === postalCode) return true;
+      if (provinceName && cityName && 
+          area.provinceName === provinceName && 
+          area.cityName === cityName) return true;
+      return false;
+    });
+    
+    // ตอบกลับผลการตรวจสอบ
+    if (matchingArea) {
+      return res.json({ 
+        success: true, 
+        isValid: true,
+        message: 'พื้นที่ให้บริการถูกต้อง สามารถจัดส่งได้',
+        area: {
+          postalCode: matchingArea.postalCode,
+          provinceName: matchingArea.provinceName,
+          cityName: matchingArea.cityName
+        }
+      });
+    } else {
+      return res.json({ 
+        success: true, 
+        isValid: false,
+        message: 'พื้นที่นี้อาจไม่อยู่ในเขตให้บริการของ Flash Express หรือข้อมูลไม่ถูกต้อง',
+        suggestion: 'กรุณาตรวจสอบข้อมูลให้ถูกต้อง หรือติดต่อ Flash Express โดยตรง'
+      });
+    }
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
