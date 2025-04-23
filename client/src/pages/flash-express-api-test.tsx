@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface AddressData {
@@ -27,6 +28,7 @@ interface ShippingData {
   srcDistrictName: string;
   srcPostalCode: string;
   srcDetailAddress: string;
+  srcEmail?: string;
   dstName: string;
   dstPhone: string;
   dstProvinceName: string;
@@ -34,25 +36,61 @@ interface ShippingData {
   dstDistrictName: string;
   dstPostalCode: string;
   dstDetailAddress: string;
-  articleCategory: number;
-  expressCategory: number;
-  weight: number;
-  width?: number;
-  length?: number;
-  height?: number;
-  insured: number;
-  codEnabled: number;
-  codAmount?: number;
+  dstEmail?: string;
+  weight: string;
+  width?: string;
+  length?: string;
+  height?: string;
+  parcelKind: string;
+  expressCategory: string;
+  articleCategory: string;
+  insured: string;
+  codEnabled: string;
+  codAmount?: string;
+  insuredAmount?: string;
   remark?: string;
+  productType: string;
+  transportType: string;
+  payType: string;
+  expressTypeId: string;
 }
 
 export default function FlashExpressAPITest() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   const [loading, setLoading] = useState(false);
   const [rateResponse, setRateResponse] = useState<any>(null);
   const [shippingResponse, setShippingResponse] = useState<any>(null);
   const [connectionTestResult, setConnectionTestResult] = useState<any>(null);
+  
+  // ฟังก์ชันที่จะทำงานเมื่อคอมโพเนนต์โหลดเสร็จ
+  useEffect(() => {
+    // สร้างเลขอ้างอิงใหม่ทุกครั้งที่โหลดหน้า
+    setShippingData(prev => ({
+      ...prev,
+      outTradeNo: `TEST${Date.now()}`
+    }));
+    
+    // ดึงข้อมูลผู้ใช้ถ้ามี
+    if (user) {
+      setShippingData(prev => ({
+        ...prev,
+        srcName: user.fullname || prev.srcName,
+        srcPhone: user.phone || prev.srcPhone,
+        srcDetailAddress: user.address || prev.srcDetailAddress
+      }));
+    }
+    
+    // ถ้ามี tab parameter ให้เปลี่ยนไปที่แท็บนั้น
+    if (location.includes('?tab=')) {
+      const tabParam = location.split('?tab=')[1];
+      if (['connection', 'rates', 'shipping'].includes(tabParam)) {
+        // ตั้งค่า default tab ตาม parameter
+        document.querySelector(`[data-value="${tabParam}"]`)?.click();
+      }
+    }
+  }, [user]);
   
   // ข้อมูลที่อยู่สำหรับดึงอัตราค่าขนส่ง
   const [fromAddress, setFromAddress] = useState<AddressData>({
@@ -74,38 +112,37 @@ export default function FlashExpressAPITest() {
   // ข้อมูลสำหรับสร้างการจัดส่ง
   const [shippingData, setShippingData] = useState<ShippingData>({
     outTradeNo: `TEST${Date.now()}`,
-    srcName: user?.fullname || 'ผู้ทดสอบ',
-    srcPhone: user?.phone || '0812345678',
+    srcName: user?.fullname || 'กรธนภัทร นาคคงคำ',
+    srcPhone: user?.phone || '0829327325',
     srcProvinceName: 'กรุงเทพมหานคร',
     srcCityName: 'ลาดพร้าว',
     srcDistrictName: 'จรเข้บัว',
     srcPostalCode: '10230',
-    srcDetailAddress: user?.address || '123 ถนนทดสอบ',
-    srcEmail: 'test@example.com', // เพิ่มอีเมลผู้ส่ง
-    dstName: 'ลูกค้าทดสอบ',
-    dstPhone: '0812345678',
-    dstProvinceName: 'เชียงใหม่',
-    dstCityName: 'เมืองเชียงใหม่',
-    dstDistrictName: 'ช้างคลาน',
-    dstPostalCode: '50100',
-    dstDetailAddress: '456 ถนนทดสอบ ต.ช้างคลาน อ.เมือง จ.เชียงใหม่ 50100',
-    dstEmail: 'customer@example.com', // เพิ่มอีเมลผู้รับ
-    weight: 1000, // 1 kg (หน่วยเป็น g)
-    width: 10, // ความกว้างเป็น cm
-    length: 10, // ความยาวเป็น cm
-    height: 10, // ความสูงเป็น cm
+    srcDetailAddress: user?.address || '26 ลาดปลาเค้า 24 แยก 8',
+    dstName: 'ธัญลักษณ์ ภาคภูมิ',
+    dstPhone: '0869972410',
+    dstProvinceName: 'พระนครศรีอยุธยา',
+    dstCityName: 'บางปะอิน',
+    dstDistrictName: 'เชียงรากน้อย',
+    dstPostalCode: '13160',
+    dstDetailAddress: '138/348 ม.7 ซ.20 ต.เชียงรากน้อย อ.บางปะอิน',
+    weight: "1000", // 1 kg (หน่วยเป็น g) - ต้องเป็น string
+    width: "10", // ความกว้างเป็น cm - ต้องเป็น string
+    length: "10", // ความยาวเป็น cm - ต้องเป็น string
+    height: "10", // ความสูงเป็น cm - ต้องเป็น string
     // ข้อมูลที่จำเป็นตามข้อกำหนดของ Flash Express API
-    parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป) ต้องเป็น string
-    expressCategory: "1", // 1=ส่งด่วน, 2=ส่งธรรมดา ต้องเป็น string
-    articleCategory: "1", // ประเภทสินค้า (1=ทั่วไป) ต้องเป็น string
-    expressTypeId: "1", // ประเภทการส่ง (1=ส่งด่วน) ต้องเป็น string
-    productType: "1", // ประเภทสินค้า (1=ทั่วไป) ต้องเป็น string
-    payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย) ต้องเป็น string
-    transportType: "1", // ประเภทการขนส่ง (1=ปกติ) ต้องเป็น string
-    insured: "0", // 0=ไม่ซื้อ Flash care ต้องเป็น string
-    codEnabled: "0", // 0=ไม่ใช่ COD ต้องเป็น string
-    codAmount: "0", // จำนวนเงิน COD (ถ้ามี) ต้องเป็น string
-    insuredAmount: "0", // จำนวนเงินประกัน (ถ้ามี) ต้องเป็น string
+    parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป)
+    expressCategory: "1", // 1=ส่งด่วน, 2=ส่งธรรมดา
+    articleCategory: "2", // ประเภทสินค้า (2=อื่นๆ)
+    expressTypeId: "1", // ประเภทการส่ง (1=ส่งด่วน)
+    productType: "1", // ประเภทสินค้า (1=ทั่วไป)
+    payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย)
+    transportType: "1", // ประเภทการขนส่ง (1=ปกติ)
+    insured: "0", // 0=ไม่ซื้อ Flash care
+    codEnabled: "0", // 0=ไม่ใช่ COD
+    codAmount: "0", // จำนวนเงิน COD (ถ้ามี)
+    insuredAmount: "0", // จำนวนเงินประกัน (ถ้ามี)
+    remark: "ทดสอบการส่งพัสดุ", // หมายเหตุ
   });
   
   // ดึงข้อมูลค่าจัดส่ง
