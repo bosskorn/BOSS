@@ -360,7 +360,7 @@ export default function CreateFlashExpressOrderPage() {
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form className="space-y-6">
                   {/* ข้อมูลผู้ส่ง */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">ข้อมูลผู้ส่ง</h3>
@@ -868,10 +868,55 @@ export default function CreateFlashExpressOrderPage() {
                   </div>
 
                   <Button
-                    type="submit"
+                    type="button"
                     className="w-full"
                     disabled={isLoading || calculatingRate || !shippingRate}
-                    onClick={() => console.log('ข้อมูลของฟอร์ม:', form.getValues(), 'ข้อผิดพลาด:', form.formState.errors)}
+                    onClick={async () => {
+                      try {
+                        console.log('เริ่มส่งข้อมูลไปยัง API...');
+                        const values = form.getValues();
+                        console.log('ข้อมูลของฟอร์ม:', values);
+                        setIsLoading(true);
+                        
+                        // ส่งข้อมูลไปยัง API
+                        const response = await fetch('/api/shipping/flash-express-new/create', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          credentials: 'include',
+                          body: JSON.stringify(values),
+                        });
+
+                        const data = await response.json();
+                        console.log('API ตอบกลับ:', data);
+
+                        if (data.success) {
+                          toast({
+                            title: 'สร้างเลขพัสดุสำเร็จ',
+                            description: `เลขพัสดุของคุณคือ ${data.trackingNumber}`,
+                          });
+
+                          // ไปยังหน้ารายละเอียดออเดอร์
+                          setLocation(`/order-detail/${data.orderId}`);
+                        } else {
+                          toast({
+                            title: 'ไม่สามารถสร้างเลขพัสดุได้',
+                            description: data.error || 'กรุณาตรวจสอบข้อมูลและลองอีกครั้ง',
+                            variant: 'destructive',
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Error creating shipment:', error);
+                        toast({
+                          title: 'เกิดข้อผิดพลาด',
+                          description: 'ไม่สามารถสร้างเลขพัสดุได้ กรุณาลองอีกครั้งในภายหลัง',
+                          variant: 'destructive',
+                        });
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
                   >
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     สร้างเลขพัสดุ
