@@ -4,7 +4,7 @@ import querystring from 'querystring';
 import { v4 as uuidv4 } from 'uuid';
 
 // URL ของ Flash Express API
-const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com/open';
+const FLASH_EXPRESS_API_URL = 'https://open-api.flashexpress.com';
 
 // ฟังก์ชันสำหรับสร้างลายเซ็นดิจิตอล (signature) สำหรับ Flash Express API
 function createSignature(params: Record<string, any>, apiKey: string): string {
@@ -122,7 +122,8 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
     console.log('Flash Express Pickup API request params:', JSON.stringify(apiParams, null, 2));
     
     // URL ของ API เรียกรถของ Flash Express ตามเอกสารล่าสุด
-    const apiUrl = `${FLASH_EXPRESS_API_URL}/v1/notify`;
+    const apiUrl = `${FLASH_EXPRESS_API_URL}/open/v1/notify`;
+    console.log('Flash Express Pickup API URL:', apiUrl);
     
     try {
       // ส่งคำขอไปยัง Flash Express API
