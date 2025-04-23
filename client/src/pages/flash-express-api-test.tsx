@@ -19,6 +19,16 @@ interface TestResponse {
   response?: any;
   error?: any;
   timestamp?: string;
+  // Extended properties
+  merchant_id?: string;
+  api_key_status?: string;
+  weight_grams?: number;
+  express_type?: string;
+  shipping_rate_baht?: number;
+  tracking_number?: string;
+  sort_code?: string;
+  order_number?: string;
+  pdf_url?: string;
 }
 
 export default function FlashExpressAPITest() {
@@ -223,7 +233,9 @@ export default function FlashExpressAPITest() {
             </div>
             <div>
               <span className="font-medium">สถานะ API Key:</span>{' '}
-              <Badge variant={connectionResponse.api_key_status === 'Active' ? 'success' : 'destructive'}>
+              <Badge 
+                variant="outline" 
+                className={connectionResponse.api_key_status === 'Active' ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}>
                 {connectionResponse.api_key_status || 'N/A'}
               </Badge>
             </div>
@@ -329,7 +341,7 @@ export default function FlashExpressAPITest() {
             {orderResponse.success ? (
               <LuCheck className="h-5 w-5" />
             ) : (
-              <LuXCircle className="h-5 w-5" />
+              <LuX className="h-5 w-5" />
             )}
             <AlertTitle>{orderResponse.success ? "การสร้างคำสั่งจัดส่งสำเร็จ" : "การสร้างคำสั่งจัดส่งล้มเหลว"}</AlertTitle>
           </div>
@@ -494,8 +506,8 @@ export default function FlashExpressAPITest() {
                             <Label htmlFor="api-key-status">API Key Status</Label>
                             <div className="flex items-center">
                               <Badge 
-                                variant={connectionResponse?.api_key_status === 'Active' ? 'success' : connectionResponse?.api_key_status === 'Error' ? 'destructive' : 'outline'}
-                                className="ml-2"
+                                variant={connectionResponse?.api_key_status === 'Active' ? 'outline' : 'destructive'}
+                                className={connectionResponse?.api_key_status === 'Active' ? "ml-2 bg-green-50 text-green-700 border-green-200" : "ml-2"}
                               >
                                 {connectionResponse?.api_key_status || 'ยังไม่ได้ทดสอบ'}
                               </Badge>
@@ -578,7 +590,7 @@ export default function FlashExpressAPITest() {
                     
                     <Card>
                       <CardContent className="pt-6">
-                        <Alert variant="warning" className="mb-4">
+                        <Alert variant="destructive" className="mb-4">
                           <LuTriangle className="h-4 w-4" />
                           <AlertTitle>ข้อควรระวัง</AlertTitle>
                           <AlertDescription>
