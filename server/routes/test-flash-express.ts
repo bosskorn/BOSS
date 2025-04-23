@@ -38,14 +38,14 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
       
       // ข้อมูลประเภทพัสดุและบริการ (ฟิลด์ที่จำเป็นต้องมี)
       expressCategory: 1, // 1 = ธรรมดา (ตามเอกสาร Flash Express)
-      articleCategory: 1, // 1 = สินค้าทั่วไป
+      articleCategory: 99, // 99 = อื่นๆ (ตามเอกสาร Flash Express)
       
       // ข้อมูลการชำระเงิน
       settlementType: 1, // 1 = ผู้ส่งเป็นผู้ชำระ
       payType: 1, // เพิ่ม payType ด้วย
       
       // ข้อมูลสินค้า
-      itemCategory: 1,
+      itemCategory: 99, // 99 = อื่นๆ (ตามประเภทสินค้า)
       subItemTypes: [{itemName: "สินค้า", itemQuantity: 1}]
     };
     
