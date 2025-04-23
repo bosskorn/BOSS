@@ -67,13 +67,15 @@ function createSignature(data: any, timestamp: number): string {
     const stringA = parts.join('&');
     
     // 5. ต่อ stringA ด้วย &key=API_KEY (stringSignTemp)
+    // ตามเอกสาร Flash Express: stringSignTemp=stringA+"&key=secret_key"
     const stringSignTemp = `${stringA}&key=${API_KEY}`;
     
     console.log('String for signature (stringSignTemp):', stringSignTemp);
     
-    // 6. ใช้ SHA-256 สร้างลายเซ็นและแปลงเป็นตัวพิมพ์ใหญ่
+    // 6. คำนวณ SHA-256 ของ stringSignTemp
     // ตามเอกสาร Flash Express: sign=sha256(stringSignTemp).toUpperCase()
-    const hash = createHmac('sha256', '') // ไม่ต้องใช้ secret ในการสร้าง HMAC เพราะเราต่อ API_KEY ในสตริงแล้ว
+    const crypto = require('crypto');
+    const hash = crypto.createHash('sha256')
       .update(stringSignTemp)
       .digest('hex')
       .toUpperCase();
