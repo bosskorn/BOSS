@@ -133,6 +133,11 @@ async function testCreateShipping() {
       articleCategory: "2", // ประเภทสินค้า (2=อื่นๆ)
       insured: "0", // ประกันพัสดุ (0=ไม่มี)
       codEnabled: "0", // COD (0=ไม่มี)
+      // เพิ่มพารามิเตอร์ที่ Flash Express ต้องการ
+      productType: "1", // ประเภทสินค้า (1=ทั่วไป)
+      transportType: "1", // ประเภทการขนส่ง (1=ปกติ)
+      payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย)
+      expressTypeId: "1" // ประเภทการจัดส่ง (1=ส่งด่วน)
     };
     
     // 3. สร้างลายเซ็นจากข้อมูลสะอาด (ไม่มี remark)
