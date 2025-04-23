@@ -21,13 +21,19 @@ if (!API_KEY) {
  * @param timestamp เวลาที่ใช้ในการสร้างลายเซ็น (ไม่ได้ใช้ในกรณีของ Flash Express)
  * @returns ลายเซ็นที่สร้างขึ้น
  * 
- * การสร้างลายเซ็นตามเอกสาร Flash Express:
- * 1. เรียงลำดับข้อมูลตาม key ตามลำดับอักษร a-z
- * 2. แปลงข้อมูลเป็นรูปแบบ key=value คั่นด้วย &
- * 3. นำ API Key ต่อท้าย (ไม่มี &)
- * 4. นำไปเข้ารหัสด้วย SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
+ * การสร้างลายเซ็นตามเอกสาร Flash Express API:
+ * 1. จัดเรียง key ตามลำดับ ASCII
+ * 2. แปลงข้อมูลเป็นรูปแบบ key=value คั่นด้วย & เพื่อสร้าง stringA
+ * 3. นำ stringA มาต่อกับ "&key=API_KEY" เพื่อสร้าง stringSignTemp
+ * 4. คำนวณ SHA-256 ของ stringSignTemp
+ * 5. แปลงผลลัพธ์เป็นตัวพิมพ์ใหญ่ทั้งหมด
+ * 
+ * หมายเหตุสำคัญ:
+ * - ขั้นตอนการสร้าง stringA ไม่ต้อง URL encode ค่าต่างๆ (ให้ encode เฉพาะตอนส่งข้อมูลจริงเท่านั้น)
+ * - ฟิลด์ subItemTypes ต้องแปลงเป็น JSON string ก่อน (JSON.stringify)
+ * - ต้องแปลงผลลัพธ์ SHA-256 เป็นตัวพิมพ์ใหญ่ทั้งหมด
  */
-function createSignature(data: any, timestamp: number): string {
+async function createSignature(data: any, timestamp: number): Promise<string> {
   try {
     console.log('=== สร้างลายเซ็นสำหรับข้อมูล ===');
     console.log('ข้อมูลเริ่มต้น:', JSON.stringify(data, null, 2));
@@ -100,8 +106,8 @@ function createSignature(data: any, timestamp: number): string {
     
     // 6. คำนวณ SHA-256 ของ stringSignTemp และแปลงเป็นตัวพิมพ์ใหญ่
     // ตามเอกสาร Flash Express: sign=sha256(stringSignTemp).toUpperCase()
-    const crypto = require('crypto');
-    const hash = crypto.createHash('sha256')
+    const { createHash } = await import('crypto');
+    const hash = createHash('sha256')
       .update(stringSignTemp)
       .digest('hex')
       .toUpperCase();
