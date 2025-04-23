@@ -558,8 +558,8 @@ async function testFlashApi() {
       console.log('Form Data String:', formDataString);
       
       // ขั้นตอนที่ 3.1: ทดสอบด้วย endpoint เฉพาะ
-      // เปลี่ยนมาใช้ endpoint ที่รองรับในเวอร์ชันปัจจุบัน: /open/v3/merchant/info
-      console.log('ทดสอบเชื่อมต่อกับ endpoint: /open/v3/merchant/info');
+      // กลับมาใช้ endpoint เดิมเนื่องจากในประวัติการใช้งานเคยสำเร็จกับ endpoint นี้
+      console.log('ทดสอบเชื่อมต่อกับ endpoint: /open/v3/orders/create');
             
       // ตั้งค่าตัวเลือกการส่งคำขอ
       const requestOptions = {
@@ -573,7 +573,7 @@ async function testFlashApi() {
       };
       
       const response = await axios.post(
-        `${BASE_URL}/open/v3/merchant/info`,
+        `${BASE_URL}/open/v3/orders/create`,
         formDataString,
         requestOptions
       );
