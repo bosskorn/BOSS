@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import { auth } from '../middleware/auth';
 import { storage } from '../storage';
@@ -97,7 +96,7 @@ router.get('/track/:trackingNumber', async (req, res) => {
     // สร้างข้อมูลสถานะการจัดส่งจำลอง
     const statusOptions = ['pending', 'in_transit', 'out_for_delivery', 'delivered'];
     const randomStatus = statusOptions[Math.floor(Math.random() * statusOptions.length)];
-    
+
     // สร้างข้อมูลการติดตามจำลอง
     const mockTrackingInfo = {
       trackingNumber,
@@ -113,7 +112,7 @@ router.get('/track/:trackingNumber', async (req, res) => {
         }
       ]
     };
-    
+
     // เพิ่มสถานะเพิ่มเติมตามสถานะปัจจุบัน
     if (['in_transit', 'out_for_delivery', 'delivered'].includes(randomStatus)) {
       mockTrackingInfo.details.push({
@@ -123,7 +122,7 @@ router.get('/track/:trackingNumber', async (req, res) => {
         timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() // 12 ชั่วโมงก่อน
       });
     }
-    
+
     if (['out_for_delivery', 'delivered'].includes(randomStatus)) {
       mockTrackingInfo.details.push({
         status: 'out_for_delivery',
@@ -132,7 +131,7 @@ router.get('/track/:trackingNumber', async (req, res) => {
         timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() // 4 ชั่วโมงก่อน
       });
     }
-    
+
     if (randomStatus === 'delivered') {
       mockTrackingInfo.details.push({
         status: 'delivered',
