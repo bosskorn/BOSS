@@ -31,7 +31,9 @@ export default function TestFlashExpress() {
 
     try {
       // เรียกใช้ API ทดสอบ
+      console.log('กำลังทดสอบเรียก API Flash Express...');
       const response = await api.post('/api/flash-express-test/test-create-order');
+      console.log('การตอบกลับจาก API:', response.data);
       console.log("ผลการทดสอบ:", response.data);
       
       setResult(response.data);
