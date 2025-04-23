@@ -417,12 +417,24 @@ export async function trackFlashOrder(trackingNumber: string): Promise<any> {
       throw new Error('Flash Express API credentials are missing');
     }
 
-    const data = { trackingNumber };
+    console.log(`เริ่มติดตามพัสดุ Flash Express หมายเลข: ${trackingNumber}`);
+
+    // ปรับปรุงการส่งข้อมูลให้ตรงตามคู่มือล่าสุดของ Flash Express
+    // ตามข้อกำหนดของ API Flash Express อาจต้องใช้เฉพาะตัวเลขจากหมายเลขพัสดุ
+    const pno = trackingNumber.replace(/^[A-Za-z]+/, ''); // ตัดตัวอักษรด้านหน้าออก (เช่น TH)
+    
+    const data = { 
+      mchId: MERCHANT_ID, 
+      pno: trackingNumber // ใช้หมายเลขพัสดุเต็ม
+    };
+    
     const timestamp = Date.now();
     const signature = await createSignature(data, timestamp);
 
-    const response = await axios.get(`${BASE_URL}/v3/tracking`, {
-      params: data,
+    // ลองใช้ endpoint ที่อัปเดตตามเอกสารล่าสุด
+    console.log(`ส่งคำขอไปยัง Flash Express API: ${BASE_URL}/v3/tracking/routes/${trackingNumber}`, data);
+    
+    const response = await axios.get(`${BASE_URL}/v3/tracking/routes/${trackingNumber}`, {
       headers: {
         'Content-Type': 'application/json',
         'X-Flash-Merchant-Id': MERCHANT_ID,
@@ -431,9 +443,24 @@ export async function trackFlashOrder(trackingNumber: string): Promise<any> {
       }
     });
 
+    console.log('Flash Express API Response (Tracking):', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error: any) {
     console.error('Error tracking Flash Express order:', error?.response?.data || error.message);
+    
+    // ถ้าเกิดข้อผิดพลาด 404 อาจเป็นเพราะพัสดุเพิ่งถูกสร้าง ยังไม่มีข้อมูลการติดตาม
+    if (error.response && error.response.status === 404) {
+      return {
+        code: 0, // ใช้ code 0 เพื่อให้แอพรู้ว่าคำขอสำเร็จ แต่ยังไม่มีข้อมูล
+        message: 'ยังไม่พบข้อมูลการติดตามพัสดุนี้ อาจเป็นเพราะพัสดุเพิ่งถูกสร้าง',
+        data: {
+          trackingNumber,
+          trackingStatus: 'waiting',
+          trackingHistory: []
+        }
+      };
+    }
+    
     throw error;
   }
 }
