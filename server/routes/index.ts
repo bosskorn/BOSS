@@ -13,6 +13,7 @@ import dashboardRoutes from './dashboard';
 import feeHistoryRoutes from './fee-history';
 import testFlashExpressRoutes from './test-flash-express';
 import flashExpressRoutes from './flash-express'; // เพิ่มเส้นทาง Flash Express
+import flashExpressTestRoutes from './flash-express-test'; // เพิ่มเส้นทางทดสอบ Flash Express
 
 const router = Router();
 
@@ -31,6 +32,7 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/fee-history', feeHistoryRoutes);
 router.use('/flash-express-test', testFlashExpressRoutes);
 router.use('/flash-express', flashExpressRoutes); // เพิ่มเส้นทาง Flash Express API
+router.use('/flash-express-api-test', flashExpressTestRoutes); // เพิ่มเส้นทางทดสอบ Flash Express API ใหม่
 
 // Base API route
 router.get('/', (req, res) => {
