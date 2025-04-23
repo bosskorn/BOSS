@@ -188,13 +188,13 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
       weight: Math.round(weight), // แปลงเป็นจำนวนเต็ม
       
       // ข้อมูลประกัน
-      insured: (hasInsurance || insuranceAmount > 0) ? 1 : 0,
-      insureDeclareValue: (hasInsurance || insuranceAmount > 0) ? Math.round(insuranceAmount || 10000) : 0,
-      opdInsureEnabled: (hasInsurance || insuranceAmount > 0) ? 1 : 0,
+      insured: req.body.insured || 0,
+      insureDeclareValue: req.body.insureDeclareValue || 0,
+      opdInsureEnabled: req.body.opdInsureEnabled || 0,
       
       // ข้อมูล COD
-      codEnabled: codEnabled || 0,
-      codAmount: codEnabled ? Math.round(codAmount) : 0,
+      codEnabled: req.body.codEnabled || 0,
+      codAmount: req.body.codEnabled ? Math.round(req.body.codAmount || 0) : 0,
       
       // ข้อมูลพัสดุย่อย
       subParcelQuantity: 1,
