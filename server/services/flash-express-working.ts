@@ -1,5 +1,6 @@
 /**
- * บริการ Flash Express แบบปรับปรุงแล้วและทำงานได้จริง
+ * บริการ Flash Express ที่ทำงานได้จริง
+ * สร้างมาจากไฟล์เปรียบเทียบที่ทดสอบและทำงานได้แล้ว
  */
 import axios from 'axios';
 import crypto from 'crypto';
@@ -23,14 +24,10 @@ function generateNonceStr(length = 16): string {
 }
 
 /**
- * สร้างลายเซ็นตามมาตรฐานของ Flash Express อย่างเคร่งครัด
- * ฉบับปรับปรุงให้ทำงานได้จริง
+ * สร้างลายเซ็นสำหรับ Flash Express API ที่ทำงานได้
  */
 function generateFlashSignature(params: Record<string, any>, apiKey: string): string {
   try {
-    console.log('⚙️ สร้างลายเซ็น Flash Express API...');
-    console.log('⚙️ ข้อมูลเริ่มต้น:', JSON.stringify(params, null, 2));
-    
     // 1. แปลงทุกค่าเป็น string และกรองพารามิเตอร์
     const stringParams: Record<string, string> = {};
     Object.keys(params).forEach(key => {
@@ -41,7 +38,7 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
         'merchantId',  // ใช้ mchId แทน
         'subParcel',   // ไม่รวมในการคำนวณลายเซ็น
         'subParcelQuantity', // ไม่รวมในการคำนวณลายเซ็น
-        'remark'       // ห้ามรวมในการคำนวณลายเซ็น (สำคัญมาก)
+        'remark'       // ไม่รวมในการคำนวณลายเซ็น
       ];
       
       if (skipParams.includes(key)) return;
@@ -60,17 +57,16 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
     const stringToSign = sortedKeys
       .map(key => `${key}=${stringParams[key]}`)
       .join('&') + `&key=${apiKey}`;
-
-    console.log('🔑 สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
     
-    // 4. สร้าง SHA-256 hash และแปลงเป็นตัวพิมพ์ใหญ่
-    const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toUpperCase();
+    // 4. คำนวณค่า SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
+    const sign = crypto.createHash('sha256')
+      .update(stringToSign)
+      .digest('hex')
+      .toUpperCase();
     
-    console.log('🔒 ลายเซ็นที่สร้าง:', signature);
-    
-    return signature;
-  } catch (error) {
-    console.error('❌ เกิดข้อผิดพลาดในการสร้างลายเซ็น Flash Express:', error);
+    return sign;
+  } catch (error: any) {
+    console.error('❌ เกิดข้อผิดพลาดในการสร้างลายเซ็น:', error.message);
     throw error;
   }
 }
@@ -79,11 +75,14 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
  * สร้างข้อมูลพื้นฐานสำหรับการส่งคำขอไปยัง Flash Express API
  */
 function createBaseRequestParams() {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const nonceStr = generateNonceStr();
+  
   return {
     mchId: FLASH_EXPRESS_MCH_ID,
-    nonceStr: generateNonceStr(),
-    timestamp: String(Math.floor(Date.now() / 1000)),
-    warehouseNo: `${FLASH_EXPRESS_MCH_ID}_001`,
+    nonceStr: nonceStr,
+    timestamp: timestamp,
+    warehouseNo: `${FLASH_EXPRESS_MCH_ID}_001` // รูปแบบมาตรฐานของ Flash Express
   };
 }
 
@@ -97,17 +96,17 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       throw new Error('Flash Express API credentials not configured');
     }
     
-    // สร้างพารามิเตอร์พื้นฐาน
+    // สร้างข้อมูลพื้นฐาน
     const requestParams = {
       ...createBaseRequestParams(),
       
-      // ข้อมูลต้นทาง
+      // ข้อมูลที่อยู่ต้นทาง
       srcProvinceName: originAddress.province,
       srcCityName: originAddress.district,
       srcDistrictName: originAddress.subdistrict,
       srcPostalCode: originAddress.zipcode,
       
-      // ข้อมูลปลายทาง
+      // ข้อมูลที่อยู่ปลายทาง
       dstProvinceName: destinationAddress.province,
       dstCityName: destinationAddress.district,
       dstDistrictName: destinationAddress.subdistrict,
@@ -118,6 +117,7 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       width: String(Math.round(packageDetails.width || 0)),
       length: String(Math.round(packageDetails.length || 0)),
       height: String(Math.round(packageDetails.height || 0)),
+      insured: '0' // จำเป็นต้องระบุเพื่อความสมบูรณ์ของการเรียก API
     };
     
     // สร้างลายเซ็น
@@ -138,7 +138,7 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
     
     // เรียกใช้ API
     const response = await axios.post(
-      `${FLASH_EXPRESS_API_URL}/open/v1/orders/estimate_rate`,
+      `${FLASH_EXPRESS_API_URL}/open/v3/estimate_rate`,
       encodedPayload,
       { headers, timeout: API_TIMEOUT }
     );
@@ -180,15 +180,14 @@ export async function createShipment(shipmentData: any) {
       throw new Error('Flash Express API credentials not configured');
     }
     
-    // สร้างเลขอ้างอิงภายใน
-    const outTradeNo = shipmentData.outTradeNo || `ORDER${Date.now()}`;
+    // สร้างเลขอ้างอิงออเดอร์
+    const outTradeNo = `SS${Date.now()}`;
     
     // แปลงเบอร์โทรให้เป็นรูปแบบที่ถูกต้อง (ลบช่องว่างและขีด)
     const senderPhone = (shipmentData.senderPhone || '').replace(/[\s-]/g, '');
     const recipientPhone = (shipmentData.recipientPhone || '').replace(/[\s-]/g, '');
     
-    // 1. สร้างข้อมูลพื้นฐาน (ไม่มี remark)
-    // สำคัญ: ต้องไม่มี remark เลย แม้แต่ในข้อมูลต้นฉบับ
+    // สร้างข้อมูลพื้นฐาน (รวม remark)
     const requestParams = {
       ...createBaseRequestParams(),
       outTradeNo,
@@ -221,17 +220,16 @@ export async function createShipment(shipmentData: any) {
       height: String(Math.round(shipmentData.height || 0)),
       insured: String(shipmentData.insured || 0), // ไม่ซื้อประกัน
       codEnabled: String(shipmentData.codEnabled || 0), // ไม่ใช้ COD
-      // ไม่ใส่ remark ในขั้นตอนนี้
+      remark: shipmentData.remark || '',
     };
     
-    // 2. สร้างลายเซ็น
-    const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
+    // สร้างข้อมูลที่จะใช้ในการสร้างลายเซ็น (ไม่รวม remark)
+    const paramsCopy = { ...requestParams };
+    delete paramsCopy.remark; // ลบ remark ออกก่อนสร้างลายเซ็น (สำคัญมาก)
     
-    // 3. เพิ่มลายเซ็นเข้าไปในข้อมูล
+    // สร้างลายเซ็น
+    const signature = generateFlashSignature(paramsCopy, FLASH_EXPRESS_API_KEY as string);
     requestParams.sign = signature;
-    
-    // 4. เพิ่ม remark หลังจากคำนวณลายเซ็นเสร็จเรียบร้อยแล้ว
-    requestParams.remark = shipmentData.remark || '';
     
     // แปลงเป็น URL-encoded string
     const encodedPayload = new URLSearchParams(requestParams as Record<string, string>).toString();
@@ -423,7 +421,7 @@ export async function testApi() {
 
 // รันการทดสอบหากเรียกไฟล์โดยตรง
 // เพื่อทดสอบโค้ดนี้ รัน: 
-// npx tsx server/flash-express-fixed-final.ts test
+// npx tsx server/services/flash-express-working.ts test
 if (process.argv.includes('test')) {
   testApi().then(result => {
     console.log('🏁 ผลลัพธ์การทดสอบ:', result);
