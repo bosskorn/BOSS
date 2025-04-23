@@ -228,8 +228,8 @@ export default function FlashExpressAPITest() {
         }
         
         // เพิ่มข้อมูล HTML response หากได้รับการตอบกลับเป็น HTML
-        if (data.htmlResponse) {
-          console.log('ได้รับการตอบกลับเป็น HTML:', data.htmlResponse);
+        if (data.htmlAnalysis) {
+          console.log('ได้รับการตอบกลับเป็น HTML:', data.htmlAnalysis);
           description += ' - เซิร์ฟเวอร์ตอบกลับด้วย HTML แทน JSON ซึ่งอาจเกิดจากการเปลี่ยนเส้นทาง';
         }
         
