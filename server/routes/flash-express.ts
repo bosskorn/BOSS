@@ -222,16 +222,16 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
       codEnabled: req.body.codEnabled || 0,
       codAmount: req.body.codEnabled ? Math.round(req.body.codAmount || 0) : 0,
       
-      // ข้อมูลพัสดุย่อย
-      subParcelQuantity: 1,
-      subParcel: JSON.stringify([{
-        outTradeNo: outTradeNo + "1",
-        weight: Math.round(weight),
-        width: Math.round(width),
-        length: Math.round(length),
-        height: Math.round(height),
-        remark: ""
-      }]),
+      // ไม่ใช้ฟีเจอร์พัสดุย่อย เนื่องจากบัญชีไม่ได้เปิดใช้งาน
+      // subParcelQuantity: 1,
+      // subParcel: JSON.stringify([{
+      //   outTradeNo: outTradeNo + "1",
+      //   weight: Math.round(weight),
+      //   width: Math.round(width),
+      //   length: Math.round(length),
+      //   height: Math.round(height),
+      //   remark: ""
+      // }]),
       
       // ข้อมูลสินค้า
       subItemTypes: JSON.stringify(subItemTypes || [{
@@ -265,8 +265,8 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
 
       console.log('Flash Express API response:', response.data);
 
-      // ตรวจสอบว่าได้รับเลขพัสดุหรือไม่
-      if (response.data.msg === 'success' && response.data.pno) {
+      // ตรวจสอบว่าเป็นการตอบกลับที่สำเร็จหรือไม่
+      if (response.data.code === 1 && response.data.msg === 'success' && response.data.pno) {
         // บันทึกข้อมูลเลขพัสดุลงในฐานข้อมูล หากต้องการ
         
         // ส่งข้อมูลกลับไปยังไคลเอนต์
@@ -280,10 +280,21 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
           response: response.data
         });
       } else {
-        // กรณีมีข้อผิดพลาดจาก Flash Express API
+        // กรณีมีข้อผิดพลาดจาก Flash Express API หรือข้อความแจ้งจาก API
+        // ถ้า code = 0 อาจหมายถึงว่า API รับข้อมูลได้แต่มีปัญหาบางอย่าง
+        let errorMessage = '';
+        
+        if (response.data.message) {
+          errorMessage = response.data.message;
+        } else if (response.data.msg) {
+          errorMessage = response.data.msg;
+        } else {
+          errorMessage = 'ไม่ทราบสาเหตุ';
+        }
+        
         return res.status(400).json({
           success: false,
-          message: `มีข้อผิดพลาดจาก Flash Express: ${response.data.msg || 'ไม่ทราบสาเหตุ'}`,
+          message: `มีข้อผิดพลาดจาก Flash Express: ${errorMessage}`,
           errorCode: response.data.code || 'UNKNOWN',
           response: response.data
         });
@@ -296,8 +307,16 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
       let errorData = null;
       
       if (apiError.response) {
-        errorMessage = apiError.response.data.msg || apiError.response.data.message || 'มีข้อผิดพลาดจาก Flash Express API';
+        if (apiError.response.data && (apiError.response.data.msg || apiError.response.data.message)) {
+          errorMessage = apiError.response.data.msg || apiError.response.data.message;
+        } else if (apiError.response.data && apiError.response.data.code === 0) {
+          // กรณีพิเศษสำหรับ code 0
+          errorMessage = apiError.response.data.message || 'มีข้อผิดพลาดจาก Flash Express API';
+        } else {
+          errorMessage = 'มีข้อผิดพลาดจาก Flash Express API';
+        }
         errorData = apiError.response.data;
+        console.log('Error data from Flash Express API:', JSON.stringify(errorData));
       }
       
       return res.status(400).json({
