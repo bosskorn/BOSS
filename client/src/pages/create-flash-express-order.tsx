@@ -21,7 +21,7 @@ export default function CreateFlashExpressOrder() {
               <ExclamationTriangleIcon className="h-4 w-4" />
               <AlertTitle>บริการถูกยกเลิก</AlertTitle>
               <AlertDescription>
-                บริการนี้ได้ถูกลบออกจากระบบแล้ว
+                บริการ Flash Express ได้ถูกลบออกจากระบบแล้ว
               </AlertDescription>
             </Alert>
           </CardContent>

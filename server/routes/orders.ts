@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { storage } from '../storage';
 import { auth } from '../middleware/auth';
-import { createFlashShipment as createFlashExpressShipping } from '../services/flash-express';
 import { db } from '../db';
 import { users, feeHistory } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -477,122 +476,8 @@ router.post('/', auth, async (req, res) => {
       }
     }
     
-    // If this is a COD order, create shipping label with Flash Express
-    if (isCashOnDelivery && orderData.shipping_service_id && order.id) {
-      try {
-        // Get customer information - ใช้ customerId ที่ถูกต้อง
-        const customer = await storage.getCustomer(orderData.customerId);
-        
-        if (customer) {
-          // Get user information (merchant/sender) from session
-          const user = req.user as any;
-          
-          // Prepare sender information (merchant)
-          const senderInfo = {
-            name: user.fullname || user.username,
-            phone: user.phone || '0800000000', // Fallback
-            address: user.address || 'PURPLEDASH Office',
-            province: 'กรุงเทพมหานคร', // Default or from user profile
-            district: 'บางรัก',
-            subdistrict: 'สีลม',
-            zipcode: '10500'
-          };
-          
-          // Prepare recipient information (customer)
-          const recipientInfo = {
-            name: customer.name,
-            phone: customer.phone,
-            address: customer.address,
-            province: customer.province,
-            district: customer.district,
-            subdistrict: customer.subdistrict,
-            zipcode: customer.zipcode
-          };
-          
-          // Prepare parcel information
-          const parcelInfo = {
-            serviceId: orderData.shipping_service_id,
-            weight: 1.0, // Default weight or calculate based on items
-          };
-          
-          // Call Flash Express API to create shipping label with COD
-          // ข้อมูลสำหรับการสร้าง Flash Express shipping ตามรูปแบบ API
-          const shippingData = {
-            outTradeNo: order.orderNumber,
-            // ข้อมูลผู้ส่ง (sender)
-            srcName: senderInfo.name,
-            srcPhone: senderInfo.phone,
-            srcProvinceName: senderInfo.province,
-            srcCityName: senderInfo.district,
-            srcDistrictName: senderInfo.subdistrict,
-            srcPostalCode: senderInfo.zipcode,
-            srcDetailAddress: senderInfo.address,
-            // ข้อมูลผู้รับ (recipient)
-            dstName: recipientInfo.name,
-            dstPhone: recipientInfo.phone,
-            dstHomePhone: recipientInfo.phone, // ใช้เบอร์เดียวกัน
-            dstProvinceName: recipientInfo.province,
-            dstCityName: recipientInfo.district, 
-            dstDistrictName: recipientInfo.subdistrict,
-            dstPostalCode: recipientInfo.zipcode,
-            dstDetailAddress: recipientInfo.address,
-            // ข้อมูลพัสดุ
-            articleCategory: 4, // Default - สินค้าทั่วไป
-            expressCategory: 1, // Standard delivery
-            weight: parcelInfo.weight * 1000, // แปลงเป็นกรัม
-            width: 20, // ค่าเริ่มต้น
-            length: 30, // ค่าเริ่มต้น
-            height: 10, // ค่าเริ่มต้น
-            insured: 0, // ไม่ได้ซื้อประกัน
-            codEnabled: 1, // เปิดใช้งาน COD
-            codAmount: Math.round(orderData.total * 100), // แปลงเป็นสตางค์
-            remark: `Order #${order.orderNumber}`,
-            // ข้อมูลสินค้าภายใน (สร้างข้อมูลจากตัวออเดอร์)
-            subItemTypes: [
-              {
-                itemName: `สินค้าออเดอร์ #${order.orderNumber}`,
-                itemQuantity: 1
-              }
-            ]
-          };
-          
-          // เรียกใช้ API
-          const flashExpressResponse = await createFlashExpressShipping(shippingData);
-          
-          // Store tracking information if available and successful
-          if (flashExpressResponse && flashExpressResponse.success && flashExpressResponse.trackingNumber) {
-            await storage.updateOrder(order.id, {
-              trackingNumber: flashExpressResponse.trackingNumber,
-              status: 'processing'
-            });
-            
-            console.log(`การสร้างเลขพัสดุสำเร็จ: ${flashExpressResponse.trackingNumber}`);
-          } else {
-            // If Flash Express API failed, delete the order and return error
-            await storage.deleteOrder(order.id);
-            
-            const errorMessage = flashExpressResponse.error || 'ไม่สามารถสร้างเลขพัสดุได้ กรุณาลองใหม่อีกครั้ง';
-            console.error(`การสร้างเลขพัสดุล้มเหลว: ${errorMessage}`);
-            
-            return res.status(400).json({
-              success: false,
-              message: errorMessage,
-              details: {
-                apiResponse: flashExpressResponse,
-                shippingData: shippingData
-              }
-            });
-          }
-        }
-      } catch (error: any) {
-        // Delete the order if shipping creation fails and return error
-        await storage.deleteOrder(order.id);
-        return res.status(400).json({
-          success: false,
-          message: error.message || 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง กรุณาลองใหม่อีกครั้ง'
-        });
-      }
-    }
+    // COD order processing has been removed
+    // การสร้างเลขพัสดุสำหรับ COD ถูกลบออกแล้ว
     
     // ดึงข้อมูลผู้ใช้ล่าสุดหลังจากหักเครดิต
     const updatedUser = await storage.getUser(req.user.id);
