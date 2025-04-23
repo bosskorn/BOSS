@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { storage } from '../storage';
 import { auth } from '../middleware/auth';
-import { createShipment as createFlashExpressShipping } from '../services/flash-express';
+import { createFlashShipment as createFlashExpressShipping } from '../services/flash-express';
 import { db } from '../db';
 import { users, feeHistory } from '@shared/schema';
 import { eq } from 'drizzle-orm';

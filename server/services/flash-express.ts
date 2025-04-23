@@ -10,6 +10,33 @@ const BASE_URL = 'https://open-api-tra.flashexpress.com';
 const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
+/**
+ * ตัวอย่างข้อมูลสำเร็จรูปจากเอกสาร Flash Express
+ * ใช้สำหรับอ้างอิงในการทดสอบการสร้างลายเซ็น
+ */
+const EXAMPLE_DATA = {
+  mchId: 'AAXXXX',
+  nonceStr: '1526461166805',
+  srcProvinceName: 'อุบลราชธานี',
+  srcCityName: 'เมืองอุบลราชธานี',
+  srcDistrictName: 'ในเมือง',
+  srcPostalCode: '34000',
+  dstProvinceName: 'เชียงใหม่',
+  dstCityName: 'สันทราย',
+  dstDistrictName: 'สันพระเนตร',
+  dstPostalCode: '50210',
+  weight: '1000', // ต้องเป็น string
+  width: '40',
+  length: '40',
+  height: '40',
+  expressCategory: '2',
+  insureDeclareValue: '100',
+  insured: '1',
+  opdInsureEnabled: '1',
+  pricingTable: '1'
+};
+// ลายเซ็นที่ถูกต้องของข้อมูลตัวอย่าง: 'CD03E4D230D0824E804D2AB013879E39A75238C1230214840C6A31C9DF169BF5'
+
 // ตรวจสอบว่ามีการตั้งค่า API key หรือไม่
 if (!MERCHANT_ID || !API_KEY) {
   console.error('Flash Express API: MERCHANT_ID หรือ API_KEY ไม่ถูกตั้งค่า');
@@ -196,7 +223,8 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
 /**
  * สร้างเลขพัสดุใหม่กับ Flash Express
  */
-export async function createShipment(shipmentData: any) {
+// ป้องกันการประกาศซ้ำ
+export async function createFlashShipment(shipmentData: any) {
   try {
     // 1. สร้างข้อมูลพื้นฐาน
     const baseParams = createBaseRequestParams();
@@ -321,7 +349,8 @@ export async function createShipment(shipmentData: any) {
 /**
  * ติดตามสถานะพัสดุ
  */
-export async function trackShipment(trackingNumber: string) {
+// เปลี่ยนชื่อฟังก์ชันเพื่อป้องกันการขัดแย้ง
+export async function trackFlashShipment(trackingNumber: string) {
   try {
     // 1. สร้างข้อมูลพื้นฐาน
     const baseParams = createBaseRequestParams();
@@ -383,12 +412,61 @@ export async function trackShipment(trackingNumber: string) {
  * สำหรับ API เดิม ให้ใช้เป็นชื่อที่ตรงกับ import ในไฟล์ shipping-methods.ts
  */
 export const getFlashExpressShippingOptions = getShippingOptions;
+// รีเอ็กซ์พอร์ตฟังก์ชันอื่นๆ ที่ใช้ในไฟล์อื่น
+// ไม่ต้องส่งออกซ้ำซ้อน
+
+/**
+ * ทดสอบการสร้างลายเซ็นกับข้อมูลตัวอย่างจากเอกสาร
+ * ใช้สำหรับตรวจสอบว่าการสร้างลายเซ็นของเราทำงานถูกต้องหรือไม่
+ */
+export function testSignatureWithExampleData() {
+  try {
+    // 1. ใช้ข้อมูลตัวอย่างจากเอกสาร
+    const testParams = { ...EXAMPLE_DATA };
+    
+    // 2. ใช้ apiKey ตัวอย่างสำหรับการทดสอบ (เนื่องจากไม่มีในตัวอย่าง ให้ใช้ค่าสมมติ)
+    const testApiKey = 'test_api_key_for_signature_verification';
+    
+    // 3. สร้างลายเซ็นจากโค้ดของเรา
+    const ourSignature = generateFlashSignature(testParams, testApiKey);
+    
+    // 4. ลายเซ็นที่ถูกต้องจากเอกสาร
+    const expectedSignature = 'CD03E4D230D0824E804D2AB013879E39A75238C1230214840C6A31C9DF169BF5';
+    
+    // 5. เปรียบเทียบผลลัพธ์
+    const signatureMatches = (ourSignature === expectedSignature);
+    
+    return {
+      success: signatureMatches,
+      testData: {
+        params: testParams,
+        apiKey: testApiKey.substring(0, 3) + '...'
+      },
+      signatures: {
+        ours: ourSignature,
+        expected: expectedSignature,
+        match: signatureMatches,
+        length: ourSignature.length
+      },
+      message: signatureMatches 
+        ? 'การสร้างลายเซ็นตรงกับตัวอย่างในเอกสาร! ✓' 
+        : 'ลายเซ็นที่สร้างไม่ตรงกับตัวอย่างในเอกสาร ✗'
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message,
+      message: `เกิดข้อผิดพลาดในการทดสอบลายเซ็น: ${error.message}`
+    };
+  }
+}
 
 /**
  * ทดสอบการเชื่อมต่อกับ API แบบละเอียด
  * ตรวจสอบการตั้งค่า API Key, ทดสอบการสร้างลายเซ็น, และทดสอบการเชื่อมต่อกับ API
  */
-export async function testApi() {
+// เปลี่ยนชื่อฟังก์ชันเพื่อป้องกันการขัดแย้ง
+export async function testFlashApi() {
   try {
     // 1. ตรวจสอบการตั้งค่า API Key
     const credentialCheck = {

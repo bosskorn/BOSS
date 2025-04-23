@@ -19,7 +19,7 @@ import mockShippingRouter from "./routes/mock-shipping";
 import dashboardRouter from "./routes/dashboard";
 import stripeRouter from "./routes/stripe";
 import feeHistoryRouter from "./routes/fee-history";
-import flashExpressRouter from "./routes/flash-express-routes";
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // แสดงข้อมูลข้อมูลของทุกคำขอเพื่อแก้ไขปัญหา
@@ -54,9 +54,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/dashboard", dashboardRouter);
   app.use("/api/stripe", stripeRouter);
   app.use("/api/fee-history", feeHistoryRouter);
-  app.use("/api/shipping/flash-express-new", flashExpressRouter);
-
-  // ตรวจสอบสถานะ Flash Express API
+  // แสดงสถานะการใช้งาน Flash Express API
   app.get("/api/flash-express/status", (req, res) => {
     const hasCredentials = process.env.FLASH_EXPRESS_MERCHANT_ID && process.env.FLASH_EXPRESS_API_KEY;
     res.json({
@@ -66,8 +64,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
-  // เพิ่มเส้นทางสำหรับการใช้งาน Flash Express API
-  app.use("/api/flash-express", flashExpressRouter);
+  // endpoint ทดสอบการคำนวณลายเซ็น Flash Express API 
+  app.get("/api/flash-express/test-signature", (req, res) => {
+    const { testSignatureWithExampleData } = require('./services/flash-express');
+    const result = testSignatureWithExampleData();
+    res.json(result);
+  });
 
   const httpServer = createServer(app);
 

@@ -4,11 +4,9 @@ import { auth } from '../middleware/auth';
 import { insertShippingMethodSchema } from '@shared/schema';
 
 import { 
-  getShippingOptions as getFlashExpressShippingOptions, 
-  createShipment as createFlashExpressShipping
+  getFlashExpressShippingOptions, 
+  createFlashShipment as createFlashExpressShipping
 } from '../services/flash-express';
-import flashExpressRoutes from './flash-express-routes';
-
 // ฟังก์ชันสร้าง nonceStr
 function generateNonceStr(length = 16): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -21,8 +19,7 @@ function generateNonceStr(length = 16): string {
 
 const router = Router();
 
-// เพิ่ม Routes สำหรับ Flash Express API ใหม่
-router.use("/flash-express-new", flashExpressRoutes);
+// Routes สำหรับ Flash Express API จัดการแยกใน routes.ts
 
 // API สำหรับดึงข้อมูลวิธีการจัดส่งทั้งหมด
 router.get('/', auth, async (req, res) => {
