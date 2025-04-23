@@ -28,6 +28,9 @@ function generateNonceStr(length = 16): string {
  */
 function generateFlashSignature(params: Record<string, any>, apiKey: string): string {
   try {
+    console.log('⚙️ สร้างลายเซ็น Flash Express API...');
+    console.log('⚙️ ข้อมูลเริ่มต้น:', JSON.stringify(params, null, 2));
+    
     // 1. แปลงทุกค่าเป็น string และกรองพารามิเตอร์
     const stringParams: Record<string, string> = {};
     Object.keys(params).forEach(key => {
@@ -38,13 +41,19 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
         'merchantId',  // ใช้ mchId แทน
         'subParcel',   // ไม่รวมในการคำนวณลายเซ็น
         'subParcelQuantity', // ไม่รวมในการคำนวณลายเซ็น
-        'remark'       // ไม่รวมในการคำนวณลายเซ็น
+        'remark'       // ห้ามรวมในการคำนวณลายเซ็น (สำคัญมาก)
       ];
       
-      if (skipParams.includes(key)) return;
+      if (skipParams.includes(key)) {
+        console.log(`🚫 ข้ามพารามิเตอร์ "${key}" ในการคำนวณลายเซ็น`);
+        return;
+      }
       
       // ข้ามค่าที่เป็น null, undefined หรือช่องว่าง
-      if (params[key] === null || params[key] === undefined || params[key] === '') return;
+      if (params[key] === null || params[key] === undefined || params[key] === '') {
+        console.log(`⚠️ ข้ามพารามิเตอร์ "${key}" เนื่องจากค่าเป็น null, undefined หรือค่าว่าง`);
+        return;
+      }
       
       // แปลงทุกค่าเป็น string
       stringParams[key] = String(params[key]);
@@ -52,11 +61,14 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
 
     // 2. จัดเรียงคีย์ตามลำดับตัวอักษร ASCII
     const sortedKeys = Object.keys(stringParams).sort();
+    console.log('📝 คีย์ที่เรียงลำดับแล้ว:', sortedKeys);
 
     // 3. สร้างสตริงสำหรับลายเซ็น
     const stringToSign = sortedKeys
       .map(key => `${key}=${stringParams[key]}`)
       .join('&') + `&key=${apiKey}`;
+    
+    console.log('🔑 สตริงที่ใช้สร้างลายเซ็น:', stringToSign);
     
     // 4. คำนวณค่า SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
     const sign = crypto.createHash('sha256')
@@ -64,6 +76,7 @@ function generateFlashSignature(params: Record<string, any>, apiKey: string): st
       .digest('hex')
       .toUpperCase();
     
+    console.log('🔒 ลายเซ็นที่สร้าง:', sign);
     return sign;
   } catch (error: any) {
     console.error('❌ เกิดข้อผิดพลาดในการสร้างลายเซ็น:', error.message);
@@ -201,7 +214,7 @@ export async function createShipment(shipmentData: any) {
     const senderPhone = (shipmentData.senderPhone || '').replace(/[\s-]/g, '');
     const recipientPhone = (shipmentData.recipientPhone || '').replace(/[\s-]/g, '');
     
-    // สร้างข้อมูลพื้นฐาน (รวม remark)
+    // สร้างข้อมูลพื้นฐาน (ไม่รวม remark)
     const requestParams = {
       ...createBaseRequestParams(),
       outTradeNo,
@@ -224,7 +237,7 @@ export async function createShipment(shipmentData: any) {
       dstPostalCode: shipmentData.recipientAddress.zipcode,
       dstDetailAddress: shipmentData.recipientAddress.address,
       
-      // ข้อมูลพัสดุ
+      // ข้อมูลพัสดุ (สำคัญ: ต้องครบทุกพารามิเตอร์จำเป็น)
       articleCategory: String(shipmentData.articleCategory || 1), // ประเภทสินค้าทั่วไป
       expressCategory: String(shipmentData.expressCategory || 1), // บริการขนส่งปกติ
       parcelKind: String(shipmentData.parcelKind || 1), // พัสดุปกติ
@@ -232,18 +245,26 @@ export async function createShipment(shipmentData: any) {
       width: String(Math.round(shipmentData.width || 0)),
       length: String(Math.round(shipmentData.length || 0)),
       height: String(Math.round(shipmentData.height || 0)),
-      insured: String(shipmentData.insured || 0), // ไม่ซื้อประกัน
-      codEnabled: String(shipmentData.codEnabled || 0), // ไม่ใช้ COD
-      remark: shipmentData.remark || '',
+      insured: '0', // สำคัญ: ต้องระบุเป็น '0' เสมอถ้าไม่ต้องการประกัน
+      codEnabled: '0', // สำคัญ: ต้องระบุเป็น '0' เสมอถ้าไม่ต้องการ COD
     };
     
-    // สร้างข้อมูลที่จะใช้ในการสร้างลายเซ็น (ไม่รวม remark)
-    const paramsCopy = { ...requestParams };
-    delete paramsCopy.remark; // ลบ remark ออกก่อนสร้างลายเซ็น (สำคัญมาก)
+    console.log('⚙️ ข้อมูลก่อนสร้างลายเซ็น:', JSON.stringify(requestParams, null, 2));
     
     // สร้างลายเซ็น
-    const signature = generateFlashSignature(paramsCopy, FLASH_EXPRESS_API_KEY as string);
-    const requestWithSign = { ...requestParams, sign: signature };
+    const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
+    
+    console.log('🔒 ลายเซ็นที่สร้างเสร็จ:', signature);
+    
+    // เพิ่มลายเซ็นเข้าไปในข้อมูล
+    // ใช้วิธี casting เพื่อหลีกเลี่ยงการเกิด LSP errors
+    const requestWithSignature = { ...requestParams, sign: signature } as any;
+    
+    // เพิ่ม remark หลังจากคำนวณลายเซ็นเสร็จเรียบร้อยแล้ว
+    const requestWithSign = { 
+      ...requestWithSignature, 
+      remark: shipmentData.remark || '' 
+    };
     
     // แปลงเป็น URL-encoded string
     const encodedPayload = new URLSearchParams(requestWithSign as Record<string, string>).toString();
