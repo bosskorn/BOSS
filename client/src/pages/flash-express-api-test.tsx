@@ -1,966 +1,1080 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-import Layout from '@/components/Layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { Loader2 } from 'lucide-react';
 
-interface AddressData {
-  province: string;
-  district: string;
-  subdistrict: string;
-  zipcode: string;
-}
+// Components
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormDescription } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import AdminLayout from '@/components/AdminLayout';
 
-interface ShippingData {
-  outTradeNo: string;
-  srcName: string;
-  srcPhone: string;
-  srcProvinceName: string;
-  srcCityName: string;
-  srcDistrictName: string;
-  srcPostalCode: string;
-  srcDetailAddress: string;
-  srcEmail?: string;
-  dstName: string;
-  dstPhone: string;
-  dstProvinceName: string;
-  dstCityName: string;
-  dstDistrictName: string;
-  dstPostalCode: string;
-  dstDetailAddress: string;
-  dstEmail?: string;
-  weight: string;
-  width?: string;
-  length?: string;
-  height?: string;
-  parcelKind: string;
-  expressCategory: string;
-  articleCategory: string;
-  insured: string;
-  codEnabled: string;
-  codAmount?: string;
-  insuredAmount?: string;
-  remark?: string;
-  productType: string;
-  transportType: string;
-  payType: string;
-  expressTypeId: string;
-}
+// Schemas
+const provinceList = [
+  'กรุงเทพมหานคร', 'กระบี่', 'กาญจนบุรี', 'กาฬสินธุ์', 'กำแพงเพชร', 'ขอนแก่น', 'จันทบุรี', 'ฉะเชิงเทรา',
+  'ชลบุรี', 'ชัยนาท', 'ชัยภูมิ', 'ชุมพร', 'เชียงราย', 'เชียงใหม่', 'ตรัง', 'ตราด', 'ตาก', 'นครนายก',
+  'นครปฐม', 'นครพนม', 'นครราชสีมา', 'นครศรีธรรมราช', 'นครสวรรค์', 'นนทบุรี', 'นราธิวาส', 'น่าน',
+  'บึงกาฬ', 'บุรีรัมย์', 'ปทุมธานี', 'ประจวบคีรีขันธ์', 'ปราจีนบุรี', 'ปัตตานี', 'พระนครศรีอยุธยา',
+  'พะเยา', 'พังงา', 'พัทลุง', 'พิจิตร', 'พิษณุโลก', 'เพชรบุรี', 'เพชรบูรณ์', 'แพร่', 'ภูเก็ต',
+  'มหาสารคาม', 'มุกดาหาร', 'แม่ฮ่องสอน', 'ยโสธร', 'ยะลา', 'ร้อยเอ็ด', 'ระนอง', 'ระยอง', 'ราชบุรี',
+  'ลพบุรี', 'ลำปาง', 'ลำพูน', 'เลย', 'ศรีสะเกษ', 'สกลนคร', 'สงขลา', 'สตูล', 'สมุทรปราการ',
+  'สมุทรสงคราม', 'สมุทรสาคร', 'สระแก้ว', 'สระบุรี', 'สิงห์บุรี', 'สุโขทัย', 'สุพรรณบุรี', 'สุราษฎร์ธานี',
+  'สุรินทร์', 'หนองคาย', 'หนองบัวลำภู', 'อ่างทอง', 'อำนาจเจริญ', 'อุดรธานี', 'อุตรดิตถ์', 'อุทัยธานี', 'อุบลราชธานี'
+];
 
-export default function FlashExpressAPITest() {
-  const { user } = useAuth();
+// คำนิยามประเภทสินค้า
+const articleCategories = [
+  { value: "1", label: "เสื้อผ้า" },
+  { value: "2", label: "อื่นๆ" },
+  { value: "3", label: "อุปกรณ์อิเล็กทรอนิกส์" },
+  { value: "4", label: "หนังสือ" },
+  { value: "5", label: "ของเล่น" },
+  { value: "6", label: "อาหารและเครื่องดื่ม" },
+  { value: "7", label: "เครื่องสำอาง" },
+  { value: "8", label: "ยา" },
+  { value: "9", label: "เครื่องใช้ในบ้าน" }
+];
+
+// คำนิยามประเภทการจัดส่ง
+const expressCategories = [
+  { value: "1", label: "ด่วน (1-2 วัน)" },
+  { value: "2", label: "ปกติ (2-3 วัน)" }
+];
+
+const orderFormSchema = z.object({
+  // ข้อมูลพื้นฐาน
+  outTradeNo: z.string().default(() => `TEST${Date.now()}`),
+  
+  // ข้อมูลผู้ส่ง
+  srcName: z.string().min(2, 'กรุณาระบุชื่อผู้ส่ง'),
+  srcPhone: z.string().min(9, 'กรุณาระบุเบอร์โทรศัพท์ที่ถูกต้อง'),
+  srcProvinceName: z.string().min(1, 'กรุณาเลือกจังหวัด'),
+  srcCityName: z.string().min(1, 'กรุณาเลือกอำเภอ/เขต'),
+  srcDistrictName: z.string().optional(),
+  srcPostalCode: z.string().min(5, 'กรุณาระบุรหัสไปรษณีย์'),
+  srcDetailAddress: z.string().min(5, 'กรุณาระบุที่อยู่'),
+
+  // ข้อมูลผู้รับ
+  dstName: z.string().min(2, 'กรุณาระบุชื่อผู้รับ'),
+  dstPhone: z.string().min(9, 'กรุณาระบุเบอร์โทรศัพท์ที่ถูกต้อง'),
+  dstHomePhone: z.string().optional(),
+  dstProvinceName: z.string().min(1, 'กรุณาเลือกจังหวัด'),
+  dstCityName: z.string().min(1, 'กรุณาเลือกอำเภอ/เขต'),
+  dstDistrictName: z.string().optional(),
+  dstPostalCode: z.string().min(5, 'กรุณาระบุรหัสไปรษณีย์'),
+  dstDetailAddress: z.string().min(5, 'กรุณาระบุที่อยู่'),
+
+  // ข้อมูลพัสดุ
+  weight: z.coerce.number().min(0.1, 'น้ำหนักต้องมากกว่า 0.1 กก.').max(30, 'น้ำหนักต้องไม่เกิน 30 กก.'),
+  width: z.coerce.number().min(1, 'ความกว้างต้องมากกว่า 1 ซม.').max(100, 'ความกว้างต้องไม่เกิน 100 ซม.').optional(),
+  length: z.coerce.number().min(1, 'ความยาวต้องมากกว่า 1 ซม.').max(100, 'ความยาวต้องไม่เกิน 100 ซม.').optional(),
+  height: z.coerce.number().min(1, 'ความสูงต้องมากกว่า 1 ซม.').max(100, 'ความสูงต้องไม่เกิน 100 ซม.').optional(),
+  
+  // ประเภทสินค้าและการจัดส่ง
+  articleCategory: z.string().default("2"), // 2 = อื่นๆ (default)
+  expressCategory: z.string().default("1"), // 1 = ด่วน (default)
+  
+  // บริการเสริม
+  insured: z.coerce.number().default(0),
+  insureDeclareValue: z.coerce.number().optional(),
+  opdInsureEnabled: z.coerce.number().default(0),
+  codEnabled: z.coerce.number().default(0),
+  codAmount: z.coerce.number().default(0),
+  
+  // อื่นๆ
+  remark: z.string().optional(),
+  
+  // ข้อมูลสินค้า (จำเป็นเมื่อใช้ COD)
+  subItemTypes: z.array(
+    z.object({
+      itemName: z.string().default("สินค้า"),
+      itemWeightSize: z.string().default("1kg"),
+      itemColor: z.string().default("-"),
+      itemQuantity: z.coerce.number().min(1).default(1)
+    })
+  ).optional()
+});
+
+type OrderFormValues = z.infer<typeof orderFormSchema>;
+
+export default function FlashExpressApiTest() {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [subdistricts, setSubdistricts] = useState<string[]>([]);
+  const [recipientDistricts, setRecipientDistricts] = useState<string[]>([]);
+  const [recipientSubdistricts, setRecipientSubdistricts] = useState<string[]>([]);
+  const [calculatingRate, setCalculatingRate] = useState(false);
+  const [orderResult, setOrderResult] = useState<any>(null);
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
-  const [loading, setLoading] = useState(false);
-  const [rateResponse, setRateResponse] = useState<any>(null);
-  const [shippingResponse, setShippingResponse] = useState<any>(null);
-  const [connectionTestResult, setConnectionTestResult] = useState<any>(null);
 
-  // ฟังก์ชันที่จะทำงานเมื่อคอมโพเนนต์โหลดเสร็จ
-  useEffect(() => {
-    // สร้างเลขอ้างอิงใหม่ทุกครั้งที่โหลดหน้า
-    setShippingData(prev => ({
-      ...prev,
-      outTradeNo: `TEST${Date.now()}`
-    }));
-
-    // ดึงข้อมูลผู้ใช้ถ้ามี
-    if (user) {
-      setShippingData(prev => ({
-        ...prev,
-        srcName: user.fullname || prev.srcName,
-        srcPhone: user.phone || prev.srcPhone,
-        srcDetailAddress: user.address || prev.srcDetailAddress
-      }));
-    }
-
-    // ถ้ามี tab parameter ให้เปลี่ยนไปที่แท็บนั้น
-    if (location.includes('?tab=')) {
-      const tabParam = location.split('?tab=')[1];
-      if (['connection', 'rates', 'shipping'].includes(tabParam)) {
-        // ตั้งค่า default tab ตาม parameter
-        document.querySelector(`[data-value="${tabParam}"]`)?.click();
-      }
-    }
-  }, [user]);
-
-  // ข้อมูลที่อยู่สำหรับดึงอัตราค่าขนส่ง
-  const [fromAddress, setFromAddress] = useState<AddressData>({
-    province: 'กรุงเทพมหานคร',
-    district: 'ลาดพร้าว',
-    subdistrict: 'จรเข้บัว',
-    zipcode: '10230'
-  });
-
-  const [toAddress, setToAddress] = useState<AddressData>({
-    province: 'เชียงใหม่',
-    district: 'เมืองเชียงใหม่',
-    subdistrict: 'ช้างคลาน',
-    zipcode: '50100'
-  });
-
-  const [weight, setWeight] = useState(1.0);
-
-  // ข้อมูลสำหรับสร้างการจัดส่ง
-  const [shippingData, setShippingData] = useState<ShippingData>({
-    outTradeNo: `TEST${Date.now()}`,
-    srcName: user?.fullname || 'กรธนภัทร นาคคงคำ',
-    srcPhone: user?.phone || '0829327325',
-    srcProvinceName: 'กรุงเทพมหานคร',
-    srcCityName: 'ลาดพร้าว',
-    srcDistrictName: 'จรเข้บัว',
-    srcPostalCode: '10230',
-    srcDetailAddress: user?.address || '26 ลาดปลาเค้า 24 แยก 8',
-    dstName: 'ธัญลักษณ์ ภาคภูมิ',
-    dstPhone: '0869972410',
-    dstProvinceName: 'พระนครศรีอยุธยา',
-    dstCityName: 'บางปะอิน',
-    dstDistrictName: 'เชียงรากน้อย',
-    dstPostalCode: '13160',
-    dstDetailAddress: '138/348 ม.7 ซ.20 ต.เชียงรากน้อย อ.บางปะอิน',
-    weight: "1000", // 1 kg (หน่วยเป็น g) - ต้องเป็น string
-    width: "10", // ความกว้างเป็น cm - ต้องเป็น string
-    length: "10", // ความยาวเป็น cm - ต้องเป็น string
-    height: "10", // ความสูงเป็น cm - ต้องเป็น string
-    // ข้อมูลที่จำเป็นตามข้อกำหนดของ Flash Express API
-    parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป)
-    expressCategory: "1", // 1=ส่งด่วน, 2=ส่งธรรมดา
-    articleCategory: "2", // ประเภทสินค้า (2=อื่นๆ)
-    expressTypeId: "1", // ประเภทการส่ง (1=ส่งด่วน)
-    productType: "1", // ประเภทสินค้า (1=ทั่วไป)
-    payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย)
-    transportType: "1", // ประเภทการขนส่ง (1=ปกติ)
-    insured: "0", // 0=ไม่ซื้อ Flash care
-    codEnabled: "0", // 0=ไม่ใช่ COD
-    codAmount: "0", // จำนวนเงิน COD (ถ้ามี)
-    insuredAmount: "0", // จำนวนเงินประกัน (ถ้ามี)
-    remark: "ทดสอบการส่งพัสดุ", // หมายเหตุ
-  });
-
-  // ดึงข้อมูลค่าจัดส่ง
-  const getShippingRates = async () => {
-    try {
-      setLoading(true);
-
-      console.log('กำลังเรียก API เพื่อดึงข้อมูลค่าจัดส่ง:', {
-        fromAddress,
-        toAddress,
-        weight
-      });
-
-      const response = await apiRequest(
-        'POST',
-        '/api/shipping-methods/flash-express/rates',
-        {
-          fromAddress,
-          toAddress,
-          weight
-        }
-      );
-
-      const data = await response.json();
-      console.log('ข้อมูลค่าจัดส่งที่ได้รับ:', data);
-      setRateResponse(data);
-
-      toast({
-        title: 'ดึงข้อมูลสำเร็จ',
-        description: 'ได้รับข้อมูลค่าจัดส่งจาก Flash Express API แล้ว',
-      });
-    } catch (error) {
-      console.error('เกิดข้อผิดพลาดในการดึงข้อมูลค่าจัดส่ง:', error);
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: 'ไม่สามารถดึงข้อมูลค่าจัดส่งได้',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
+  // ข้อมูลเขต และแขวง (mock data)
+  const districtData: Record<string, Record<string, string[]>> = {
+    'กรุงเทพมหานคร': {
+      'เขตพระนคร': ['พระบรมมหาราชวัง', 'วังบูรพาภิรมย์', 'วัดราชบพิธ', 'สำราญราษฎร์', 'ศาลเจ้าพ่อเสือ'],
+      'เขตดุสิต': ['ดุสิต', 'วชิรพยาบาล', 'สวนจิตรลดา', 'สี่แยกมหานาค', 'บางซื่อ'],
+      'เขตหนองจอก': ['กระทุ่มราย', 'หนองจอก', 'คลองสิบ', 'คลองสิบสอง', 'โคกแฝด'],
+      'เขตบางรัก': ['มหาพฤฒาราม', 'สีลม', 'สุริยวงศ์', 'บางรัก', 'สี่พระยา'],
+      'เขตบางเขน': ['อนุสาวรีย์', 'ท่าแร้ง'],
+      'เขตบางกะปิ': ['คลองจั่น', 'หัวหมาก'],
+      'เขตปทุมวัน': ['รองเมือง', 'วังใหม่', 'ปทุมวัน', 'ลุมพินี'],
+      'เขตป้อมปราบศัตรูพ่าย': ['วังบูรพาภิรมย์', 'วัดเทพศิรินทร์', 'คลองมหานาค', 'ป้อมปราบ'],
+      'เขตพญาไท': ['สามเสนใน'],
+      'เขตธนบุรี': ['วัดกัลยาณ์', 'หิรัญรูจี', 'บางยี่เรือ', 'บุคคโล', 'ตลาดพลู'],
+      'เขตบางกอกใหญ่': ['วัดอรุณ', 'วัดท่าพระ'],
+      'เขตห้วยขวาง': ['ห้วยขวาง', 'บางกะปิ', 'สามเสนนอก'],
+      'เขตลาดพร้าว': ['จรเข้บัว', 'ลาดพร้าว'],
+      'เขตบางนา': ['บางนา']
+    },
+    'พระนครศรีอยุธยา': {
+      'บางปะอิน': ['บางปะอิน', 'บ้านแป้ง', 'บางกระสั้น', 'คลองจิก', 'เชียงรากน้อย', 'บ้านพลับ'],
+      'พระนครศรีอยุธยา': ['ประตูชัย', 'เวียงสระ', 'กะมัง', 'สวนพริก', 'หอรัตนไชย', 'ไผ่ลิง']
     }
   };
 
-  // สร้างการจัดส่ง
-  const createShipping = async () => {
+  const form = useForm<OrderFormValues>({
+    resolver: zodResolver(orderFormSchema),
+    defaultValues: {
+      outTradeNo: `TEST${Date.now()}`,
+      srcName: '',
+      srcPhone: '',
+      srcProvinceName: 'กรุงเทพมหานคร',
+      srcCityName: '',
+      srcDistrictName: '',
+      srcPostalCode: '',
+      srcDetailAddress: '',
+      dstName: '',
+      dstPhone: '',
+      dstHomePhone: '',
+      dstProvinceName: 'กรุงเทพมหานคร',
+      dstCityName: '',
+      dstDistrictName: '',
+      dstPostalCode: '',
+      dstDetailAddress: '',
+      weight: 1,
+      width: 10,
+      length: 20,
+      height: 10,
+      articleCategory: "2",
+      expressCategory: "1",
+      insured: 0,
+      insureDeclareValue: 0,
+      opdInsureEnabled: 0,
+      codEnabled: 0,
+      codAmount: 0,
+      remark: 'ทดสอบการส่งพัสดุ',
+      subItemTypes: [
+        { itemName: 'สินค้าทดสอบ', itemWeightSize: '1kg', itemColor: '-', itemQuantity: 1 }
+      ]
+    },
+  });
+
+  // ตรวจจับการเปลี่ยนแปลงค่าที่สำคัญ
+  const senderProvince = form.watch('srcProvinceName');
+  const senderDistrict = form.watch('srcCityName');
+  const recipientProvince = form.watch('dstProvinceName');
+  const recipientDistrict = form.watch('dstCityName');
+  const codEnabled = form.watch('codEnabled');
+
+  // ดึงข้อมูลผู้ใช้จาก API เมื่อโหลดหน้า
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch('/api/user-profile', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.user) {
+            // กำหนดค่าเริ่มต้นสำหรับผู้ส่ง
+            form.setValue('srcName', data.user.fullname || '');
+            form.setValue('srcPhone', data.user.phone || '');
+            form.setValue('srcProvinceName', data.user.province || 'กรุงเทพมหานคร');
+            form.setValue('srcCityName', data.user.district || '');
+            form.setValue('srcDistrictName', data.user.subdistrict || '');
+            form.setValue('srcPostalCode', data.user.zipcode || '');
+            form.setValue('srcDetailAddress', data.user.address || '');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  // ฟังก์ชันโหลดอำเภอเมื่อเลือกจังหวัด (สำหรับผู้ส่ง)
+  useEffect(() => {
+    if (senderProvince) {
+      const availableDistricts = Object.keys(districtData[senderProvince] || {});
+      setDistricts(availableDistricts);
+      form.setValue('srcCityName', '');
+      form.setValue('srcDistrictName', '');
+      form.setValue('srcPostalCode', '');
+    }
+  }, [senderProvince, form]);
+
+  // ฟังก์ชันโหลดตำบลเมื่อเลือกอำเภอ (สำหรับผู้ส่ง)
+  useEffect(() => {
+    if (senderProvince && senderDistrict) {
+      const availableSubdistricts = districtData[senderProvince]?.[senderDistrict] || [];
+      setSubdistricts(availableSubdistricts);
+      form.setValue('srcDistrictName', '');
+
+      // กำหนดรหัสไปรษณีย์ตามพื้นที่ (ตัวอย่าง)
+      if (senderProvince === 'กรุงเทพมหานคร') {
+        if (['เขตพระนคร', 'เขตป้อมปราบศัตรูพ่าย', 'เขตสัมพันธวงศ์'].includes(senderDistrict)) {
+          form.setValue('srcPostalCode', '10200');
+        } else if (['เขตดุสิต'].includes(senderDistrict)) {
+          form.setValue('srcPostalCode', '10300');
+        } else if (['เขตบางรัก', 'เขตสาทร', 'เขตปทุมวัน'].includes(senderDistrict)) {
+          form.setValue('srcPostalCode', '10330');
+        } else if (['เขตพญาไท', 'เขตดินแดง', 'เขตห้วยขวาง'].includes(senderDistrict)) {
+          form.setValue('srcPostalCode', '10400');
+        } else if (['เขตลาดพร้าว'].includes(senderDistrict)) {
+          form.setValue('srcPostalCode', '10230');
+        }
+      } else if (senderProvince === 'พระนครศรีอยุธยา') {
+        if (senderDistrict === 'บางปะอิน') {
+          form.setValue('srcPostalCode', '13160');
+        } else {
+          form.setValue('srcPostalCode', '13000');
+        }
+      }
+    }
+  }, [senderProvince, senderDistrict, form]);
+
+  // ฟังก์ชันโหลดอำเภอเมื่อเลือกจังหวัด (สำหรับผู้รับ)
+  useEffect(() => {
+    if (recipientProvince) {
+      const availableDistricts = Object.keys(districtData[recipientProvince] || {});
+      setRecipientDistricts(availableDistricts);
+      form.setValue('dstCityName', '');
+      form.setValue('dstDistrictName', '');
+      form.setValue('dstPostalCode', '');
+    }
+  }, [recipientProvince, form]);
+
+  // ฟังก์ชันโหลดตำบลเมื่อเลือกอำเภอ (สำหรับผู้รับ)
+  useEffect(() => {
+    if (recipientProvince && recipientDistrict) {
+      const availableSubdistricts = districtData[recipientProvince]?.[recipientDistrict] || [];
+      setRecipientSubdistricts(availableSubdistricts);
+      form.setValue('dstDistrictName', '');
+
+      // กำหนดรหัสไปรษณีย์ตามพื้นที่ (ตัวอย่าง)
+      if (recipientProvince === 'กรุงเทพมหานคร') {
+        if (['เขตพระนคร', 'เขตป้อมปราบศัตรูพ่าย', 'เขตสัมพันธวงศ์'].includes(recipientDistrict)) {
+          form.setValue('dstPostalCode', '10200');
+        } else if (['เขตดุสิต'].includes(recipientDistrict)) {
+          form.setValue('dstPostalCode', '10300');
+        } else if (['เขตบางรัก', 'เขตสาทร', 'เขตปทุมวัน'].includes(recipientDistrict)) {
+          form.setValue('dstPostalCode', '10330');
+        } else if (['เขตพญาไท', 'เขตดินแดง', 'เขตห้วยขวาง'].includes(recipientDistrict)) {
+          form.setValue('dstPostalCode', '10400');
+        } else if (['เขตลาดพร้าว'].includes(recipientDistrict)) {
+          form.setValue('dstPostalCode', '10230');
+        }
+      } else if (recipientProvince === 'พระนครศรีอยุธยา') {
+        if (recipientDistrict === 'บางปะอิน') {
+          form.setValue('dstPostalCode', '13160');
+        } else {
+          form.setValue('dstPostalCode', '13000');
+        }
+      }
+    }
+  }, [recipientProvince, recipientDistrict, form]);
+
+  // ส่งคำขอสร้างเลขพัสดุ
+  const handleCreateShipping = async () => {
     try {
-      setLoading(true);
-
-      console.log('กำลังเรียก API เพื่อสร้างการจัดส่ง:', {
-        orderData: shippingData
-      });
-
-      // แปลงข้อมูลเพื่อให้มั่นใจว่าส่งตามฟอร์แมตที่ถูกต้อง
-      const formattedShippingData = {
-        ...shippingData,
-        // แปลงค่าทุกอย่างให้เป็น string ตามข้อกำหนดของ Flash Express API
-        weight: String(shippingData.weight),
-        width: String(shippingData.width || 20),
-        length: String(shippingData.length || 30),
-        height: String(shippingData.height || 10),
-        insured: String(shippingData.insured || 0),
-        codEnabled: String(shippingData.codEnabled || 0),
-        codAmount: String(shippingData.codAmount || 0),
-        insuredAmount: String(shippingData.insuredAmount || 0),
-        expressCategory: String(shippingData.expressCategory || 1),
-        articleCategory: String(shippingData.articleCategory || 2)
+      setIsLoading(true);
+      
+      // ดึงข้อมูลจากฟอร์ม
+      const values = form.getValues();
+      
+      // เตรียมข้อมูลสำหรับส่งไปยัง API
+      const requestData = {
+        orderData: {
+          ...values,
+          // แปลงข้อมูลตามที่ Flash Express API ต้องการ
+          // ปรับค่าน้ำหนักเป็นกรัม
+          weight: String(Math.round(values.weight * 1000)),
+          // ปรับขนาดเป็น String
+          width: String(values.width || 10),
+          length: String(values.length || 10),
+          height: String(values.height || 10),
+          // ค่าตัวเลขอื่นๆเป็น String
+          insured: String(values.insured),
+          codEnabled: String(values.codEnabled),
+          articleCategory: values.articleCategory,
+          expressCategory: values.expressCategory,
+          
+          // เพิ่มข้อมูลที่จำเป็นสำหรับ Flash Express API
+          parcelKind: "1", // ประเภทพัสดุ (1=ทั่วไป)
+          expressTypeId: "1", // ประเภทการจัดส่ง (1=ส่งด่วน)
+          productType: "1", // ประเภทสินค้า (1=ทั่วไป)
+          payType: "1", // วิธีการชำระเงิน (1=ผู้ส่งจ่าย)
+          transportType: "1", // ประเภทการขนส่ง (1=ปกติ)
+          pricingType: "1",
+          pricingTable: "1",
+          opdInsureEnabled: String(values.opdInsureEnabled || 0),
+          
+          // ถ้า COD เปิดใช้งาน ให้แปลงค่าเป็นสตางค์ 
+          codAmount: values.codEnabled ? String(Math.round(values.codAmount * 100)) : "0",
+          insuredAmount: values.insured ? String(Math.round(values.insureDeclareValue || 2000) * 100) : "0",
+        }
       };
 
-      const response = await apiRequest(
-        'POST',
-        '/api/shipping-methods/flash-express/shipping',
-        {
-          orderData: formattedShippingData
-        }
-      );
+      console.log('กำลังเรียก API เพื่อสร้างการจัดส่ง:', requestData);
+      
+      // ส่งข้อมูลไปยัง API
+      const response = await fetch('/api/shipping-methods/flash-express/shipping', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(requestData),
+      });
 
       const data = await response.json();
       console.log('ข้อมูลการจัดส่งที่ได้รับ:', data);
-      setShippingResponse(data);
+      setOrderResult(data);
 
       if (data.success) {
         toast({
-          title: 'สร้างการจัดส่งสำเร็จ',
-          description: `เลขพัสดุ: ${data.trackingNumber}`,
+          title: 'สร้างเลขพัสดุสำเร็จ',
+          description: `เลขพัสดุของคุณคือ ${data.trackingNumber}`,
         });
       } else {
         toast({
-          title: 'สร้างการจัดส่งไม่สำเร็จ',
-          description: data.message || 'เกิดข้อผิดพลาดในการสร้างการจัดส่ง',
+          title: 'ไม่สามารถสร้างเลขพัสดุได้',
+          description: data.message || 'กรุณาตรวจสอบข้อมูลและลองอีกครั้ง',
           variant: 'destructive',
         });
       }
     } catch (error: any) {
-      console.error('เกิดข้อผิดพลาดในการสร้างการจัดส่ง:', error);
-      
-      // แสดงข้อมูลข้อผิดพลาดเพิ่มเติมถ้ามี response data
-      const errorDetail = error.response?.data 
-        ? JSON.stringify(error.response.data, null, 2) 
-        : error.message;
-        
-      setShippingResponse({
-        success: false,
-        error: error.message,
-        details: error.response?.data || {},
-        status: error.response?.status || 'unknown'
-      });
-      
+      console.error('API Request Error:', error);
       toast({
         title: 'เกิดข้อผิดพลาด',
-        description: `ไม่สามารถสร้างการจัดส่งได้: ${error.message}`,
+        description: error.message || 'ไม่สามารถสร้างเลขพัสดุได้ กรุณาลองอีกครั้งในภายหลัง',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
-    }
-  };
-
-  // อัพเดตข้อมูลที่อยู่ต้นทาง
-  const updateFromAddress = (key: keyof AddressData, value: string) => {
-    setFromAddress(prev => ({ ...prev, [key]: value }));
-  };
-
-  // อัพเดตข้อมูลที่อยู่ปลายทาง
-  const updateToAddress = (key: keyof AddressData, value: string) => {
-    setToAddress(prev => ({ ...prev, [key]: value }));
-  };
-
-  // อัพเดตข้อมูลการจัดส่ง
-  const updateShippingData = (key: keyof ShippingData, value: any) => {
-    setShippingData(prev => ({ ...prev, [key]: value }));
-  };
-
-  // ทดสอบการเชื่อมต่อกับ Flash Express API โดยตรง
-  const testConnection = async () => {
-    try {
-      setLoading(true);
-
-      console.log('กำลังทดสอบการเชื่อมต่อกับ Flash Express API... (URL: https://open-api.flashexpress.com)');
-
-      // เปลี่ยนมาใช้ endpoint ใหม่ที่เราเพิ่งสร้าง
-      const response = await apiRequest(
-        'GET',
-        '/api/shipping/test-connection',
-        null
-      );
-
-      try {
-        // พยายามแปลงข้อมูลเป็น JSON
-        const data = await response.json();
-        console.log('ผลการทดสอบการเชื่อมต่อ Flash Express API:', data);
-        setConnectionTestResult(data);
-
-        let description = data.message || (data.success ? 'สามารถเชื่อมต่อกับ Flash Express API ได้' : 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้');
-
-        // เพิ่มรายละเอียดหากมีข้อมูล API response
-        if (data.apiResponse) {
-          console.log('รายละเอียดการตอบกลับจาก API:', data.apiResponse);
-
-          if (data.apiResponse.data) {
-            description += ` (API Response Code: ${data.apiResponse.data.code || 'N/A'})`;
-          }
-        }
-
-        // เพิ่มข้อมูล HTML response หากได้รับการตอบกลับเป็น HTML
-        if (data.htmlAnalysis) {
-          console.log('ได้รับการตอบกลับเป็น HTML:', data.htmlAnalysis);
-          description += ' - เซิร์ฟเวอร์ตอบกลับด้วย HTML แทน JSON ซึ่งอาจเกิดจากการเปลี่ยนเส้นทาง';
-        }
-
-        toast({
-          title: data.success ? 'การเชื่อมต่อสำเร็จ' : 'การเชื่อมต่อไม่สำเร็จ',
-          description: description,
-          variant: data.success ? 'default' : 'destructive',
-        });
-      } catch (jsonError) {
-        // หากไม่สามารถแปลงเป็น JSON ได้ แสดงว่าอาจได้รับ HTML แทน
-        console.error('เกิดข้อผิดพลาดในการแปลงข้อมูล JSON:', jsonError);
-
-        try {
-          const text = await response.text();
-          console.log('ข้อมูลการตอบกลับ (ไม่ใช่ JSON):', text.substring(0, 500) + '...');
-          setConnectionTestResult({ success: false, rawResponse: text });
-
-          toast({
-            title: 'เกิดข้อผิดพลาดรูปแบบข้อมูล',
-            description: 'ได้รับข้อมูลที่ไม่ใช่ JSON ซึ่งอาจเกิดจากปัญหาในการเชื่อมต่อ',
-            variant: 'destructive',
-          });
-        } catch (textError) {
-          setConnectionTestResult({ success: false, error: String(textError) });
-          toast({
-            title: 'เกิดข้อผิดพลาด',
-            description: 'ไม่สามารถอ่านข้อมูลการตอบกลับจากเซิร์ฟเวอร์',
-            variant: 'destructive',
-          });
-        }
-      }
-    } catch (error: any) {
-      console.error('เกิดข้อผิดพลาดในการทดสอบการเชื่อมต่อ:', error);
-      setConnectionTestResult({ 
-        success: false, 
-        error: String(error),
-        message: error.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'
-      });
-
-      toast({
-        title: 'เกิดข้อผิดพลาด',
-        description: `ไม่สามารถเชื่อมต่อกับ Flash Express API ได้: ${error.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'}`,
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <Layout>
+    <AdminLayout>
       <div className="container mx-auto py-6">
-        <h1 className="text-2xl font-bold mb-6">ทดสอบการเชื่อมต่อ Flash Express API</h1>
+        <div className="flex flex-col gap-8">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold tracking-tight">ทดสอบสร้างเลขพัสดุ Flash Express API</h1>
+            <Button
+              variant="outline"
+              onClick={() => setLocation('/dashboard')}
+            >
+              กลับไปหน้าแดชบอร์ด
+            </Button>
+          </div>
 
-        <Tabs defaultValue="connection">
-          <TabsList className="mb-4">
-            <TabsTrigger value="connection">ทดสอบการเชื่อมต่อ</TabsTrigger>
-            <TabsTrigger value="rates">ทดสอบดึงข้อมูลค่าจัดส่ง</TabsTrigger>
-            <TabsTrigger value="shipping">ทดสอบสร้างการจัดส่ง</TabsTrigger>
-          </TabsList>
+          <Tabs defaultValue="create-order" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="create-order">สร้างเลขพัสดุ</TabsTrigger>
+              <TabsTrigger value="result" disabled={!orderResult}>ผลลัพธ์</TabsTrigger>
+            </TabsList>
 
-          {/* แท็บทดสอบดึงข้อมูลค่าจัดส่ง */}
-          <TabsContent value="rates">
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* ฟอร์มกรอกข้อมูล */}
-              <Card>
+            <TabsContent value="create-order">
+              <Card className="w-full">
                 <CardHeader>
-                  <CardTitle>ข้อมูลต้นทางและปลายทาง</CardTitle>
+                  <CardTitle>สร้างเลขพัสดุกับ Flash Express</CardTitle>
+                  <CardDescription>
+                    กรอกข้อมูลให้ครบถ้วนเพื่อสร้างเลขพัสดุกับ Flash Express
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-medium">ที่อยู่ต้นทาง</h3>
-                      <div className="grid grid-cols-2 gap-4 mt-2">
-                        <div>
-                          <Label htmlFor="fromProvince">จังหวัด</Label>
-                          <Input 
-                            id="fromProvince"
-                            value={fromAddress.province}
-                            onChange={(e) => updateFromAddress('province', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="fromDistrict">อำเภอ/เขต</Label>
-                          <Input 
-                            id="fromDistrict"
-                            value={fromAddress.district}
-                            onChange={(e) => updateFromAddress('district', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="fromSubdistrict">ตำบล/แขวง</Label>
-                          <Input 
-                            id="fromSubdistrict"
-                            value={fromAddress.subdistrict}
-                            onChange={(e) => updateFromAddress('subdistrict', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="fromZipcode">รหัสไปรษณีย์</Label>
-                          <Input 
-                            id="fromZipcode"
-                            value={fromAddress.zipcode}
-                            onChange={(e) => updateFromAddress('zipcode', e.target.value)}
-                          />
-                        </div>
+                  <Form {...form}>
+                    <form className="space-y-6">
+                      {/* ข้อมูลพื้นฐาน */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">ข้อมูลพื้นฐาน</h3>
+                        <Separator />
+
+                        <FormField
+                          control={form.control}
+                          name="outTradeNo"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>เลขออเดอร์ (Order Number)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="เลขออเดอร์" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                เลขออเดอร์จะถูกสร้างอัตโนมัติ แต่คุณสามารถกำหนดเองได้
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
-                    </div>
 
-                    <Separator />
+                      {/* ข้อมูลผู้ส่ง */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">ข้อมูลผู้ส่ง</h3>
+                        <Separator />
 
-                    <div>
-                      <h3 className="text-lg font-medium">ที่อยู่ปลายทาง</h3>
-                      <div className="grid grid-cols-2 gap-4 mt-2">
-                        <div>
-                          <Label htmlFor="toProvince">จังหวัด</Label>
-                          <Input 
-                            id="toProvince"
-                            value={toAddress.province}
-                            onChange={(e) => updateToAddress('province', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="toDistrict">อำเภอ/เขต</Label>
-                          <Input 
-                            id="toDistrict"
-                            value={toAddress.district}
-                            onChange={(e) => updateToAddress('district', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="toSubdistrict">ตำบล/แขวง</Label>
-                          <Input 
-                            id="toSubdistrict"
-                            value={toAddress.subdistrict}
-                            onChange={(e) => updateToAddress('subdistrict', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="toZipcode">รหัสไปรษณีย์</Label>
-                          <Input 
-                            id="toZipcode"
-                            value={toAddress.zipcode}
-                            onChange={(e) => updateToAddress('zipcode', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="weight">น้ำหนัก (กิโลกรัม)</Label>
-                      <Input 
-                        id="weight"
-                        type="number"
-                        min="0.1"
-                        step="0.1"
-                        value={weight}
-                        onChange={(e) => setWeight(parseFloat(e.target.value))}
-                      />
-                    </div>
-
-                    <Button 
-                      onClick={getShippingRates} 
-                      disabled={loading}
-                      className="w-full"
-                    >
-                      {loading ? 'กำลังดำเนินการ...' : 'ตรวจสอบค่าจัดส่ง'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* แสดงผลข้อมูลที่ได้รับ */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>ผลการดึงข้อมูลค่าจัดส่ง</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {rateResponse ? (
-                    <div className="bg-muted p-4 rounded-md whitespace-pre-wrap h-[600px] overflow-auto">
-                      <pre>{JSON.stringify(rateResponse, null, 2)}</pre>
-                    </div>
-                  ) : (
-                    <div className="text-center p-6 text-muted-foreground">
-                      ยังไม่มีข้อมูล กรุณากดปุ่ม 'ตรวจสอบค่าจัดส่ง' เพื่อเริ่มดึงข้อมูล
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* แท็บทดสอบการเชื่อมต่อ */}
-          <TabsContent value="connection">
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* คำอธิบายการทดสอบ */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>ทดสอบการเชื่อมต่อกับ Flash Express API</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <Alert>
-                      <AlertTitle>วิธีการทดสอบ</AlertTitle>
-                      <AlertDescription>
-                        กดปุ่ม "ทดสอบการเชื่อมต่อ" เพื่อตรวจสอบว่าระบบสามารถเชื่อมต่อกับ Flash Express API ได้หรือไม่
-                        การทดสอบนี้จะส่งคำขอตรวจสอบไปยัง Flash Express API โดยตรง
-                      </AlertDescription>
-                    </Alert>
-
-                    <Alert className="bg-amber-50 border-amber-200">
-                      <AlertTitle className="text-amber-800">การวิเคราะห์ปัญหา</AlertTitle>
-                      <AlertDescription className="text-amber-700">
-                        หากมีปัญหาในการเชื่อมต่อกับ Flash Express API อาจมีสาเหตุจาก:
-                        <ul className="list-disc pl-5 mt-2 space-y-1">
-                          <li>การตั้งค่า API Key หรือ Merchant ID ไม่ถูกต้อง</li>
-                          <li>การสร้างลายเซ็นสำหรับ API ไม่ถูกต้อง</li>
-                          <li>รูปแบบของคำขอไม่ตรงตามที่ Flash Express API กำหนด</li>
-                          <li>การตั้งค่า Content-Type ไม่ถูกต้อง (ต้องเป็น application/x-www-form-urlencoded)</li>
-                          <li>ปัญหาการเชื่อมต่อจาก Replit ไปยัง Flash Express API</li>
-                        </ul>
-                      </AlertDescription>
-                    </Alert>
-
-                    <Button 
-                      onClick={testConnection} 
-                      disabled={loading}
-                      className="w-full"
-                    >
-                      {loading ? 'กำลังทดสอบ...' : 'ทดสอบการเชื่อมต่อ'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* แสดงผลลัพธ์การทดสอบ */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>ผลการทดสอบการเชื่อมต่อ</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {connectionTestResult ? (
-                    <div>
-                      {connectionTestResult.success ? (
-                        <Alert className="mb-4 bg-green-50 border-green-200">
-                          <AlertTitle className="text-green-600">เชื่อมต่อสำเร็จ</AlertTitle>
-                          <AlertDescription className="text-green-700">
-                            สามารถเชื่อมต่อกับ Flash Express API ได้
-                          </AlertDescription>
-                        </Alert>
-                      ) : (
-                        <Alert className="mb-4 bg-red-50 border-red-200">
-                          <AlertTitle className="text-red-600">เชื่อมต่อไม่สำเร็จ</AlertTitle>
-                          <AlertDescription className="text-red-700">
-                            {connectionTestResult.message || 'ไม่สามารถเชื่อมต่อกับ Flash Express API ได้'}
-                            {connectionTestResult.statusText && (
-                              <div className="mt-2">
-                                <span className="font-semibold">สถานะ:</span> {connectionTestResult.statusText}
-                              </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="srcName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ชื่อผู้ส่ง</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="ชื่อผู้ส่ง" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
                             )}
-                            {connectionTestResult.error && connectionTestResult.error.response && (
-                              <div className="mt-2">
-                                <span className="font-semibold">รหัสข้อผิดพลาด:</span> {connectionTestResult.error.response.status}
-                                <br />
-                                <span className="font-semibold">ข้อความจาก API:</span> {connectionTestResult.error.response.statusText}
-                              </div>
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="srcPhone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>เบอร์โทรศัพท์ผู้ส่ง</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="เบอร์โทรศัพท์" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
                             )}
-                          </AlertDescription>
-                        </Alert>
-                      )}
-
-                      {typeof connectionTestResult === 'string' ? (
-                        <div className="bg-muted p-4 rounded-md mb-4">
-                          <div className="font-medium text-red-500 mb-2">ปัญหาการแสดงผลข้อมูล HTML แทน JSON</div>
-                          <p className="text-sm mb-4">ระบบได้รับการตอบกลับในรูปแบบ HTML แทนที่จะเป็น JSON ซึ่งอาจเกิดจากปัญหาการเชื่อมต่อหรือการตั้งค่า CORS</p>
-                          <div className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-[400px]">
-                            {connectionTestResult.substring(0, 500)}...
-                          </div>
+                          />
                         </div>
+
+                        <FormField
+                          control={form.control}
+                          name="srcDetailAddress"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>ที่อยู่</FormLabel>
+                              <FormControl>
+                                <Input placeholder="บ้านเลขที่ หมู่บ้าน ถนน ซอย" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="srcProvinceName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>จังหวัด</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="เลือกจังหวัด" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {provinceList.map((province) => (
+                                      <SelectItem key={province} value={province}>
+                                        {province}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="srcCityName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>อำเภอ/เขต</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                  disabled={!senderProvince}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="เลือกอำเภอ/เขต" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {districts.map((district) => (
+                                      <SelectItem key={district} value={district}>
+                                        {district}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="srcDistrictName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ตำบล/แขวง</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                  disabled={!senderDistrict}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="เลือกตำบล/แขวง" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {subdistricts.map((subdistrict) => (
+                                      <SelectItem key={subdistrict} value={subdistrict}>
+                                        {subdistrict}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="srcPostalCode"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>รหัสไปรษณีย์</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="รหัสไปรษณีย์" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      {/* ข้อมูลผู้รับ */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">ข้อมูลผู้รับ</h3>
+                        <Separator />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="dstName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ชื่อผู้รับ</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="ชื่อผู้รับ" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="dstPhone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>เบอร์โทรศัพท์ผู้รับ</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="เบอร์โทรศัพท์" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="dstDetailAddress"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>ที่อยู่</FormLabel>
+                              <FormControl>
+                                <Input placeholder="บ้านเลขที่ หมู่บ้าน ถนน ซอย" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="dstProvinceName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>จังหวัด</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="เลือกจังหวัด" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {provinceList.map((province) => (
+                                      <SelectItem key={province} value={province}>
+                                        {province}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="dstCityName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>อำเภอ/เขต</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                  disabled={!recipientProvince}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="เลือกอำเภอ/เขต" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {recipientDistricts.map((district) => (
+                                      <SelectItem key={district} value={district}>
+                                        {district}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="dstDistrictName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ตำบล/แขวง</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                  disabled={!recipientDistrict}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="เลือกตำบล/แขวง" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {recipientSubdistricts.map((subdistrict) => (
+                                      <SelectItem key={subdistrict} value={subdistrict}>
+                                        {subdistrict}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="dstPostalCode"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>รหัสไปรษณีย์</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="รหัสไปรษณีย์" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      {/* ข้อมูลพัสดุ */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">ข้อมูลพัสดุ</h3>
+                        <Separator />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="expressCategory"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ประเภทการจัดส่ง</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="เลือกประเภทการจัดส่ง" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {expressCategories.map((category) => (
+                                      <SelectItem key={category.value} value={category.value}>
+                                        {category.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="articleCategory"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ประเภทสินค้า</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="เลือกประเภทสินค้า" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {articleCategories.map((category) => (
+                                      <SelectItem key={category.value} value={category.value}>
+                                        {category.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="weight"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>น้ำหนัก (กก.)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="0.1" min="0.1" max="30" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="width"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ความกว้าง (ซม.)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="1" min="1" max="100" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="length"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ความยาว (ซม.)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="1" min="1" max="100" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="height"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ความสูง (ซม.)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" step="1" min="1" max="100" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="remark"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>หมายเหตุ</FormLabel>
+                              <FormControl>
+                                <Textarea placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* บริการเสริม */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">บริการเสริม</h3>
+                        <Separator />
+
+                        <div className="grid grid-cols-1 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="insured"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                  <FormLabel className="text-base">ประกันพัสดุ (Flash care)</FormLabel>
+                                  <FormDescription>
+                                    บริการประกันพัสดุมูลค่า 2,000 บาท (คิดค่าบริการเพิ่ม 20 บาท)
+                                  </FormDescription>
+                                </div>
+                                <FormControl>
+                                  <Switch
+                                    checked={field.value === 1}
+                                    onCheckedChange={(checked) => {
+                                      field.onChange(checked ? 1 : 0);
+                                      if (checked && !form.getValues('insureDeclareValue')) {
+                                        form.setValue('insureDeclareValue', 2000);
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+
+                          {form.watch('insured') === 1 && (
+                            <FormField
+                              control={form.control}
+                              name="insureDeclareValue"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>มูลค่าสินค้าที่ประกัน (บาท)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      placeholder="มูลค่าสินค้า"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    1 บาท = 100 สตางค์ (ระบบจะแปลงให้อัตโนมัติ)
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+
+                          <FormField
+                            control={form.control}
+                            name="codEnabled"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                  <FormLabel className="text-base">เก็บเงินปลายทาง (COD)</FormLabel>
+                                  <FormDescription>
+                                    บริการเก็บเงินปลายทาง (คิดค่าบริการเพิ่ม 3% ของยอดเงิน ขั้นต่ำ 10 บาท)
+                                  </FormDescription>
+                                </div>
+                                <FormControl>
+                                  <Switch
+                                    checked={field.value === 1}
+                                    onCheckedChange={(checked) => {
+                                      field.onChange(checked ? 1 : 0);
+                                      if (!checked) {
+                                        form.setValue('codAmount', 0);
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+
+                          {codEnabled === 1 && (
+                            <FormField
+                              control={form.control}
+                              name="codAmount"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>ยอดเงินที่ต้องการเก็บปลายทาง (บาท)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      placeholder="จำนวนเงิน"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    1 บาท = 100 สตางค์ (ระบบจะแปลงให้อัตโนมัติ)
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        className="w-full"
+                        disabled={isLoading}
+                        onClick={handleCreateShipping}
+                      >
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        สร้างเลขพัสดุ
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+                <CardFooter className="flex flex-col items-start gap-2 text-sm text-muted-foreground">
+                  <p>
+                    * บริการนี้ใช้สำหรับการสร้างเลขพัสดุกับ Flash Express เท่านั้น
+                  </p>
+                  <p>
+                    * เมื่อสร้างเลขพัสดุแล้ว ระบบจะหักค่าบริการจากเครดิตของท่านทันที
+                  </p>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="result">
+              <Card className="w-full">
+                <CardHeader>
+                  <CardTitle>ผลลัพธ์การสร้างเลขพัสดุ</CardTitle>
+                  <CardDescription>
+                    ผลการสร้างเลขพัสดุกับ Flash Express
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {orderResult && (
+                    <div className="space-y-4">
+                      {orderResult.success ? (
+                        <>
+                          <div className="p-4 bg-green-50 rounded-md border border-green-200">
+                            <h3 className="text-lg font-semibold text-green-700">สร้างเลขพัสดุสำเร็จ</h3>
+                            <div className="mt-2 space-y-2">
+                              <p><span className="font-medium">เลขพัสดุ:</span> {orderResult.trackingNumber}</p>
+                              <p><span className="font-medium">Sort Code:</span> {orderResult.sortCode}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-end space-x-2 mt-4">
+                            <Button 
+                              variant="outline" 
+                              onClick={() => setLocation(`/flash-express-label/${orderResult.trackingNumber}`)}
+                            >
+                              พิมพ์ใบปะหน้าพัสดุ
+                            </Button>
+                            
+                            <Button onClick={() => {
+                              form.reset();
+                              setOrderResult(null);
+                            }}>
+                              สร้างเลขพัสดุใหม่
+                            </Button>
+                          </div>
+                        </>
                       ) : (
-                        <div className="bg-muted p-4 rounded-md whitespace-pre-wrap h-[380px] overflow-auto mb-4">
-                          <pre>{JSON.stringify(connectionTestResult, null, 2)}</pre>
+                        <div className="p-4 bg-red-50 rounded-md border border-red-200">
+                          <h3 className="text-lg font-semibold text-red-700">ไม่สามารถสร้างเลขพัสดุได้</h3>
+                          <p className="mt-2 text-red-600">{orderResult.message}</p>
+                          
+                          {orderResult.errorDetails && (
+                            <div className="mt-4">
+                              <h4 className="font-medium">รายละเอียดข้อผิดพลาด:</h4>
+                              <pre className="mt-2 p-2 bg-gray-100 rounded text-sm overflow-x-auto">
+                                {typeof orderResult.errorDetails === 'string' 
+                                  ? orderResult.errorDetails 
+                                  : JSON.stringify(orderResult.errorDetails, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                          
+                          <Button 
+                            className="mt-4" 
+                            variant="outline"
+                            onClick={() => setOrderResult(null)}
+                          >
+                            กลับไปแก้ไขข้อมูล
+                          </Button>
                         </div>
                       )}
-
-                      <div className="space-y-2">
-                        <h3 className="font-medium text-sm">การแก้ไขปัญหา:</h3>
-                        <ul className="list-disc pl-5 text-sm space-y-1">
-                          <li>ตรวจสอบว่าตั้งค่า API Key และ Merchant ID ถูกต้อง</li>
-                          <li>ตรวจสอบว่าการสร้างลายเซ็นถูกต้องตามเอกสารของ Flash Express API</li>
-                          <li>ตรวจสอบว่า Content-Type เป็น application/x-www-form-urlencoded</li>
-                          <li>ตรวจสอบการเรียงลำดับของพารามิเตอร์ตามที่ API กำหนด</li>
-                          <li>ทดสอบจาก Postman หรือเครื่องมืออื่นเพื่อยืนยันว่า API ใช้งานได้จริง</li>
-                        </ul>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center p-6 text-muted-foreground">
-                      ยังไม่มีข้อมูล กรุณากดปุ่ม 'ทดสอบการเชื่อมต่อ' เพื่อเริ่มการทดสอบ
                     </div>
                   )}
                 </CardContent>
               </Card>
-            </div>
-          </TabsContent>
-
-          {/* แท็บทดสอบสร้างการจัดส่ง */}
-          <TabsContent value="shipping">
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* ฟอร์มสร้างการจัดส่ง */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>สร้างการจัดส่งกับ Flash Express</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4">
-                    <div>
-                      <Label htmlFor="outTradeNo">หมายเลขออเดอร์</Label>
-                      <Input 
-                        id="outTradeNo"
-                        value={shippingData.outTradeNo}
-                        onChange={(e) => updateShippingData('outTradeNo', e.target.value)}
-                      />
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h3 className="text-lg font-medium">ข้อมูลผู้ส่ง</h3>
-                      <div className="space-y-3 mt-2">
-                        <div>
-                          <Label htmlFor="srcName">ชื่อผู้ส่ง</Label>
-                          <Input 
-                            id="srcName"
-                            value={shippingData.srcName}
-                            onChange={(e) => updateShippingData('srcName', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="srcPhone">เบอร์โทรผู้ส่ง</Label>
-                          <Input 
-                            id="srcPhone"
-                            value={shippingData.srcPhone}
-                            onChange={(e) => updateShippingData('srcPhone', e.target.value)}
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label htmlFor="srcProvinceName">จังหวัด</Label>
-                            <Input 
-                              id="srcProvinceName"
-                              value={shippingData.srcProvinceName}
-                              onChange={(e) => updateShippingData('srcProvinceName', e.target.value)}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="srcCityName">อำเภอ/เขต</Label>
-                            <Input 
-                              id="srcCityName"
-                              value={shippingData.srcCityName}
-                              onChange={(e) => updateShippingData('srcCityName', e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label htmlFor="srcDistrictName">ตำบล/แขวง</Label>
-                            <Input 
-                              id="srcDistrictName"
-                              value={shippingData.srcDistrictName}
-                              onChange={(e) => updateShippingData('srcDistrictName', e.target.value)}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="srcPostalCode">รหัสไปรษณีย์</Label>
-                            <Input 
-                              id="srcPostalCode"
-                              value={shippingData.srcPostalCode}
-                              onChange={(e) => updateShippingData('srcPostalCode', e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="srcDetailAddress">ที่อยู่</Label>
-                          <Input 
-                            id="srcDetailAddress"
-                            value={shippingData.srcDetailAddress}
-                            onChange={(e) => updateShippingData('srcDetailAddress', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h3 className="text-lg font-medium">ข้อมูลผู้รับ</h3>
-                      <div className="space-y-3 mt-2">
-                        <div>
-                          <Label htmlFor="dstName">ชื่อผู้รับ</Label>
-                          <Input 
-                            id="dstName"
-                            value={shippingData.dstName}
-                            onChange={(e) => updateShippingData('dstName', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="dstPhone">เบอร์โทรผู้รับ</Label>
-                          <Input 
-                            id="dstPhone"
-                            value={shippingData.dstPhone}
-                            onChange={(e) => updateShippingData('dstPhone', e.target.value)}
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label htmlFor="dstProvinceName">จังหวัด</Label>
-                            <Input 
-                              id="dstProvinceName"
-                              value={shippingData.dstProvinceName}
-                              onChange={(e) => updateShippingData('dstProvinceName', e.target.value)}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="dstCityName">อำเภอ/เขต</Label>
-                            <Input 
-                              id="dstCityName"
-                              value={shippingData.dstCityName}
-                              onChange={(e) => updateShippingData('dstCityName', e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label htmlFor="dstDistrictName">ตำบล/แขวง</Label>
-                            <Input 
-                              id="dstDistrictName"
-                              value={shippingData.dstDistrictName}
-                              onChange={(e) => updateShippingData('dstDistrictName', e.target.value)}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="dstPostalCode">รหัสไปรษณีย์</Label>
-                            <Input 
-                              id="dstPostalCode"
-                              value={shippingData.dstPostalCode}
-                              onChange={(e) => updateShippingData('dstPostalCode', e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="dstDetailAddress">ที่อยู่</Label>
-                          <Input 
-                            id="dstDetailAddress"
-                            value={shippingData.dstDetailAddress}
-                            onChange={(e) => updateShippingData('dstDetailAddress', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h3 className="text-lg font-medium">ข้อมูลพัสดุ</h3>
-                      <div className="space-y-3 mt-2">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label htmlFor="articleCategory">ประเภทสินค้า</Label>
-                            <Input 
-                              id="articleCategory"
-                              type="number"
-                              value={shippingData.articleCategory}
-                              onChange={(e) => updateShippingData('articleCategory', parseInt(e.target.value))}
-                            />
-                            <span className="text-xs text-muted-foreground">1 = เสื้อผ้า, 2 = อิเล็กทรอนิกส์</span>
-                          </div>
-                          <div>
-                            <Label htmlFor="expressCategory">ประเภทการจัดส่ง</Label>
-                            <Input 
-                              id="expressCategory"
-                              type="number"
-                              value={shippingData.expressCategory}
-                              onChange={(e) => updateShippingData('expressCategory', parseInt(e.target.value))}
-                            />
-                            <span className="text-xs text-muted-foreground">1 = ปกติ, 2 = ด่วน</span>
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="weight">น้ำหนัก (กรัม)</Label>
-                          <Input 
-                            id="weight"
-                            type="number"
-                            min="100"
-                            step="100"
-                            value={shippingData.weight}
-                            onChange={(e) => updateShippingData('weight', parseInt(e.target.value))}
-                          />
-                          <span className="text-xs text-muted-foreground">หน่วยเป็นกรัม (เช่น 1000 = 1 กก.)</span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3">
-                          <div>
-                            <Label htmlFor="width">ความกว้าง (ซม.)</Label>
-                            <Input 
-                              id="width"
-                              type="number"
-                              value={shippingData.width || ""}
-                              onChange={(e) => updateShippingData('width', e.target.value ? parseInt(e.target.value) : undefined)}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="length">ความยาว (ซม.)</Label>
-                            <Input 
-                              id="length"
-                              type="number"
-                              value={shippingData.length || ""}
-                              onChange={(e) => updateShippingData('length', e.target.value ? parseInt(e.target.value) : undefined)}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="height">ความสูง (ซม.)</Label>
-                            <Input 
-                              id="height"
-                              type="number"
-                              value={shippingData.height || ""}
-                              onChange={(e) => updateShippingData('height', e.target.value ? parseInt(e.target.value) : undefined)}
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label htmlFor="insured">ประกันพัสดุ</Label>
-                            <Input 
-                              id="insured"
-                              type="number"
-                              min="0"
-                              max="1"
-                              value={shippingData.insured}
-                              onChange={(e) => updateShippingData('insured', parseInt(e.target.value))}
-                            />
-                            <span className="text-xs text-muted-foreground">0 = ไม่มี, 1 = มี</span>
-                          </div>
-                          <div>
-                            <Label htmlFor="codEnabled">COD (เก็บเงินปลายทาง)</Label>
-                            <Input 
-                              id="codEnabled"
-                              type="number"
-                              min="0"
-                              max="1"
-                              value={shippingData.codEnabled}
-                              onChange={(e) => updateShippingData('codEnabled', parseInt(e.target.value))}
-                            />
-                            <span className="text-xs text-muted-foreground">0 = ไม่มี, 1 = มี</span>
-                          </div>
-                        </div>
-                        {shippingData.codEnabled === 1 && (
-                          <div>
-                            <Label htmlFor="codAmount">ยอด COD (สตางค์)</Label>
-                            <Input 
-                              id="codAmount"
-                              type="number"
-                              min="100"
-                              step="100"
-                              value={shippingData.codAmount || ""}
-                              onChange={(e) => updateShippingData('codAmount', e.target.value ? parseInt(e.target.value) : undefined)}
-                            />
-                            <span className="text-xs text-muted-foreground">หน่วยเป็นสตางค์ (เช่น 10000 = 100 บาท)</span>
-                          </div>
-                        )}
-                        <div>
-                          <Label htmlFor="remark">หมายเหตุ</Label>
-                          <Input 
-                            id="remark"
-                            value={shippingData.remark || ""}
-                            onChange={(e) => updateShippingData('remark', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button 
-                      onClick={createShipping} 
-                      disabled={loading}
-                      className="w-full"
-                    >
-                      {loading ? 'กำลังดำเนินการ...' : 'สร้างการจัดส่ง'}
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="mt-2 w-full"
-                      onClick={async () => {
-                        try {
-                          setLoading(true);
-                          console.log('กำลังทดสอบการสร้างเลขพัสดุแบบละเอียด:', shippingData);
-
-                          const response = await fetch('/api/shipping/flash-express/debug-create', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(shippingData)
-                          });
-
-                          const data = await response.json();
-                          console.log('ผลลัพธ์การทดสอบละเอียด:', data);
-
-                          toast({
-                            title: 'การทดสอบเสร็จสิ้น',
-                            description: 'กรุณาตรวจสอบข้อมูลในคอนโซล',
-                          });
-                        } catch (error) {
-                          console.error('เกิดข้อผิดพลาดในการทดสอบละเอียด:', error);
-                          toast({
-                            title: 'เกิดข้อผิดพลาด',
-                            description: 'ไม่สามารถทดสอบได้ กรุณาลองอีกครั้ง',
-                            variant: 'destructive',
-                          });
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      disabled={loading}
-                    >
-                      ทดสอบแบบละเอียด (Debug)
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* แสดงผลข้อมูลที่ได้รับ */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>ผลการสร้างการจัดส่ง</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {shippingResponse ? (
-                    <div className="bg-muted p-4 rounded-md whitespace-pre-wrap h-[600px] overflow-auto">
-                      <pre>{JSON.stringify(shippingResponse, null, 2)}</pre>
-                    </div>
-                  ) : (
-                    <div className="text-center p-6 text-muted-foreground">
-                      ยังไม่มีข้อมูล กรุณากดปุ่ม 'สร้างการจัดส่ง' เพื่อเริ่มสร้างการจัดส่ง
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

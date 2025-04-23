@@ -249,8 +249,8 @@ export async function createFlashShipment(shipmentData: any) {
     const baseParams = createBaseRequestParams();
 
     // 2. แยกรายการสินค้าออกจากข้อมูลหลัก
-    const items = shipmentData.items || [];
-    delete shipmentData.items;
+    const items = shipmentData.subItemTypes || [];
+    delete shipmentData.subItemTypes;
 
     // 3. รวมข้อมูลทั้งหมดและกำหนดค่าเริ่มต้นสำหรับฟิลด์ที่จำเป็น
     // แปลงข้อมูลเป็น string ตามมาตรฐานของ Flash Express
@@ -327,10 +327,17 @@ export async function createFlashShipment(shipmentData: any) {
     // ถ้าไม่มีข้อมูลสินค้า ให้ใส่ข้อมูลตัวอย่าง (จำเป็นต้องมี)
     const subItemTypes = items.length > 0
       ? items.map((item: any) => ({
-          itemName: item.itemName,
-          itemQuantity: String(item.itemQuantity)
+          itemName: item.itemName || "สินค้าทดสอบ",
+          itemQuantity: String(item.itemQuantity || 1),
+          itemWeightSize: item.itemWeightSize || "1kg",
+          itemColor: item.itemColor || "-"
         }))
-      : [{ itemName: "สินค้าทดสอบ", itemQuantity: "1" }];
+      : [{ 
+          itemName: "สินค้าทดสอบ", 
+          itemQuantity: "1",
+          itemWeightSize: "1kg",
+          itemColor: "-"
+        }];
 
     // 7. สร้าง form data (ไม่รวม subItemTypes และ remark ในการคำนวณลายเซ็น)
     const formData = new URLSearchParams();

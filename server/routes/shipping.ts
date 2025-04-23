@@ -196,7 +196,14 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
         dstDistrictName: orderData.dstDistrictName || '',
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
-        
+      };
+      
+      console.log('Flash Express API request data:', apiData);
+      
+      // เพิ่ม codAmount เฉพาะถ้า codEnabled เป็น 1
+      if (orderData.codEnabled == 1 && orderData.codAmount) {
+        apiData.codAmount = orderData.codAmount;
+      }
 
 /**
  * API สำหรับทดสอบการเชื่อมต่อกับ Flash Express API
