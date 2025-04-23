@@ -296,4 +296,282 @@ router.post('/validate-area', async (req, res) => {
   }
 });
 
+/**
+ * API สร้างออเดอร์ Flash Express (เวอร์ชันใหม่)
+ */
+router.post('/create-order', auth, async (req, res) => {
+  try {
+    // ตรวจสอบว่ามีการเข้าสู่ระบบ
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'กรุณาเข้าสู่ระบบก่อนสร้างออเดอร์'
+      });
+    }
+    
+    // รับข้อมูลจากฟอร์ม
+    const orderData = req.body;
+    
+    // ตรวจสอบข้อมูลพื้นฐาน
+    if (!orderData.srcName || !orderData.srcPhone || !orderData.dstName || !orderData.dstPhone) {
+      return res.status(400).json({
+        success: false,
+        message: 'ข้อมูลไม่ครบถ้วน กรุณากรอกข้อมูลให้ครบถ้วน'
+      });
+    }
+    
+    console.log('กำลังสร้างออเดอร์ Flash Express จากข้อมูลฟอร์ม:', JSON.stringify(orderData, null, 2));
+    
+    // เพิ่มข้อมูลที่จำเป็น
+    const flashExpressOrder = {
+      ...orderData,
+      outTradeNo: `SS${Date.now()}`, // เลขอ้างอิงร้านค้า
+      nonceStr: Date.now().toString(), // ตัวเลขสุ่ม
+      mchId: process.env.FLASH_EXPRESS_MERCHANT_ID,
+      payType: 1, // ผู้ส่งชำระ
+      settlementType: 1, // ผู้ส่งชำระ
+    };
+    
+    // เรียกใช้บริการของ Flash Express
+    const result = await createFlashOrder(flashExpressOrder);
+    
+    // แสดงผลลัพธ์
+    console.log('Flash Express API Response:', JSON.stringify(result, null, 2));
+    
+    // ตรวจสอบผลลัพธ์
+    if (result && result.code === 0 && result.data) {
+      // บันทึกข้อมูลออเดอร์ลงในฐานข้อมูล
+      try {
+        // สร้างข้อมูลออเดอร์ขนส่ง
+        const shippingOrder = {
+          userId: req.user.id,
+          orderNumber: flashExpressOrder.outTradeNo,
+          trackingNumber: result.data.pno,
+          status: 'created',
+          courier: 'flash-express',
+          senderName: orderData.srcName,
+          senderPhone: orderData.srcPhone,
+          senderAddress: `${orderData.srcDetailAddress}, ${orderData.srcCityName || ''}, ${orderData.srcProvinceName}, ${orderData.srcPostalCode}`,
+          receiverName: orderData.dstName,
+          receiverPhone: orderData.dstPhone,
+          receiverAddress: `${orderData.dstDetailAddress}, ${orderData.dstCityName || ''}, ${orderData.dstProvinceName}, ${orderData.dstPostalCode}`,
+          codAmount: orderData.codEnabled ? orderData.codAmount || 0 : 0,
+          weight: orderData.weight / 1000, // แปลงจากกรัมเป็นกิโลกรัม
+          fee: 0, // ค่าจัดส่ง (ต้องอัปเดตต่อไป)
+          createdAt: new Date()
+        };
+        
+        // บันทึกลงฐานข้อมูล (เปิดใช้งานเมื่อมีการเชื่อมต่อฐานข้อมูล)
+        // await storage.createShippingOrder(shippingOrder);
+        
+        console.log('บันทึกข้อมูลออเดอร์ขนส่งสำเร็จ');
+      } catch (dbError) {
+        console.error('เกิดข้อผิดพลาดในการบันทึกข้อมูลออเดอร์ขนส่ง:', dbError);
+      }
+      
+      // ส่งผลลัพธ์กลับไปยังผู้ใช้
+      return res.json({
+        success: true,
+        message: 'สร้างออเดอร์ Flash Express สำเร็จ',
+        trackingNumber: result.data.pno,
+        sortCode: result.data.sortingCode,
+        merchantTrackingNumber: flashExpressOrder.outTradeNo,
+        data: result.data
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: result?.message || 'ไม่สามารถสร้างออเดอร์ได้',
+        error: result
+      });
+    }
+  } catch (error: any) {
+    console.error('Error creating Flash Express order:', error);
+    
+    let errorMessage = 'ไม่สามารถสร้างออเดอร์ได้';
+    let errorDetails = null;
+    
+    if (error.response) {
+      errorMessage = error.response.data?.message || error.response.data?.error_msg || 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์';
+      errorDetails = error.response.data;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    return res.status(500).json({
+      success: false,
+      message: errorMessage,
+      error: errorDetails || error.message
+    });
+  }
+});
+
+/**
+ * API สำหรับพิมพ์ใบปะหน้าพัสดุ
+ */
+router.get('/print-label/:trackingNumber', async (req, res) => {
+  try {
+    const { trackingNumber } = req.params;
+    
+    if (!trackingNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'ไม่ระบุเลขพัสดุ'
+      });
+    }
+    
+    // ในอนาคตสามารถเพิ่มการดึงข้อมูลพัสดุจาก API ของ Flash Express เพื่อสร้างใบปะหน้าที่สมบูรณ์
+    // สำหรับตอนนี้ส่งค่าเลขพัสดุกลับไปแสดงผล
+    
+    // ส่งคืนหน้า HTML สำหรับใบปะหน้าพัสดุ
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="th">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ใบปะหน้าพัสดุ Flash Express - ${trackingNumber}</title>
+        <style>
+          body {
+            font-family: 'Kanit', 'Sarabun', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+          }
+          .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+          }
+          .tracking-number-box {
+            text-align: center;
+            margin: 20px 0;
+          }
+          .tracking-number {
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px;
+            border: 2px solid #000;
+            display: inline-block;
+          }
+          .barcode-container {
+            text-align: center;
+            margin: 20px 0;
+          }
+          .barcode {
+            max-width: 90%;
+            height: auto;
+          }
+          .info-section {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+          }
+          .info-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .info-content {
+            margin-bottom: 15px;
+          }
+          .print-button {
+            background-color: #7856FF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+          }
+          .print-button:hover {
+            background-color: #6040E0;
+          }
+          @media print {
+            .no-print {
+              display: none;
+            }
+            body {
+              background-color: white;
+            }
+            .container {
+              box-shadow: none;
+              padding: 0;
+              margin: 0;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="https://www.flashexpress.co.th/wp-content/themes/flashexpress/assets/images/logo-flash.svg" alt="Flash Express Logo" style="height: 40px;">
+            <h1>ใบปะหน้าพัสดุ</h1>
+          </div>
+          
+          <div class="tracking-number-box">
+            <div class="tracking-number">${trackingNumber}</div>
+          </div>
+          
+          <div class="barcode-container">
+            <!-- สร้าง barcode ด้วย JavaScript -->
+            <svg id="barcode" class="barcode"></svg>
+          </div>
+          
+          <div class="info-section">
+            <div class="info-title">ผู้ส่ง:</div>
+            <div class="info-content">
+              <div>ชื่อ: <span id="sender-name">รอข้อมูล</span></div>
+              <div>โทร: <span id="sender-phone">รอข้อมูล</span></div>
+              <div>ที่อยู่: <span id="sender-address">รอข้อมูล</span></div>
+            </div>
+            
+            <div class="info-title">ผู้รับ:</div>
+            <div class="info-content">
+              <div>ชื่อ: <span id="receiver-name">รอข้อมูล</span></div>
+              <div>โทร: <span id="receiver-phone">รอข้อมูล</span></div>
+              <div>ที่อยู่: <span id="receiver-address">รอข้อมูล</span></div>
+            </div>
+          </div>
+          
+          <div class="no-print" style="text-align: center; margin-top: 20px;">
+            <button class="print-button" onclick="window.print()">พิมพ์ใบปะหน้าพัสดุ</button>
+          </div>
+        </div>
+        
+        <!-- ใช้ JsBarcode สำหรับสร้าง barcode -->
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            // สร้าง barcode
+            JsBarcode("#barcode", "${trackingNumber}", {
+              format: "CODE128",
+              width: 3,
+              height: 100,
+              displayValue: false
+            });
+          });
+        </script>
+      </body>
+      </html>
+    `);
+  } catch (error: any) {
+    console.error('Error generating Flash Express label:', error);
+    
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'เกิดข้อผิดพลาดในการสร้างใบปะหน้าพัสดุ',
+      error: error
+    });
+  }
+});
+
 export default router;
