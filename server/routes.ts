@@ -20,6 +20,7 @@ import dashboardRouter from "./routes/dashboard";
 import stripeRouter from "./routes/stripe";
 import feeHistoryRouter from "./routes/fee-history";
 import flashExpressTestRouter from "./routes/flash-express-test";
+import flashExpressRouter from "./routes/flash-express-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // แสดงข้อมูลข้อมูลของทุกคำขอเพื่อแก้ไขปัญหา
@@ -54,6 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/dashboard", dashboardRouter);
   app.use("/api/stripe", stripeRouter);
   app.use("/api/fee-history", feeHistoryRouter);
+  app.use("/api/shipping/flash-express-new", flashExpressRouter);
 
   // ตรวจสอบสถานะ Flash Express API
   app.get("/api/flash-express/status", (req, res) => {
