@@ -122,10 +122,10 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
     
     // สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
-    requestParams.sign = signature;
+    const requestWithSign = { ...requestParams, sign: signature };
     
     // แปลงเป็น URL-encoded string
-    const encodedPayload = new URLSearchParams(requestParams as Record<string, string>).toString();
+    const encodedPayload = new URLSearchParams(requestWithSign as Record<string, string>).toString();
     
     // ตั้งค่า headers
     const headers = {
@@ -136,28 +136,42 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
       'X-Flash-Nonce': requestParams.nonceStr
     };
     
-    // เรียกใช้ API
-    const response = await axios.post(
-      `${FLASH_EXPRESS_API_URL}/open/v3/estimate_rate`,
-      encodedPayload,
-      { headers, timeout: API_TIMEOUT }
-    );
+    console.log('กำลังเรียก Flash Express API ที่: ', `${FLASH_EXPRESS_API_URL}/open/v3/estimate_rate`);
+    console.log('ส่งข้อมูล: ', JSON.stringify(requestWithSign));
     
-    // ตรวจสอบผลลัพธ์
-    if (response.data && response.data.code === 1) {
-      // สำเร็จ
-      return {
-        success: true,
-        price: Number(response.data.data.estimatePrice) / 100, // แปลงเป็นบาท
-        estimateData: response.data.data
-      };
-    } else {
-      // ไม่สำเร็จ
-      return {
-        success: false,
-        error: response.data?.message || 'Unknown error',
-        errorCode: response.data?.code
-      };
+    try {
+      // เรียกใช้ API
+      const response = await axios.post(
+        `${FLASH_EXPRESS_API_URL}/open/v3/estimate_rate`,
+        encodedPayload,
+        { headers, timeout: API_TIMEOUT }
+      );
+      
+      // แสดงข้อมูลการตอบกลับ
+      console.log('ข้อมูลการตอบกลับจาก Flash Express API: ', JSON.stringify(response.data));
+      
+      // ตรวจสอบผลลัพธ์
+      if (response.data && response.data.code === 1) {
+        // สำเร็จ
+        return {
+          success: true,
+          price: Number(response.data.data.estimatePrice) / 100, // แปลงเป็นบาท
+          estimateData: response.data.data
+        };
+      } else {
+        // ไม่สำเร็จ
+        return {
+          success: false,
+          error: response.data?.message || 'Unknown error',
+          errorCode: response.data?.code
+        };
+      }
+    } catch (error: any) {
+      console.error('เกิดข้อผิดพลาดในการเรียก Flash Express API:', error.message);
+      if (error.response) {
+        console.error('ข้อมูลการตอบกลับที่มีข้อผิดพลาด:', JSON.stringify(error.response.data));
+      }
+      throw error;
     }
   } catch (error: any) {
     console.error('❌ เกิดข้อผิดพลาดในการดึงตัวเลือกการจัดส่ง:', error.message);
@@ -229,10 +243,10 @@ export async function createShipment(shipmentData: any) {
     
     // สร้างลายเซ็น
     const signature = generateFlashSignature(paramsCopy, FLASH_EXPRESS_API_KEY as string);
-    requestParams.sign = signature;
+    const requestWithSign = { ...requestParams, sign: signature };
     
     // แปลงเป็น URL-encoded string
-    const encodedPayload = new URLSearchParams(requestParams as Record<string, string>).toString();
+    const encodedPayload = new URLSearchParams(requestWithSign as Record<string, string>).toString();
     
     // ตั้งค่า headers
     const headers = {
@@ -297,10 +311,10 @@ export async function trackShipment(trackingNumber: string) {
     
     // สร้างลายเซ็น
     const signature = generateFlashSignature(requestParams, FLASH_EXPRESS_API_KEY as string);
-    requestParams.sign = signature;
+    const requestWithSign = { ...requestParams, sign: signature };
     
     // แปลงเป็น URL-encoded string
-    const encodedPayload = new URLSearchParams(requestParams as Record<string, string>).toString();
+    const encodedPayload = new URLSearchParams(requestWithSign as Record<string, string>).toString();
     
     // ตั้งค่า headers
     const headers = {
