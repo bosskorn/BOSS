@@ -197,7 +197,7 @@ router.post('/test-create-order', auth, async (req: Request, res: Response) => {
         dstDistrictName: orderData.dstDistrictName || '',
         dstPostalCode: orderData.dstPostalCode,
         dstDetailAddress: orderData.dstDetailAddress,
-        
+
         // ข้อมูลพัสดุ (เพิ่มเลย เพื่อให้แน่ใจว่าการคำนวณลายเซ็นมีฟิลด์เหล่านี้ด้วย)
         articleCategory: orderData.articleCategory || "2",
         expressCategory: orderData.expressCategory || "1",
@@ -720,7 +720,7 @@ router.post('/flash-express/debug-create', auth, async (req: Request, res: Respo
 
     // ทดสอบการสร้างพัสดุโดยตรงโดยใช้ createFlashExpressShipping
     const result = await createFlashExpressShipping(req.body);
-    
+
     // บันทึกข้อมูลละเอียดลงในคอนโซล
     console.log('Debug createFlashExpressShipping result:', JSON.stringify(result, null, 2));
 
