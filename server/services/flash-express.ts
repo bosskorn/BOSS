@@ -247,7 +247,9 @@ export async function createFlashOrder(orderData: any): Promise<any> {
       
       // ข้อมูลอื่นๆ ตามภาพตัวอย่าง
       itemCategory: parseInt(orderData.itemCategory || orderData.articleCategory || 1),
-      payType: parseInt(orderData.payType || 1),
+      
+      // เปลี่ยนจาก payType เป็น settlementType ตามเอกสาร Flash Express
+      settlementType: parseInt(orderData.settlementType || orderData.payType || 1),
       
       // รายการสินค้า (อยู่ในรูปแบบ array ที่มี itemName และ itemQuantity)
       subItemTypes: subItemTypes
