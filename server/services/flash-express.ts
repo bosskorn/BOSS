@@ -41,40 +41,43 @@ function createSignature(data: any, timestamp: number): string {
     
     for (const key of keys) {
       // ถ้าค่าไม่ใช่ undefined, null หรือว่างเปล่า ให้เพิ่มเข้าไปในสตริง
-      if (dataForSigning[key] !== undefined && dataForSigning[key] !== null && dataForSigning[key] !== '') {
-        let value = dataForSigning[key];
-        
-        // ถ้าเป็น array หรือ object ให้แปลงเป็น JSON string
-        if (typeof value === 'object') {
-          // ตรวจสอบให้แน่ใจว่า value ไม่เป็น null ก่อนแปลงเป็น JSON
-          value = value !== null ? JSON.stringify(value) : '';
-        }
-        
-        // แปลงตัวเลขเป็น string
-        if (typeof value === 'number') {
-          value = value.toString();
-        }
-        
-        parts.push(`${key}=${value}`);
+      // เอกสาร Flash Express ระบุว่าค่าว่างหมายถึงสตริงที่มีเฉพาะช่องว่าง (\t \n \r ฯลฯ)
+      let value = dataForSigning[key];
+      if (value === undefined || value === null) {
+        continue; // ข้ามค่า undefined และ null
       }
+      
+      // แปลงค่าให้เป็น string ทั้งหมด
+      if (typeof value === 'object') {
+        value = JSON.stringify(value);
+      } else if (typeof value !== 'string') {
+        value = String(value);
+      }
+      
+      // ตรวจสอบว่าค่าเป็นสตริงว่างหรือไม่ (ตามคำนิยามของ Flash Express)
+      // ถ้าเป็นสตริงที่มีเฉพาะช่องว่าง (\t \n \r ฯลฯ) ให้ข้ามไป
+      if (value.trim() === '') {
+        continue;
+      }
+      
+      parts.push(`${key}=${value}`);
     }
     
-    // 4. รวม key=value คั่นด้วย &
-    const queryString = parts.join('&');
+    // 4. รวม key=value คั่นด้วย & (stringA)
+    const stringA = parts.join('&');
     
-    // 5. เพิ่ม API_KEY ต่อท้าย (ตามเอกสาร Flash Express)
-    // ใช้ API_KEY โดยตรงไม่มี & คั่น
-    const signStr = queryString + API_KEY;
+    // 5. ต่อ stringA ด้วย &key=API_KEY (stringSignTemp)
+    const stringSignTemp = `${stringA}&key=${API_KEY}`;
     
-    console.log('Raw signature string:', signStr);
+    console.log('String for signature (stringSignTemp):', stringSignTemp);
     
-    // 6. ใช้ SHA-256 สร้างลายเซ็น
-    // ใช้ API_KEY เป็น secret key สำหรับ HMAC
-    const hash = createHmac('sha256', API_KEY || '')
-      .update(signStr)
+    // 6. ใช้ SHA-256 สร้างลายเซ็นและแปลงเป็นตัวพิมพ์ใหญ่
+    // ตามเอกสาร Flash Express: sign=sha256(stringSignTemp).toUpperCase()
+    const hash = createHmac('sha256', '') // ไม่ต้องใช้ secret ในการสร้าง HMAC เพราะเราต่อ API_KEY ในสตริงแล้ว
+      .update(stringSignTemp)
       .digest('hex')
-      .toUpperCase(); // ตัวพิมพ์ใหญ่ทั้งหมดตามที่ Flash Express ต้องการ
-    
+      .toUpperCase();
+      
     console.log('Generated signature:', hash);
     return hash;
   } catch (error) {
