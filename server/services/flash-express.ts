@@ -6,7 +6,10 @@ import axios from 'axios';
 import crypto from 'crypto';
 
 // กำหนดค่าคงที่
-const BASE_URL = 'https://open-api-tra.flashexpress.com';
+// ใช้ URL จริงแทน URL ทดสอบ
+const BASE_URL = 'https://open-api.flashexpress.com';
+// สำรอง URL สำหรับการทดสอบหากต้องการสลับกลับมา
+// const TEST_URL = 'https://open-api-tra.flashexpress.com';
 const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID;
 const API_KEY = process.env.FLASH_EXPRESS_API_KEY;
 
@@ -195,11 +198,22 @@ export async function getShippingOptions(originAddress: any, destinationAddress:
     };
     
     // ส่งคำขอไปยัง Flash Express API
+    // เพิ่มการบันทึกข้อมูลทั้งหมดที่ส่งไปยัง API
+    console.log('Flash Express API complete request data:', formData.toString());
+    
     const response = await axios.post(
       `${BASE_URL}/open/v1/estimate_rate`,
       formData.toString(),
       axiosConfig
     );
+    
+    // เพิ่มการแสดงผลการตอบกลับแบบละเอียดเพื่อการแก้ไขปัญหา
+    console.log('Flash Express API response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+      data: response.data
+    });
     
     // 6. แปลงข้อมูลที่ได้รับและส่งกลับ
     if (response.data.code === 1 && response.data.data) {
