@@ -1,3 +1,4 @@
+
 import { Router } from 'express';
 import { auth } from '../middleware/auth';
 import { storage } from '../storage';
@@ -47,7 +48,7 @@ router.post('/options', auth, async (req, res) => {
 /**
  * API สำหรับ Mock การสร้างเลขพัสดุ
  */
-router.post('/create', auth, async (req: Request, res: Response) => {
+router.post('/create', auth, async (req, res) => {
   try {
     // ตรวจสอบข้อมูลที่จำเป็น
     if (!req.body.senderInfo || !req.body.receiverInfo || !req.body.packageInfo) {
@@ -82,7 +83,7 @@ router.post('/create', auth, async (req: Request, res: Response) => {
 /**
  * API สำหรับตรวจสอบสถานะการจัดส่ง
  */
-router.get('/track/:trackingNumber', async (req: Request, res: Response) => {
+router.get('/track/:trackingNumber', async (req, res) => {
   try {
     const { trackingNumber } = req.params;
 
@@ -157,7 +158,7 @@ router.get('/track/:trackingNumber', async (req: Request, res: Response) => {
 /**
  * API สำหรับวิเคราะห์ที่อยู่ (ใช้การวิเคราะห์แบบ local)
  */
-router.post('/analyze-address', auth, async (req: Request, res: Response) => {
+router.post('/analyze-address', auth, async (req, res) => {
   try {
     const { fullAddress } = req.body;
 

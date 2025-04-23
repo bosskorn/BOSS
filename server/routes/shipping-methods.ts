@@ -1,31 +1,79 @@
 import { Router } from 'express';
-import { storage } from '../storage';
 import { auth } from '../middleware/auth';
-import { insertShippingMethodSchema } from '@shared/schema';
-
-// ฟังก์ชันสร้าง nonceStr
-function generateNonceStr(length = 16): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
 
 const router = Router();
 
-// API สำหรับดึงข้อมูลวิธีการจัดส่งทั้งหมด
+/**
+ * API สำหรับการดึงวิธีการจัดส่ง
+ */
 router.get('/', auth, async (req, res) => {
   try {
-    // ดึงข้อมูลวิธีการจัดส่งของผู้ใช้ที่ล็อกอินเท่านั้น
-    const userId = req.user!.id;
-    const shippingMethods = await storage.getShippingMethodsByUserId(userId);
+    // ข้อมูลการจัดส่งจำลอง
+    const shippingMethods = [
+      {
+        id: 1,
+        name: 'ส่งด่วน',
+        price: 60,
+        estimatedDeliveryDays: 1,
+        provider: 'บริการจัดส่ง',
+        icon: '⚡',
+        isActive: true
+      },
+      {
+        id: 2,
+        name: 'ส่งธรรมดา',
+        price: 40,
+        estimatedDeliveryDays: 3,
+        provider: 'บริการจัดส่ง',
+        icon: '🚚',
+        isActive: true
+      }
+    ];
 
-    res.json({ success: true, shippingMethods });
-  } catch (error) {
+    res.json({
+      success: true,
+      methods: shippingMethods
+    });
+  } catch (error: any) {
     console.error('Error fetching shipping methods:', error);
-    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลวิธีการจัดส่ง' });
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to fetch shipping methods'
+    });
+  }
+});
+
+/**
+ * API สำหรับดึงวิธีการชำระเงิน
+ */
+router.get('/payment-methods', auth, async (req, res) => {
+  try {
+    // ข้อมูลการชำระเงินจำลอง
+    const paymentMethods = [
+      {
+        id: 1,
+        name: 'เก็บเงินปลายทาง (COD)',
+        fee: 20,
+        isActive: true
+      },
+      {
+        id: 2,
+        name: 'โอนเงินล่วงหน้า',
+        fee: 0,
+        isActive: true
+      }
+    ];
+
+    res.json({
+      success: true,
+      methods: paymentMethods
+    });
+  } catch (error: any) {
+    console.error('Error fetching payment methods:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to fetch payment methods'
+    });
   }
 });
 
@@ -159,10 +207,6 @@ router.post('/shipping', auth, async (req, res) => {
     }
 
     console.log('กำลังสร้างการจัดส่ง:', JSON.stringify(orderData, null, 2));
-
-    // เพิ่ม timestamp และ nonceStr
-    const nonceStr = generateNonceStr();
-    const timestamp = String(Math.floor(Date.now() / 1000));
 
     // สร้างเลขติดตามการจัดส่งสมมติ
     const trackingNumber = `TRK${Date.now()}`;
