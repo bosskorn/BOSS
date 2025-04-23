@@ -127,11 +127,13 @@ export async function flashExpressPickupRequest(params: PickupRequestParams): Pr
     
     try {
       // ส่งคำขอไปยัง Flash Express API
+      console.log('Sending request to Flash Express Pickup API...');
       const response = await axios.post(apiUrl, querystring.stringify(apiParams), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json'
         },
+        responseType: 'json',
         validateStatus: (status) => status < 500, // ยอมรับการตอบกลับที่มี status code น้อยกว่า 500
         timeout: 15000, // เพิ่ม timeout เป็น 15 วินาที
         maxRedirects: 0 // ป้องกันการ redirect ที่อาจนำไปสู่การได้รับ HTML
