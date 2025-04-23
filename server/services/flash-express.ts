@@ -157,32 +157,46 @@ export async function createFlashOrder(orderData: any): Promise<any> {
     // แปลงข้อมูลให้ตรงตามที่ Flash Express API ต้องการ
     // - ทำให้แน่ใจว่าข้อมูลตัวเลขส่งเป็น integer จริงๆ (ไม่ใช่ string)
     // - ทำให้แน่ใจว่า subItemTypes อยู่ในรูปแบบที่ถูกต้อง
-    // Flash Express API ต้องการ subItemTypes ในรูปแบบที่เฉพาะเจาะจง
-    // คือต้องมี itemName, itemWeightSize (ถ้ามี), itemColor (ถ้ามี) และ itemQuantity (เป็นตัวเลข)
-    const subItemTypes = Array.isArray(orderData.subItemTypes) ? orderData.subItemTypes.map(item => {
-      const formattedItem: Record<string, any> = {
-        itemName: item.itemName || 'สินค้า',
-        itemQuantity: typeof item.itemQuantity === 'string' ? parseInt(item.itemQuantity) : (item.itemQuantity || 1)
-      };
-      
-      // เพิ่มฟิลด์เสริมตามเอกสาร Flash Express API
-      if (item.itemWeightSize) formattedItem.itemWeightSize = item.itemWeightSize;
-      if (item.itemColor) formattedItem.itemColor = item.itemColor;
-      
-      return formattedItem;
-    }) : [{ itemName: 'สินค้า', itemQuantity: 1 }];
+    // จากภาพที่ผู้ใช้ส่งมาให้ดู Flash Express API ส่ง subItemTypes เป็น Array(1) แบบนี้
+    // รูปแบบที่ถูกต้องคือมี itemName (บังคับ), itemQuantity (บังคับ, เป็นตัวเลข)
+    // อาจมี itemWeightSize, itemColor เป็นตัวเลือก
+    let subItemTypes = [];
+    
+    if (Array.isArray(orderData.subItemTypes) && orderData.subItemTypes.length > 0) {
+      // แปลง subItemTypes ให้อยู่ในรูปแบบที่ถูกต้อง
+      subItemTypes = orderData.subItemTypes.map(item => {
+        // สร้าง Object ใหม่ที่มีเฉพาะข้อมูลที่จำเป็น
+        const cleanItem: Record<string, any> = {
+          // ต้องมี itemName และต้องเป็น string
+          itemName: item.itemName || 'สินค้า',
+          // ต้องมี itemQuantity และต้องเป็นตัวเลข
+          itemQuantity: typeof item.itemQuantity === 'string' ? parseInt(item.itemQuantity) : (item.itemQuantity || 1)
+        };
+        
+        // เพิ่มฟิลด์เสริมเฉพาะเมื่อมีข้อมูล
+        if (item.itemWeightSize) cleanItem.itemWeightSize = item.itemWeightSize;
+        if (item.itemColor) cleanItem.itemColor = item.itemColor;
+        
+        return cleanItem;
+      });
+    } else {
+      // ถ้าไม่มีข้อมูล ใช้ค่าเริ่มต้น
+      subItemTypes = [{ itemName: 'สินค้า', itemQuantity: 1 }];
+    }
+    
+    console.log('Formatted subItemTypes:', JSON.stringify(subItemTypes, null, 2));
 
     // สร้างข้อมูลตามรูปแบบที่ Flash Express API ต้องการ ตรงตามเอกสาร
+    // และมีโครงสร้างตามที่เห็นจากภาพตัวอย่าง
     const formattedOrderData: Record<string, any> = {
-      // ข้อมูลการยืนยัน
+      // ข้อมูลการยืนยัน (ตามตัวอย่างเอกสาร)
       mchId: MERCHANT_ID,
       nonceStr: Date.now().toString(),
       
       // ข้อมูลออเดอร์
       outTradeNo: orderData.outTradeNo || `SS${Date.now()}`,
-      warehouseNo: orderData.warehouseNo || `${MERCHANT_ID}_001`,
       
-      // ข้อมูลผู้ส่ง
+      // ข้อมูลผู้ส่ง (จัดเรียงตามตัวอย่างที่เห็นในภาพ)
       srcName: orderData.srcName,
       srcPhone: orderData.srcPhone,
       srcProvinceName: orderData.srcProvinceName,
@@ -191,49 +205,66 @@ export async function createFlashOrder(orderData: any): Promise<any> {
       srcPostalCode: orderData.srcPostalCode,
       srcDetailAddress: orderData.srcDetailAddress,
       
-      // ข้อมูลผู้รับ
+      // ข้อมูลผู้รับ (จัดเรียงตามตัวอย่างที่เห็นในภาพ)
       dstName: orderData.dstName,
       dstPhone: orderData.dstPhone,
-      dstHomePhone: orderData.dstHomePhone || orderData.dstPhone,
+      dstHomePhone: orderData.dstHomePhone || "",  // ใช้ค่าว่างถ้าไม่มี ไม่ควรส่งค่าเดียวกับ dstPhone
       dstProvinceName: orderData.dstProvinceName,
       dstCityName: orderData.dstCityName,
       dstDistrictName: orderData.dstDistrictName || "",
       dstPostalCode: orderData.dstPostalCode,
       dstDetailAddress: orderData.dstDetailAddress,
       
-      // ข้อมูลที่อยู่ส่งคืน
-      returnName: orderData.returnName || orderData.srcName,
-      returnPhone: orderData.returnPhone || orderData.srcPhone,
-      returnProvinceName: orderData.returnProvinceName || orderData.srcProvinceName,
-      returnCityName: orderData.returnCityName || orderData.srcCityName,
-      returnDistrictName: orderData.returnDistrictName || orderData.srcDistrictName || "",
-      returnPostalCode: orderData.returnPostalCode || orderData.srcPostalCode,
-      returnDetailAddress: orderData.returnDetailAddress || orderData.srcDetailAddress,
-      
-      // ข้อมูลพัสดุ
+      // ข้อมูลพัสดุ (จัดเรียงตามตัวอย่างที่เห็นในภาพ)
       articleCategory: parseInt(orderData.articleCategory),
       expressCategory: parseInt(orderData.expressCategory),
       weight: parseInt(orderData.weight),
-      width: parseInt(orderData.width || 20),
-      length: parseInt(orderData.length || 30),
-      height: parseInt(orderData.height || 10),
+      length: parseInt(orderData.length || 30),  // ต้องมีตามภาพตัวอย่าง
+      width: parseInt(orderData.width || 20),    // ต้องมีตามภาพตัวอย่าง
+      height: parseInt(orderData.height || 10),  // ต้องมีตามภาพตัวอย่าง
       
-      // ข้อมูลการประกัน
+      // ข้อมูล COD (ตามภาพตัวอย่าง codEnabled เป็น 0)
+      codEnabled: parseInt(orderData.codEnabled || 0),
+      
+      // ข้อมูลการประกัน (เป็น 0 ในภาพตัวอย่าง)
       insured: parseInt(orderData.insured || 0),
-      insureDeclareValue: orderData.insured === 1 ? parseInt(orderData.insureDeclareValue || 0) : 0,
       opdInsureEnabled: parseInt(orderData.opdInsureEnabled || 0),
       
-      // ข้อมูล COD
-      codEnabled: parseInt(orderData.codEnabled || 0),
-      codAmount: orderData.codEnabled === 1 ? parseInt(orderData.codAmount || 0) : 0,
-      
-      // ข้อมูลอื่นๆ
-      payType: parseInt(orderData.payType || 1),
+      // ข้อมูลอื่นๆ ตามภาพตัวอย่าง
       itemCategory: parseInt(orderData.itemCategory || orderData.articleCategory || 1),
+      payType: parseInt(orderData.payType || 1),
       
-      // รายการสินค้า
+      // รายการสินค้า (อยู่ในรูปแบบ array ที่มี itemName และ itemQuantity)
       subItemTypes: subItemTypes
     };
+    
+    // เพิ่มฟิลด์อื่นๆ เมื่อมีค่า - ตามภาพตัวอย่าง
+    
+    // เพิ่ม warehouseNo เมื่อใช้วิธีการส่งแบบระบุคลัง
+    if (orderData.warehouseNo) {
+      formattedOrderData.warehouseNo = orderData.warehouseNo;
+    }
+    
+    // เพิ่ม codAmount เมื่อเป็นพัสดุ COD
+    if (orderData.codEnabled === 1 && orderData.codAmount) {
+      formattedOrderData.codAmount = parseInt(orderData.codAmount);
+    }
+    
+    // เพิ่ม insureDeclareValue เมื่อมีการเลือกประกัน
+    if (orderData.insured === 1 && orderData.insureDeclareValue) {
+      formattedOrderData.insureDeclareValue = parseInt(orderData.insureDeclareValue);
+    }
+    
+    // ข้อมูลที่อยู่ส่งคืนเมื่อระบุ (ไม่บังคับ)
+    if (orderData.returnName || orderData.returnPhone || orderData.returnProvinceName) {
+      formattedOrderData.returnName = orderData.returnName || orderData.srcName;
+      formattedOrderData.returnPhone = orderData.returnPhone || orderData.srcPhone;
+      formattedOrderData.returnProvinceName = orderData.returnProvinceName || orderData.srcProvinceName;
+      formattedOrderData.returnCityName = orderData.returnCityName || orderData.srcCityName;
+      formattedOrderData.returnDistrictName = orderData.returnDistrictName || orderData.srcDistrictName || "";
+      formattedOrderData.returnPostalCode = orderData.returnPostalCode || orderData.srcPostalCode;
+      formattedOrderData.returnDetailAddress = orderData.returnDetailAddress || orderData.srcDetailAddress;
+    }
     
     // ข้อมูลพัสดุย่อย (ถ้ามี)
     if (Array.isArray(orderData.subParcel) && orderData.subParcel.length > 0) {

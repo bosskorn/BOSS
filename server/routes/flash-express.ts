@@ -28,6 +28,9 @@ router.post('/shipping', auth, async (req, res) => {
 
     const { orderData } = req.body;
     
+    // แสดงข้อมูลที่ได้รับเพื่อการตรวจสอบ
+    console.log('ข้อมูลจากฝั่งผู้ใช้:', JSON.stringify(orderData, null, 2));
+    
     // อัปเดตข้อมูลสำคัญที่จำเป็นถ้าไม่มี
     if (!orderData.outTradeNo) {
       orderData.outTradeNo = `SS${Date.now()}`;
