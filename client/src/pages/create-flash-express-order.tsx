@@ -124,12 +124,74 @@ export default function CreateFlashExpressOrderPage() {
   const codEnabled = form.watch('codEnabled');
   const codAmount = form.watch('codAmount');
 
+  // ข้อมูลเขต และแขวง (ใช้ข้อมูลจริงแทนข้อมูล mock)
+  const districtData = {
+    'กรุงเทพมหานคร': {
+      'เขตพระนคร': ['พระบรมมหาราชวัง', 'วังบูรพาภิรมย์', 'วัดราชบพิธ', 'สำราญราษฎร์', 'ศาลเจ้าพ่อเสือ', 'เสาชิงช้า', 'บวรนิเวศ', 'ตลาดยอด', 'ชนะสงคราม', 'บ้านพานถม', 'บางขุนพรหม', 'วัดสามพระยา'],
+      'เขตดุสิต': ['ดุสิต', 'วชิรพยาบาล', 'สวนจิตรลดา', 'สี่แยกมหานาค', 'บางซื่อ', 'ถนนนครไชยศรี', 'สามเสนใน'],
+      'เขตหนองจอก': ['กระทุ่มราย', 'หนองจอก', 'คลองสิบ', 'คลองสิบสอง', 'โคกแฝด', 'คู้ฝั่งเหนือ', 'ลำผักชี', 'ลำต้อยติ่ง'],
+      'เขตบางรัก': ['มหาพฤฒาราม', 'สีลม', 'สุริยวงศ์', 'บางรัก', 'สี่พระยา'],
+      'เขตบางเขน': ['อนุสาวรีย์', 'ท่าแร้ง'],
+      'เขตบางกะปิ': ['คลองจั่น', 'หัวหมาก'],
+      'เขตปทุมวัน': ['รองเมือง', 'วังใหม่', 'ปทุมวัน', 'ลุมพินี'],
+      'เขตป้อมปราบศัตรูพ่าย': ['วังบูรพาภิรมย์', 'วัดเทพศิรินทร์', 'คลองมหานาค', 'ป้อมปราบ', 'บ้านบาตร'],
+      'เขตพระโขนง': ['บางจาก'],
+      'เขตมีนบุรี': ['มีนบุรี', 'แสนแสบ'],
+      'เขตลาดกระบัง': ['ลาดกระบัง', 'คลองสองต้นนุ่น', 'คลองสามประเวศ', 'ลำปลาทิว', 'ทับยาว', 'ขุมทอง'],
+      'เขตยานนาวา': ['ช่องนนทรี', 'บางโพงพาง'],
+      'เขตสัมพันธวงศ์': ['จักรวรรดิ', 'สัมพันธวงศ์', 'ตลาดน้อย'],
+      'เขตพญาไท': ['สามเสนใน'],
+      'เขตธนบุรี': ['วัดกัลยาณ์', 'หิรัญรูจี', 'บางยี่เรือ', 'บุคคโล', 'ตลาดพลู', 'ดาวคะนอง', 'สำเหร่'],
+      'เขตบางกอกใหญ่': ['วัดอรุณ', 'วัดท่าพระ'],
+      'เขตห้วยขวาง': ['ห้วยขวาง', 'บางกะปิ', 'สามเสนนอก'],
+      'เขตคลองสาน': ['คลองต้นไทร', 'คลองสาน', 'บางลำภูล่าง', 'สมเด็จเจ้าพระยา'],
+      'เขตตลิ่งชัน': ['คลองชักพระ', 'ตลิ่งชัน', 'ฉิมพลี', 'บางพรม', 'บางระมาด', 'บางเชือกหนัง'],
+      'เขตบางกอกน้อย': ['ศิริราช', 'บ้านช่างหล่อ', 'บางขุนนนท์', 'บางขุนศรี', 'อรุณอมรินทร์', 'บางยี่ขัน'],
+      'เขตบางขุนเทียน': ['ท่าข้าม', 'แสมดำ'],
+      'เขตภาษีเจริญ': ['บางหว้า', 'บางด้วน', 'บางแวก', 'คลองขวาง', 'ปากคลองภาษีเจริญ', 'คูหาสวรรค์', 'บางจาก'],
+      'เขตหนองแขม': ['หนองแขม', 'หนองค้างพลู'],
+      'เขตราษฎร์บูรณะ': ['ราษฎร์บูรณะ', 'บางปะกอก'],
+      'เขตบางพลัด': ['บางพลัด', 'บางอ้อ', 'บางบำหรุ', 'บางยี่ขัน'],
+      'เขตดินแดง': ['ดินแดง'],
+      'เขตบึงกุ่ม': ['คลองกุ่ม', 'นวมินทร์'],
+      'เขตสาทร': ['ทุ่งวัดดอน', 'ยานนาวา', 'ทุ่งมหาเมฆ'],
+      'เขตบางซื่อ': ['บางซื่อ'],
+      'เขตจตุจักร': ['จตุจักร', 'จอมพล', 'จันทรเกษม', 'ลาดยาว', 'เสนานิคม'],
+      'เขตบางคอแหลม': ['บางคอแหลม', 'วัดพระยาไกร', 'บางโคล่'],
+      'เขตประเวศ': ['ประเวศ', 'หนองบอน', 'ดอกไม้', 'ดอกไม้'],
+      'เขตคลองเตย': ['คลองเตย', 'คลองตัน', 'พระโขนง'],
+      'เขตสวนหลวง': ['สวนหลวง'],
+      'เขตจอมทอง': ['จอมทอง', 'บางมด', 'บางค้อ', 'บางขุนเทียน'],
+      'เขตดอนเมือง': ['สีกัน', 'ดอนเมือง'],
+      'เขตราชเทวี': ['ทุ่งพญาไท', 'ถนนเพชรบุรี', 'ถนนพญาไท', 'มักกะสัน'],
+      'เขตลาดพร้าว': ['จรเข้บัว', 'ลาดพร้าว'],
+      'เขตวัฒนา': ['คลองตันเหนือ', 'คลองเตยเหนือ', 'พระโขนงเหนือ'],
+      'เขตบางแค': ['บางแค', 'บางแคเหนือ', 'บางไผ่', 'หลักสอง'],
+      'เขตหลักสี่': ['ตลาดบางเขน', 'ทุ่งสองห้อง'],
+      'เขตสายไหม': ['สายไหม', 'ออเงิน', 'คลองถนน'],
+      'เขตคันนายาว': ['คันนายาว'],
+      'เขตสะพานสูง': ['สะพานสูง'],
+      'เขตวังทองหลาง': ['วังทองหลาง'],
+      'เขตคลองสามวา': ['สามวาตะวันออก', 'สามวาตะวันตก', 'บางชัน', 'ทรายกองดิน', 'ทรายกองดินใต้'],
+      'เขตบางนา': ['บางนา'],
+      'เขตทวีวัฒนา': ['ทวีวัฒนา', 'ศาลาธรรมสพน์'],
+      'เขตทุ่งครุ': ['ทุ่งครุ', 'บางมด'],
+      'เขตบางบอน': ['บางบอน']
+    },
+    'นนทบุรี': {
+      'เมืองนนทบุรี': ['สวนใหญ่', 'ตลาดขวัญ', 'บางเขน', 'บางกระสอ', 'ท่าทราย', 'บางไผ่', 'บางศรีเมือง', 'บางกร่าง', 'ไทรม้า', 'บางรักน้อย'],
+      'บางกรวย': ['วัดชลอ', 'บางกรวย', 'บางสีทอง', 'บางขนุน', 'บางขุนกอง', 'บางคูเวียง', 'มหาสวัสดิ์', 'ปลายบาง', 'บางแม่นาง']
+    }
+  };
+
   // ฟังก์ชันโหลดอำเภอเมื่อเลือกจังหวัด (สำหรับผู้ส่ง)
   useEffect(() => {
     if (senderProvince) {
-      // ในสถานการณ์จริงจะดึงข้อมูลจาก API แต่นี่เป็นการสร้างข้อมูลทดสอบ
-      const mockDistricts = ['เมือง', 'บางรัก', 'ปทุมวัน', 'บางกะปิ', 'ดินแดง'];
-      setDistricts(mockDistricts);
+      // ใช้ข้อมูลจริงจากตัวแปร districtData ที่กำหนดไว้
+      const availableDistricts = Object.keys(districtData[senderProvince] || {});
+      setDistricts(availableDistricts);
+      
+      // รีเซ็ตค่าที่เกี่ยวข้อง
       form.setValue('senderAddress.district', '');
       form.setValue('senderAddress.subdistrict', '');
       form.setValue('senderAddress.zipcode', '');
@@ -138,21 +200,47 @@ export default function CreateFlashExpressOrderPage() {
 
   // ฟังก์ชันโหลดตำบลเมื่อเลือกอำเภอ (สำหรับผู้ส่ง)
   useEffect(() => {
-    if (senderDistrict) {
-      // ในสถานการณ์จริงจะดึงข้อมูลจาก API แต่นี่เป็นการสร้างข้อมูลทดสอบ
-      const mockSubdistricts = ['ลุมพินี', 'สีลม', 'ถนนเพชรบุรี', 'คลองเตย', 'พระโขนง'];
-      setSubdistricts(mockSubdistricts);
+    if (senderProvince && senderDistrict) {
+      // ใช้ข้อมูลจริงจากตัวแปร districtData ที่กำหนดไว้
+      const availableSubdistricts = districtData[senderProvince]?.[senderDistrict] || [];
+      setSubdistricts(availableSubdistricts);
+      
+      // รีเซ็ตค่าที่เกี่ยวข้อง
       form.setValue('senderAddress.subdistrict', '');
-      form.setValue('senderAddress.zipcode', '10330');
+
+      // กำหนดรหัสไปรษณีย์ตามพื้นที่ (ตัวอย่าง)
+      if (senderProvince === 'กรุงเทพมหานคร') {
+        if (['เขตพระนคร', 'เขตป้อมปราบศัตรูพ่าย', 'เขตสัมพันธวงศ์'].includes(senderDistrict)) {
+          form.setValue('senderAddress.zipcode', '10200');
+        } else if (['เขตดุสิต'].includes(senderDistrict)) {
+          form.setValue('senderAddress.zipcode', '10300');
+        } else if (['เขตบางรัก', 'เขตสาทร', 'เขตปทุมวัน'].includes(senderDistrict)) {
+          form.setValue('senderAddress.zipcode', '10330');
+        } else if (['เขตพญาไท', 'เขตดินแดง', 'เขตห้วยขวาง'].includes(senderDistrict)) {
+          form.setValue('senderAddress.zipcode', '10400');
+        } else if (['เขตคลองเตย', 'เขตวัฒนา'].includes(senderDistrict)) {
+          form.setValue('senderAddress.zipcode', '10110');
+        } else if (['เขตบางกะปิ', 'เขตวังทองหลาง', 'เขตลาดพร้าว'].includes(senderDistrict)) {
+          form.setValue('senderAddress.zipcode', '10310');
+        } else {
+          form.setValue('senderAddress.zipcode', '10XXX');
+        }
+      } else if (senderProvince === 'นนทบุรี') {
+        form.setValue('senderAddress.zipcode', '11000');
+      } else {
+        form.setValue('senderAddress.zipcode', '');
+      }
     }
-  }, [senderDistrict, form]);
+  }, [senderProvince, senderDistrict, form]);
 
   // ฟังก์ชันโหลดอำเภอเมื่อเลือกจังหวัด (สำหรับผู้รับ)
   useEffect(() => {
     if (recipientProvince) {
-      // ในสถานการณ์จริงจะดึงข้อมูลจาก API แต่นี่เป็นการสร้างข้อมูลทดสอบ
-      const mockDistricts = ['เมือง', 'บางรัก', 'ปทุมวัน', 'บางกะปิ', 'ดินแดง'];
-      setRecipientDistricts(mockDistricts);
+      // ใช้ข้อมูลจริงจากตัวแปร districtData ที่กำหนดไว้
+      const availableDistricts = Object.keys(districtData[recipientProvince] || {});
+      setRecipientDistricts(availableDistricts);
+      
+      // รีเซ็ตค่าที่เกี่ยวข้อง
       form.setValue('recipientAddress.district', '');
       form.setValue('recipientAddress.subdistrict', '');
       form.setValue('recipientAddress.zipcode', '');
@@ -161,14 +249,38 @@ export default function CreateFlashExpressOrderPage() {
 
   // ฟังก์ชันโหลดตำบลเมื่อเลือกอำเภอ (สำหรับผู้รับ)
   useEffect(() => {
-    if (recipientDistrict) {
-      // ในสถานการณ์จริงจะดึงข้อมูลจาก API แต่นี่เป็นการสร้างข้อมูลทดสอบ
-      const mockSubdistricts = ['ลุมพินี', 'สีลม', 'ถนนเพชรบุรี', 'คลองเตย', 'พระโขนง'];
-      setRecipientSubdistricts(mockSubdistricts);
+    if (recipientProvince && recipientDistrict) {
+      // ใช้ข้อมูลจริงจากตัวแปร districtData ที่กำหนดไว้
+      const availableSubdistricts = districtData[recipientProvince]?.[recipientDistrict] || [];
+      setRecipientSubdistricts(availableSubdistricts);
+      
+      // รีเซ็ตค่าที่เกี่ยวข้อง
       form.setValue('recipientAddress.subdistrict', '');
-      form.setValue('recipientAddress.zipcode', '10330');
+
+      // กำหนดรหัสไปรษณีย์ตามพื้นที่ (ตัวอย่าง)
+      if (recipientProvince === 'กรุงเทพมหานคร') {
+        if (['เขตพระนคร', 'เขตป้อมปราบศัตรูพ่าย', 'เขตสัมพันธวงศ์'].includes(recipientDistrict)) {
+          form.setValue('recipientAddress.zipcode', '10200');
+        } else if (['เขตดุสิต'].includes(recipientDistrict)) {
+          form.setValue('recipientAddress.zipcode', '10300');
+        } else if (['เขตบางรัก', 'เขตสาทร', 'เขตปทุมวัน'].includes(recipientDistrict)) {
+          form.setValue('recipientAddress.zipcode', '10330');
+        } else if (['เขตพญาไท', 'เขตดินแดง', 'เขตห้วยขวาง'].includes(recipientDistrict)) {
+          form.setValue('recipientAddress.zipcode', '10400');
+        } else if (['เขตคลองเตย', 'เขตวัฒนา'].includes(recipientDistrict)) {
+          form.setValue('recipientAddress.zipcode', '10110');
+        } else if (['เขตบางกะปิ', 'เขตวังทองหลาง', 'เขตลาดพร้าว'].includes(recipientDistrict)) {
+          form.setValue('recipientAddress.zipcode', '10310');
+        } else {
+          form.setValue('recipientAddress.zipcode', '10XXX');
+        }
+      } else if (recipientProvince === 'นนทบุรี') {
+        form.setValue('recipientAddress.zipcode', '11000');
+      } else {
+        form.setValue('recipientAddress.zipcode', '');
+      }
     }
-  }, [recipientDistrict, form]);
+  }, [recipientProvince, recipientDistrict, form]);
 
   // คำนวณค่าจัดส่งอัตโนมัติเมื่อมีการเปลี่ยนแปลงข้อมูลที่เกี่ยวข้อง
   useEffect(() => {
