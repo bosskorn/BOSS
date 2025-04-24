@@ -1642,19 +1642,51 @@ const OrderList: React.FC = () => {
                   <div className="mt-2 text-sm text-gray-700">
                     <div className="flex items-center space-x-2">
                       <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                      <span>{trackingData.status || 'รอดำเนินการ'}</span>
+                      <span>
+                        {trackingData.stateText || trackingData.status || 'รอดำเนินการ'}
+                      </span>
                     </div>
                   </div>
                 </div>
                 
-                {trackingData.history && trackingData.history.length > 0 ? (
+                {/* ตรวจสอบทั้ง history (รูปแบบเก่า) และ routes (Flash Express API) */}
+                {(trackingData.history && trackingData.history.length > 0) || (trackingData.routes && trackingData.routes.length > 0) ? (
                   <div className="rounded-lg border border-gray-200 overflow-hidden">
                     <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
                       <h3 className="font-medium text-gray-900">ประวัติการเดินทาง</h3>
                     </div>
                     <ul className="divide-y divide-gray-200">
-                      {trackingData.history.map((item: any, index: number) => (
-                        <li key={index} className="px-4 py-3">
+                      {/* กรณีมีข้อมูลในรูปแบบ routes (จาก Flash Express API) */}
+                      {trackingData.routes && trackingData.routes.map((item: any, index: number) => (
+                        <li key={`route-${index}`} className="px-4 py-3">
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0 pt-1">
+                              <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                            </div>
+                            <div className="ml-3">
+                              <p className="text-sm font-medium text-gray-900">
+                                {item.message || item.routeAction || 'อัปเดตสถานะ'}
+                              </p>
+                              <div className="mt-1 text-sm text-gray-500 space-y-1">
+                                <p>{item.operationAddress || 'ไม่ระบุสถานที่'}</p>
+                                <p className="text-xs text-gray-400">
+                                  {item.routedAt 
+                                    ? new Date(item.routedAt * 1000).toLocaleString('th-TH', {
+                                        year: 'numeric', month: 'short', day: 'numeric',
+                                        hour: '2-digit', minute: '2-digit'
+                                      })
+                                    : 'ไม่ระบุเวลา'
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                      
+                      {/* กรณีมีข้อมูลในรูปแบบ history (รูปแบบเก่า) */}
+                      {trackingData.history && trackingData.history.map((item: any, index: number) => (
+                        <li key={`history-${index}`} className="px-4 py-3">
                           <div className="flex items-start">
                             <div className="flex-shrink-0 pt-1">
                               <div className="h-2 w-2 rounded-full bg-blue-500"></div>
