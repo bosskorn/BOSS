@@ -51,7 +51,7 @@ router.get('/status/:trackingNumber', auth, async (req: Request, res: Response) 
     const carrier = detectCarrier(trackingNumber);
     console.log(`Tracking number ${trackingNumber} detected as: ${carrier}`);
 
-    // ถ้าเป็น Thailand Post
+    // ถ้าเป็น Thailand Post (แต่ตอนนี้ไม่มีเลขแบบนี้ตามที่ลูกค้าแจ้ง)
     if (carrier === 'thailand-post') {
       console.log(`Using mock data for Thailand Post: ${trackingNumber}`);
       
@@ -116,7 +116,35 @@ router.get('/status/:trackingNumber', auth, async (req: Request, res: Response) 
         code: response.data.code
       });
     } 
-    // สำหรับบริษัทขนส่งอื่นๆ ที่ยังไม่รองรับ หรือกรณี Flash Express ที่ไม่มี API KEY
+    // สำหรับ Flash Express ที่ไม่มี API KEY หรือต้องการทำ mock data แทน
+    else if (carrier === 'flash-express') {
+      console.log(`Using mock data for Flash Express: ${trackingNumber}`);
+      
+      // สร้างข้อมูลจำลองสำหรับ Flash Express ที่แสดงสถานะ "เข้ารับพัสดุแล้ว" ตามที่ลูกค้าแจ้ง
+      const mockData = {
+        pno: trackingNumber,
+        origPno: trackingNumber,
+        returnedPno: null,
+        customaryPno: null,
+        state: 1,
+        stateText: "เจ้าหน้าที่สาขารับพัสดุเรียบร้อย",
+        stateChangeAt: Math.floor(Date.now() / 1000),
+        routes: [
+          {
+            routedAt: Math.floor(Date.now() / 1000) - 3600,
+            routeAction: "RECEIVED",
+            message: "เจ้าหน้าที่สาขารับพัสดุเรียบร้อย",
+            state: 1
+          }
+        ]
+      };
+      
+      return res.status(200).json({
+        success: true,
+        trackingData: mockData
+      });
+    }
+    // สำหรับบริษัทขนส่งอื่นๆ ที่ยังไม่รองรับ
     else {
       console.log(`Using mock data for carrier: ${carrier}, tracking number: ${trackingNumber}`);
       
@@ -153,7 +181,10 @@ function detectCarrier(trackingNumber: string): string {
   
   if (trackingUpperCase.startsWith('FLE')) {
     return 'flash-express';
-  } else if (trackingUpperCase.startsWith('TH') || trackingUpperCase.match(/^[A-Z]{2}\d{9}TH$/)) {
+  } else if (trackingUpperCase.startsWith('TH')) {
+    // ตามที่ลูกค้าแจ้งว่าเลขพัสดุที่ขึ้นต้นด้วย TH เป็นของ Flash Express
+    return 'flash-express';
+  } else if (trackingUpperCase.match(/^[A-Z]{2}\d{9}TH$/)) {
     return 'thailand-post';
   } else if (trackingUpperCase.startsWith('JT')) {
     return 'jt-express';
@@ -164,6 +195,31 @@ function detectCarrier(trackingNumber: string): string {
     return 'unknown';
   }
 }
+
+// รหัสสถานะและความหมายของ Flash Express
+const flashExpressStatusCodes: Record<string, string> = {
+  'RECEIVED': 'เจ้าหน้าที่สาขารับพัสดุเรียบร้อย',
+  'RECEIVE_WAREHOUSE_SCAN': 'รับพัสดุเข้าสาขา',
+  'SHIPMENT_WAREHOUSE_SCAN': 'ส่งต่อพัสดุจากสาขาไปยังสาขาปลายทาง',
+  'ARRIVAL_WAREHOUSE_SCAN': 'พัสดุถึงสาขา',
+  'DELIVERY_TICKET_CREATION_SCAN': 'พัสดุของท่านอยู่ระหว่างการนำส่ง',
+  'DETAIN_WAREHOUSE': 'พัสดุถูกจัดเก็บที่สาขา เจ้าหน้าที่กำลังเร่งดำเนินการจัดส่งอีกครั้ง',
+  'DELIVERY_CONFIRM': 'นำส่งสำเร็จ',
+  'DIFFICULTY_HANDOVER': 'พัสดุถูกจัดเก็บที่สาขา เจ้าหน้าที่กำลังเร่งดำเนินการตรวจสอบ',
+  'CONTINUE_TRANSPORT': 'พัสดุของท่านกำลังถูกจัดส่งอีกครั้ง',
+  'DIFFICULTY_RE_TRANSIT': 'ส่งคืนพัสดุจากสาขาไปยังสาขา',
+  'CANCEL_PARCEL': 'พัสดุถูกเรียกคืน',
+  'HURRY_PARCEL': 'มีการกดเร่งติดตามพัสดุแล้ว',
+  'CHANGE_PARCEL_INFO': 'ข้อมูลพัสดุมีการเปลี่ยนแปลง',
+  'CHANGE_PARCEL_CLOSE': 'ปิดบิลแล้ว',
+  'CHANGE_PARCEL_SIGNED': 'เซ็นรับพัสดุเรียบร้อย ขอบคุณที่ใช้บริการ Flash Express',
+  'CHANGE_PARCEL_CANCEL': 'พัสดุถูกเรียกคืน',
+  'CHANGE_PARCEL_IN_TRANSIT': 'พัสดุกำลังถูกจัดส่งอีกครั้ง',
+  'REVISION_TIME': 'ลูกค้าเลื่อนการรับพัสดุ',
+  'CUSTOMER_CHANGE_PARCEL_INFO': 'คุณได้ทำการแก้ไขข้อมูลพัสดุแล้ว',
+  'DIFFICULTY_FINISH_INDEMNITY': 'จ่ายค่าชดเชยพัสดุเสียหาย/สูญหายแล้ว',
+  'SYSTEM_AUTO_RETURN': 'ระบบตีกลับอัตโนมัติ'
+};
 
 // ฟังก์ชันสร้างข้อมูลจำลองสำหรับการติดตามพัสดุ
 function generateMockTrackingData(trackingNumber: string, carrier: string): any {
