@@ -584,10 +584,8 @@ const OrderList: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">ทั้งหมด</SelectItem>
-                    <SelectItem value="cod">เก็บเงินปลายทาง (COD)</SelectItem>
-                    <SelectItem value="prepaid">จ่ายล่วงหน้า</SelectItem>
-                    <SelectItem value="paid">ชำระเงินแล้ว</SelectItem>
-                    <SelectItem value="pending">รอชำระเงิน</SelectItem>
+                    <SelectItem value="cod">เก็บเงินปลายทาง</SelectItem>
+                    <SelectItem value="transfer">โอนเงิน</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
