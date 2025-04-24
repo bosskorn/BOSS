@@ -592,7 +592,13 @@ const OrderList: React.FC = () => {
       const orderIds = ordersToPrint.map((order: Order) => order.id).join(',');
       
       // เปิดหน้าพิมพ์ลาเบลหลายรายการในแท็บใหม่
-      window.open(`/print-multiple-labels?orders=${orderIds}&type=${selectedLabelType}`, '_blank');
+      if (selectedLabelType === 'flash') {
+        // สำหรับ Flash Express ใช้รูปแบบ BLUEDASH
+        window.open(`/tiktok-style-label?orders=${orderIds}`, '_blank');
+      } else {
+        // สำหรับประเภทอื่นๆ ใช้เหมือนเดิม
+        window.open(`/print-multiple-labels?orders=${orderIds}&type=${selectedLabelType}`, '_blank');
+      }
       
       // อัพเดตออเดอร์ว่าได้พิมพ์แล้ว
       ordersToPrint.forEach(async (order: Order) => {
@@ -622,7 +628,13 @@ const OrderList: React.FC = () => {
       });
       
       // เปิดหน้าพิมพ์ในแท็บใหม่ตามประเภทที่เลือก
-      window.open(`/print-label-enhanced?order=${orderToPrint.id}&type=${selectedLabelType}`, '_blank');
+      if (selectedLabelType === 'flash') {
+        // สำหรับ Flash Express ใช้รูปแบบ BLUEDASH
+        window.open(`/tiktok-style-label?orders=${orderToPrint.id}`, '_blank');
+      } else {
+        // สำหรับประเภทอื่นๆ ใช้เหมือนเดิม
+        window.open(`/print-label-enhanced?order=${orderToPrint.id}&type=${selectedLabelType}`, '_blank');
+      }
     }
     
     // รีเซ็ตสถานะการพิมพ์หลายรายการ

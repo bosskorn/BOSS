@@ -81,6 +81,7 @@ function Router() {
       <Route path="/jnt-express-label" component={JntExpressLabel} />
       <Route path="/tiktok-shipping-label" component={TikTokShippingLabel} />
       <Route path="/tiktok-shipping-label-fixed" component={TikTokShippingLabelFixed} />
+      <Route path="/tiktok-style-label" component={TikTokStyleLabelPage} />
       <Route path="/print-multiple-labels" component={PrintMultipleLabels} />
       <Route path="/print-multiple-labels-fixed" component={PrintMultipleLabelsFixed} />
       <Route path="/landing" component={LandingPage} />
