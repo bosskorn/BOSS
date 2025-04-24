@@ -539,10 +539,17 @@ const OrderList: React.FC = () => {
       return;
     }
     
-    // ตรวจสอบว่ามีออเดอร์ที่มีเลขพัสดุหรือไม่
+    // ตรวจสอบว่ามีออเดอร์ที่มีเลขพัสดุหรือไม่ (ตรวจสอบทั้ง camelCase และ snake_case)
     const ordersWithTracking = filteredOrders.filter(order => 
-      selectedOrders.includes(order.id) && order.trackingNumber
+      selectedOrders.includes(order.id) && (order.trackingNumber || order.tracking_number)
     );
+    
+    // สำหรับ debug
+    console.log("ข้อมูลออเดอร์ที่เลือก:", filteredOrders.filter(order => selectedOrders.includes(order.id)).map(o => ({
+      id: o.id,
+      trackingNumber: o.trackingNumber || 'null',
+      tracking_number: o.tracking_number || 'null'
+    })));
     
     if (ordersWithTracking.length === 0) {
       toast({
@@ -569,8 +576,8 @@ const OrderList: React.FC = () => {
       // พิมพ์ลาเบลหลายรายการ
       const selectedOrdersData = filteredOrders.filter((order: Order) => selectedOrders.includes(order.id));
       
-      // กรองเฉพาะออเดอร์ที่มีเลขพัสดุ
-      const ordersToPrint = selectedOrdersData.filter((order: Order) => order.trackingNumber);
+      // กรองเฉพาะออเดอร์ที่มีเลขพัสดุ (ตรวจสอบทั้ง camelCase และ snake_case)
+      const ordersToPrint = selectedOrdersData.filter((order: Order) => order.trackingNumber || order.tracking_number);
       
       if (ordersToPrint.length === 0) {
         toast({
