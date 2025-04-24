@@ -178,8 +178,8 @@ const OrderList: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        console.log("ดึงข้อมูลวิธีการจัดส่งสำเร็จ:", data.shippingMethods.length, "รายการ");
-        setDbShippingMethods(data.shippingMethods);
+        console.log("ดึงข้อมูลวิธีการจัดส่งสำเร็จ:", data.methods?.length || 0, "รายการ");
+        setDbShippingMethods(data.methods || []);
       } else {
         throw new Error(data.message || 'ไม่สามารถดึงข้อมูลวิธีการจัดส่งได้');
       }
