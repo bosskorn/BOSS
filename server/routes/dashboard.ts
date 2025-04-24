@@ -1,10 +1,10 @@
 import express, { Request, Response } from 'express';
 import { storage } from '../storage';
-import { db } from '../db';
+import { db, pool } from '../db';
 import { eq, sql, desc, and, gte, lt, count, asc } from 'drizzle-orm';
 import { orders, customers, users } from '@shared/schema';
 import { format, subDays, startOfDay, startOfMonth, endOfMonth } from 'date-fns';
-import { auth } from '../middleware/auth';
+import { auth } from '../auth';
 
 const router = express.Router();
 
@@ -23,36 +23,36 @@ router.get('/summary', auth, async (req: Request, res: Response) => {
     if (!userId) {
       return res.status(401).json({ success: false, message: 'ไม่ได้เข้าสู่ระบบ' });
     }
+
+    // สร้าง SQL ด้วย raw queries แทนการใช้ ORM
     
     // 1. ดึงยอดขายวันนี้
     const todayStart = startOfDay(new Date());
-    const todaySales = await db.select({
-      total: sql<number>`COALESCE(SUM(${orders.totalAmount}), 0)`.as('total')
-    })
-    .from(orders)
-    .where(
-      and(
-        eq(orders.userId, userId),
-        gte(orders.createdAt, todayStart)
-      )
-    );
-    
-    const todayTotal = todaySales[0]?.total || 0;
+    const todayQuery = `
+      SELECT COALESCE(SUM(total_amount), 0) as total
+      FROM orders
+      WHERE user_id = $1
+        AND created_at >= $2
+    `;
+    const todayResult = await pool.query(todayQuery, [
+      userId,
+      todayStart
+    ]);
+    const todayTotal = parseFloat(todayResult.rows[0]?.total || '0');
     
     // 2. ดึงยอดขายเดือนนี้
     const monthStart = startOfMonth(new Date());
-    const monthSales = await db.select({
-      total: sql<number>`COALESCE(SUM(${orders.totalAmount}), 0)`.as('total')
-    })
-    .from(orders)
-    .where(
-      and(
-        eq(orders.userId, userId),
-        gte(orders.createdAt, monthStart)
-      )
-    );
-    
-    const monthTotal = monthSales[0]?.total || 0;
+    const monthQuery = `
+      SELECT COALESCE(SUM(total_amount), 0) as total
+      FROM orders
+      WHERE user_id = $1
+        AND created_at >= $2
+    `;
+    const monthResult = await pool.query(monthQuery, [
+      userId,
+      monthStart
+    ]);
+    const monthTotal = parseFloat(monthResult.rows[0]?.total || '0');
     
     // 3. ดึงยอดขายย้อนหลัง 7 วัน
     const last7Days = [];
@@ -62,109 +62,114 @@ router.get('/summary', auth, async (req: Request, res: Response) => {
       const nextDay = new Date(dayStart);
       nextDay.setDate(nextDay.getDate() + 1);
       
-      const daySales = await db.select({
-        total: sql<number>`COALESCE(SUM(${orders.totalAmount}), 0)`.as('total')
-      })
-      .from(orders)
-      .where(
-        and(
-          eq(orders.userId, userId),
-          gte(orders.createdAt, dayStart),
-          lt(orders.createdAt, nextDay)
-        )
-      );
+      const daySalesQuery = `
+        SELECT COALESCE(SUM(total_amount), 0) as total
+        FROM orders
+        WHERE user_id = $1
+          AND created_at >= $2
+          AND created_at < $3
+      `;
+      const daySalesResult = await pool.query(daySalesQuery, [
+        userId,
+        dayStart,
+        nextDay
+      ]);
       
       last7Days.push({
         date: format(day, 'yyyy-MM-dd'),
-        total: Number(daySales[0]?.total) || 0
+        total: parseFloat(daySalesResult.rows[0]?.total || '0')
       });
     }
     
-    // 4. ดึงคำสั่งซื้อล่าสุดที่รอดำเนินการ (สถานะ pending) 5 รายการ พร้อมข้อมูลลูกค้า
-    const ordersResult = await db.select({
-      id: orders.id,
-      orderNumber: orders.orderNumber,
-      totalAmount: orders.totalAmount,
-      createdAt: orders.createdAt,
-      status: orders.status,
-      customerId: orders.customerId
-    })
-    .from(orders)
-    .where(
-      and(
-        eq(orders.userId, userId),
-        eq(orders.status, 'pending')
-      )
-    )
-    .orderBy(desc(orders.createdAt))
-    .limit(5);
+    // 4. ดึงคำสั่งซื้อล่าสุดที่รอดำเนินการ (สถานะ pending) 5 รายการ
+    const latestOrdersQuery = `
+      SELECT id, order_number, total_amount, created_at, status, customer_id
+      FROM orders
+      WHERE user_id = $1
+        AND status = 'pending'
+      ORDER BY created_at DESC
+      LIMIT 5
+    `;
+    const latestOrdersResult = await pool.query(latestOrdersQuery, [userId]);
+    const ordersResult = latestOrdersResult.rows;
     
     // สร้างรายการคำสั่งซื้อที่แสดงข้อมูลในแดชบอร์ด
     const latestOrders = [];
     for (const order of ordersResult) {
       // กรณีที่ไม่มีผู้รับ ใช้ "ลูกค้า BD" หรือ "ลูกค้า PD" ตามคำนำหน้า Order Number
-      let orderPrefix = order.orderNumber ? order.orderNumber.substring(0, 2) : "BD";
+      let orderPrefix = order.order_number ? order.order_number.substring(0, 2) : "BD";
       let customerName = `ลูกค้า ${orderPrefix}`;
       
       // ถ้ามี customerId ให้ค้นหาข้อมูลลูกค้า
-      if (order.customerId) {
-        const customerResult = await db.select({
-          name: customers.name
-        })
-        .from(customers)
-        .where(eq(customers.id, order.customerId))
-        .limit(1);
+      if (order.customer_id) {
+        const customerQuery = `
+          SELECT name FROM customers
+          WHERE id = $1
+          LIMIT 1
+        `;
+        const customerResult = await pool.query(customerQuery, [order.customer_id]);
         
-        if (customerResult.length > 0) {
-          customerName = customerResult[0].name;
+        if (customerResult.rows.length > 0) {
+          customerName = customerResult.rows[0].name;
         }
       }
       
       latestOrders.push({
-        id: order.orderNumber || order.id.toString(),
+        id: order.order_number || order.id.toString(),
         customer: customerName,
-        total: Number(order.totalAmount),
-        date: order.createdAt?.toISOString() || new Date().toISOString(),
+        total: parseFloat(order.total_amount),
+        date: order.created_at?.toISOString() || new Date().toISOString(),
         status: order.status
       });
     }
     
     // 5. สถิติเพิ่มเติม - ยอดคำสั่งซื้อทั้งหมด
-    const totalOrdersCount = await db.select({
-      count: count(orders.id)
-    })
-    .from(orders)
-    .where(eq(orders.userId, userId));
+    const totalOrdersQuery = `
+      SELECT COUNT(*) as count
+      FROM orders
+      WHERE user_id = $1
+    `;
+    const totalOrdersResult = await pool.query(totalOrdersQuery, [userId]);
+    const totalOrdersCount = parseInt(totalOrdersResult.rows[0].count);
     
     // 6. จำนวนคำสั่งซื้อตามสถานะ
-    const orderStatusCounts = {};
+    const orderStatusCounts: Record<string, number> = {};
     
     const statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
     for (const status of statuses) {
-      const statusCount = await db.select({
-        count: count(orders.id)
-      })
-      .from(orders)
-      .where(and(
-        eq(orders.userId, userId),
-        eq(orders.status, status)
-      ));
+      const statusCountQuery = `
+        SELECT COUNT(*) as count
+        FROM orders
+        WHERE user_id = $1
+          AND status = $2
+      `;
+      const statusCountResult = await pool.query(statusCountQuery, [userId, status]);
       
-      orderStatusCounts[status] = statusCount[0].count;
+      orderStatusCounts[status] = parseInt(statusCountResult.rows[0].count);
     }
     
-    // 7. ค่าจัดส่งทั้งหมดเดือนนี้ - ใช้ค่าคงที่เนื่องจากยังไม่มี column shippingCost ในตาราง orders
-    const monthShippingTotal = 1500; // ค่าคงที่ชั่วคราวสำหรับ demo
+    // 7. ค่าจัดส่งทั้งหมดเดือนนี้
+    const monthShippingQuery = `
+      SELECT COALESCE(SUM(shipping_cost), 0) as total
+      FROM orders
+      WHERE user_id = $1
+        AND created_at >= $2
+    `;
+    const monthShippingResult = await pool.query(monthShippingQuery, [
+      userId,
+      monthStart
+    ]);
+    const monthShippingTotal = parseFloat(monthShippingResult.rows[0]?.total || '0');
     
     // ส่งข้อมูลทั้งหมดกลับไป
     res.json({
       success: true,
       data: {
-        todayTotal: Number(todayTotal),
-        monthTotal: Number(monthTotal),
-        totalOrdersCount: totalOrdersCount[0].count,
+        todayTotal,
+        monthTotal,
+        totalOrdersCount,
         orderStatusCounts,
-        monthShippingTotal: Number(monthShippingTotal),
+        monthShippingTotal,
         last7Days,
         latestOrders
       }

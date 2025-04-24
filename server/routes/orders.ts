@@ -1,10 +1,10 @@
-
 import express from 'express';
 import { auth } from '../auth';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { db } from '../db';
+import { pool } from '../db';
 import { orders, orderItems } from '@shared/schema';
 import { eq, and, desc, like, ilike, or, sql } from 'drizzle-orm';
 import { storage } from '../storage';
@@ -38,65 +38,60 @@ router.post('/', auth, async (req, res) => {
       shippingMethod,
       shippingCost,
       isCOD,
-      codAmount,
-      trackingNumber,
-      sortCode
+      codAmount
     } = req.body;
 
-    // สร้างหมายเลขออเดอร์แบบสุ่ม
+    // สร้างหมายเลขออเดอร์
     const orderNumber = `ORD-${Date.now().toString().slice(-8)}-${Math.floor(Math.random() * 1000)}`;
 
-    // สร้างออเดอร์ใหม่ในฐานข้อมูลด้วย Drizzle
-    const [newOrder] = await db.insert(orders).values({
-      userId,
-      orderNumber,
-      customerName,
-      customerPhone,
-      customerEmail,
-      shippingAddress,
-      shippingProvince,
-      shippingDistrict,
-      shippingSubdistrict,
-      shippingZipcode,
-      note,
-      total,
-      shippingMethod,
-      shippingCost,
-      isCOD,
-      codAmount,
-      trackingNumber,
-      sortCode,
-      status: 'pending',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
+    try {
+      // สร้างออเดอร์ใหม่
+      const [newOrder] = await db.insert(orders).values({
+        userId,
+        orderNumber,
+        customerName,
+        customerPhone,
+        customerEmail: customerEmail || '',
+        shippingAddress,
+        shippingProvince,
+        shippingDistrict,
+        shippingSubdistrict,
+        shippingZipcode,
+        note: note || '',
+        totalAmount: total,
+        shippingMethod,
+        shippingCost,
+        isCOD: isCOD || false,
+        codAmount: codAmount || 0,
+        status: 'pending'
+      }).returning();
 
-    // สร้าง orderItems สำหรับแต่ละรายการสินค้า
-    const orderItemsData = items.map((item: any) => ({
-      orderId: newOrder.id,
-      productId: item.productId,
-      productName: item.productName,
-      productSku: item.productSku,
-      quantity: item.quantity,
-      price: item.price,
-      options: item.options || {},
-      createdAt: new Date()
-    }));
+      // เพิ่มรายการสินค้าสำหรับออเดอร์นี้
+      const orderItemsForInsertion = items.map((item) => ({
+        orderId: newOrder.id,
+        productId: item.productId || 0,
+        productName: item.productName,
+        productSku: item.productSku || '',
+        quantity: item.quantity,
+        price: item.price,
+        options: item.options || {}
+      }));
 
-    // บันทึก items ทั้งหมด
-    const newOrderItems = await db.insert(orderItems).values(orderItemsData).returning();
+      // บันทึกรายการสินค้า
+      const savedItems = await db.insert(orderItems).values(orderItemsForInsertion).returning();
 
-    // ส่งคืนข้อมูลทั้งหมด
-    const orderWithItems = {
-      ...newOrder,
-      items: newOrderItems
-    };
-
-    res.status(201).json({
-      success: true,
-      message: 'สร้างออเดอร์สำเร็จ',
-      order: orderWithItems
-    });
+      res.json({
+        success: true,
+        message: 'สร้างออเดอร์สำเร็จ',
+        order: {
+          ...newOrder,
+          items: savedItems
+        }
+      });
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+      throw new Error(`เกิดข้อผิดพลาดในการบันทึกข้อมูล: ${(dbError as Error).message}`);
+    }
   } catch (error) {
     console.error('Error creating order:', error);
     res.status(500).json({
@@ -111,81 +106,90 @@ router.post('/', auth, async (req, res) => {
 router.get('/', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'ไม่ได้รับอนุญาต' 
+      });
+    }
     
     // คิวรี่พารามิเตอร์
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
-    const status = req.query.status as string || undefined;
-    const search = req.query.search as string || undefined;
+    const status = req.query.status as string || 'all';
+    const search = req.query.search as string || '';
     
     // คำนวณการข้ามข้อมูล
     const skip = (page - 1) * limit;
 
     try {
-      // ใช้ raw SQL queries เพื่อหลีกเลี่ยงปัญหากับ Drizzle ORM
       // นับจำนวนออเดอร์ทั้งหมด
-      let sql = `SELECT COUNT(*) as total FROM orders WHERE user_id = $1`;
-      const sqlParams = [userId];
+      let countQuery = 'SELECT COUNT(*) as total FROM orders WHERE user_id = $1';
+      const countParams = [userId];
       
-      let paramCount = 1;
+      let paramIndex = 1;
       
       if (status && status !== 'all') {
-        paramCount++;
-        sql += ` AND status = $${paramCount}`;
-        sqlParams.push(status);
+        paramIndex++;
+        countQuery += ` AND status = $${paramIndex}`;
+        countParams.push(status);
       }
       
       if (search) {
-        paramCount++;
-        sql += ` AND order_number ILIKE $${paramCount}`;
-        sqlParams.push(`%${search}%`);
+        paramIndex++;
+        countQuery += ` AND order_number ILIKE $${paramIndex}`;
+        countParams.push(`%${search}%`);
       }
       
-      console.log('Count SQL:', sql, 'Params:', sqlParams);
+      console.log('Count Query:', countQuery, 'Params:', countParams);
       
-      const countResult = await db.execute(sql, sqlParams);
+      const countResult = await pool.query(countQuery, countParams);
       const totalOrders = parseInt(countResult.rows[0]?.total || '0');
       
-      // ดึงข้อมูลออเดอร์
-      let ordersSql = `SELECT * FROM orders WHERE user_id = $1`;
+      console.log('Total orders count:', totalOrders);
+      
+      // สร้าง SQL สำหรับดึงข้อมูลออเดอร์
+      let ordersQuery = 'SELECT * FROM orders WHERE user_id = $1';
       const ordersParams = [userId];
       
-      paramCount = 1;
+      paramIndex = 1;
       
       if (status && status !== 'all') {
-        paramCount++;
-        ordersSql += ` AND status = $${paramCount}`;
+        paramIndex++;
+        ordersQuery += ` AND status = $${paramIndex}`;
         ordersParams.push(status);
       }
       
       if (search) {
-        paramCount++;
-        ordersSql += ` AND order_number ILIKE $${paramCount}`;
+        paramIndex++;
+        ordersQuery += ` AND order_number ILIKE $${paramIndex}`;
         ordersParams.push(`%${search}%`);
       }
       
-      paramCount++;
-      ordersSql += ` ORDER BY created_at DESC LIMIT $${paramCount}`;
+      ordersQuery += ' ORDER BY created_at DESC';
+      
+      paramIndex++;
+      ordersQuery += ` LIMIT $${paramIndex}`;
       ordersParams.push(limit);
       
-      paramCount++;
-      ordersSql += ` OFFSET $${paramCount}`;
+      paramIndex++;
+      ordersQuery += ` OFFSET $${paramIndex}`;
       ordersParams.push(skip);
       
-      console.log('Orders SQL:', ordersSql, 'Params:', ordersParams);
+      console.log('Orders Query:', ordersQuery, 'Params:', ordersParams);
       
       // ดึงข้อมูลออเดอร์
-      const ordersResult = await db.execute(ordersSql, ordersParams);
+      const ordersResult = await pool.query(ordersQuery, ordersParams);
       const ordersData = ordersResult.rows;
       
       // ดึงข้อมูล order items สำหรับแต่ละออเดอร์
-      const orderIds = ordersData.map(order => order.id);
+      const orderIds = ordersData.map((order: any) => order.id);
       
       let orderItemsData: any[] = [];
       if (orderIds.length > 0) {
         try {
           // ใช้ parameterized query เพื่อป้องกัน SQL injection
-          const placeholders = orderIds.map((_, idx) => `$${idx + 1}`).join(',');
+          const placeholders = orderIds.map((_: any, idx: any) => `$${idx + 1}`).join(',');
           const orderItemsQuery = `
             SELECT * FROM order_items 
             WHERE order_id IN (${placeholders})
@@ -193,7 +197,7 @@ router.get('/', auth, async (req, res) => {
           console.log('Order Items Query:', orderItemsQuery);
           console.log('Order IDs:', orderIds);
           
-          const orderItemsResult = await db.execute(orderItemsQuery, orderIds);
+          const orderItemsResult = await pool.query(orderItemsQuery, orderIds);
           orderItemsData = orderItemsResult.rows;
         } catch (err) {
           console.error('Error fetching order items:', err);
@@ -214,7 +218,7 @@ router.get('/', auth, async (req, res) => {
       }
       
       // เพิ่ม items เข้าไปในแต่ละออเดอร์
-      const ordersWithItems = ordersData.map(order => ({
+      const ordersWithItems = ordersData.map((order: any) => ({
         ...order,
         items: orderItemsMap[order.id] || []
       }));
@@ -232,7 +236,7 @@ router.get('/', auth, async (req, res) => {
           totalPages
         }
       });
-    } catch (sqlError) {
+    } catch (sqlError: any) {
       console.error('SQL Error:', sqlError);
       throw new Error(`Database error: ${sqlError.message}`);
     }
@@ -279,19 +283,21 @@ router.get('/:id', auth, async (req, res) => {
 router.patch('/:id/status', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'ไม่ได้รับอนุญาต' 
+      });
+    }
+    
     const orderId = parseInt(req.params.id);
     const { status } = req.body;
     
-    // ใช้ Drizzle ORM แทน Prisma
-    const orderData = await db
-      .select()
-      .from(orders)
-      .where(and(
-        eq(orders.id, orderId),
-        eq(orders.userId, userId)
-      ));
+    // ค้นหาออเดอร์ด้วย raw SQL เพื่อหลีกเลี่ยงปัญหา ORM
+    const findOrderQuery = 'SELECT * FROM orders WHERE id = $1 AND user_id = $2';
+    const findOrderResult = await pool.query(findOrderQuery, [orderId, userId]);
     
-    if (!orderData || orderData.length === 0) {
+    if (findOrderResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'ไม่พบออเดอร์'
@@ -299,27 +305,21 @@ router.patch('/:id/status', auth, async (req, res) => {
     }
     
     // อัปเดตออเดอร์
-    const [updatedOrder] = await db
-      .update(orders)
-      .set({
-        status,
-        updatedAt: new Date()
-      })
-      .where(eq(orders.id, orderId))
-      .returning();
+    const updateOrderQuery = 'UPDATE orders SET status = $1, updated_at = $2 WHERE id = $3 AND user_id = $4 RETURNING *';
+    const updateOrderResult = await pool.query(updateOrderQuery, [status, new Date(), orderId, userId]);
+    const updatedOrder = updateOrderResult.rows[0];
     
     // ดึงข้อมูล items
-    const orderItemsData = await db
-      .select()
-      .from(orderItems)
-      .where(eq(orderItems.orderId, orderId));
+    const itemsQuery = 'SELECT * FROM order_items WHERE order_id = $1';
+    const itemsResult = await pool.query(itemsQuery, [orderId]);
+    const orderItems = itemsResult.rows;
     
     res.json({
       success: true,
       message: 'อัปเดตสถานะออเดอร์สำเร็จ',
       order: {
         ...updatedOrder,
-        items: orderItemsData
+        items: orderItems
       }
     });
   } catch (error) {
@@ -336,19 +336,21 @@ router.patch('/:id/status', auth, async (req, res) => {
 router.patch('/:id/tracking', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'ไม่ได้รับอนุญาต' 
+      });
+    }
+    
     const orderId = parseInt(req.params.id);
     const { trackingNumber, shippingMethod, sortCode } = req.body;
     
-    // ใช้ Drizzle ORM แทน Prisma
-    const orderData = await db
-      .select()
-      .from(orders)
-      .where(and(
-        eq(orders.id, orderId),
-        eq(orders.userId, userId)
-      ));
+    // ค้นหาออเดอร์ด้วย raw SQL
+    const findOrderQuery = 'SELECT * FROM orders WHERE id = $1 AND user_id = $2';
+    const findOrderResult = await pool.query(findOrderQuery, [orderId, userId]);
     
-    if (!orderData || orderData.length === 0) {
+    if (findOrderResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'ไม่พบออเดอร์'
@@ -356,30 +358,29 @@ router.patch('/:id/tracking', auth, async (req, res) => {
     }
     
     // อัปเดตออเดอร์
-    const [updatedOrder] = await db
-      .update(orders)
-      .set({
-        trackingNumber,
-        shippingMethod,
-        sortCode,
-        status: 'shipped',
-        updatedAt: new Date()
-      })
-      .where(eq(orders.id, orderId))
-      .returning();
+    const updateOrderQuery = `
+      UPDATE orders 
+      SET tracking_number = $1, shipping_method = $2, sort_code = $3, status = $4, updated_at = $5 
+      WHERE id = $6 AND user_id = $7 
+      RETURNING *
+    `;
+    const updateOrderResult = await pool.query(
+      updateOrderQuery, 
+      [trackingNumber, shippingMethod, sortCode, 'shipped', new Date(), orderId, userId]
+    );
+    const updatedOrder = updateOrderResult.rows[0];
     
     // ดึงข้อมูล items
-    const orderItemsData = await db
-      .select()
-      .from(orderItems)
-      .where(eq(orderItems.orderId, orderId));
+    const itemsQuery = 'SELECT * FROM order_items WHERE order_id = $1';
+    const itemsResult = await pool.query(itemsQuery, [orderId]);
+    const orderItems = itemsResult.rows;
     
     res.json({
       success: true,
       message: 'อัปเดตข้อมูลการติดตามสำเร็จ',
       order: {
         ...updatedOrder,
-        items: orderItemsData
+        items: orderItems
       }
     });
   } catch (error) {
@@ -396,16 +397,20 @@ router.patch('/:id/tracking', auth, async (req, res) => {
 router.delete('/:id', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'ไม่ได้รับอนุญาต' 
+      });
+    }
+    
     const orderId = parseInt(req.params.id);
     
-    const order = await prisma.order.findFirst({
-      where: {
-        id: orderId,
-        userId
-      }
-    });
+    // ค้นหาออเดอร์ด้วย raw SQL
+    const findOrderQuery = 'SELECT * FROM orders WHERE id = $1 AND user_id = $2';
+    const findOrderResult = await pool.query(findOrderQuery, [orderId, userId]);
     
-    if (!order) {
+    if (findOrderResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'ไม่พบออเดอร์'
@@ -413,18 +418,10 @@ router.delete('/:id', auth, async (req, res) => {
     }
     
     // ลบรายการสินค้าก่อน
-    await prisma.orderItem.deleteMany({
-      where: {
-        orderId
-      }
-    });
+    await pool.query('DELETE FROM order_items WHERE order_id = $1', [orderId]);
     
     // จากนั้นลบออเดอร์
-    await prisma.order.delete({
-      where: {
-        id: orderId
-      }
-    });
+    await pool.query('DELETE FROM orders WHERE id = $1 AND user_id = $2', [orderId, userId]);
     
     res.json({
       success: true,
@@ -444,28 +441,39 @@ router.delete('/:id', auth, async (req, res) => {
 router.get('/tracking/:trackingNumber', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'ไม่ได้รับอนุญาต' 
+      });
+    }
+    
     const trackingNumber = req.params.trackingNumber;
     
-    const order = await prisma.order.findFirst({
-      where: {
-        trackingNumber,
-        userId
-      },
-      include: {
-        items: true
-      }
-    });
+    // ค้นหาออเดอร์ด้วย raw SQL
+    const findOrderQuery = 'SELECT * FROM orders WHERE tracking_number = $1 AND user_id = $2';
+    const findOrderResult = await pool.query(findOrderQuery, [trackingNumber, userId]);
     
-    if (!order) {
+    if (findOrderResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'ไม่พบออเดอร์จากหมายเลขการติดตาม'
       });
     }
     
+    const order = findOrderResult.rows[0];
+    
+    // ดึงข้อมูล items
+    const itemsQuery = 'SELECT * FROM order_items WHERE order_id = $1';
+    const itemsResult = await pool.query(itemsQuery, [order.id]);
+    const orderItems = itemsResult.rows;
+    
     res.json({
       success: true,
-      order
+      order: {
+        ...order,
+        items: orderItems
+      }
     });
   } catch (error) {
     console.error('Error finding order by tracking number:', error);
@@ -481,28 +489,39 @@ router.get('/tracking/:trackingNumber', auth, async (req, res) => {
 router.get('/order-number/:orderNumber', auth, async (req, res) => {
   try {
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'ไม่ได้รับอนุญาต' 
+      });
+    }
+    
     const orderNumber = req.params.orderNumber;
     
-    const order = await prisma.order.findFirst({
-      where: {
-        orderNumber,
-        userId
-      },
-      include: {
-        items: true
-      }
-    });
+    // ค้นหาออเดอร์ด้วย raw SQL
+    const findOrderQuery = 'SELECT * FROM orders WHERE order_number = $1 AND user_id = $2';
+    const findOrderResult = await pool.query(findOrderQuery, [orderNumber, userId]);
     
-    if (!order) {
+    if (findOrderResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'ไม่พบออเดอร์จากหมายเลขออเดอร์'
       });
     }
     
+    const order = findOrderResult.rows[0];
+    
+    // ดึงข้อมูล items
+    const itemsQuery = 'SELECT * FROM order_items WHERE order_id = $1';
+    const itemsResult = await pool.query(itemsQuery, [order.id]);
+    const orderItems = itemsResult.rows;
+    
     res.json({
       success: true,
-      order
+      order: {
+        ...order,
+        items: orderItems
+      }
     });
   } catch (error) {
     console.error('Error finding order by order number:', error);
@@ -534,32 +553,8 @@ router.post('/bulk', auth, async (req, res) => {
     const createdOrders = [];
     
     for (const orderData of orders) {
-      const {
-        customerName,
-        customerPhone,
-        customerEmail,
-        shippingAddress,
-        shippingProvince,
-        shippingDistrict,
-        shippingSubdistrict,
-        shippingZipcode,
-        note,
-        items,
-        total,
-        shippingMethod,
-        shippingCost,
-        isCOD,
-        codAmount
-      } = orderData;
-      
-      // สร้างหมายเลขออเดอร์แบบสุ่ม
-      const orderNumber = `ORD-${Date.now().toString().slice(-8)}-${Math.floor(Math.random() * 1000)}`;
-      
-      // สร้างออเดอร์ใหม่ในฐานข้อมูล
-      const newOrder = await prisma.order.create({
-        data: {
-          userId,
-          orderNumber,
+      try {
+        const {
           customerName,
           customerPhone,
           customerEmail,
@@ -569,107 +564,82 @@ router.post('/bulk', auth, async (req, res) => {
           shippingSubdistrict,
           shippingZipcode,
           note,
+          items,
           total,
           shippingMethod,
           shippingCost,
           isCOD,
-          codAmount,
-          status: 'pending',
-          items: {
-            create: items.map((item: any) => ({
-              productId: item.productId,
-              productName: item.productName,
-              productSku: item.productSku,
-              quantity: item.quantity,
-              price: item.price,
-              options: item.options || {}
-            }))
-          }
-        },
-        include: {
-          items: true
+          codAmount
+        } = orderData;
+        
+        // สร้างหมายเลขออเดอร์แบบสุ่ม
+        const orderNumber = `ORD-${Date.now().toString().slice(-8)}-${Math.floor(Math.random() * 1000)}`;
+        
+        // ใช้ raw SQL เพื่อสร้างออเดอร์
+        const orderInsertQuery = `
+          INSERT INTO orders (
+            user_id, order_number, customer_name, customer_phone, customer_email,
+            shipping_address, shipping_province, shipping_district, shipping_subdistrict,
+            shipping_zipcode, note, total_amount, shipping_method, shipping_cost, is_cod,
+            cod_amount, status, created_at, updated_at
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+          RETURNING *
+        `;
+        
+        const now = new Date();
+        
+        const orderInsertResult = await pool.query(orderInsertQuery, [
+          userId, orderNumber, customerName, customerPhone, customerEmail || '',
+          shippingAddress, shippingProvince, shippingDistrict, shippingSubdistrict,
+          shippingZipcode, note || '', total, shippingMethod, shippingCost || 0, isCOD || false,
+          codAmount || 0, 'pending', now, now
+        ]);
+        
+        const newOrder = orderInsertResult.rows[0];
+        
+        // เพิ่มรายการสินค้า
+        const orderItemsData = [];
+        
+        for (const item of items) {
+          const itemInsertQuery = `
+            INSERT INTO order_items (
+              order_id, product_id, product_name, product_sku, quantity, price, options
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+          `;
+          
+          const itemInsertResult = await pool.query(itemInsertQuery, [
+            newOrder.id,
+            item.productId || 0,
+            item.productName,
+            item.productSku || '',
+            item.quantity,
+            item.price,
+            item.options || {}
+          ]);
+          
+          orderItemsData.push(itemInsertResult.rows[0]);
         }
-      });
-      
-      createdOrders.push(newOrder);
-    }
-    
-    res.status(201).json({
-      success: true,
-      message: `สร้างออเดอร์สำเร็จ ${createdOrders.length} รายการ`,
-      orders: createdOrders
-    });
-  } catch (error) {
-    console.error('Error creating bulk orders:', error);
-    res.status(500).json({
-      success: false,
-      message: 'เกิดข้อผิดพลาดในการสร้างออเดอร์จำนวนมาก',
-      error: (error as Error).message
-    });
-  }
-});
-
-// เพิ่ม endpoint สำหรับตรวจสอบการค้นหาออเดอร์จากหมายเลขการติดตามของลูกค้า (Merchant Tracking)
-router.get('/merchant-tracking/:merchantTracking', auth, async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    const merchantTracking = req.params.merchantTracking;
-    
-    const order = await prisma.order.findFirst({
-      where: {
-        orderNumber: {
-          contains: merchantTracking
-        },
-        userId
-      },
-      include: {
-        items: true
+        
+        createdOrders.push({
+          ...newOrder,
+          items: orderItemsData
+        });
+      } catch (orderError) {
+        console.error('Error creating individual order:', orderError);
+        // ข้ามออเดอร์ที่มีปัญหาและดำเนินการต่อ
       }
-    });
-    
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'ไม่พบออเดอร์จากหมายเลขการติดตามของลูกค้า'
-      });
     }
     
     res.json({
       success: true,
-      order
+      message: `สร้าง ${createdOrders.length} ออเดอร์สำเร็จ`,
+      orders: createdOrders
     });
   } catch (error) {
-    console.error('Error finding order by merchant tracking:', error);
-    res.status(500).json({
-      success: false,
-      message: 'เกิดข้อผิดพลาดในการค้นหาออเดอร์',
-      error: (error as Error).message
-    });
-  }
-});
-
-// API สำหรับสร้างออเดอร์ใหม่
-router.post('/create', async (req, res) => {
-  try {
-    const orderData = req.body;
-    console.log('ข้อมูลการสร้างออเดอร์ที่ได้รับ:', orderData);
-
-    // สร้างออเดอร์จริงในระบบ (จำลอง - ให้เปลี่ยนตามระบบจริง)
-    // ในตัวอย่างนี้เราแค่ส่งกลับข้อมูลที่ได้รับมาพร้อมกับ ID สุ่ม
-    const createdOrder = {
-      id: Math.floor(Math.random() * 10000),
-      ...orderData,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    };
-
-    res.status(201).json({
-      success: true,
-      message: 'สร้างออเดอร์สำเร็จ',
-      order: createdOrder
-    });
-  } catch (error) {
-    console.error('เกิดข้อผิดพลาดในการสร้างออเดอร์:', error);
+    console.error('Error creating bulk orders:', error);
     res.status(500).json({
       success: false,
       message: 'เกิดข้อผิดพลาดในการสร้างออเดอร์',
