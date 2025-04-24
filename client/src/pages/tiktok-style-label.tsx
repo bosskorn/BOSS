@@ -14,6 +14,7 @@ const TikTokStyleLabelPage = () => {
   const [ordersData, setOrdersData] = useState<any[]>([]);
   const [orderIds, setOrderIds] = useState<string[]>([]);
   const [sortingCode] = useState('SS1');
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // CSS สำหรับการแสดงลาเบล
   const labelStyles = `
