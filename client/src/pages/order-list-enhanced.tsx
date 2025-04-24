@@ -82,7 +82,7 @@ const OrderList: React.FC = () => {
   const [statusSelected, setStatusSelected] = useState('all');
   const [orderToPrint, setOrderToPrint] = useState<Order | null>(null);
   const [labelTypeDialogOpen, setLabelTypeDialogOpen] = useState(false);
-  const [selectedLabelType, setSelectedLabelType] = useState('standard');
+  const [selectedLabelType, setSelectedLabelType] = useState('flash');
   const [showFilters, setShowFilters] = useState(false);
   const [isPrintingMultiple, setIsPrintingMultiple] = useState(false);
   
@@ -1444,11 +1444,11 @@ const OrderList: React.FC = () => {
                   
                   switch(selectedLabelType) {
                     case 'flash':
-                      labelUrl = `/flash-express-label-new?orders=${orderIds}`;
+                      labelUrl = `/tiktok-style-label?orders=${orderIds}`;
                       console.log("พิมพ์ลาเบลสำหรับ:", orderIds);
                       toast({
                         title: 'กำลังเปิดหน้าพิมพ์ลาเบล',
-                        description: `กำลังเตรียมพิมพ์ลาเบลทั้งหมด ${ordersToPrint.length} รายการ (รูปแบบ Flash Express)`,
+                        description: `กำลังเตรียมพิมพ์ลาเบลทั้งหมด ${ordersToPrint.length} รายการ (รูปแบบ BLUEDASH)`,
                       });
                       break;
                     case 'jt':
@@ -1514,7 +1514,7 @@ const OrderList: React.FC = () => {
                   let labelUrl = '';
                   switch(selectedLabelType) {
                     case 'flash':
-                      labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
+                      labelUrl = `/tiktok-style-label?orders=${orderToPrint.id}`;
                       break;
                     case 'jt':
                       labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
