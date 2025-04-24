@@ -55,6 +55,7 @@ import FlashExpressTestV2 from './pages/flash-express-test-v2';
 import PickupRequestsHistory from './pages/pickup-requests-history';
 import PickupRequestsTest from './pages/pickup-requests-test';
 import FlashExpressDirectTest from './pages/flash-express-direct-test';
+import FlashExpressLabelNew from './pages/flash-express-label-new';
 
 // รายงาน
 import ReportsOverview from "@/pages/reports/overview";
@@ -91,6 +92,7 @@ function Router() {
       <Route path="/flash-express-test-v2" component={FlashExpressTestV2} />
       <Route path="/create-flash-express-order" component={CreateFlashExpressOrder} />
       <Route path="/flash-express-direct" component={FlashExpressDirectTest} />
+      <Route path="/flash-express-label-new" component={FlashExpressLabelNew} />
       {/* Flash Express routes have been updated */}
 
       {/* Protected routes - require authentication */}
