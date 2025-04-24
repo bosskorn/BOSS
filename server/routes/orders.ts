@@ -144,7 +144,7 @@ router.get('/', auth, async (req, res) => {
       
       // นับจำนวนออเดอร์ทั้งหมด
       const countResult = await db.execute(countQuery, params);
-      const totalOrders = parseInt(countResult.rows[0].total);
+      const totalOrders = parseInt(countResult.rows[0].total || '0');
       
       // สร้าง query เพื่อดึงข้อมูลออเดอร์
       let ordersQuery = `
@@ -165,8 +165,13 @@ router.get('/', auth, async (req, res) => {
         params.push(`%${search}%`);
       }
       
-      ordersQuery += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-      params.push(limit.toString(), skip.toString());
+      // ใช้พารามิเตอร์ที่ถูกต้องและตรวจสอบว่าเป็นตัวเลข
+      const limitParam = Number(limit);
+      const skipParam = Number(skip);
+      params.push(limitParam, skipParam);
+      
+      ordersQuery += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
+      
       
       // ดึงข้อมูลออเดอร์
       const ordersResult = await db.execute(ordersQuery, params);
@@ -177,11 +182,13 @@ router.get('/', auth, async (req, res) => {
       
       let orderItemsData = [];
       if (orderIds.length > 0) {
+        // ใช้ parameterized query เพื่อป้องกัน SQL injection
+        const placeholders = orderIds.map((_, idx) => `$${idx + 1}`).join(',');
         const orderItemsQuery = `
           SELECT * FROM order_items 
-          WHERE order_id IN (${orderIds.join(',')})
+          WHERE order_id IN (${placeholders})
         `;
-        const orderItemsResult = await db.execute(orderItemsQuery);
+        const orderItemsResult = await db.execute(orderItemsQuery, orderIds);
         orderItemsData = orderItemsResult.rows;
       }
       
