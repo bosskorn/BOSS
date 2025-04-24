@@ -717,9 +717,9 @@ const OrderList: React.FC = () => {
                     >
                       <div className="flex items-center gap-1.5">
                         <Clock className="h-4 w-4 text-purple-500" />
-                        <span>รอดำเนินการ</span>
+                        <span>รออนุมัติ/เข้ารับ</span>
                         <span className="ml-1 bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">
-                          {orders.filter(o => !o.status || o.status === 'waiting').length}
+                          {orders.filter(o => o.status === 'pending').length}
                         </span>
                       </div>
                     </TabsTrigger>
@@ -1166,8 +1166,11 @@ const OrderList: React.FC = () => {
                           }
                         </TableCell>
                         <TableCell>
-                          {order.status === 'pending' && (
+                          {order.status === 'pending' && !(order.tracking_number || order.trackingNumber) && (
                             <Badge variant="outline" className="border-yellow-300 text-yellow-700 bg-yellow-50">รอดำเนินการ</Badge>
+                          )}
+                          {order.status === 'pending' && (order.tracking_number || order.trackingNumber) && (
+                            <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50">รอเข้ารับ</Badge>
                           )}
                           {order.status === 'processing' && (
                             <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">กำลังดำเนินการ</Badge>
