@@ -761,14 +761,11 @@ const TikTokStyleLabelPage = () => {
               <div key={index} className="shipping-label">
                 {/* แสดงส่วนบนของลาเบล */}
                 <div className="label-header">
-                  <div className="tiktok-logo">
-                    TikTok Shop
-                  </div>
                   <div className="flash-logo">
                     FLASH Express
                   </div>
                   <div className="service-type">
-                    Standard
+                    {order.serviceType || order.service_type || "มาตรฐาน"}
                   </div>
                 </div>
                 
@@ -782,9 +779,7 @@ const TikTokStyleLabelPage = () => {
                 <div className="order-number-section">
                   <div className="order-number">{order.sortingCode}</div>
                   <div className="sorting-info">
-                    <div>{order.sorting_line_code || order.sortingLineCode || 'C13'}</div>
                     <div>{order.dst_store_name || order.dstStoreName || 'RM9_SP-พระรามที่9'}</div>
-                    <div>พร้อม</div>
                   </div>
                 </div>
                 
