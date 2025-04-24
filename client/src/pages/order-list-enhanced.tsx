@@ -1112,7 +1112,14 @@ const OrderList: React.FC = () => {
                             {order.orderNumber}
                           </Link>
                         </TableCell>
-                        <TableCell>{order.customerName || (order.customer?.name) || 'ไม่ระบุ'}</TableCell>
+                        <TableCell>
+                          {/* ทดสอบแสดงชื่อลูกค้า */}
+                          {console.log(`Order #${order.id} customer:`, 
+                            `customer_name=${order.customer_name || 'null'}`, 
+                            `customerName=${order.customerName || 'null'}`
+                          )}
+                          {order.customer_name || order.customerName || (order.customer?.name) || 'ไม่ระบุ'}
+                        </TableCell>
                         <TableCell className="font-medium">
                           {typeof order.total === 'number' 
                             ? new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(order.total)
@@ -1402,7 +1409,7 @@ const OrderList: React.FC = () => {
                   // กรณีพิมพ์หลายรายการ
                   const selectedOrdersData = filteredOrders.filter((order: Order) => selectedOrders.includes(order.id));
                   // กรองเฉพาะออเดอร์ที่มีเลขพัสดุ
-                  const ordersToPrint = selectedOrdersData.filter((order: Order) => order.trackingNumber);
+                  const ordersToPrint = selectedOrdersData.filter((order: Order) => order.tracking_number || order.trackingNumber);
                   
                   if (ordersToPrint.length === 0) {
                     toast({
@@ -1473,7 +1480,7 @@ const OrderList: React.FC = () => {
                 } else {
                   // กรณีพิมพ์รายการเดียว
                   // ตรวจสอบว่ามี order และ trackingNumber หรือไม่
-                  if (!orderToPrint || !orderToPrint.trackingNumber) {
+                  if (!orderToPrint || (!orderToPrint.trackingNumber && !orderToPrint.tracking_number)) {
                     toast({
                       title: 'ไม่สามารถพิมพ์ลาเบลได้',
                       description: 'ออเดอร์นี้ไม่มีเลขพัสดุ กรุณาสร้างเลขพัสดุก่อนพิมพ์ลาเบล',
