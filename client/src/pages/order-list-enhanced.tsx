@@ -253,7 +253,12 @@ const OrderList: React.FC = () => {
             !order.trackingStatus.includes('ขนส่ง') && 
             !order.trackingStatus.includes('จัดส่ง') && 
             !order.trackingStatus.includes('ส่งสำเร็จ') &&
-            !order.trackingStatus.includes('ได้รับพัสดุ')))
+            !order.trackingStatus.includes('ได้รับพัสดุ') &&
+            !order.trackingStatus.includes('เดินทาง') &&
+            !order.trackingStatus.includes('ขาออก') &&
+            !order.trackingStatus.includes('ส่งต่อ') &&
+            !order.trackingStatus.includes('จุดรับ') &&
+            !order.trackingStatus.includes('เตรียม')))
       );
     } else if (activeTab === 'shipping') {
       // อยู่ระหว่างการจัดส่ง
@@ -261,6 +266,9 @@ const OrderList: React.FC = () => {
         order.trackingStatus && 
         (order.trackingStatus.includes('จัดส่ง') || 
          order.trackingStatus.includes('ขนส่ง') ||
+         order.trackingStatus.includes('เดินทาง') ||
+         order.trackingStatus.includes('ขาออก') ||
+         order.trackingStatus.includes('ส่งต่อ') ||
          order.trackingStatus.includes('จุดรับ') ||
          order.trackingStatus.includes('เตรียม'))
       );
@@ -940,7 +948,12 @@ const OrderList: React.FC = () => {
                         !o.trackingStatus.includes('ขนส่ง') && 
                         !o.trackingStatus.includes('จัดส่ง') && 
                         !o.trackingStatus.includes('ส่งสำเร็จ') &&
-                        !o.trackingStatus.includes('ได้รับพัสดุ')))
+                        !o.trackingStatus.includes('ได้รับพัสดุ') &&
+                        !o.trackingStatus.includes('เดินทาง') &&
+                        !o.trackingStatus.includes('ขาออก') &&
+                        !o.trackingStatus.includes('ส่งต่อ') &&
+                        !o.trackingStatus.includes('จุดรับ') &&
+                        !o.trackingStatus.includes('เตรียม')))
                     ).length})</span>
                   </TabsTrigger>
                   <TabsTrigger
@@ -951,6 +964,9 @@ const OrderList: React.FC = () => {
                       o.trackingStatus && 
                       (o.trackingStatus.includes('จัดส่ง') || 
                        o.trackingStatus.includes('ขนส่ง') ||
+                       o.trackingStatus.includes('เดินทาง') ||
+                       o.trackingStatus.includes('ขาออก') ||
+                       o.trackingStatus.includes('ส่งต่อ') ||
                        o.trackingStatus.includes('จุดรับ') ||
                        o.trackingStatus.includes('เตรียม'))
                     ).length})</span>
