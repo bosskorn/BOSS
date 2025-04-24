@@ -120,76 +120,104 @@ router.get('/', auth, async (req, res) => {
     
     // คำนวณการข้ามข้อมูล
     const skip = (page - 1) * limit;
-    
-    // ดึงข้อมูลออเดอร์ด้วย Drizzle
-    let query = db
-      .select()
-      .from(orders)
-      .where(eq(orders.userId, userId));
-    
-    // เพิ่มเงื่อนไขสถานะ ถ้ามี
-    if (status && status !== 'all') {
-      query = query.where(eq(orders.status, status));
-    }
-    
-    // เพิ่มเงื่อนไขการค้นหา (อย่างง่าย - สำหรับ orderNumber)
-    if (search) {
-      // ใช้ ilike หรือ like ขึ้นอยู่กับ dialect ของ database
-      query = query.where(ilike(orders.orderNumber, `%${search}%`));
-    }
-    
-    // ดึงข้อมูลออเดอร์
-    const ordersData = await query
-      .orderBy(desc(orders.createdAt))
-      .limit(limit)
-      .offset(skip);
-    
-    // นับจำนวนออเดอร์ทั้งหมด
-    const totalOrdersResult = await db
-      .select({ count: sql`count(*)` })
-      .from(orders)
-      .where(eq(orders.userId, userId));
-    
-    const totalOrders = Number(totalOrdersResult[0]?.count || 0);
-    
-    // ดึงข้อมูล order items สำหรับแต่ละออเดอร์
-    const orderIds = ordersData.map(order => order.id);
-    const orderItemsData = orderIds.length > 0 
-      ? await db
-          .select()
-          .from(orderItems)
-          .where(sql`${orderItems.orderId} IN (${orderIds.join(',')})`)
-      : [];
-    
-    // จัดกลุ่ม order items ตาม orderId
-    const orderItemsMap = orderItemsData.reduce((acc, item) => {
-      const orderId = item.orderId;
-      if (!acc[orderId]) {
-        acc[orderId] = [];
+
+    try {
+      // ดึงข้อมูลออเดอร์ด้วย SQL โดยตรง เพื่อหลีกเลี่ยงปัญหากับ Drizzle
+      let countQuery = `
+        SELECT COUNT(*) as total 
+        FROM orders 
+        WHERE user_id = $1
+      `;
+      
+      let params = [userId];
+      
+      if (status && status !== 'all') {
+        countQuery += ` AND status = $2`;
+        params.push(status);
       }
-      acc[orderId].push(item);
-      return acc;
-    }, {} as Record<number, typeof orderItemsData>);
-    
-    // เพิ่ม items เข้าไปในแต่ละออเดอร์
-    const ordersWithItems = ordersData.map(order => ({
-      ...order,
-      items: orderItemsMap[order.id] || []
-    }));
-    
-    // คำนวณจำนวนหน้าทั้งหมด
-    const totalPages = Math.ceil(totalOrders / limit);
-    
-    res.json({
-      success: true,
-      orders: ordersWithItems,
-      pagination: {
-        total: totalOrders,
-        page,
-        limit,
-        totalPages
+      
+      if (search) {
+        const paramIndex = params.length + 1;
+        countQuery += ` AND order_number ILIKE $${paramIndex}`;
+        params.push(`%${search}%`);
       }
-    });
+      
+      // นับจำนวนออเดอร์ทั้งหมด
+      const countResult = await db.execute(countQuery, params);
+      const totalOrders = parseInt(countResult.rows[0].total);
+      
+      // สร้าง query เพื่อดึงข้อมูลออเดอร์
+      let ordersQuery = `
+        SELECT * FROM orders 
+        WHERE user_id = $1
+      `;
+      
+      params = [userId];
+      
+      if (status && status !== 'all') {
+        ordersQuery += ` AND status = $2`;
+        params.push(status);
+      }
+      
+      if (search) {
+        const paramIndex = params.length + 1;
+        ordersQuery += ` AND order_number ILIKE $${paramIndex}`;
+        params.push(`%${search}%`);
+      }
+      
+      ordersQuery += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+      params.push(limit.toString(), skip.toString());
+      
+      // ดึงข้อมูลออเดอร์
+      const ordersResult = await db.execute(ordersQuery, params);
+      const ordersData = ordersResult.rows;
+      
+      // ดึงข้อมูล order items สำหรับแต่ละออเดอร์
+      const orderIds = ordersData.map(order => order.id);
+      
+      let orderItemsData = [];
+      if (orderIds.length > 0) {
+        const orderItemsQuery = `
+          SELECT * FROM order_items 
+          WHERE order_id IN (${orderIds.join(',')})
+        `;
+        const orderItemsResult = await db.execute(orderItemsQuery);
+        orderItemsData = orderItemsResult.rows;
+      }
+      
+      // จัดกลุ่ม order items ตาม orderId
+      const orderItemsMap = orderItemsData.reduce((acc, item) => {
+        const orderId = item.order_id;
+        if (!acc[orderId]) {
+          acc[orderId] = [];
+        }
+        acc[orderId].push(item);
+        return acc;
+      }, {} as Record<number, any[]>);
+      
+      // เพิ่ม items เข้าไปในแต่ละออเดอร์
+      const ordersWithItems = ordersData.map(order => ({
+        ...order,
+        items: orderItemsMap[order.id] || []
+      }));
+      
+      // คำนวณจำนวนหน้าทั้งหมด
+      const totalPages = Math.ceil(totalOrders / limit);
+      
+      res.json({
+        success: true,
+        orders: ordersWithItems,
+        pagination: {
+          total: totalOrders,
+          page,
+          limit,
+          totalPages
+        }
+      });
+    } catch (sqlError) {
+      console.error('SQL Error:', sqlError);
+      throw new Error(`Database error: ${sqlError.message}`);
+    }
   } catch (error) {
     console.error('Error fetching orders:', error);
     res.status(500).json({
@@ -236,36 +264,45 @@ router.patch('/:id/status', auth, async (req, res) => {
     const orderId = parseInt(req.params.id);
     const { status } = req.body;
     
-    const order = await prisma.order.findFirst({
-      where: {
-        id: orderId,
-        userId
-      }
-    });
+    // ใช้ Drizzle ORM แทน Prisma
+    const orderData = await db
+      .select()
+      .from(orders)
+      .where(and(
+        eq(orders.id, orderId),
+        eq(orders.userId, userId)
+      ));
     
-    if (!order) {
+    if (!orderData || orderData.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'ไม่พบออเดอร์'
       });
     }
     
-    const updatedOrder = await prisma.order.update({
-      where: {
-        id: orderId
-      },
-      data: {
-        status
-      },
-      include: {
-        items: true
-      }
-    });
+    // อัปเดตออเดอร์
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({
+        status,
+        updatedAt: new Date()
+      })
+      .where(eq(orders.id, orderId))
+      .returning();
+    
+    // ดึงข้อมูล items
+    const orderItemsData = await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, orderId));
     
     res.json({
       success: true,
       message: 'อัปเดตสถานะออเดอร์สำเร็จ',
-      order: updatedOrder
+      order: {
+        ...updatedOrder,
+        items: orderItemsData
+      }
     });
   } catch (error) {
     console.error('Error updating order status:', error);
@@ -284,39 +321,48 @@ router.patch('/:id/tracking', auth, async (req, res) => {
     const orderId = parseInt(req.params.id);
     const { trackingNumber, shippingMethod, sortCode } = req.body;
     
-    const order = await prisma.order.findFirst({
-      where: {
-        id: orderId,
-        userId
-      }
-    });
+    // ใช้ Drizzle ORM แทน Prisma
+    const orderData = await db
+      .select()
+      .from(orders)
+      .where(and(
+        eq(orders.id, orderId),
+        eq(orders.userId, userId)
+      ));
     
-    if (!order) {
+    if (!orderData || orderData.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'ไม่พบออเดอร์'
       });
     }
     
-    const updatedOrder = await prisma.order.update({
-      where: {
-        id: orderId
-      },
-      data: {
+    // อัปเดตออเดอร์
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({
         trackingNumber,
         shippingMethod,
         sortCode,
-        status: 'shipped'
-      },
-      include: {
-        items: true
-      }
-    });
+        status: 'shipped',
+        updatedAt: new Date()
+      })
+      .where(eq(orders.id, orderId))
+      .returning();
+    
+    // ดึงข้อมูล items
+    const orderItemsData = await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, orderId));
     
     res.json({
       success: true,
       message: 'อัปเดตข้อมูลการติดตามสำเร็จ',
-      order: updatedOrder
+      order: {
+        ...updatedOrder,
+        items: orderItemsData
+      }
     });
   } catch (error) {
     console.error('Error updating tracking info:', error);
