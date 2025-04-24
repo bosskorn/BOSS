@@ -150,8 +150,11 @@ const OrderList: React.FC = () => {
           };
         });
         
-        setOrders(ordersWithCarrier);
-        setFilteredOrders(ordersWithCarrier);
+        // ดึงข้อมูลสถานะการติดตามของออเดอร์ที่มีเลขพัสดุ
+        const ordersWithTracking = await fetchTrackingStatusForOrders(ordersWithCarrier);
+        
+        setOrders(ordersWithTracking);
+        setFilteredOrders(ordersWithTracking);
         
         // ดึงข้อมูลวิธีการจัดส่งเพื่อใช้ในตัวกรอง
         fetchShippingMethods();
@@ -431,6 +434,74 @@ const OrderList: React.FC = () => {
   // ฟังก์ชันยกเลิกการเลือกทั้งหมด
   const clearAllSelections = () => {
     setSelectedOrders([]);
+  };
+  
+  // ฟังก์ชันดึงสถานะการติดตามพัสดุสำหรับรายการที่มีเลขพัสดุ
+  const fetchTrackingStatusForOrders = async (orders: Order[]) => {
+    // คัดกรองเฉพาะออเดอร์ที่มีเลขพัสดุและเป็นเลขพัสดุจริง (ไม่ใช่เลขพัสดุจำลองที่ขึ้นต้นด้วย "แบบ")
+    const ordersWithValidTracking = orders.filter(order => {
+      const trackingNo = order.tracking_number || order.trackingNumber;
+      return trackingNo && !trackingNo.startsWith('แบบ');
+    });
+    
+    if (ordersWithValidTracking.length === 0) {
+      return orders; // ไม่มีออเดอร์ที่มีเลขพัสดุที่ใช้งานได้
+    }
+    
+    console.log(`กำลังดึงสถานะการติดตามสำหรับ ${ordersWithValidTracking.length} ออเดอร์ที่มีเลขพัสดุ`);
+    
+    // สร้าง Promise สำหรับการดึงข้อมูลพัสดุแต่ละรายการ
+    const trackingPromises = ordersWithValidTracking.map(async (order) => {
+      const trackingNo = order.tracking_number || order.trackingNumber;
+      if (!trackingNo) return order; // ข้ามรายการที่ไม่มีเลขพัสดุ
+      
+      try {
+        const response = await fetch(`/api/tracking/status/${trackingNo}`);
+        const data = await response.json();
+        
+        if (data.success && data.trackingData) {
+          // ดึงสถานะล่าสุดจากข้อมูลการติดตาม
+          let latestStatus = '';
+          
+          // กรณีมีข้อมูลแบบใหม่ (routes จาก Flash Express API)
+          if (data.trackingData.routes && data.trackingData.routes.length > 0) {
+            // ใช้สถานะล่าสุดจาก routes
+            latestStatus = data.trackingData.routes[0].message || 
+                         data.trackingData.routes[0].routeAction || 
+                         'รอขนส่งเข้ารับ';
+          } 
+          // กรณีมีข้อมูลแบบเก่า (history)
+          else if (data.trackingData.history && data.trackingData.history.length > 0) {
+            // ใช้สถานะล่าสุดจาก history
+            latestStatus = data.trackingData.history[0].status || 'รอขนส่งเข้ารับ';
+          }
+          // กรณีมี stateText จาก API
+          else if (data.trackingData.stateText) {
+            latestStatus = data.trackingData.stateText;
+          }
+          
+          // เพิ่มสถานะการติดตามเข้าไปในออเดอร์
+          return {
+            ...order,
+            trackingStatus: latestStatus
+          };
+        }
+        
+        return order; // คืนค่าออเดอร์เดิมหากไม่มีข้อมูลการติดตาม
+      } catch (error) {
+        console.error(`เกิดข้อผิดพลาดในการดึงข้อมูลติดตามพัสดุเลข ${trackingNo}:`, error);
+        return order; // คืนค่าออเดอร์เดิมในกรณีเกิดข้อผิดพลาด
+      }
+    });
+    
+    // รอการดึงข้อมูลพัสดุทั้งหมดเสร็จสิ้น
+    const ordersWithTrackingStatus = await Promise.all(trackingPromises);
+    
+    // แทนที่ออเดอร์เดิมด้วยออเดอร์ที่มีข้อมูลการติดตาม
+    return orders.map(originalOrder => {
+      const orderWithTracking = ordersWithTrackingStatus.find(o => o.id === originalOrder.id);
+      return orderWithTracking || originalOrder;
+    });
   };
 
   return (
@@ -951,23 +1022,31 @@ const OrderList: React.FC = () => {
                           }
                         </TableCell>
                         <TableCell>
-                          {order.status === 'pending' && !(order.tracking_number || order.trackingNumber) && (
+                          {!order.tracking_number && !order.trackingNumber ? (
+                            // กรณี 1: ไม่มีเลขพัสดุ สถานะคือ "รอดำเนินการ" (ไม่สนใจค่า order.status)
                             <Badge variant="outline" className="border-yellow-300 text-yellow-700 bg-yellow-50">รอดำเนินการ</Badge>
-                          )}
-                          {order.status === 'pending' && (order.tracking_number || order.trackingNumber) && (
-                            <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50">รอเข้ารับ</Badge>
-                          )}
-                          {order.status === 'processing' && (
-                            <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">กำลังดำเนินการ</Badge>
-                          )}
-                          {order.status === 'shipped' && (
-                            <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">จัดส่งแล้ว</Badge>
-                          )}
-                          {order.status === 'completed' && (
-                            <Badge variant="outline" className="border-teal-300 text-teal-700 bg-teal-50">เสร็จสมบูรณ์</Badge>
-                          )}
-                          {order.status === 'cancelled' && (
-                            <Badge variant="outline" className="border-red-300 text-red-700 bg-red-50">ยกเลิก</Badge>
+                          ) : (
+                            // มีเลขพัสดุแล้ว ตรวจสอบสถานะ trackingStatus
+                            order.trackingStatus ? (
+                              // กรณี 3: มีเลขพัสดุและมีสถานะจากการติดตาม ใช้สถานะจาก trackingStatus
+                              <Badge 
+                                variant="outline" 
+                                className={
+                                  order.trackingStatus.includes('ส่งสำเร็จ') || order.trackingStatus.includes('ได้รับพัสดุ') ? 
+                                    "border-green-300 text-green-700 bg-green-50" : 
+                                  order.trackingStatus.includes('กำลัง') || order.trackingStatus.includes('จัดส่ง') ? 
+                                    "border-blue-300 text-blue-700 bg-blue-50" : 
+                                  order.trackingStatus.includes('ยกเลิก') ? 
+                                    "border-red-300 text-red-700 bg-red-50" : 
+                                    "border-purple-300 text-purple-700 bg-purple-50"
+                                }
+                              >
+                                {order.trackingStatus}
+                              </Badge>
+                            ) : (
+                              // กรณี 2: มีเลขพัสดุแต่ไม่มีสถานะจากการติดตาม สถานะคือ "รอเข้ารับ"
+                              <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50">รอเข้ารับ</Badge>
+                            )
                           )}
                         </TableCell>
                         <TableCell>
