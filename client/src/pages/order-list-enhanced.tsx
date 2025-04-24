@@ -594,8 +594,42 @@ const OrderList: React.FC = () => {
               
               <div className="mr-4">
                 <p className="text-filter mt-0 mb-0">สถานะพิมพ์ใบปะหน้า</p>
-                <div className="el-select__selected-item el-select__placeholder is-transparent h-9 mt-2 border rounded flex items-center px-3">
-                  <span>สถานะพิมพ์ใบปะหน้า</span>
+                <Select 
+                  value="all"
+                >
+                  <SelectTrigger className="w-[160px] h-9 mt-2">
+                    <SelectValue placeholder="สถานะพิมพ์ใบปะหน้า" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">ทั้งหมด</SelectItem>
+                    <SelectItem value="printed">พิมพ์แล้ว</SelectItem>
+                    <SelectItem value="not-printed">ยังไม่ได้พิมพ์</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="mr-4">
+                <p className="text-filter mt-0 mb-0">ขนส่ง</p>
+                <Select 
+                  value="all"
+                >
+                  <SelectTrigger className="w-[160px] h-9 mt-2">
+                    <SelectValue placeholder="ขนส่ง" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">ทั้งหมด</SelectItem>
+                    <SelectItem value="flash-express">Flash Express</SelectItem>
+                    <SelectItem value="jt-express">J&T Express</SelectItem>
+                    <SelectItem value="thailand-post">ไปรษณีย์ไทย</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="mr-4">
+                <p className="text-filter mt-0 mb-0">วันที่</p>
+                <div className="flex items-center h-9 mt-2 border rounded px-3">
+                  <span className="text-gray-500">เลือกช่วงวันที่</span>
+                  <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
                 </div>
               </div>
               
