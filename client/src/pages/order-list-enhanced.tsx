@@ -67,7 +67,7 @@ const OrderList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [dateRangeFilter, setDateRangeFilter] = useState('all');
-  const [dateRange, setDateRange] = useState<{ from: Date; to?: Date }>();
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to?: Date | undefined }>({ from: undefined });
   const [shippingMethodFilter, setShippingMethodFilter] = useState('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
@@ -967,8 +967,8 @@ const OrderList: React.FC = () => {
                         mode="range"
                         defaultMonth={dateRange?.from}
                         selected={dateRange}
-                        onSelect={(range) => {
-                          setDateRange(range);
+                        onSelect={(range: any) => {
+                          setDateRange(range as { from: Date | undefined; to?: Date | undefined });
                           if (range?.from) {
                             const fromDate = new Date(range.from);
                             fromDate.setHours(0, 0, 0, 0);
@@ -1019,7 +1019,7 @@ const OrderList: React.FC = () => {
                             variant="ghost" 
                             className="w-full justify-center text-xs h-8"
                             onClick={() => {
-                              setDateRange(undefined);
+                              setDateRange({ from: undefined });
                               filterOrders();
                             }}
                           >
