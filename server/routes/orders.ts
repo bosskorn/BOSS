@@ -122,85 +122,96 @@ router.get('/', auth, async (req, res) => {
     const skip = (page - 1) * limit;
 
     try {
-      // ดึงข้อมูลออเดอร์ด้วย SQL โดยตรง เพื่อหลีกเลี่ยงปัญหากับ Drizzle
-      let countQuery = `
-        SELECT COUNT(*) as total 
-        FROM orders 
-        WHERE user_id = $1
-      `;
-      
-      let params = [userId];
-      
-      if (status && status !== 'all') {
-        countQuery += ` AND status = $2`;
-        params.push(status);
-      }
-      
-      if (search) {
-        const paramIndex = params.length + 1;
-        countQuery += ` AND order_number ILIKE $${paramIndex}`;
-        params.push(`%${search}%`);
-      }
-      
+      // ใช้ raw SQL queries เพื่อหลีกเลี่ยงปัญหากับ Drizzle ORM
       // นับจำนวนออเดอร์ทั้งหมด
-      const countResult = await db.execute(countQuery, params);
-      const totalOrders = parseInt(countResult.rows[0].total || '0');
+      let sql = `SELECT COUNT(*) as total FROM orders WHERE user_id = $1`;
+      const sqlParams = [userId];
       
-      // สร้าง query เพื่อดึงข้อมูลออเดอร์
-      let ordersQuery = `
-        SELECT * FROM orders 
-        WHERE user_id = $1
-      `;
-      
-      params = [userId];
+      let paramCount = 1;
       
       if (status && status !== 'all') {
-        ordersQuery += ` AND status = $2`;
-        params.push(status);
+        paramCount++;
+        sql += ` AND status = $${paramCount}`;
+        sqlParams.push(status);
       }
       
       if (search) {
-        const paramIndex = params.length + 1;
-        ordersQuery += ` AND order_number ILIKE $${paramIndex}`;
-        params.push(`%${search}%`);
+        paramCount++;
+        sql += ` AND order_number ILIKE $${paramCount}`;
+        sqlParams.push(`%${search}%`);
       }
       
-      // ใช้พารามิเตอร์ที่ถูกต้องและตรวจสอบว่าเป็นตัวเลข
-      const limitParam = Number(limit);
-      const skipParam = Number(skip);
-      params.push(limitParam, skipParam);
+      console.log('Count SQL:', sql, 'Params:', sqlParams);
       
-      ordersQuery += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
-      
+      const countResult = await db.execute(sql, sqlParams);
+      const totalOrders = parseInt(countResult.rows[0]?.total || '0');
       
       // ดึงข้อมูลออเดอร์
-      const ordersResult = await db.execute(ordersQuery, params);
+      let ordersSql = `SELECT * FROM orders WHERE user_id = $1`;
+      const ordersParams = [userId];
+      
+      paramCount = 1;
+      
+      if (status && status !== 'all') {
+        paramCount++;
+        ordersSql += ` AND status = $${paramCount}`;
+        ordersParams.push(status);
+      }
+      
+      if (search) {
+        paramCount++;
+        ordersSql += ` AND order_number ILIKE $${paramCount}`;
+        ordersParams.push(`%${search}%`);
+      }
+      
+      paramCount++;
+      ordersSql += ` ORDER BY created_at DESC LIMIT $${paramCount}`;
+      ordersParams.push(limit);
+      
+      paramCount++;
+      ordersSql += ` OFFSET $${paramCount}`;
+      ordersParams.push(skip);
+      
+      console.log('Orders SQL:', ordersSql, 'Params:', ordersParams);
+      
+      // ดึงข้อมูลออเดอร์
+      const ordersResult = await db.execute(ordersSql, ordersParams);
       const ordersData = ordersResult.rows;
       
       // ดึงข้อมูล order items สำหรับแต่ละออเดอร์
       const orderIds = ordersData.map(order => order.id);
       
-      let orderItemsData = [];
+      let orderItemsData: any[] = [];
       if (orderIds.length > 0) {
-        // ใช้ parameterized query เพื่อป้องกัน SQL injection
-        const placeholders = orderIds.map((_, idx) => `$${idx + 1}`).join(',');
-        const orderItemsQuery = `
-          SELECT * FROM order_items 
-          WHERE order_id IN (${placeholders})
-        `;
-        const orderItemsResult = await db.execute(orderItemsQuery, orderIds);
-        orderItemsData = orderItemsResult.rows;
+        try {
+          // ใช้ parameterized query เพื่อป้องกัน SQL injection
+          const placeholders = orderIds.map((_, idx) => `$${idx + 1}`).join(',');
+          const orderItemsQuery = `
+            SELECT * FROM order_items 
+            WHERE order_id IN (${placeholders})
+          `;
+          console.log('Order Items Query:', orderItemsQuery);
+          console.log('Order IDs:', orderIds);
+          
+          const orderItemsResult = await db.execute(orderItemsQuery, orderIds);
+          orderItemsData = orderItemsResult.rows;
+        } catch (err) {
+          console.error('Error fetching order items:', err);
+          // ในกรณีที่มีข้อผิดพลาดให้ใช้อาร์เรย์ว่าง
+          orderItemsData = [];
+        }
       }
       
       // จัดกลุ่ม order items ตาม orderId
-      const orderItemsMap = orderItemsData.reduce((acc, item) => {
+      const orderItemsMap: Record<number, any[]> = {};
+      
+      for (const item of orderItemsData) {
         const orderId = item.order_id;
-        if (!acc[orderId]) {
-          acc[orderId] = [];
+        if (!orderItemsMap[orderId]) {
+          orderItemsMap[orderId] = [];
         }
-        acc[orderId].push(item);
-        return acc;
-      }, {} as Record<number, any[]>);
+        orderItemsMap[orderId].push(item);
+      }
       
       // เพิ่ม items เข้าไปในแต่ละออเดอร์
       const ordersWithItems = ordersData.map(order => ({
