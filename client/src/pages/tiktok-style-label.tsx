@@ -150,11 +150,33 @@ const TikTokStyleLabelPage = () => {
       justify-content: center;
     }
     
+    .sender-info-row {
+      display: flex;
+      border-bottom: 1px solid #000;
+    }
+    
+    .sorting-line-code-box {
+      background-color: #000;
+      color: white;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 70px;
+      font-size: 32px;
+      font-weight: bold;
+    }
+    
     .sender-info, .recipient-info {
       padding: 5px 10px;
       border-bottom: 1px solid #000;
       font-size: 12px;
       position: relative;
+    }
+    
+    .sender-info-row .sender-info {
+      border-bottom: none;
+      flex: 1;
     }
     
     .sender-info {
@@ -766,15 +788,20 @@ const TikTokStyleLabelPage = () => {
                   </div>
                 </div>
                 
-                {/* แสดงข้อมูลผู้ส่ง */}
-                <div className="sender-info">
-                  <div className="sender-info-header">
-                    จาก {currentUser?.fullname || 'ผู้ส่ง'} ({currentUser?.phone || '-'})
+                {/* แสดงข้อมูลผู้ส่งพร้อมช่องแสดงเลขสายพาน */}
+                <div className="sender-info-row">
+                  <div className="sender-info">
+                    <div className="sender-info-header">
+                      จาก {currentUser?.fullname || 'ผู้ส่ง'} ({currentUser?.phone || '-'})
+                    </div>
+                    <div className="sender-address">
+                      {currentUser?.address ? 
+                        `${currentUser.address} ${currentUser.subdistrict ? 'แขวง/ตำบล ' + currentUser.subdistrict : ''} ${currentUser.district ? 'เขต/อำเภอ ' + currentUser.district : ''} ${currentUser.province || ''} ${currentUser.zipcode || ''}` 
+                        : 'ไม่ระบุที่อยู่'}
+                    </div>
                   </div>
-                  <div className="sender-address">
-                    {currentUser?.address ? 
-                      `${currentUser.address} ${currentUser.subdistrict ? 'แขวง/ตำบล ' + currentUser.subdistrict : ''} ${currentUser.district ? 'เขต/อำเภอ ' + currentUser.district : ''} ${currentUser.province || ''} ${currentUser.zipcode || ''}` 
-                      : 'ไม่ระบุที่อยู่'}
+                  <div className="sorting-line-code-box">
+                    {order.sorting_line_code || order.sortingLineCode || 'C13'}
                   </div>
                 </div>
                 
