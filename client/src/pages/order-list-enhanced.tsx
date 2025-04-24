@@ -1640,7 +1640,17 @@ const OrderList: React.FC = () => {
 
 
       {/* Dialog แสดงข้อมูลการติดตามพัสดุ */}
-      <Dialog open={trackingDialogOpen} onOpenChange={setTrackingDialogOpen}>
+      <Dialog open={trackingDialogOpen} onOpenChange={(open) => {
+        // ปิด Dialog เมื่อกดปิด และล้างข้อมูลเพื่อป้องกัน dialog ซ้อนกัน
+        if (!open) {
+          setTrackingDialogOpen(false);
+          // รอสักครู่แล้วล้างข้อมูล
+          setTimeout(() => {
+            setTrackingData(null);
+            setCurrentTrackingNumber('');
+          }, 300);
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>ข้อมูลการติดตามพัสดุ</DialogTitle>
