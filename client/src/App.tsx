@@ -41,6 +41,7 @@ import TikTokShippingLabelFixed from './pages/tiktok-shipping-label-fixed';
 import PrintMultipleLabels from './pages/print-multiple-labels';
 import PrintMultipleLabelsFixed from './pages/print-multiple-labels-fixed';
 import JntExpressLabel from './pages/jnt-express-label';
+import TikTokFlashLabel from './pages/tiktok-flash-label';
 import FeeHistory from './pages/fee-history';
 import LandingPage from './pages/landing';
 import FlashExpressAPITest from './pages/flash-express-api-test';
@@ -93,6 +94,7 @@ function Router() {
       <Route path="/create-flash-express-order" component={CreateFlashExpressOrder} />
       <Route path="/flash-express-direct" component={FlashExpressDirectTest} />
       <Route path="/flash-express-label-new" component={FlashExpressLabelNew} />
+      <Route path="/tiktok-flash-label" component={TikTokFlashLabel} />
       {/* Flash Express routes have been updated */}
 
       {/* Protected routes - require authentication */}
