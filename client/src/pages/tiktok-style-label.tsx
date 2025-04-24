@@ -671,13 +671,13 @@ const TikTokStyleLabelPage = () => {
     return `https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=${encodeURIComponent(text)}`;
   };
   
-  // แสดงผลบนหน้าเว็บ
+  // แสดงผลบนหน้าเว็บ - แบบไม่แสดงหน้า loading
   return (
     <div>
       <style dangerouslySetInnerHTML={{ __html: labelStyles }} />
       
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center justify-center min-h-screen" style={{ display: 'none' }}>
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
           <h2 className="text-xl font-medium">กำลังโหลดข้อมูลสำหรับพิมพ์ลาเบล...</h2>
           <p className="text-gray-500 mt-2">ระบบจะพิมพ์ลาเบลโดยอัตโนมัติเมื่อโหลดเสร็จ</p>
@@ -698,8 +698,8 @@ const TikTokStyleLabelPage = () => {
         </div>
       ) : (
         <div>
-          {/* ส่วนที่แสดงเฉพาะบนหน้าจอ ไม่พิมพ์ */}
-          <div className="print-controls">
+          {/* ส่วนที่แสดงเฉพาะบนหน้าจอ ไม่พิมพ์ - ซ่อนไว้ */}
+          <div className="print-controls" style={{ display: 'none' }}>
             <h1 className="text-2xl font-bold mb-4 text-center">ลาเบลพร้อมสำหรับการพิมพ์</h1>
             <p className="text-gray-600 mb-6 text-center">
               {ordersData.length > 1 
