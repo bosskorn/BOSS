@@ -195,6 +195,12 @@ const TikTokStyleLabelPage = () => {
     .recipient-address, .sender-address {
       max-width: calc(100% - 90px); /* ลดความกว้างด้านขวาสำหรับ QR Code */
       word-break: break-word;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    
+    .recipient-address > div {
+      margin-top: 2px;
     }
     
     .sender-info-header {
@@ -804,7 +810,12 @@ const TikTokStyleLabelPage = () => {
                 {/* แสดงข้อมูลผู้รับพร้อม QR Code */}
                 <div className="recipient-info">
                   <div className="recipient-info-header">ถึง {order.recipientName} ({order.recipientPhone})</div>
-                  <div className="recipient-address">{order.recipientAddress}</div>
+                  <div className="recipient-address">
+                    {order.recipientAddress || 'ไม่ระบุที่อยู่'}
+                    {(order.shippingSubdistrict || order.shipping_subdistrict) && <div>แขวง/ตำบล {order.shippingSubdistrict || order.shipping_subdistrict}</div>}
+                    {(order.shippingDistrict || order.shipping_district) && <div>เขต/อำเภอ {order.shippingDistrict || order.shipping_district}</div>}
+                    {(order.shippingProvince || order.shipping_province) && <div>{order.shippingProvince || order.shipping_province} {order.shippingZipcode || order.shipping_zipcode}</div>}
+                  </div>
                   <div className="qr-code-container">
                     <img src={getQRCodeUrl(order.displayTrackingNumber)} className="qr-code" alt="QR Code" />
                   </div>
