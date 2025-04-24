@@ -46,48 +46,56 @@ router.post('/', auth, async (req, res) => {
     // สร้างหมายเลขออเดอร์แบบสุ่ม
     const orderNumber = `ORD-${Date.now().toString().slice(-8)}-${Math.floor(Math.random() * 1000)}`;
 
-    // สร้างออเดอร์ใหม่ในฐานข้อมูล
-    const newOrder = await prisma.order.create({
-      data: {
-        userId,
-        orderNumber,
-        customerName,
-        customerPhone,
-        customerEmail,
-        shippingAddress,
-        shippingProvince,
-        shippingDistrict,
-        shippingSubdistrict,
-        shippingZipcode,
-        note,
-        total,
-        shippingMethod,
-        shippingCost,
-        isCOD,
-        codAmount,
-        trackingNumber,
-        sortCode,
-        status: 'pending',
-        items: {
-          create: items.map((item: any) => ({
-            productId: item.productId,
-            productName: item.productName,
-            productSku: item.productSku,
-            quantity: item.quantity,
-            price: item.price,
-            options: item.options || {}
-          }))
-        }
-      },
-      include: {
-        items: true
-      }
-    });
+    // สร้างออเดอร์ใหม่ในฐานข้อมูลด้วย Drizzle
+    const [newOrder] = await db.insert(orders).values({
+      userId,
+      orderNumber,
+      customerName,
+      customerPhone,
+      customerEmail,
+      shippingAddress,
+      shippingProvince,
+      shippingDistrict,
+      shippingSubdistrict,
+      shippingZipcode,
+      note,
+      total,
+      shippingMethod,
+      shippingCost,
+      isCOD,
+      codAmount,
+      trackingNumber,
+      sortCode,
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+
+    // สร้าง orderItems สำหรับแต่ละรายการสินค้า
+    const orderItemsData = items.map((item: any) => ({
+      orderId: newOrder.id,
+      productId: item.productId,
+      productName: item.productName,
+      productSku: item.productSku,
+      quantity: item.quantity,
+      price: item.price,
+      options: item.options || {},
+      createdAt: new Date()
+    }));
+
+    // บันทึก items ทั้งหมด
+    const newOrderItems = await db.insert(orderItems).values(orderItemsData).returning();
+
+    // ส่งคืนข้อมูลทั้งหมด
+    const orderWithItems = {
+      ...newOrder,
+      items: newOrderItems
+    };
 
     res.status(201).json({
       success: true,
       message: 'สร้างออเดอร์สำเร็จ',
-      order: newOrder
+      order: orderWithItems
     });
   } catch (error) {
     console.error('Error creating order:', error);
@@ -113,49 +121,68 @@ router.get('/', auth, async (req, res) => {
     // คำนวณการข้ามข้อมูล
     const skip = (page - 1) * limit;
     
-    // สร้างเงื่อนไขการค้นหา
-    const whereCondition: any = { userId };
+    // ดึงข้อมูลออเดอร์ด้วย Drizzle
+    let query = db
+      .select()
+      .from(orders)
+      .where(eq(orders.userId, userId));
     
     // เพิ่มเงื่อนไขสถานะ ถ้ามี
     if (status && status !== 'all') {
-      whereCondition.status = status;
+      query = query.where(eq(orders.status, status));
     }
     
-    // เพิ่มเงื่อนไขการค้นหา ถ้ามี
+    // เพิ่มเงื่อนไขการค้นหา (อย่างง่าย - สำหรับ orderNumber)
     if (search) {
-      whereCondition.OR = [
-        { orderNumber: { contains: search, mode: 'insensitive' } },
-        { trackingNumber: { contains: search, mode: 'insensitive' } },
-        { customerName: { contains: search, mode: 'insensitive' } },
-        { customerPhone: { contains: search, mode: 'insensitive' } },
-        { customerEmail: { contains: search, mode: 'insensitive' } }
-      ];
+      // ใช้ ilike หรือ like ขึ้นอยู่กับ dialect ของ database
+      query = query.where(ilike(orders.orderNumber, `%${search}%`));
     }
     
     // ดึงข้อมูลออเดอร์
-    const orders = await prisma.order.findMany({
-      where: whereCondition,
-      include: {
-        items: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      skip,
-      take: limit
-    });
+    const ordersData = await query
+      .orderBy(desc(orders.createdAt))
+      .limit(limit)
+      .offset(skip);
     
     // นับจำนวนออเดอร์ทั้งหมด
-    const totalOrders = await prisma.order.count({
-      where: whereCondition
-    });
+    const totalOrdersResult = await db
+      .select({ count: sql`count(*)` })
+      .from(orders)
+      .where(eq(orders.userId, userId));
+    
+    const totalOrders = Number(totalOrdersResult[0]?.count || 0);
+    
+    // ดึงข้อมูล order items สำหรับแต่ละออเดอร์
+    const orderIds = ordersData.map(order => order.id);
+    const orderItemsData = orderIds.length > 0 
+      ? await db
+          .select()
+          .from(orderItems)
+          .where(sql`${orderItems.orderId} IN (${orderIds.join(',')})`)
+      : [];
+    
+    // จัดกลุ่ม order items ตาม orderId
+    const orderItemsMap = orderItemsData.reduce((acc, item) => {
+      const orderId = item.orderId;
+      if (!acc[orderId]) {
+        acc[orderId] = [];
+      }
+      acc[orderId].push(item);
+      return acc;
+    }, {} as Record<number, typeof orderItemsData>);
+    
+    // เพิ่ม items เข้าไปในแต่ละออเดอร์
+    const ordersWithItems = ordersData.map(order => ({
+      ...order,
+      items: orderItemsMap[order.id] || []
+    }));
     
     // คำนวณจำนวนหน้าทั้งหมด
     const totalPages = Math.ceil(totalOrders / limit);
     
     res.json({
       success: true,
-      orders,
+      orders: ordersWithItems,
       pagination: {
         total: totalOrders,
         page,
