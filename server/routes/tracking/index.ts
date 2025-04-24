@@ -14,23 +14,26 @@ console.log(`Using Flash Express MerchantID: ${MERCHANT_ID}`);
 
 // สร้าง signature สำหรับ API Flash Express
 function createSignature(params: Record<string, any>, apiKey: string): string {
-  // เรียงลำดับ keys ตามตัวอักษร
+  // เรียงลำดับ keys ตามตัวอักษร (จากเอกสาร Flash Express)
   const keys = Object.keys(params).sort();
   
-  // สร้าง query string
+  // สร้าง string เพื่อทำ signature
   let signStr = '';
   for (const key of keys) {
-    signStr += `${key}=${params[key]}&`;
+    // เพิ่มค่าแบบ key=value (ไม่มี & คั่น)
+    signStr += key + '=' + params[key];
   }
   
-  // ตัด & ตัวสุดท้ายออก
-  signStr = signStr.substring(0, signStr.length - 1);
-  
-  // เพิ่ม apiKey
+  // เพิ่ม apiKey ต่อท้าย
   signStr += apiKey;
   
-  // สร้าง signature ด้วย SHA-256
-  return createHash('sha256').update(signStr).digest('hex').toUpperCase();
+  console.log('Signature string:', signStr);
+  
+  // สร้าง signature ด้วย SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
+  const signature = createHash('sha256').update(signStr).digest('hex').toUpperCase();
+  console.log('Generated signature:', signature);
+  
+  return signature;
 }
 
 /**
