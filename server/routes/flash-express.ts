@@ -288,8 +288,9 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
                 order_number, customer_name, customer_phone, customer_email,
                 shipping_address, shipping_province, shipping_district, shipping_subdistrict, shipping_zipcode,
                 shipping_method, shipping_cost, is_cod, cod_amount, tracking_number, sort_code,
-                status, note, total, created_at, updated_at, user_id, subtotal, payment_method, payment_status
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24) RETURNING *`,
+                status, note, total, created_at, updated_at, user_id, 
+                subtotal, payment_method, payment_status, total_amount
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25) RETURNING *`,
               [
                 orderNumber, receiverName, receiverPhone, '',
                 receiverAddress, receiverProvince, receiverCity, receiverDistrict, receiverPostcode,
@@ -298,7 +299,8 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
                 codEnabled ? Math.round(codAmount || 0) : 0, now, now, userId, 
                 0, // subtotal
                 'bank_transfer', // payment_method
-                'pending' // payment_status
+                'pending', // payment_status
+                0 // total_amount
               ]
             );
             
