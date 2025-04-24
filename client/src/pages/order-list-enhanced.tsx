@@ -111,10 +111,10 @@ const OrderList: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        console.log("ข้อมูลออเดอร์อยู่ใน data field:", data.data.length, "รายการ");
+        console.log("ข้อมูลออเดอร์อยู่ใน orders field:", data.orders?.length || 0, "รายการ");
         
         // เพิ่มการตรวจสอบและตั้งค่าข้อมูลบริษัทขนส่งตามรหัสนำหน้าเลขพัสดุ
-        const ordersWithCarrier = data.data.map((order: any) => {
+        const ordersWithCarrier = (data.orders || []).map((order: any) => {
           let carrier = 'unknown';
           
           if (order.trackingNumber) {
