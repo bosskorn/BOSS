@@ -1444,11 +1444,11 @@ const OrderList: React.FC = () => {
                   
                   switch(selectedLabelType) {
                     case 'flash':
-                      labelUrl = `/tiktok-flash-label?orders=${orderIds}`;
+                      labelUrl = `/flash-express-label-new?orders=${orderIds}`;
                       console.log("พิมพ์ลาเบลสำหรับ:", orderIds);
                       toast({
                         title: 'กำลังเปิดหน้าพิมพ์ลาเบล',
-                        description: `กำลังเตรียมพิมพ์ลาเบลทั้งหมด ${ordersToPrint.length} รายการ (รูปแบบ TikTok Shop)`,
+                        description: `กำลังเตรียมพิมพ์ลาเบลทั้งหมด ${ordersToPrint.length} รายการ (รูปแบบ Flash Express)`,
                       });
                       break;
                     case 'jt':
@@ -1514,7 +1514,7 @@ const OrderList: React.FC = () => {
                   let labelUrl = '';
                   switch(selectedLabelType) {
                     case 'flash':
-                      labelUrl = `/tiktok-flash-label?order=${orderToPrint.id}`;
+                      labelUrl = `/flash-express-label-new?order=${orderToPrint.id}`;
                       break;
                     case 'jt':
                       labelUrl = `/jt-express-label?order=${orderToPrint.id}`;
