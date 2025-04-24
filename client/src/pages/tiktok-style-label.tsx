@@ -414,15 +414,18 @@ const TikTokStyleLabelPage = () => {
                   }
                 }
                 
+                // สนับสนุนทั้งรูปแบบ snake_case และ camelCase
+                const trackingNumber = data.order.trackingNumber || data.order.tracking_number;
+                
                 // แปลงเลขพัสดุถ้าขึ้นต้นด้วย "แบบ" ให้ใช้รูปแบบใหม่แทน
-                if (data.order.trackingNumber && data.order.trackingNumber.startsWith('แบบ')) {
+                if (trackingNumber && trackingNumber.startsWith('แบบ')) {
                   // สร้างเลขพัสดุแบบจำลอง
                   const prefix = 'THT';
                   const randomPart = Math.random().toString(36).substring(2, 7).toUpperCase();
                   const randomDigits = Math.floor(Math.random() * 9000) + 1000;
                   data.order.displayTrackingNumber = `${prefix}${randomDigits}T${randomPart}Z`;
-                } else if (data.order.trackingNumber) {
-                  data.order.displayTrackingNumber = data.order.trackingNumber;
+                } else if (trackingNumber) {
+                  data.order.displayTrackingNumber = trackingNumber;
                 } else {
                   // ถ้าไม่มีเลขพัสดุ สร้างเลขแบบจำลอง
                   const prefix = 'THT';
@@ -441,8 +444,9 @@ const TikTokStyleLabelPage = () => {
                 data.order.hasCOD = (data.order.paymentMethod === 'cod' || data.order.paymentMethod === 'cash_on_delivery');
                 
                 // ข้อมูลลูกค้า
-                let cusName = data.order.customerName || 'ไม่ระบุชื่อผู้รับ';
-                let cusPhone = '';
+                // สนับสนุนทั้งรูปแบบ snake_case และ camelCase
+                let cusName = data.order.customerName || data.order.customer_name || 'ไม่ระบุชื่อผู้รับ';
+                let cusPhone = data.order.customerPhone || data.order.customer_phone || '';
                 let cusAddress = 'ไม่ระบุที่อยู่ผู้รับ';
                 
                 // ถ้ามีข้อมูลลูกค้าเพิ่มเติม
