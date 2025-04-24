@@ -571,25 +571,7 @@ const OrderList: React.FC = () => {
                 </Select>
               </div>
               
-              <div className="mb-4 md:mb-0 md:mr-4">
-                <p className="text-filter mt-0 mb-2 text-sm font-medium text-gray-700">บริษัทขนส่ง</p>
-                <Select 
-                  value={shippingMethodFilter}
-                  onValueChange={setShippingMethodFilter}
-                >
-                  <SelectTrigger className="w-[160px] h-9">
-                    <SelectValue placeholder="บริษัทขนส่ง" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">ทั้งหมด</SelectItem>
-                    <SelectItem value="flash-express">Flash Express</SelectItem>
-                    <SelectItem value="jt-express">J&T Express</SelectItem>
-                    <SelectItem value="thailand-post">ไปรษณีย์ไทย</SelectItem>
-                    <SelectItem value="xiaobai-express">เสี่ยวไป๋ Xiaobai</SelectItem>
-                    <SelectItem value="none">ยังไม่มีเลขพัสดุ</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+
               
               <div className="mb-4 md:mb-0 md:mr-4">
                 <p className="text-filter mt-0 mb-2 text-sm font-medium text-gray-700">วิธีการชำระเงิน</p>
@@ -765,18 +747,6 @@ const OrderList: React.FC = () => {
                   >
                     <span>ยกเลิก ({filteredOrders.filter(o => o.status === 'cancelled').length})</span>
                   </TabsTrigger>
-                  <TabsTrigger
-                    value="flash-express"
-                    className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
-                  >
-                    <span>Flash Express ({filteredOrders.filter(o => o.tracking_number?.startsWith('TH')).length})</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="jt-express"
-                    className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
-                  >
-                    <span>J&T Express ({filteredOrders.filter(o => o.tracking_number?.startsWith('JT')).length})</span>
-                  </TabsTrigger>
                 </TabsList>
               </div>
               
@@ -788,8 +758,7 @@ const OrderList: React.FC = () => {
                              activeTab === 'processing' ? 247 : 
                              activeTab === 'shipped' ? 403 : 
                              activeTab === 'completed' ? 546 : 
-                             activeTab === 'cancelled' ? 669 : 
-                             activeTab === 'flash-express' ? 774 : 912}px)`
+                             activeTab === 'cancelled' ? 669 : 0}px)`
               }}></div>
             </div>
             
