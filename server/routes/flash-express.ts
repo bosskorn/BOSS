@@ -322,6 +322,8 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
           message: 'สร้างเลขพัสดุสำเร็จ',
           trackingNumber: trackingNumber,
           sortCode: sortCode,
+          sortingLineCode: response.data.data.sortingLineCode || '',
+          dstStoreName: response.data.data.dstStoreName || '',
           pdfUrl: response.data.pdfUrl || null,
           orderNumber: params.outTradeNo, // แก้ไขจาก params.merchantNo เป็น params.outTradeNo
           response: response.data
@@ -346,7 +348,17 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
             const orderNumber = params.outTradeNo;
             const trackingNumber = response.data.data.pno || 'ไม่ระบุ';
             const sortCode = response.data.data.sortCode || '00';
+            const sortingLineCode = response.data.data.sortingLineCode || '';
+            const dstStoreName = response.data.data.dstStoreName || '';
             const now = new Date();
+            
+            // แสดงข้อมูลเพิ่มเติมเพื่อตรวจสอบ
+            console.log('ข้อมูลจาก Flash Express API ที่บันทึกลงฐานข้อมูล:', {
+              trackingNumber,
+              sortCode,
+              sortingLineCode,
+              dstStoreName
+            });
             
             // ใช้ SQL query โดยตรงเพื่อบันทึกข้อมูลลงในฐานข้อมูล (รูปแบบที่สอง)
             try {
@@ -355,13 +367,15 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
                   order_number, customer_name, customer_phone, customer_email,
                   shipping_address, shipping_province, shipping_district, shipping_subdistrict, shipping_zipcode,
                   shipping_method, shipping_cost, is_cod, cod_amount, tracking_number, sort_code,
+                  sorting_line_code, dst_store_name,
                   status, note, total, created_at, updated_at, user_id
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) RETURNING *`,
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23) RETURNING *`,
                 [
                   orderNumber, receiverName, receiverPhone, '',
                   receiverAddress, receiverProvince, receiverCity, receiverDistrict, receiverPostcode,
                   'Flash Express', 0, codEnabled ? true : false, codEnabled ? Math.round(req.body.codAmount || 0) : 0,
-                  trackingNumber, sortCode, 'pending', `สร้างออเดอร์ Flash Express สำเร็จ - ${trackingNumber}`,
+                  trackingNumber, sortCode, sortingLineCode, dstStoreName,
+                  'pending', `สร้างออเดอร์ Flash Express สำเร็จ - ${trackingNumber}`,
                   codEnabled ? Math.round(req.body.codAmount || 0) : 0, now, now, userId
                 ]
               );

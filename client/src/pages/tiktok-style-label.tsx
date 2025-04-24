@@ -434,8 +434,8 @@ const TikTokStyleLabelPage = () => {
                   data.order.displayTrackingNumber = `${prefix}${randomDigits}T${randomPart}Z`;
                 }
                 
-                // สร้างรหัสพื้นที่การจัดส่ง (แบบจำลอง)
-                data.order.sortingCode = `${Math.floor(Math.random() * 90) + 10}S-${Math.floor(Math.random() * 90000) + 10000}-${Math.floor(Math.random() * 90) + 10}`;
+                // ใช้รหัสพื้นที่การจัดส่งจากข้อมูลออเดอร์จริง (หรือค่าเริ่มต้นถ้าไม่มี)
+                data.order.sortingCode = data.order.sort_code || data.order.sortCode || '16B-16223-01';
                 
                 // เพิ่มข้อมูลเพิ่มเติมที่จำเป็นสำหรับการพิมพ์
                 // กำหนดยอดเงิน COD จากข้อมูลออเดอร์
@@ -760,8 +760,8 @@ const TikTokStyleLabelPage = () => {
                 <div className="order-number-section">
                   <div className="order-number">{order.sortingCode}</div>
                   <div className="sorting-info">
-                    <div>{order.sortingLineCode || 'C13'}</div>
-                    <div>{order.dstStoreName || 'RM9_SP-พระรามที่9'}</div>
+                    <div>{order.sorting_line_code || order.sortingLineCode || 'C13'}</div>
+                    <div>{order.dst_store_name || order.dstStoreName || 'RM9_SP-พระรามที่9'}</div>
                     <div>พร้อม</div>
                   </div>
                 </div>
