@@ -426,8 +426,8 @@ const OrderList: React.FC = () => {
   const handlePrintLabel = (order: Order) => {
     console.log("พิมพ์ลาเบลสำหรับออเดอร์:", order);
     
-    // ตรวจสอบว่าออเดอร์มีเลขพัสดุหรือไม่
-    if (!order.trackingNumber) {
+    // ตรวจสอบว่าออเดอร์มีเลขพัสดุหรือไม่ (ตรวจสอบทั้ง camelCase และ snake_case)
+    if (!order.trackingNumber && !order.tracking_number) {
       toast({
         title: 'ไม่สามารถพิมพ์ลาเบลได้',
         description: 'ออเดอร์นี้ไม่มีเลขพัสดุ กรุณาสร้างเลขพัสดุก่อนพิมพ์ลาเบล',
@@ -438,7 +438,7 @@ const OrderList: React.FC = () => {
     
     // บันทึกข้อมูลออเดอร์ที่จะพิมพ์และเปิดไดอะล็อกเลือกประเภทลาเบลโดยตรง
     setOrderToPrint(order);
-    setSelectedLabelType('standard'); // ตั้งค่าเริ่มต้นเป็นลาเบลมาตรฐาน
+    setSelectedLabelType('flash'); // ตั้งค่าเริ่มต้นเป็นลาเบล BLUEDASH
     setLabelTypeDialogOpen(true);
   };
 
