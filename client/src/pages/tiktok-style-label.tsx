@@ -760,8 +760,8 @@ const TikTokStyleLabelPage = () => {
                 <div className="order-number-section">
                   <div className="order-number">{order.sortingCode}</div>
                   <div className="sorting-info">
-                    <div>SS1</div>
-                    <div>2TPY_BDC-ตบ</div>
+                    <div>{order.sortingLineCode || 'C13'}</div>
+                    <div>{order.dstStoreName || 'RM9_SP-พระรามที่9'}</div>
                     <div>พร้อม</div>
                   </div>
                 </div>
