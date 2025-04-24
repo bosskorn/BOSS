@@ -12,25 +12,41 @@ const MERCHANT_ID = process.env.FLASH_EXPRESS_MERCHANT_ID || 'CBE1930';
 console.log(`Using Flash Express API key: ${API_KEY ? 'Set' : 'Not set'}`);
 console.log(`Using Flash Express MerchantID: ${MERCHANT_ID}`);
 
-// สร้าง signature สำหรับ API Flash Express
+// สร้าง signature สำหรับ API Flash Express (ตามเอกสาร Flash Express โดยตรง)
 function createSignature(params: Record<string, any>, apiKey: string): string {
-  // เรียงลำดับ keys ตามตัวอักษร (จากเอกสาร Flash Express)
-  const keys = Object.keys(params).sort();
+  // แสดงค่า API key (เฉพาะ 6 ตัวแรก) สำหรับการตรวจสอบ
+  console.log(`API Key (first 6 chars): ${apiKey.substring(0, 6)}...`);
   
-  // สร้าง string เพื่อทำ signature
-  let signStr = '';
-  for (const key of keys) {
-    // เพิ่มค่าแบบ key=value (ไม่มี & คั่น)
-    signStr += key + '=' + params[key];
+  // 1. ตัดพารามิเตอร์ที่มีค่าว่างออกไป
+  const filteredParams: Record<string, any> = {};
+  for (const key in params) {
+    const value = params[key];
+    // ตรวจสอบว่าค่าไม่ว่าง (ไม่เป็น undefined, null, หรือ whitespace)
+    if (value !== undefined && value !== null && (!String(value).trim || String(value).trim() !== '')) {
+      filteredParams[key] = value;
+    }
   }
   
-  // เพิ่ม apiKey ต่อท้าย
-  signStr += apiKey;
+  // 2. เรียงลำดับ keys ตาม ASCII (dictionary order)
+  const keys = Object.keys(filteredParams).sort();
   
-  console.log('Signature string:', signStr);
+  // 3. สร้าง string เพื่อทำ signature ตามรูปแบบของ Flash Express:
+  // "key1=value1&key2=value2&key3=value3"
+  let stringA = '';
+  for (const key of keys) {
+    stringA += `${key}=${filteredParams[key]}&`;
+  }
   
-  // สร้าง signature ด้วย SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
-  const signature = createHash('sha256').update(signStr).digest('hex').toUpperCase();
+  // ตัด & ตัวสุดท้ายออก
+  stringA = stringA.substring(0, stringA.length - 1);
+  
+  // 4. นำ stringA มาต่อด้วย key ตามรูปแบบ "stringA&key=API_KEY"
+  const stringSignTemp = `${stringA}&key=${apiKey}`;
+  
+  console.log('Signature string:', stringSignTemp);
+  
+  // 5. สร้าง signature ด้วย SHA-256 และแปลงเป็นตัวพิมพ์ใหญ่
+  const signature = createHash('sha256').update(stringSignTemp).digest('hex').toUpperCase();
   console.log('Generated signature:', signature);
   
   return signature;
@@ -92,9 +108,14 @@ router.get('/status/:trackingNumber', auth, async (req: Request, res: Response) 
       // สร้าง url params สำหรับส่งไปที่ Flash Express API
       const queryString = `mchId=${params.mchId}&nonceStr=${params.nonceStr}&sign=${sign}`;
       
+      // ตรวจสอบ URL และข้อมูลที่ส่ง
+      const apiUrl = `https://open-api.flashexpress.com/open/v1/orders/${trackingNumber}/routes`;
+      console.log(`API URL: ${apiUrl}`);
+      console.log(`Request data: ${queryString}`);
+      
       // ทำการเรียก API
       const response = await axios.post(
-        `https://open-api.flashexpress.com/open/v1/orders/${trackingNumber}/routes`,
+        apiUrl,
         queryString,
         {
           headers: {
