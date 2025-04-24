@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import Layout from '@/components/Layout';
-import { Loader2, Search, Filter, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square, Tag, Clock, AlertCircle, CornerUpLeft, CircleDollarSign, Slash, Folder, Trash2 } from 'lucide-react';
+import { Loader2, Search, Filter, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square, Tag, Clock, AlertCircle, CornerUpLeft, CircleDollarSign, Slash, Folder, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -77,6 +77,8 @@ const OrderList: React.FC = () => {
   const [shippingDialogOpen, setShippingDialogOpen] = useState(false);
   const [multipleTrackingDialogOpen, setMultipleTrackingDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  
+  // Dialog แสดงข้อมูลการติดตามพัสดุ
   const [orderToCreateTracking, setOrderToCreateTracking] = useState<number | null>(null);
   const [dbShippingMethods, setDbShippingMethods] = useState<any[]>([]);
   const [statusSelected, setStatusSelected] = useState('all');
@@ -85,6 +87,8 @@ const OrderList: React.FC = () => {
   const [selectedLabelType, setSelectedLabelType] = useState('flash');
   const [showFilters, setShowFilters] = useState(false);
   const [isPrintingMultiple, setIsPrintingMultiple] = useState(false);
+  
+  // Dialog สำหรับแสดงข้อมูลการติดตามพัสดุ
   const [trackingDialogOpen, setTrackingDialogOpen] = useState(false);
   const [currentTrackingNumber, setCurrentTrackingNumber] = useState<string>('');
   const [trackingData, setTrackingData] = useState<any>(null);
@@ -843,14 +847,14 @@ const OrderList: React.FC = () => {
               <div className="flex flex-wrap gap-2 mb-3">
                 <div className="relative inline-block w-64">
                   <Select
-                    value={shippingMethodFilter === 'all' ? '' : shippingMethodFilter}
-                    onValueChange={(value) => setShippingMethodFilter(value || 'all')}
+                    value={shippingMethodFilter}
+                    onValueChange={(value) => setShippingMethodFilter(value)}
                   >
                     <SelectTrigger className="w-full h-10 border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500">
                       <SelectValue placeholder="กรองตามบริษัทขนส่ง" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">ทั้งหมด</SelectItem>
+                      <SelectItem value="all">ทั้งหมด</SelectItem>
                       <SelectItem value="flash-express">
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 inline-block bg-orange-500 rounded-full"></span>
@@ -1222,29 +1226,63 @@ const OrderList: React.FC = () => {
                             `trackingNumber=${order.trackingNumber || 'null'}`
                           )}
                           {/* ตรวจสอบว่ามีค่าเลขพัสดุหรือไม่ */}
-                          {(
-                            order.tracking_number || 
-                            order.trackingNumber
-                          ) ? (
-                            // ถ้ามีเลขพัสดุให้แสดง แต่ถ้าขึ้นต้นด้วย "แบบ" ให้แปลงเป็นเลขพัสดุจำลอง
-                            (
-                              (order.tracking_number && order.tracking_number.startsWith('แบบ')) || 
-                              (order.trackingNumber && order.trackingNumber.startsWith('แบบ'))
-                            ) ? 
-                              `FLE${Math.random().toString(36).substring(2, 10).toUpperCase()}` :
+                          {!order.tracking_number && !order.trackingNumber ? (
+                            // กรณีไม่มีเลขพัสดุ แสดงปุ่มสร้างเลขพัสดุ
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="px-2 py-0 h-7 text-xs" 
+                              onClick={() => {
+                                setOrderToCreateTracking(order.id);
+                                setShippingDialogOpen(true);
+                              }}
+                            >
+                              <Truck className="h-3 w-3 mr-1" />
+                              สร้างเลขพัสดุ
+                            </Button>
+                          ) : (
+                            // กรณีมีเลขพัสดุ ตรวจสอบว่ามีคำว่า "แบบ" หรือไม่
+                            (order.tracking_number && order.tracking_number.startsWith('แบบ')) || 
+                            (order.trackingNumber && order.trackingNumber.startsWith('แบบ')) ? (
+                              // กรณีเป็นเลขพัสดุที่ขึ้นต้นด้วย "แบบ" ให้แปลงเป็นเลขพัสดุจำลอง
+                              <span className="text-xs text-gray-600">
+                                {`FLE${Math.random().toString(36).substring(2, 10).toUpperCase()}`}
+                              </span>
+                            ) : (
+                              // กรณีเป็นเลขพัสดุปกติให้แสดงเป็นลิงก์
                               <Button 
                                 variant="link" 
                                 size="sm" 
                                 className="p-0 h-5 text-blue-600 hover:text-blue-700 underline font-medium"
-                                onClick={() => openTrackingDialog(order.tracking_number || order.trackingNumber)}
+                                onClick={() => {
+                                  const trackingNo = order.tracking_number || order.trackingNumber || '';
+                                  setCurrentTrackingNumber(trackingNo);
+                                  setTrackingDialogOpen(true);
+                                  setIsLoadingTracking(true);
+                                  
+                                  // ดึงสถานะการติดตามพัสดุ
+                                  fetch(`/api/tracking/status/${trackingNo}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                      setTrackingData(data);
+                                      console.log("ข้อมูลติดตามพัสดุ:", data);
+                                    })
+                                    .catch(error => {
+                                      console.error("เกิดข้อผิดพลาดในการดึงข้อมูลติดตามพัสดุ:", error);
+                                      toast({
+                                        title: "เกิดข้อผิดพลาด",
+                                        description: "ไม่สามารถดึงข้อมูลติดตามพัสดุได้",
+                                        variant: "destructive"
+                                      });
+                                    })
+                                    .finally(() => {
+                                      setIsLoadingTracking(false);
+                                    });
+                                }}
                               >
                                 {order.tracking_number || order.trackingNumber}
                               </Button>
-                          ) : (
-                            <Button variant="outline" size="sm" className="px-2 py-0 h-7 text-xs" onClick={() => openShippingDialog(order.id)}>
-                              <Truck className="h-3 w-3 mr-1" />
-                              สร้างเลขพัสดุ
-                            </Button>
+                            )
                           )}
                         </TableCell>
                         <TableCell>
@@ -1426,6 +1464,80 @@ const OrderList: React.FC = () => {
 
 
 
+      {/* Dialog แสดงข้อมูลการติดตามพัสดุ */}
+      <Dialog open={trackingDialogOpen} onOpenChange={setTrackingDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>ข้อมูลการติดตามพัสดุ</DialogTitle>
+            <DialogDescription>
+              เลขพัสดุ: {currentTrackingNumber}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {isLoadingTracking ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                <span className="ml-2 text-lg">กำลังโหลดข้อมูล...</span>
+              </div>
+            ) : trackingData ? (
+              <div className="space-y-4">
+                <div className="rounded-lg bg-gray-50 p-4">
+                  <h3 className="font-medium text-gray-900">สถานะล่าสุด</h3>
+                  <div className="mt-2 text-sm text-gray-700">
+                    <div className="flex items-center space-x-2">
+                      <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                      <span>{trackingData.status || 'รอดำเนินการ'}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {trackingData.history && trackingData.history.length > 0 ? (
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                      <h3 className="font-medium text-gray-900">ประวัติการเดินทาง</h3>
+                    </div>
+                    <ul className="divide-y divide-gray-200">
+                      {trackingData.history.map((item: any, index: number) => (
+                        <li key={index} className="px-4 py-3">
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0 pt-1">
+                              <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                            </div>
+                            <div className="ml-3">
+                              <p className="text-sm font-medium text-gray-900">{item.status || 'อัปเดตสถานะ'}</p>
+                              <div className="mt-1 text-sm text-gray-500 space-y-1">
+                                <p>{item.location || 'ไม่ระบุสถานที่'}</p>
+                                <p className="text-xs text-gray-400">{item.datetime || 'ไม่ระบุเวลา'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Package className="h-12 w-12 mx-auto text-gray-300" />
+                    <p className="mt-2">ยังไม่มีข้อมูลการเดินทางของพัสดุ</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <AlertCircle className="h-12 w-12 mx-auto text-gray-300" />
+                <p className="mt-2">ไม่พบข้อมูลการติดตามพัสดุ</p>
+                <p className="text-sm text-gray-400 mt-1">โปรดตรวจสอบเลขพัสดุอีกครั้ง</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setTrackingDialogOpen(false)}>
+              ปิด
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Dialog เลือกประเภทลาเบล */}
       <Dialog open={labelTypeDialogOpen} onOpenChange={setLabelTypeDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -1839,6 +1951,95 @@ const OrderList: React.FC = () => {
             >
               <Tag className="h-4 w-4 mr-1.5" />
               สร้างเลขพัสดุ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog สำหรับแสดงข้อมูลการติดตามพัสดุ */}
+      <Dialog open={trackingDialogOpen} onOpenChange={setTrackingDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">
+              ข้อมูลการติดตามพัสดุ
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-500">
+              หมายเลขพัสดุ: <span className="font-medium text-black">{currentTrackingNumber}</span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {isLoadingTracking ? (
+              <div className="py-8 flex flex-col items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
+                <p className="text-sm text-gray-500">กำลังโหลดข้อมูล...</p>
+              </div>
+            ) : trackingData && trackingData.success ? (
+              <div className="space-y-4">
+                {/* สถานะปัจจุบัน */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-1">สถานะปัจจุบัน</h4>
+                  <p className="text-sm font-medium text-blue-600">
+                    {trackingData.current_status || "รอดำเนินการ"}
+                  </p>
+                  {trackingData.update_time && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      อัพเดทล่าสุด: {new Date(trackingData.update_time).toLocaleString('th-TH')}
+                    </p>
+                  )}
+                </div>
+                
+                {/* ประวัติการเคลื่อนไหว */}
+                {trackingData.tracking_history && trackingData.tracking_history.length > 0 ? (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">ประวัติการเคลื่อนไหว</h4>
+                    <div className="space-y-3">
+                      {trackingData.tracking_history.map((history: any, index: number) => (
+                        <div key={index} className="border-l-2 border-gray-200 pl-3 pb-2">
+                          <p className="text-sm font-medium">{history.status || "ไม่ระบุสถานะ"}</p>
+                          <p className="text-xs text-gray-600">{history.location || "ไม่ระบุสถานที่"}</p>
+                          {history.timestamp && (
+                            <p className="text-xs text-gray-500">
+                              {new Date(history.timestamp).toLocaleString('th-TH')}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm">ยังไม่มีข้อมูลการเคลื่อนไหว</p>
+                  </div>
+                )}
+                
+                {/* ข้อมูลผู้รับ */}
+                {trackingData.recipient && (
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-1">ข้อมูลผู้รับ</h4>
+                    <p className="text-sm text-gray-700">{trackingData.recipient.name || "ไม่ระบุชื่อ"}</p>
+                    <p className="text-sm text-gray-700">{trackingData.recipient.phone || "ไม่ระบุเบอร์โทร"}</p>
+                    <p className="text-sm text-gray-700">{trackingData.recipient.address || "ไม่ระบุที่อยู่"}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-2" />
+                <p className="text-gray-700 font-medium">ไม่พบข้อมูลการติดตามพัสดุ</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  อาจเกิดจากเลขพัสดุไม่ถูกต้อง หรือระบบติดตามพัสดุมีปัญหา
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="default"
+              onClick={() => setTrackingDialogOpen(false)}
+            >
+              ปิด
             </Button>
           </DialogFooter>
         </DialogContent>
