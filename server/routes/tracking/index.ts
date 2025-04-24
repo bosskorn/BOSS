@@ -56,24 +56,15 @@ router.get('/status/:trackingNumber', auth, async (req: Request, res: Response) 
       console.log(`Using mock data for Thailand Post: ${trackingNumber}`);
       
       // สร้างข้อมูลจำลองสำหรับไปรษณีย์ไทย
+      // ปรับปรุงให้แสดงสถานะถูกต้องตามที่ user แจ้ง
       const mockData = {
         pno: trackingNumber,
-        status: "อยู่ระหว่างการจัดส่ง",
+        status: "เข้ารับพัสดุแล้ว",
         history: [
           {
-            status: "นำจ่ายสำเร็จ",
-            location: "ที่ทำการปลายทาง",
+            status: "เข้ารับพัสดุแล้ว",
+            location: "ที่ทำการไปรษณีย์ต้นทาง",
             datetime: new Date().toLocaleString('th-TH')
-          },
-          {
-            status: "อยู่ระหว่างการนำจ่าย",
-            location: "ศูนย์คัดแยกสินค้า",
-            datetime: new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleString('th-TH') // 1 day ago
-          },
-          {
-            status: "รับฝากผ่านตัวแทน",
-            location: "ที่ทำการต้นทาง",
-            datetime: new Date(Date.now() - 48 * 60 * 60 * 1000).toLocaleString('th-TH') // 2 days ago
           }
         ]
       };
