@@ -1081,8 +1081,26 @@ const OrderList: React.FC = () => {
                         )}
                       </div>
                     </TableHead>
-                    <TableHead className="py-3 font-medium text-gray-500">สถานะ</TableHead>
-                    <TableHead className="py-3 font-medium text-gray-500">การชำระเงิน</TableHead>
+                    <TableHead className="py-3 font-medium text-gray-500 cursor-pointer" onClick={() => handleSort('status')}>
+                      <div className="flex items-center space-x-1">
+                        <span>สถานะ</span>
+                        {sorting.column === 'status' && (
+                          sorting.direction === 'asc' ? 
+                            <ChevronUp className="h-4 w-4" /> : 
+                            <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead className="py-3 font-medium text-gray-500 cursor-pointer" onClick={() => handleSort('paymentStatus')}>
+                      <div className="flex items-center space-x-1">
+                        <span>การชำระเงิน</span>
+                        {sorting.column === 'paymentStatus' && (
+                          sorting.direction === 'asc' ? 
+                            <ChevronUp className="h-4 w-4" /> : 
+                            <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead className="py-3 font-medium text-gray-500 cursor-pointer" onClick={() => handleSort('createdAt')}>
                       <div className="flex items-center space-x-1">
                         <span>วันที่สร้าง</span>
