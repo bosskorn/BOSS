@@ -1510,18 +1510,19 @@ const OrderList: React.FC = () => {
                   window.open(labelUrl, '_blank');
                   
                   // อัพเดตสถานะการพิมพ์ในฐานข้อมูล
-                  fetch(`/api/orders/${orderToPrint.id}/print-status`, {
-                    method: 'PATCH',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ isPrinted: true })
-                  })
-                  .catch(error => {
+                  try {
+                    await fetch(`/api/orders/${orderToPrint.id}/print-status`, {
+                      method: 'PATCH',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`,
+                      },
+                      credentials: 'include',
+                      body: JSON.stringify({ isPrinted: true })
+                    });
+                  } catch (error) {
                     console.error('การอัพเดตสถานะการพิมพ์ล้มเหลว:', error);
-                  });
+                  }
                 }
                 
                 // รีเซ็ตสถานะ
