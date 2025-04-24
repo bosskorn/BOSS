@@ -325,6 +325,30 @@ const TikTokStyleLabelPage = () => {
   useEffect(() => {
     const fetchOrderData = async () => {
       try {
+        // ดึงข้อมูล token ครั้งเดียว เพื่อใช้ในทุกการเรียก API
+        const authToken = localStorage.getItem('auth_token');
+        
+        // ดึงข้อมูลผู้ใช้งานปัจจุบัน
+        try {
+          const userResponse = await fetch('/api/user', {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': authToken ? `Bearer ${authToken}` : '',
+            },
+            credentials: 'include'
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            if (userData.success && userData.user) {
+              setCurrentUser(userData.user);
+              console.log('ดึงข้อมูลผู้ใช้งานสำเร็จ:', userData.user);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+
         const params = new URLSearchParams(window.location.search);
         const ordersParam = params.get('orders');
         
@@ -353,7 +377,6 @@ const TikTokStyleLabelPage = () => {
         setOrderIds(ids);
         
         // ดึงข้อมูลทุกออเดอร์
-        const token = localStorage.getItem('auth_token');
         const allOrders = [];
         
         for (const id of ids) {
@@ -361,7 +384,7 @@ const TikTokStyleLabelPage = () => {
             const response = await fetch(`/api/orders/${id}`, {
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : '',
+                'Authorization': authToken ? `Bearer ${authToken}` : '',
               },
               credentials: 'include'
             });
@@ -375,7 +398,7 @@ const TikTokStyleLabelPage = () => {
                     const customerResponse = await fetch(`/api/customers/${data.order.customerId}`, {
                       headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': token ? `Bearer ${token}` : '',
+                        'Authorization': authToken ? `Bearer ${authToken}` : '',
                       },
                       credentials: 'include'
                     });
@@ -696,8 +719,14 @@ const TikTokStyleLabelPage = () => {
                 
                 {/* แสดงข้อมูลผู้ส่ง */}
                 <div className="sender-info">
-                  <div className="sender-info-header">จาก JSB Candy (+66)0836087712</div>
-                  <div className="sender-address">24 ซอยรามคำแหงมาเก็ต 008 แขวงวังทองหลาง, บางกะปิ, กรุงเทพ 10160</div>
+                  <div className="sender-info-header">
+                    จาก {currentUser?.fullname || 'ผู้ส่ง'} ({currentUser?.phone || '-'})
+                  </div>
+                  <div className="sender-address">
+                    {currentUser?.address ? 
+                      `${currentUser.address} ${currentUser.subdistrict ? 'แขวง/ตำบล ' + currentUser.subdistrict : ''} ${currentUser.district ? 'เขต/อำเภอ ' + currentUser.district : ''} ${currentUser.province || ''} ${currentUser.zipcode || ''}` 
+                      : 'ไม่ระบุที่อยู่'}
+                  </div>
                 </div>
                 
                 {/* แสดงข้อมูลผู้รับ */}
