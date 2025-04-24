@@ -536,28 +536,30 @@ const OrderList: React.FC = () => {
         
         {/* การค้นหาและกรอง - ตามรูปแบบ Lazada */}
         <div className="bg-white rounded-t-lg border border-gray-200 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="col-span-4">
-              <p className="text-filter mt-0 mb-2 text-sm font-medium text-gray-700">ค้นหาออเดอร์</p>
-              <div className="relative w-full">
-                <Input
-                  placeholder="ค้นหาเลขออเดอร์, ชื่อลูกค้า, เลขพัสดุ..."
-                  className="pl-9 w-full"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="el-row p-6 lz-card-title-non-border" style={{marginLeft: "-2.5px", marginRight: "-2.5px"}}>
+            <div className="el-col el-col-24 el-col-xs-24 el-col-sm-24 el-col-md-4 is-guttered flex pt-2" style={{paddingRight: "2.5px", paddingLeft: "2.5px"}}>
+              <div className="w-100">
+                <p className="text-filter mt-0 mb-0">ค้นหาออเดอร์</p>
+                <div className="relative w-full mt-2">
+                  <Input
+                    placeholder="ค้นหาเลขออเดอร์, ชื่อลูกค้า, เลขพัสดุ..."
+                    className="pl-9 w-full"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
               </div>
             </div>
             
-            <div className="col-span-8 md:flex md:flex-wrap md:items-end gap-4">
-              <div className="mb-4 md:mb-0 md:mr-4">
-                <p className="text-filter mt-0 mb-2 text-sm font-medium text-gray-700">สถานะออเดอร์</p>
+            <div className="el-col el-col-24 el-col-xs-24 el-col-sm-24 el-col-md-20 is-guttered flex flex-wrap items-center" style={{paddingRight: "2.5px", paddingLeft: "2.5px"}}>
+              <div className="mr-4">
+                <p className="text-filter mt-0 mb-0">สถานะออเดอร์</p>
                 <Select 
                   value={orderStatusFilter}
                   onValueChange={setOrderStatusFilter}
                 >
-                  <SelectTrigger className="w-[160px] h-9">
+                  <SelectTrigger className="w-[160px] h-9 mt-2">
                     <SelectValue placeholder="สถานะออเดอร์" />
                   </SelectTrigger>
                   <SelectContent>
@@ -571,15 +573,13 @@ const OrderList: React.FC = () => {
                 </Select>
               </div>
               
-
-              
-              <div className="mb-4 md:mb-0 md:mr-4">
-                <p className="text-filter mt-0 mb-2 text-sm font-medium text-gray-700">วิธีการชำระเงิน</p>
+              <div className="mr-4">
+                <p className="text-filter mt-0 mb-0">วิธีการชำระเงิน</p>
                 <Select 
                   value={paymentMethodFilter}
                   onValueChange={setPaymentMethodFilter}
                 >
-                  <SelectTrigger className="w-[160px] h-9">
+                  <SelectTrigger className="w-[160px] h-9 mt-2">
                     <SelectValue placeholder="วิธีการชำระเงิน" />
                   </SelectTrigger>
                   <SelectContent>
@@ -590,6 +590,13 @@ const OrderList: React.FC = () => {
                     <SelectItem value="pending">รอชำระเงิน</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              
+              <div className="mr-4">
+                <p className="text-filter mt-0 mb-0">สถานะพิมพ์ใบปะหน้า</p>
+                <div className="el-select__selected-item el-select__placeholder is-transparent h-9 mt-2 border rounded flex items-center px-3">
+                  <span>สถานะพิมพ์ใบปะหน้า</span>
+                </div>
               </div>
               
               <div className="md:flex items-end space-x-2">
