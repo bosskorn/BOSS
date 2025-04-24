@@ -135,10 +135,12 @@ const TikTokStyleLabelPage = () => {
     .order-number {
       flex: 2;
       padding: 10px;
-      font-size: 18px;
+      font-size: 24px;
       font-weight: bold;
       text-align: center;
       border-right: 1px solid #000;
+      background-color: #f0f0f0;
+      letter-spacing: 1px;
     }
     
     .sorting-info {
