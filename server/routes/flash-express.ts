@@ -275,7 +275,43 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
         const trackingNumber = response.data.pno || (response.data.data && response.data.data.pno);
         const sortCode = response.data.sortingCode || (response.data.data && response.data.data.sortCode) || '00';
         
-        // บันทึกข้อมูลเลขพัสดุลงในฐานข้อมูล หากต้องการ
+        // บันทึกข้อมูลเลขพัสดุลงในฐานข้อมูล
+        try {
+          // สร้างข้อมูลออเดอร์ใหม่ในฐานข้อมูล
+          const orderNumber = params.outTradeNo;
+          const now = new Date();
+          
+          // ใช้ข้อมูลที่ได้รับสร้างรายการออเดอร์ในฐานข้อมูล
+          const [newOrder] = await db.insert(orders).values({
+            userId,
+            orderNumber,
+            customerName: receiverName,
+            customerPhone: receiverPhone,
+            customerEmail: '',
+            shippingAddress: receiverAddress,
+            shippingProvince: receiverProvince,
+            shippingDistrict: receiverCity,
+            shippingSubdistrict: receiverDistrict,
+            shippingZipcode: receiverPostcode,
+            shippingMethod: 'Flash Express',
+            shippingCost: 0, // ต้องระบุค่าขนส่งตามที่เก็บเงินจริง
+            isCOD: codEnabled ? true : false,
+            codAmount: codEnabled ? Math.round(codAmount || 0) : 0,
+            trackingNumber: trackingNumber,
+            sortCode: sortCode,
+            status: 'pending',
+            note: `สร้างออเดอร์ Flash Express สำเร็จ - ${trackingNumber}`,
+            total: codEnabled ? Math.round(codAmount || 0) : 0,
+            createdAt: now,
+            updatedAt: now
+          }).returning();
+          
+          console.log('บันทึกออเดอร์ลงในฐานข้อมูลสำเร็จ:', newOrder);
+        } catch (dbError) {
+          console.error('ไม่สามารถบันทึกข้อมูลออเดอร์ลงในฐานข้อมูลได้:', dbError);
+          // ไม่ต้อง return ให้ API ล้มเหลว เพราะออเดอร์กับ Flash Express สำเร็จแล้ว
+          // แค่บันทึกล็อกข้อผิดพลาดไว้
+        }
         
         // ส่งข้อมูลกลับไปยังไคลเอนต์
         return res.json({
@@ -300,6 +336,44 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
           
           isSuccess = true;
           errorMessage = 'success';
+          
+          // บันทึกข้อมูลออเดอร์ลงในฐานข้อมูล
+          try {
+            // สร้างข้อมูลออเดอร์ใหม่ในฐานข้อมูล
+            const orderNumber = params.outTradeNo;
+            const trackingNumber = response.data.data.pno || 'ไม่ระบุ';
+            const sortCode = response.data.data.sortCode || '00';
+            const now = new Date();
+            
+            // ใช้ข้อมูลที่ได้รับสร้างรายการออเดอร์ในฐานข้อมูล
+            const [newOrder] = await db.insert(orders).values({
+              userId,
+              orderNumber,
+              customerName: receiverName,
+              customerPhone: receiverPhone,
+              customerEmail: '',
+              shippingAddress: receiverAddress,
+              shippingProvince: receiverProvince,
+              shippingDistrict: receiverCity,
+              shippingSubdistrict: receiverDistrict,
+              shippingZipcode: receiverPostcode,
+              shippingMethod: 'Flash Express',
+              shippingCost: 0,
+              isCOD: codEnabled ? true : false,
+              codAmount: codEnabled ? Math.round(req.body.codAmount || 0) : 0,
+              trackingNumber: trackingNumber,
+              sortCode: sortCode,
+              status: 'pending',
+              note: `สร้างออเดอร์ Flash Express สำเร็จ - ${trackingNumber}`,
+              total: codEnabled ? Math.round(req.body.codAmount || 0) : 0,
+              createdAt: now,
+              updatedAt: now
+            }).returning();
+            
+            console.log('บันทึกออเดอร์รูปแบบที่สองลงในฐานข้อมูลสำเร็จ:', newOrder);
+          } catch (dbError) {
+            console.error('ไม่สามารถบันทึกข้อมูลออเดอร์ลงในฐานข้อมูลได้ (รูปแบบที่สอง):', dbError);
+          }
           
           // กรณีสำเร็จแต่ข้อมูลอยู่ในรูปแบบต่างไปจากที่คาดหวัง
           return res.json({

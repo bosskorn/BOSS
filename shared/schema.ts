@@ -174,18 +174,32 @@ export const orders = pgTable("orders", {
   customerId: integer("customer_id").references(() => customers.id),
   shippingMethodId: integer("shipping_method_id").references(() => shippingMethods.id),
   discountId: integer("discount_id").references(() => discounts.id),
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
-  shippingFee: decimal("shipping_fee", { precision: 10, scale: 2 }).default("0"),
-  discount: decimal("discount", { precision: 10, scale: 2 }).default("0"),
-  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: paymentMethodEnum("payment_method").default("bank_transfer"),
-  paymentStatus: text("payment_status").default("pending"),
+  
+  // ข้อมูลลูกค้า
+  customerName: text("customer_name"),
+  customerPhone: text("customer_phone"),
+  customerEmail: text("customer_email"),
+  
+  // ข้อมูลการจัดส่ง
+  shippingAddress: text("shipping_address"),
+  shippingProvince: text("shipping_province"),
+  shippingDistrict: text("shipping_district"),
+  shippingSubdistrict: text("shipping_subdistrict"),
+  shippingZipcode: text("shipping_zipcode"),
+  shippingMethod: text("shipping_method"),
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default("0"),
   trackingNumber: text("tracking_number"),
+  sortCode: text("sort_code"),
   shippingDate: timestamp("shipping_date"),
+  
+  // ข้อมูลคำสั่งซื้อและการชำระเงิน
+  isCOD: boolean("is_cod").default(false),
+  codAmount: decimal("cod_amount", { precision: 10, scale: 2 }).default("0"),
+  total: decimal("total", { precision: 10, scale: 2 }).default("0"),
   note: text("note"),
   status: orderStatusEnum("status").default("pending"),
-  weight: decimal("weight", { precision: 5, scale: 2 }),
-  dimensions: json("dimensions"), // { width, height, length }
+  
+  // ข้อมูลอื่นๆ
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   userId: integer("user_id").references(() => users.id),
