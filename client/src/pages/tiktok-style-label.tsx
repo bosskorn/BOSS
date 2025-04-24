@@ -447,7 +447,23 @@ const TikTokStyleLabelPage = () => {
                 // สนับสนุนทั้งรูปแบบ snake_case และ camelCase
                 let cusName = data.order.customerName || data.order.customer_name || 'ไม่ระบุชื่อผู้รับ';
                 let cusPhone = data.order.customerPhone || data.order.customer_phone || '';
-                let cusAddress = 'ไม่ระบุที่อยู่ผู้รับ';
+                
+                // ที่อยู่ลูกค้า (สนับสนุนหลายรูปแบบการเก็บข้อมูล)
+                let cusAddress = '';
+                
+                // ลองดึงที่อยู่จากข้อมูลออเดอร์โดยตรง
+                if (data.order.address) {
+                  cusAddress = data.order.address;
+                } else if (data.order.customerAddress || data.order.customer_address) {
+                  cusAddress = data.order.customerAddress || data.order.customer_address;
+                } else if (data.order.recipientAddress || data.order.recipient_address) {
+                  cusAddress = data.order.recipientAddress || data.order.recipient_address;
+                } else if (data.order.shippingAddress || data.order.shipping_address) {
+                  cusAddress = data.order.shippingAddress || data.order.shipping_address;
+                }
+                
+                // ดีบั๊กแสดงข้อมูลออเดอร์
+                console.log('ข้อมูลออเดอร์:', data.order);
                 
                 // ถ้ามีข้อมูลลูกค้าเพิ่มเติม
                 if (data.order.customer) {
@@ -470,20 +486,49 @@ const TikTokStyleLabelPage = () => {
                   }
                 }
                 
+                // ถ้ายังไม่มีที่อยู่ ให้ใช้ฟิลด์ shippingAddress ซึ่งมีข้อมูลจริงในระบบ
+                if (!cusAddress && data.order.shippingAddress) {
+                  cusAddress = data.order.shippingAddress;
+                  
+                  // ถ้ามีข้อมูลอำเภอ/จังหวัด/รหัสไปรษณีย์ ให้ใส่ลงไปด้วย
+                  const addressDetails = [];
+                  if (data.order.shippingDistrict || data.order.shipping_district) 
+                    addressDetails.push(`อำเภอ${data.order.shippingDistrict || data.order.shipping_district}`);
+                  
+                  if (data.order.shippingSubdistrict || data.order.shipping_subdistrict) 
+                    addressDetails.push(`ตำบล${data.order.shippingSubdistrict || data.order.shipping_subdistrict}`);
+                    
+                  if (data.order.shippingProvince || data.order.shipping_province) 
+                    addressDetails.push(data.order.shippingProvince || data.order.shipping_province);
+                    
+                  if (data.order.shippingZipcode || data.order.shipping_zipcode) 
+                    addressDetails.push(data.order.shippingZipcode || data.order.shipping_zipcode);
+                  
+                  if (addressDetails.length > 0) {
+                    cusAddress += ' ' + addressDetails.join(' ');
+                  }
+                }
+                
+                // กำหนดข้อมูลผู้รับ
                 data.order.recipientName = cusName;
                 data.order.recipientPhone = cusPhone || '-';
                 data.order.recipientAddress = cusAddress;
                 
-                // หาเขต/อำเภอ จากที่อยู่
-                const addressParts = cusAddress.split(' ');
-                const possibleDistrict = addressParts.find((part: string) => 
-                  part.includes('อ.') || part.includes('อำเภอ') || part.includes('เขต')
-                );
-                
-                if (possibleDistrict) {
-                  data.order.district = possibleDistrict.replace('อ.', '').replace('อำเภอ', '').replace('เขต', '');
+                // เพิ่มฟิลด์ district จากข้อมูลที่มี
+                if (data.order.shippingDistrict || data.order.shipping_district) {
+                  data.order.district = data.order.shippingDistrict || data.order.shipping_district;
                 } else {
-                  data.order.district = '';
+                  // หาเขต/อำเภอ จากที่อยู่
+                  const addressParts = cusAddress.split(' ');
+                  const possibleDistrict = addressParts.find((part: string) => 
+                    part.includes('อ.') || part.includes('อำเภอ') || part.includes('เขต')
+                  );
+                  
+                  if (possibleDistrict) {
+                    data.order.district = possibleDistrict.replace('อ.', '').replace('อำเภอ', '').replace('เขต', '');
+                  } else {
+                    data.order.district = '';
+                  }
                 }
                 
                 // สร้างวันที่
