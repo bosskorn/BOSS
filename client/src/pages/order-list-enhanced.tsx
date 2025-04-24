@@ -1156,7 +1156,7 @@ const OrderList: React.FC = () => {
                           {order.createdAt ? new Date(order.createdAt).toLocaleDateString('th-TH') : 'ไม่ระบุ'}
                         </TableCell>
                         <TableCell className="whitespace-nowrap font-medium">
-                          {order.trackingNumber ? (
+                          {order.trackingNumber && order.trackingNumber !== 'ไม่ระบุ' && order.trackingNumber.trim() !== '' ? (
                             // ถ้ามีเลขพัสดุให้แสดง แต่ถ้าขึ้นต้นด้วย "แบบ" ให้แปลงเป็นเลขพัสดุจำลอง
                             order.trackingNumber.startsWith('แบบ') ? 
                               `FLE${Math.random().toString(36).substring(2, 10).toUpperCase()}` :
