@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import Layout from '@/components/Layout';
-import { Loader2, Search, Filter, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square, Tag, Clock, AlertCircle, CornerUpLeft, CircleDollarSign, Slash, Folder, Trash2, AlertTriangle } from 'lucide-react';
+import { Loader2, Search, Filter, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, FileText, Truck, Package, CheckCircle, XCircle, Printer, RefreshCw, X, Check, Square, Tag, Clock, AlertCircle, CornerUpLeft, CircleDollarSign, Slash, Folder, Trash2, AlertTriangle, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from '@/hooks/use-toast';
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import axios from 'axios';
 import { 
   Table, 
@@ -65,6 +67,7 @@ const OrderList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [dateRangeFilter, setDateRangeFilter] = useState('all');
+  const [dateRange, setDateRange] = useState<{ from: Date; to?: Date }>();
   const [shippingMethodFilter, setShippingMethodFilter] = useState('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
@@ -853,7 +856,7 @@ const OrderList: React.FC = () => {
             </div>
             
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-              {/* ส่วนเลือกบริษัทขนส่ง */}
+              {/* ส่วนเลือกบริษัทขนส่ง และตัวกรองอื่นๆ */}
               <div className="flex flex-wrap gap-2 mb-3">
                 <div className="relative inline-block w-64">
                   <Select
@@ -885,6 +888,148 @@ const OrderList: React.FC = () => {
                       </SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                
+                {/* กรองตามสถานะการพิมพ์ลาเบล */}
+                <div className="relative inline-block w-48">
+                  <Select
+                    defaultValue="all"
+                    onValueChange={(value) => {
+                      if (value === 'printed') {
+                        setFilteredOrders(orders.filter(o => o.isPrinted || o.is_printed));
+                      } else if (value === 'not-printed') {
+                        setFilteredOrders(orders.filter(o => (!o.isPrinted && !o.is_printed) && (o.tracking_number || o.trackingNumber)));
+                      } else if (value === 'with-tracking') {
+                        setFilteredOrders(orders.filter(o => o.tracking_number || o.trackingNumber));
+                      } else if (value === 'without-tracking') {
+                        setFilteredOrders(orders.filter(o => !o.tracking_number && !o.trackingNumber));
+                      } else {
+                        // กรณีเลือก "ทั้งหมด" ให้แสดงตามเงื่อนไขค้นหาปัจจุบัน
+                        filterOrders();
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full h-10 border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500">
+                      <SelectValue placeholder="สถานะลาเบล" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">ทั้งหมด</SelectItem>
+                      <SelectItem value="printed">
+                        <div className="flex items-center gap-2">
+                          <Printer className="h-3.5 w-3.5 text-green-600" />
+                          <span>พิมพ์ลาเบลแล้ว</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="not-printed">
+                        <div className="flex items-center gap-2">
+                          <Printer className="h-3.5 w-3.5 text-orange-600" />
+                          <span>ยังไม่ได้พิมพ์</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="with-tracking">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-3.5 w-3.5 text-blue-600" />
+                          <span>มีเลขพัสดุ</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="without-tracking">
+                        <div className="flex items-center gap-2">
+                          <XCircle className="h-3.5 w-3.5 text-gray-600" />
+                          <span>ไม่มีเลขพัสดุ</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* กรองตามช่วงวันที่ */}
+                <div className="relative inline-block w-56">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full h-10 justify-start text-left font-normal border-gray-300 rounded-md text-sm">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                          dateRange.to ? (
+                            <>
+                              {new Date(dateRange.from).toLocaleDateString('th-TH')} - {new Date(dateRange.to).toLocaleDateString('th-TH')}
+                            </>
+                          ) : (
+                            new Date(dateRange.from).toLocaleDateString('th-TH')
+                          )
+                        ) : (
+                          <span>วันที่สร้าง</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={(range) => {
+                          setDateRange(range);
+                          if (range?.from) {
+                            const fromDate = new Date(range.from);
+                            fromDate.setHours(0, 0, 0, 0);
+                            
+                            if (range.to) {
+                              const toDate = new Date(range.to);
+                              toDate.setHours(23, 59, 59, 999);
+                              
+                              // กรองออเดอร์ตามช่วงวันที่
+                              setFilteredOrders(orders.filter(order => {
+                                const orderDate = order.createdAt 
+                                  ? new Date(order.createdAt) 
+                                  : order.created_at 
+                                  ? new Date(order.created_at)
+                                  : null;
+                                
+                                if (!orderDate) return false;
+                                return orderDate >= fromDate && orderDate <= toDate;
+                              }));
+                            } else {
+                              // กรณีเลือกวันที่เดียว
+                              const endOfDay = new Date(fromDate);
+                              endOfDay.setHours(23, 59, 59, 999);
+                              
+                              setFilteredOrders(orders.filter(order => {
+                                const orderDate = order.createdAt 
+                                  ? new Date(order.createdAt) 
+                                  : order.created_at 
+                                  ? new Date(order.created_at)
+                                  : null;
+                                
+                                if (!orderDate) return false;
+                                return orderDate >= fromDate && orderDate <= endOfDay;
+                              }));
+                            }
+                          } else {
+                            // ถ้ายกเลิกการเลือกวันที่ ให้แสดงทั้งหมด
+                            filterOrders();
+                          }
+                        }}
+                        numberOfMonths={2}
+                      />
+                      
+                      {/* ปุ่มรีเซ็ตวันที่ */}
+                      {dateRange?.from && (
+                        <div className="p-3 border-t border-gray-100">
+                          <Button 
+                            variant="ghost" 
+                            className="w-full justify-center text-xs h-8"
+                            onClick={() => {
+                              setDateRange(undefined);
+                              filterOrders();
+                            }}
+                          >
+                            <X className="h-3.5 w-3.5 mr-1" />
+                            ล้างการกรองวันที่
+                          </Button>
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
               
