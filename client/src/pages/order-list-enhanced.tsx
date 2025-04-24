@@ -776,57 +776,71 @@ const OrderList: React.FC = () => {
         
         <div className="border-x border-gray-200">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <div className="overflow-x-auto border-b border-gray-200 bg-gray-50">
-              <TabsList className="flex px-4 pt-2 rounded-none w-auto min-w-full">
-                <TabsTrigger
-                  value="all"
-                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-                >
-                  ทั้งหมด
-                </TabsTrigger>
-                <TabsTrigger
-                  value="pending"
-                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-                >
-                  รอดำเนินการ
-                </TabsTrigger>
-                <TabsTrigger
-                  value="processing"
-                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-                >
-                  กำลังดำเนินการ
-                </TabsTrigger>
-                <TabsTrigger
-                  value="shipped"
-                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-                >
-                  จัดส่งแล้ว
-                </TabsTrigger>
-                <TabsTrigger
-                  value="completed"
-                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-                >
-                  เสร็จสมบูรณ์
-                </TabsTrigger>
-                <TabsTrigger
-                  value="cancelled"
-                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-                >
-                  ยกเลิก
-                </TabsTrigger>
-                <TabsTrigger
-                  value="flash-express"
-                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-                >
-                  Flash Express
-                </TabsTrigger>
-                <TabsTrigger
-                  value="jt-express"
-                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-                >
-                  J&T Express
-                </TabsTrigger>
-              </TabsList>
+            <div className="overflow-x-auto border-b border-gray-200 bg-white relative">
+              <div className="flex px-4 pt-2 rounded-none w-auto min-w-full">
+                <TabsList className="flex bg-transparent p-0 h-10 relative">
+                  <TabsTrigger
+                    value="all"
+                    className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
+                  >
+                    <span>ทั้งหมด ({filteredOrders.length})</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="pending"
+                    className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
+                  >
+                    <span>รอดำเนินการ ({filteredOrders.filter(o => o.status === 'pending').length})</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="processing"
+                    className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
+                  >
+                    <span>กำลังดำเนินการ ({filteredOrders.filter(o => o.status === 'processing').length})</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="shipped"
+                    className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
+                  >
+                    <span>อยู่ระหว่างจัดส่ง ({filteredOrders.filter(o => o.status === 'shipped').length})</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="completed"
+                    className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
+                  >
+                    <span>จัดส่งสำเร็จ ({filteredOrders.filter(o => o.status === 'completed').length})</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="cancelled"
+                    className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
+                  >
+                    <span>ยกเลิก ({filteredOrders.filter(o => o.status === 'cancelled').length})</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="flash-express"
+                    className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
+                  >
+                    <span>Flash Express ({filteredOrders.filter(o => o.tracking_number?.startsWith('TH')).length})</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="jt-express"
+                    className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
+                  >
+                    <span>J&T Express ({filteredOrders.filter(o => o.tracking_number?.startsWith('JT')).length})</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              
+              {/* แถบแสดงสถานะใต้แท็บที่เลือก */}
+              <div className="absolute bottom-0 left-0 h-0.5 bg-blue-500 transition-all" style={{
+                width: '95px',
+                transform: `translateX(${activeTab === 'all' ? 16 : 
+                             activeTab === 'pending' ? 111 : 
+                             activeTab === 'processing' ? 247 : 
+                             activeTab === 'shipped' ? 403 : 
+                             activeTab === 'completed' ? 546 : 
+                             activeTab === 'cancelled' ? 669 : 
+                             activeTab === 'flash-express' ? 774 : 912}px)`
+              }}></div>
             </div>
             
             <TabsContent value={activeTab} className="p-0 m-0">
