@@ -2025,10 +2025,10 @@ const OrderList: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-6">
-                <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-2" />
-                <p className="text-gray-700 font-medium">ไม่พบข้อมูลการติดตามพัสดุ</p>
+                <Clock className="h-10 w-10 text-amber-500 mx-auto mb-2" />
+                <p className="text-gray-700 font-medium">รอขนส่งเข้ารับพัสดุ</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  อาจเกิดจากเลขพัสดุไม่ถูกต้อง หรือระบบติดตามพัสดุมีปัญหา
+                  โปรดรอขนส่งเข้ารับพัสดุก่อน ถึงจะสามารถเช็คสถานะพัสดุได้
                 </p>
               </div>
             )}
