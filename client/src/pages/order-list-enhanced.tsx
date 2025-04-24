@@ -465,19 +465,65 @@ const OrderList: React.FC = () => {
           
           // กรณีมีข้อมูลแบบใหม่ (routes จาก Flash Express API)
           if (data.trackingData.routes && data.trackingData.routes.length > 0) {
-            // ใช้สถานะล่าสุดจาก routes
-            latestStatus = data.trackingData.routes[0].message || 
-                         data.trackingData.routes[0].routeAction || 
-                         'รอขนส่งเข้ารับ';
+            // ดึงสถานะล่าสุดจาก routes
+            const latestRoute = data.trackingData.routes[0];
+            const statusMessage = latestRoute.message || latestRoute.routeAction || '';
+            
+            // แปลงสถานะจาก API เป็นสถานะที่กำหนด
+            if (statusMessage.includes('ส่งสำเร็จ') || 
+                statusMessage.includes('ส่งมอบ') || 
+                statusMessage.includes('ได้รับพัสดุ')) {
+              latestStatus = 'ส่งสำเร็จ';
+            } else if (statusMessage.includes('ขนส่ง') || 
+                       statusMessage.includes('จัดส่ง') || 
+                       statusMessage.includes('เดินทาง') ||
+                       statusMessage.includes('ขาออก') ||
+                       statusMessage.includes('ส่งต่อ')) {
+              latestStatus = 'อยู่ระหว่างการจัดส่ง';
+            } else if (statusMessage.includes('ยกเลิก')) {
+              latestStatus = 'ยกเลิก';
+            } else {
+              latestStatus = 'กำลังดำเนินการ';
+            }
           } 
           // กรณีมีข้อมูลแบบเก่า (history)
           else if (data.trackingData.history && data.trackingData.history.length > 0) {
-            // ใช้สถานะล่าสุดจาก history
-            latestStatus = data.trackingData.history[0].status || 'รอขนส่งเข้ารับ';
+            // ดึงสถานะล่าสุดจาก history
+            const statusMessage = data.trackingData.history[0].status || '';
+            
+            // แปลงสถานะเป็นรูปแบบที่กำหนด
+            if (statusMessage.includes('ส่งสำเร็จ') || 
+                statusMessage.includes('ส่งมอบ') || 
+                statusMessage.includes('ได้รับพัสดุ')) {
+              latestStatus = 'ส่งสำเร็จ';
+            } else if (statusMessage.includes('ขนส่ง') || 
+                       statusMessage.includes('จัดส่ง') || 
+                       statusMessage.includes('เดินทาง')) {
+              latestStatus = 'อยู่ระหว่างการจัดส่ง';
+            } else if (statusMessage.includes('ยกเลิก')) {
+              latestStatus = 'ยกเลิก';
+            } else {
+              latestStatus = 'กำลังดำเนินการ';
+            }
           }
           // กรณีมี stateText จาก API
           else if (data.trackingData.stateText) {
-            latestStatus = data.trackingData.stateText;
+            const statusMessage = data.trackingData.stateText;
+            
+            // แปลงสถานะเป็นรูปแบบที่กำหนด
+            if (statusMessage.includes('ส่งสำเร็จ') || 
+                statusMessage.includes('ส่งมอบ') || 
+                statusMessage.includes('ได้รับพัสดุ')) {
+              latestStatus = 'ส่งสำเร็จ';
+            } else if (statusMessage.includes('ขนส่ง') || 
+                       statusMessage.includes('จัดส่ง') || 
+                       statusMessage.includes('เดินทาง')) {
+              latestStatus = 'อยู่ระหว่างการจัดส่ง';
+            } else if (statusMessage.includes('ยกเลิก')) {
+              latestStatus = 'ยกเลิก';
+            } else {
+              latestStatus = 'กำลังดำเนินการ';
+            }
           }
           
           // เพิ่มสถานะการติดตามเข้าไปในออเดอร์
@@ -1025,28 +1071,40 @@ const OrderList: React.FC = () => {
                           {!order.tracking_number && !order.trackingNumber ? (
                             // กรณี 1: ไม่มีเลขพัสดุ สถานะคือ "รอดำเนินการ" (ไม่สนใจค่า order.status)
                             <Badge variant="outline" className="border-yellow-300 text-yellow-700 bg-yellow-50">รอดำเนินการ</Badge>
-                          ) : (
-                            // มีเลขพัสดุแล้ว ตรวจสอบสถานะ trackingStatus
-                            order.trackingStatus ? (
-                              // กรณี 3: มีเลขพัสดุและมีสถานะจากการติดตาม ใช้สถานะจาก trackingStatus
-                              <Badge 
-                                variant="outline" 
-                                className={
-                                  order.trackingStatus.includes('ส่งสำเร็จ') || order.trackingStatus.includes('ได้รับพัสดุ') ? 
-                                    "border-green-300 text-green-700 bg-green-50" : 
-                                  order.trackingStatus.includes('กำลัง') || order.trackingStatus.includes('จัดส่ง') ? 
-                                    "border-blue-300 text-blue-700 bg-blue-50" : 
-                                  order.trackingStatus.includes('ยกเลิก') ? 
-                                    "border-red-300 text-red-700 bg-red-50" : 
-                                    "border-purple-300 text-purple-700 bg-purple-50"
-                                }
-                              >
-                                {order.trackingStatus}
+                          ) : order.trackingStatus ? (
+                            // กรณี 3 และ 4: มีเลขพัสดุและมีข้อมูลสถานะจากการติดตาม
+                            order.trackingStatus.includes('ส่งสำเร็จ') || 
+                            order.trackingStatus.includes('ได้รับพัสดุ') || 
+                            order.trackingStatus.includes('ส่งมอบ') ? (
+                              // กรณี 4: ส่งสำเร็จแล้ว
+                              <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">
+                                ส่งสำเร็จ
+                              </Badge>
+                            ) : order.trackingStatus.includes('กำลัง') || 
+                               order.trackingStatus.includes('จัดส่ง') || 
+                               order.trackingStatus.includes('ขนส่ง') || 
+                               order.trackingStatus.includes('จุดรับ') || 
+                               order.trackingStatus.includes('เตรียม') ? (
+                              // กรณี 3: อยู่ระหว่างการขนส่ง
+                              <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
+                                อยู่ระหว่างการจัดส่ง
+                              </Badge>
+                            ) : order.trackingStatus.includes('ยกเลิก') ? (
+                              // กรณีพิเศษ: ยกเลิก
+                              <Badge variant="outline" className="border-red-300 text-red-700 bg-red-50">
+                                ยกเลิก
                               </Badge>
                             ) : (
-                              // กรณี 2: มีเลขพัสดุแต่ไม่มีสถานะจากการติดตาม สถานะคือ "รอเข้ารับ"
-                              <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50">รอเข้ารับ</Badge>
+                              // กรณีอื่นๆ ที่ไม่ตรงกับเงื่อนไข
+                              <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50">
+                                กำลังดำเนินการ
+                              </Badge>
                             )
+                          ) : (
+                            // กรณี 2: มีเลขพัสดุแต่ยังไม่มีสถานะจากการติดตาม
+                            <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50">
+                              กำลังดำเนินการ
+                            </Badge>
                           )}
                         </TableCell>
                         <TableCell>
