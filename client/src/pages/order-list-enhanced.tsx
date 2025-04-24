@@ -85,6 +85,10 @@ const OrderList: React.FC = () => {
   const [selectedLabelType, setSelectedLabelType] = useState('flash');
   const [showFilters, setShowFilters] = useState(false);
   const [isPrintingMultiple, setIsPrintingMultiple] = useState(false);
+  const [trackingDialogOpen, setTrackingDialogOpen] = useState(false);
+  const [currentTrackingNumber, setCurrentTrackingNumber] = useState<string>('');
+  const [trackingData, setTrackingData] = useState<any>(null);
+  const [isLoadingTracking, setIsLoadingTracking] = useState(false);
   
   // การแบ่งหน้า
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -835,29 +839,38 @@ const OrderList: React.FC = () => {
             </div>
             
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-              {/* ส่วนป้ายกำกับบริษัทขนส่ง */}
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                <div 
-                  className={`px-3 py-1.5 rounded-full flex items-center gap-1 cursor-pointer transition-colors ${shippingMethodFilter === 'flash-express' ? 'bg-orange-100 text-orange-800 border-2 border-orange-300 font-semibold' : 'bg-orange-50 text-orange-700 text-xs font-medium border border-orange-200 hover:bg-orange-100'}`}
-                  onClick={() => setShippingMethodFilter(shippingMethodFilter === 'flash-express' ? 'all' : 'flash-express')}
-                >
-                  <span className="w-2 h-2 inline-block bg-orange-500 rounded-full"></span>
-                  เสี่ยวไป๋ เอ็กเพรส
-                </div>
-                <div 
-                  className={`px-3 py-1.5 rounded-full flex items-center gap-1 cursor-pointer transition-colors ${shippingMethodFilter === 'jt-express' ? 'bg-red-100 text-red-800 border-2 border-red-300 font-semibold' : 'bg-red-50 text-red-700 text-xs font-medium border border-red-200 hover:bg-red-100'}`}
-                  onClick={() => setShippingMethodFilter(shippingMethodFilter === 'jt-express' ? 'all' : 'jt-express')}
-                >
-                  <span className="w-2 h-2 inline-block bg-red-500 rounded-full"></span>
-                  J&T Express
-                </div>
-
-                <div 
-                  className={`px-3 py-1.5 rounded-full flex items-center gap-1 cursor-pointer transition-colors ${shippingMethodFilter === 'thailand-post' ? 'bg-blue-100 text-blue-800 border-2 border-blue-300 font-semibold' : 'bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200 hover:bg-blue-100'}`}
-                  onClick={() => setShippingMethodFilter(shippingMethodFilter === 'thailand-post' ? 'all' : 'thailand-post')}
-                >
-                  <span className="w-2 h-2 inline-block bg-blue-500 rounded-full"></span>
-                  ไปรษณีย์ไทย
+              {/* ส่วนเลือกบริษัทขนส่ง */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                <div className="relative inline-block w-64">
+                  <Select
+                    value={shippingMethodFilter === 'all' ? '' : shippingMethodFilter}
+                    onValueChange={(value) => setShippingMethodFilter(value || 'all')}
+                  >
+                    <SelectTrigger className="w-full h-10 border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500">
+                      <SelectValue placeholder="กรองตามบริษัทขนส่ง" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">ทั้งหมด</SelectItem>
+                      <SelectItem value="flash-express">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 inline-block bg-orange-500 rounded-full"></span>
+                          <span>เสี่ยวไป๋ เอ็กเพรส</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="jt-express">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 inline-block bg-red-500 rounded-full"></span>
+                          <span>J&T Express</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="thailand-post">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 inline-block bg-blue-500 rounded-full"></span>
+                          <span>ไปรษณีย์ไทย</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               
@@ -1219,7 +1232,14 @@ const OrderList: React.FC = () => {
                               (order.trackingNumber && order.trackingNumber.startsWith('แบบ'))
                             ) ? 
                               `FLE${Math.random().toString(36).substring(2, 10).toUpperCase()}` :
-                              (order.tracking_number || order.trackingNumber)
+                              <Button 
+                                variant="link" 
+                                size="sm" 
+                                className="p-0 h-5 text-blue-600 hover:text-blue-700 underline font-medium"
+                                onClick={() => openTrackingDialog(order.tracking_number || order.trackingNumber)}
+                              >
+                                {order.tracking_number || order.trackingNumber}
+                              </Button>
                           ) : (
                             <Button variant="outline" size="sm" className="px-2 py-0 h-7 text-xs" onClick={() => openShippingDialog(order.id)}>
                               <Truck className="h-3 w-3 mr-1" />
