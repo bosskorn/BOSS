@@ -1156,10 +1156,21 @@ const OrderList: React.FC = () => {
                           {order.createdAt ? new Date(order.createdAt).toLocaleDateString('th-TH') : 'ไม่ระบุ'}
                         </TableCell>
                         <TableCell className="whitespace-nowrap font-medium">
-                          {console.log(`Order #${order.id} trackingNumber:`, JSON.stringify(order.trackingNumber))}
-                          {order.tracking_number || (order.trackingNumber && order.trackingNumber !== 'ไม่ระบุ' && order.trackingNumber.trim() !== '') ? (
+                          {/* สำหรับ debug console log */}
+                          {console.log(`Order #${order.id}:`, 
+                            `tracking_number=${order.tracking_number || 'null'}`, 
+                            `trackingNumber=${order.trackingNumber || 'null'}`
+                          )}
+                          {/* ตรวจสอบว่ามีค่าเลขพัสดุหรือไม่ */}
+                          {(
+                            order.tracking_number || 
+                            order.trackingNumber
+                          ) ? (
                             // ถ้ามีเลขพัสดุให้แสดง แต่ถ้าขึ้นต้นด้วย "แบบ" ให้แปลงเป็นเลขพัสดุจำลอง
-                            (order.tracking_number || order.trackingNumber).startsWith('แบบ') ? 
+                            (
+                              (order.tracking_number && order.tracking_number.startsWith('แบบ')) || 
+                              (order.trackingNumber && order.trackingNumber.startsWith('แบบ'))
+                            ) ? 
                               `FLE${Math.random().toString(36).substring(2, 10).toUpperCase()}` :
                               (order.tracking_number || order.trackingNumber)
                           ) : (
