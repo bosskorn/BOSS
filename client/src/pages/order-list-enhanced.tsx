@@ -1416,24 +1416,43 @@ const OrderList: React.FC = () => {
                                   setTrackingDialogOpen(true);
                                   setIsLoadingTracking(true);
                                   
-                                  // ดึงสถานะการติดตามพัสดุ
-                                  fetch(`/api/tracking/status/${trackingNo}`)
-                                    .then(response => response.json())
-                                    .then(data => {
-                                      setTrackingData(data);
-                                      console.log("ข้อมูลติดตามพัสดุ:", data);
-                                    })
-                                    .catch(error => {
-                                      console.error("เกิดข้อผิดพลาดในการดึงข้อมูลติดตามพัสดุ:", error);
-                                      toast({
-                                        title: "เกิดข้อผิดพลาด",
-                                        description: "ไม่สามารถดึงข้อมูลติดตามพัสดุได้",
-                                        variant: "destructive"
+                                  // ปิด dialog ที่อาจจะเปิดอยู่ก่อนหน้า
+                                  setTrackingDialogOpen(false);
+                                  
+                                  // รอให้ dialog เดิมปิดก่อนแล้วค่อยเปิดใหม่
+                                  setTimeout(() => {
+                                    setTrackingDialogOpen(true);
+                                    setIsLoadingTracking(true);
+                                  
+                                    // ดึงสถานะการติดตามพัสดุ
+                                    fetch(`/api/tracking/status/${trackingNo}`)
+                                      .then(response => response.json())
+                                      .then(data => {
+                                        console.log("ข้อมูลติดตามพัสดุ:", data);
+                                        // ตรวจสอบรูปแบบข้อมูลที่ได้รับกลับมา
+                                        if (data.success && data.trackingData) {
+                                          setTrackingData(data.trackingData);
+                                        } else {
+                                          setTrackingData(null);
+                                          toast({
+                                            title: "ไม่พบข้อมูล",
+                                            description: data.message || "ไม่พบข้อมูลการติดตามพัสดุ",
+                                            variant: "destructive"
+                                          });
+                                        }
+                                      })
+                                      .catch(error => {
+                                        console.error("เกิดข้อผิดพลาดในการดึงข้อมูลติดตามพัสดุ:", error);
+                                        toast({
+                                          title: "เกิดข้อผิดพลาด",
+                                          description: "ไม่สามารถดึงข้อมูลติดตามพัสดุได้",
+                                          variant: "destructive"
+                                        });
+                                      })
+                                      .finally(() => {
+                                        setIsLoadingTracking(false);
                                       });
-                                    })
-                                    .finally(() => {
-                                      setIsLoadingTracking(false);
-                                    });
+                                  }, 100);
                                 }}
                               >
                                 {order.tracking_number || order.trackingNumber}
