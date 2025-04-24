@@ -5,7 +5,7 @@ import axios from 'axios';
 import crypto from 'crypto';
 import querystring from 'querystring';
 import { auth } from '../auth';
-import { db } from '../db';
+import { db, pool } from '../db';
 import { z } from 'zod';
 import { orders, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
@@ -281,32 +281,33 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
           const orderNumber = params.outTradeNo;
           const now = new Date();
           
-          // ใช้ข้อมูลที่ได้รับสร้างรายการออเดอร์ในฐานข้อมูล
-          const [newOrder] = await db.insert(orders).values({
-            userId,
-            orderNumber,
-            customerName: receiverName,
-            customerPhone: receiverPhone,
-            customerEmail: '',
-            shippingAddress: receiverAddress,
-            shippingProvince: receiverProvince,
-            shippingDistrict: receiverCity,
-            shippingSubdistrict: receiverDistrict,
-            shippingZipcode: receiverPostcode,
-            shippingMethod: 'Flash Express',
-            shippingCost: 0, // ต้องระบุค่าขนส่งตามที่เก็บเงินจริง
-            isCOD: codEnabled ? true : false,
-            codAmount: codEnabled ? Math.round(codAmount || 0) : 0,
-            trackingNumber: trackingNumber,
-            sortCode: sortCode,
-            status: 'pending',
-            note: `สร้างออเดอร์ Flash Express สำเร็จ - ${trackingNumber}`,
-            total: codEnabled ? Math.round(codAmount || 0) : 0,
-            createdAt: now,
-            updatedAt: now
-          }).returning();
-          
-          console.log('บันทึกออเดอร์ลงในฐานข้อมูลสำเร็จ:', newOrder);
+          // ใช้ SQL query โดยตรงเพื่อบันทึกข้อมูลลงในฐานข้อมูล
+          try {
+            const result = await pool.query(
+              `INSERT INTO orders (
+                order_number, customer_name, customer_phone, customer_email,
+                shipping_address, shipping_province, shipping_district, shipping_subdistrict, shipping_zipcode,
+                shipping_method, shipping_cost, is_cod, cod_amount, tracking_number, sort_code,
+                status, note, total, created_at, updated_at, user_id, subtotal, payment_method, payment_status
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24) RETURNING *`,
+              [
+                orderNumber, receiverName, receiverPhone, '',
+                receiverAddress, receiverProvince, receiverCity, receiverDistrict, receiverPostcode,
+                'Flash Express', 0, codEnabled ? true : false, codEnabled ? Math.round(codAmount || 0) : 0,
+                trackingNumber, sortCode, 'pending', `สร้างออเดอร์ Flash Express สำเร็จ - ${trackingNumber}`,
+                codEnabled ? Math.round(codAmount || 0) : 0, now, now, userId, 
+                0, // subtotal
+                'bank_transfer', // payment_method
+                'pending' // payment_status
+              ]
+            );
+            
+            const savedOrder = result.rows[0];
+            console.log('บันทึกออเดอร์ลงในฐานข้อมูลสำเร็จ (ใช้ SQL query โดยตรง):', savedOrder);
+          } catch (sqlError) {
+            console.error('ไม่สามารถบันทึกข้อมูลออเดอร์ลงในฐานข้อมูลได้ (SQL query):', sqlError);
+            // ไม่ต้อง return ให้ API ล้มเหลว เพราะออเดอร์กับ Flash Express สำเร็จแล้ว
+          }
         } catch (dbError) {
           console.error('ไม่สามารถบันทึกข้อมูลออเดอร์ลงในฐานข้อมูลได้:', dbError);
           // ไม่ต้อง return ให้ API ล้มเหลว เพราะออเดอร์กับ Flash Express สำเร็จแล้ว
@@ -345,30 +346,29 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
             const sortCode = response.data.data.sortCode || '00';
             const now = new Date();
             
-            // ใช้ข้อมูลที่ได้รับสร้างรายการออเดอร์ในฐานข้อมูล
-            const [newOrder] = await db.insert(orders).values({
-              userId,
-              orderNumber,
-              customerName: receiverName,
-              customerPhone: receiverPhone,
-              customerEmail: '',
-              shippingAddress: receiverAddress,
-              shippingProvince: receiverProvince,
-              shippingDistrict: receiverCity,
-              shippingSubdistrict: receiverDistrict,
-              shippingZipcode: receiverPostcode,
-              shippingMethod: 'Flash Express',
-              shippingCost: 0,
-              isCOD: codEnabled ? true : false,
-              codAmount: codEnabled ? Math.round(req.body.codAmount || 0) : 0,
-              trackingNumber: trackingNumber,
-              sortCode: sortCode,
-              status: 'pending',
-              note: `สร้างออเดอร์ Flash Express สำเร็จ - ${trackingNumber}`,
-              total: codEnabled ? Math.round(req.body.codAmount || 0) : 0,
-              createdAt: now,
-              updatedAt: now
-            }).returning();
+            // ใช้ SQL query โดยตรงเพื่อบันทึกข้อมูลลงในฐานข้อมูล (รูปแบบที่สอง)
+            try {
+              const result = await pool.query(
+                `INSERT INTO orders (
+                  order_number, customer_name, customer_phone, customer_email,
+                  shipping_address, shipping_province, shipping_district, shipping_subdistrict, shipping_zipcode,
+                  shipping_method, shipping_cost, is_cod, cod_amount, tracking_number, sort_code,
+                  status, note, total, created_at, updated_at, user_id
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) RETURNING *`,
+                [
+                  orderNumber, receiverName, receiverPhone, '',
+                  receiverAddress, receiverProvince, receiverCity, receiverDistrict, receiverPostcode,
+                  'Flash Express', 0, codEnabled ? true : false, codEnabled ? Math.round(req.body.codAmount || 0) : 0,
+                  trackingNumber, sortCode, 'pending', `สร้างออเดอร์ Flash Express สำเร็จ - ${trackingNumber}`,
+                  codEnabled ? Math.round(req.body.codAmount || 0) : 0, now, now, userId
+                ]
+              );
+              
+              const newOrder = result.rows[0];
+              console.log('บันทึกออเดอร์ลงในฐานข้อมูลสำเร็จ (รูปแบบที่สองใช้ SQL query โดยตรง):', newOrder);
+            } catch (sqlError) {
+              console.error('ไม่สามารถบันทึกข้อมูลออเดอร์ลงในฐานข้อมูลได้ (รูปแบบที่สอง SQL query):', sqlError);
+            }
             
             console.log('บันทึกออเดอร์รูปแบบที่สองลงในฐานข้อมูลสำเร็จ:', newOrder);
           } catch (dbError) {
