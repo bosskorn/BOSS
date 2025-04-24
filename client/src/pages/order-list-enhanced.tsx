@@ -534,51 +534,30 @@ const OrderList: React.FC = () => {
           </div>
         )}
         
-        {/* การค้นหาและกรอง */}
-        <div className="bg-white rounded-t-lg border border-gray-200 p-4">
-          <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="flex flex-1 gap-4">
-              <div className="relative flex-1">
+        {/* การค้นหาและกรอง - ตามรูปแบบ Lazada */}
+        <div className="bg-white rounded-t-lg border border-gray-200 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="col-span-4">
+              <p className="text-filter mt-0 mb-2 text-sm font-medium text-gray-700">ค้นหาออเดอร์</p>
+              <div className="relative w-full">
                 <Input
                   placeholder="ค้นหาเลขออเดอร์, ชื่อลูกค้า, เลขพัสดุ..."
-                  className="pl-9"
+                  className="pl-9 w-full"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               </div>
-              <Button
-                variant="outline"
-                className="flex items-center gap-2"
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <Filter className="h-4 w-4" />
-                <span>กรอง</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2"
-                onClick={() => {
-                  setSearchTerm('');
-                  setOrderStatusFilter('all');
-                  setShippingMethodFilter('all');
-                  setPaymentMethodFilter('all');
-                  setDateRangeFilter('all');
-                  setDateRange({ from: undefined });
-                  fetchOrders(); // รีเฟรชข้อมูล
-                }}
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span>รีเฟรช</span>
-              </Button>
             </div>
-            <div className="flex gap-4">
-              <div className="hidden lg:block">
+            
+            <div className="col-span-8 md:flex md:flex-wrap md:items-end gap-4">
+              <div className="mb-4 md:mb-0 md:mr-4">
+                <p className="text-filter mt-0 mb-2 text-sm font-medium text-gray-700">สถานะออเดอร์</p>
                 <Select 
                   value={orderStatusFilter}
                   onValueChange={setOrderStatusFilter}
                 >
-                  <SelectTrigger className="w-[180px] h-9">
+                  <SelectTrigger className="w-[160px] h-9">
                     <SelectValue placeholder="สถานะออเดอร์" />
                   </SelectTrigger>
                   <SelectContent>
@@ -591,97 +570,15 @@ const OrderList: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="hidden lg:block">
-                <Select 
-                  value={dateRangeFilter}
-                  onValueChange={setDateRangeFilter}
-                >
-                  <SelectTrigger className="w-[180px] h-9">
-                    <SelectValue placeholder="ช่วงเวลา" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">ทั้งหมด</SelectItem>
-                    <SelectItem value="today">วันนี้</SelectItem>
-                    <SelectItem value="yesterday">เมื่อวาน</SelectItem>
-                    <SelectItem value="this-week">สัปดาห์นี้</SelectItem>
-                    <SelectItem value="this-month">เดือนนี้</SelectItem>
-                    <SelectItem value="custom">กำหนดเอง</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {dateRangeFilter === 'custom' && (
-                <div className="hidden lg:block">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="pl-3 pr-2 flex justify-between items-center h-9"
-                      >
-                        <span className="text-sm">
-                          {dateRange?.from ? (
-                            dateRange.to ? (
-                              <>
-                                {dateRange.from.toLocaleDateString()} -{" "}
-                                {dateRange.to.toLocaleDateString()}
-                              </>
-                            ) : (
-                              dateRange.from.toLocaleDateString()
-                            )
-                          ) : (
-                            "เลือกวันที่"
-                          )}
-                        </span>
-                        <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="range"
-                        selected={dateRange}
-                        onSelect={setDateRange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* ตัวกรองเพิ่มเติม */}
-          {showFilters && (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-200">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  สถานะออเดอร์
-                </label>
-                <Select 
-                  value={orderStatusFilter}
-                  onValueChange={setOrderStatusFilter}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="สถานะออเดอร์" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">ทุกสถานะ</SelectItem>
-                    <SelectItem value="pending">รอดำเนินการ</SelectItem>
-                    <SelectItem value="processing">กำลังดำเนินการ</SelectItem>
-                    <SelectItem value="shipped">จัดส่งแล้ว</SelectItem>
-                    <SelectItem value="completed">เสร็จสมบูรณ์</SelectItem>
-                    <SelectItem value="cancelled">ยกเลิก</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  วิธีการจัดส่ง
-                </label>
+              
+              <div className="mb-4 md:mb-0 md:mr-4">
+                <p className="text-filter mt-0 mb-2 text-sm font-medium text-gray-700">บริษัทขนส่ง</p>
                 <Select 
                   value={shippingMethodFilter}
                   onValueChange={setShippingMethodFilter}
                 >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="วิธีการจัดส่ง" />
+                  <SelectTrigger className="w-[160px] h-9">
+                    <SelectValue placeholder="บริษัทขนส่ง" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">ทั้งหมด</SelectItem>
@@ -693,15 +590,14 @@ const OrderList: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  วิธีการชำระเงิน
-                </label>
+              
+              <div className="mb-4 md:mb-0 md:mr-4">
+                <p className="text-filter mt-0 mb-2 text-sm font-medium text-gray-700">วิธีการชำระเงิน</p>
                 <Select 
                   value={paymentMethodFilter}
                   onValueChange={setPaymentMethodFilter}
                 >
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="w-[160px] h-9">
                     <SelectValue placeholder="วิธีการชำระเงิน" />
                   </SelectTrigger>
                   <SelectContent>
@@ -713,6 +609,42 @@ const OrderList: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+              
+              <div className="md:flex items-end space-x-2">
+                <Button
+                  variant="default"
+                  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700"
+                  onClick={() => {
+                    fetchOrders(); // ค้นหาตามเงื่อนไข
+                  }}
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  ค้นหา
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full md:w-auto mt-2 md:mt-0"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setOrderStatusFilter('all');
+                    setShippingMethodFilter('all');
+                    setPaymentMethodFilter('all');
+                    setDateRangeFilter('all');
+                    setDateRange({ from: undefined });
+                    fetchOrders(); // รีเฟรชข้อมูล
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  รีเซ็ต
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          {/* ตัวกรองเพิ่มเติม */}
+          {showFilters && (
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-200">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   ช่วงเวลา
@@ -735,39 +667,57 @@ const OrderList: React.FC = () => {
                 </Select>
               </div>
               {dateRangeFilter === 'custom' && (
-                <div className="lg:col-span-4">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="pl-3 pr-2 flex justify-between items-center w-full sm:w-auto"
-                      >
-                        <span className="text-sm">
-                          {dateRange?.from ? (
-                            dateRange.to ? (
-                              <>
-                                {dateRange.from.toLocaleDateString()} -{" "}
-                                {dateRange.to.toLocaleDateString()}
-                              </>
-                            ) : (
-                              dateRange.from.toLocaleDateString()
-                            )
-                          ) : (
-                            "เลือกวันที่"
-                          )}
-                        </span>
-                        <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="range"
-                        selected={dateRange}
-                        onSelect={setDateRange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                <div className="lg:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    เลือกวันที่
+                  </label>
+                  <div className="flex space-x-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="pl-3 pr-2 flex justify-between items-center h-9 w-full md:w-auto"
+                        >
+                          <span className="text-sm">
+                            {dateRange?.from ? dateRange.from.toLocaleDateString() : "วันเริ่มต้น"}
+                          </span>
+                          <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateRange?.from}
+                          onSelect={(day) => setDateRange({ ...dateRange, from: day })}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    
+                    <span className="flex items-center">ถึง</span>
+                    
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="pl-3 pr-2 flex justify-between items-center h-9 w-full md:w-auto"
+                        >
+                          <span className="text-sm">
+                            {dateRange?.to ? dateRange.to.toLocaleDateString() : "วันสิ้นสุด"}
+                          </span>
+                          <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateRange?.to}
+                          onSelect={(day) => setDateRange({ ...dateRange, to: day })}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
               )}
             </div>
@@ -865,7 +815,6 @@ const OrderList: React.FC = () => {
                     </TableHead>
                     <TableHead className="py-3 font-medium text-gray-500 cursor-pointer" onClick={() => handleSort('orderNumber')}>
                       <div className="flex items-center space-x-1">
-                        <span>เลขออเดอร์</span>
                         {sorting.column === 'orderNumber' && (
                           sorting.direction === 'asc' ? 
                             <ChevronUp className="h-4 w-4" /> : 
@@ -875,7 +824,6 @@ const OrderList: React.FC = () => {
                     </TableHead>
                     <TableHead className="py-3 font-medium text-gray-500 cursor-pointer" onClick={() => handleSort('customerName')}>
                       <div className="flex items-center space-x-1">
-                        <span>ลูกค้า</span>
                         {sorting.column === 'customerName' && (
                           sorting.direction === 'asc' ? 
                             <ChevronUp className="h-4 w-4" /> : 
