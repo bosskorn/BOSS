@@ -671,6 +671,16 @@ const OrderList: React.FC = () => {
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">รายการคำสั่งซื้อทั้งหมด</h1>
             <p className="text-sm text-gray-500">จัดการคำสั่งซื้อและการจัดส่งพัสดุ ({orders.length} รายการ)</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50 flex items-center gap-1">
+                <Printer className="h-3 w-3" />
+                <span>พิมพ์ลาเบลแล้ว: {orders.filter(o => o.isPrinted || o.is_printed).length} รายการ</span>
+              </Badge>
+              <Badge variant="outline" className="border-orange-300 text-orange-700 bg-orange-50 flex items-center gap-1">
+                <Printer className="h-3 w-3" />
+                <span>ยังไม่ได้พิมพ์: {orders.filter(o => (!o.isPrinted && !o.is_printed) && (o.tracking_number || o.trackingNumber)).length} รายการ</span>
+              </Badge>
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-0">
             <Button 
@@ -1160,10 +1170,10 @@ const OrderList: React.FC = () => {
                             onCheckedChange={() => toggleSelectOrder(order.id)}
                           />
                         </TableCell>
-                        <TableCell className="font-medium">{order.id}</TableCell>
+                        <TableCell className="font-medium">#{order.id}</TableCell>
                         <TableCell className="font-medium text-blue-700">
                           <Link href={`/order-detail/${order.id}`}>
-                            {order.orderNumber}
+                            {order.order_number || order.orderNumber}
                           </Link>
                         </TableCell>
                         <TableCell>
@@ -1217,7 +1227,8 @@ const OrderList: React.FC = () => {
                           )}
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
-                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString('th-TH') : 'ไม่ระบุ'}
+                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString('th-TH') : 
+                           order.created_at ? new Date(order.created_at).toLocaleDateString('th-TH') : 'ไม่ระบุ'}
                         </TableCell>
                         <TableCell className="whitespace-nowrap font-medium">
                           {/* สำหรับ debug console log */}
