@@ -652,7 +652,12 @@ const TikTokStyleLabelPage = () => {
             console.error(`Error generating barcode for order ${order.id}:`, error);
           }
         });
-      }, 500);
+        
+        // พิมพ์ทันทีหลังจากสร้างบาร์โค้ดเสร็จ ถ้าไม่มีพารามิเตอร์ noprint
+        if (!urlParams.get('noprint')) {
+          window.print();
+        }
+      }, 300);
     }
   }, [ordersData, isLoading]);
   
