@@ -353,6 +353,12 @@ const TikTokStyleLabelPage = () => {
     }
   `;
 
+  // ประกาศตัวแปร hasPrinted ใน window
+  useEffect(() => {
+    // กำหนดค่าเริ่มต้นเป็น false ตอนโหลดหน้า
+    (window as any).hasPrinted = false;
+  }, []);
+
   // ดึงข้อมูลออเดอร์จาก URL parameter
   useEffect(() => {
     const fetchOrderData = async () => {
@@ -654,8 +660,9 @@ const TikTokStyleLabelPage = () => {
           }
         });
         
-        // พิมพ์ทันทีหลังจากสร้างบาร์โค้ดเสร็จ ถ้าไม่มีพารามิเตอร์ noprint
-        if (!urlParams.get('noprint')) {
+        // พิมพ์ทันทีหลังจากสร้างบาร์โค้ดเสร็จ ถ้าไม่มีพารามิเตอร์ noprint และถ้ายังไม่ได้พิมพ์
+        if (!urlParams.get('noprint') && !window.hasPrinted) {
+          window.hasPrinted = true; // ตั้งค่าว่าได้เรียกคำสั่งพิมพ์ไปแล้ว
           window.print();
         }
       }, 300);
