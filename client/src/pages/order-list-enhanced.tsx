@@ -776,57 +776,58 @@ const OrderList: React.FC = () => {
         
         <div className="border-x border-gray-200">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid grid-cols-4 md:flex md:flex-wrap px-4 pt-2 bg-gray-50 border-b border-gray-200 rounded-none">
-              <TabsTrigger
-                value="all"
-                className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-              >
-                ทั้งหมด
-              </TabsTrigger>
-              <TabsTrigger
-                value="pending"
-                className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-              >
-                รอดำเนินการ
-              </TabsTrigger>
-              <TabsTrigger
-                value="processing"
-                className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-              >
-                กำลังดำเนินการ
-              </TabsTrigger>
-              <TabsTrigger
-                value="shipped"
-                className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-              >
-                จัดส่งแล้ว
-              </TabsTrigger>
-              {/* เพิ่มเติม */}
-              <TabsTrigger
-                value="completed"
-                className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-              >
-                เสร็จสมบูรณ์
-              </TabsTrigger>
-              <TabsTrigger
-                value="cancelled"
-                className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-              >
-                ยกเลิก
-              </TabsTrigger>
-              <TabsTrigger
-                value="flash-express"
-                className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-              >
-                Flash Express
-              </TabsTrigger>
-              <TabsTrigger
-                value="jt-express"
-                className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
-              >
-                J&T Express
-              </TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto border-b border-gray-200 bg-gray-50">
+              <TabsList className="flex px-4 pt-2 rounded-none w-auto min-w-full">
+                <TabsTrigger
+                  value="all"
+                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
+                >
+                  ทั้งหมด
+                </TabsTrigger>
+                <TabsTrigger
+                  value="pending"
+                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
+                >
+                  รอดำเนินการ
+                </TabsTrigger>
+                <TabsTrigger
+                  value="processing"
+                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
+                >
+                  กำลังดำเนินการ
+                </TabsTrigger>
+                <TabsTrigger
+                  value="shipped"
+                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
+                >
+                  จัดส่งแล้ว
+                </TabsTrigger>
+                <TabsTrigger
+                  value="completed"
+                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
+                >
+                  เสร็จสมบูรณ์
+                </TabsTrigger>
+                <TabsTrigger
+                  value="cancelled"
+                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
+                >
+                  ยกเลิก
+                </TabsTrigger>
+                <TabsTrigger
+                  value="flash-express"
+                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
+                >
+                  Flash Express
+                </TabsTrigger>
+                <TabsTrigger
+                  value="jt-express"
+                  className="rounded-t-md rounded-b-none h-9 px-4 data-[state=active]:bg-white data-[state=active]:border-b-0 data-[state=active]:border-x data-[state=active]:border-t data-[state=active]:border-gray-200"
+                >
+                  J&T Express
+                </TabsTrigger>
+              </TabsList>
+            </div>
             
             <TabsContent value={activeTab} className="p-0 m-0">
               <Table>
