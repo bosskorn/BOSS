@@ -242,21 +242,54 @@ const OrderList: React.FC = () => {
     
     // กรองตามแท็บที่เลือก
     if (activeTab === 'pending') {
-      result = result.filter(order => order.status === 'pending');
+      // รอดำเนินการ (ไม่มีเลขพัสดุ)
+      result = result.filter(order => !order.tracking_number && !order.trackingNumber);
     } else if (activeTab === 'processing') {
-      result = result.filter(order => order.status === 'processing');
-    } else if (activeTab === 'shipped') {
-      result = result.filter(order => order.status === 'shipped');
-    } else if (activeTab === 'completed') {
-      result = result.filter(order => order.status === 'completed');
+      // กำลังดำเนินการ (มีเลขพัสดุแล้วแต่ยังไม่อยู่ระหว่างขนส่งหรือส่งสำเร็จ)
+      result = result.filter(order => 
+        (order.tracking_number || order.trackingNumber) && 
+        (!order.trackingStatus || 
+          (order.trackingStatus && 
+            !order.trackingStatus.includes('ขนส่ง') && 
+            !order.trackingStatus.includes('จัดส่ง') && 
+            !order.trackingStatus.includes('ส่งสำเร็จ') &&
+            !order.trackingStatus.includes('ได้รับพัสดุ')))
+      );
+    } else if (activeTab === 'shipping') {
+      // อยู่ระหว่างการจัดส่ง
+      result = result.filter(order => 
+        order.trackingStatus && 
+        (order.trackingStatus.includes('จัดส่ง') || 
+         order.trackingStatus.includes('ขนส่ง') ||
+         order.trackingStatus.includes('จุดรับ') ||
+         order.trackingStatus.includes('เตรียม'))
+      );
+    } else if (activeTab === 'delivered') {
+      // ส่งสำเร็จ
+      result = result.filter(order => 
+        order.trackingStatus && 
+        (order.trackingStatus.includes('ส่งสำเร็จ') || 
+         order.trackingStatus.includes('ได้รับพัสดุ') ||
+         order.trackingStatus.includes('ส่งมอบ'))
+      );
     } else if (activeTab === 'cancelled') {
-      result = result.filter(order => order.status === 'cancelled');
+      // ยกเลิก
+      result = result.filter(order => order.status === 'cancelled' || (order.trackingStatus && order.trackingStatus.includes('ยกเลิก')));
     } else if (activeTab === 'flash-express') {
-      result = result.filter(order => order.trackingNumber?.startsWith('FLE'));
+      result = result.filter(order => 
+        (order.trackingNumber && order.trackingNumber.startsWith('FLE')) ||
+        (order.tracking_number && (order.tracking_number.startsWith('FLE') || order.tracking_number.startsWith('TH')))
+      );
     } else if (activeTab === 'jt-express') {
-      result = result.filter(order => order.trackingNumber?.startsWith('JT'));
+      result = result.filter(order => 
+        (order.trackingNumber && order.trackingNumber.startsWith('JT')) ||
+        (order.tracking_number && order.tracking_number.startsWith('JT'))
+      );
     } else if (activeTab === 'xiaobai-express') {
-      result = result.filter(order => order.trackingNumber?.startsWith('XB'));
+      result = result.filter(order => 
+        (order.trackingNumber && order.trackingNumber.startsWith('XB')) ||
+        (order.tracking_number && order.tracking_number.startsWith('XB'))
+      );
     }
     
     // กรองตามคำค้นหา
@@ -894,25 +927,44 @@ const OrderList: React.FC = () => {
                     value="pending"
                     className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
                   >
-                    <span>รอดำเนินการ ({filteredOrders.filter(o => o.status === 'pending').length})</span>
+                    <span>รอดำเนินการ ({filteredOrders.filter(o => !o.tracking_number && !o.trackingNumber).length})</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="processing"
                     className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
                   >
-                    <span>กำลังดำเนินการ ({filteredOrders.filter(o => o.status === 'processing').length})</span>
+                    <span>กำลังดำเนินการ ({filteredOrders.filter(o => 
+                      (o.tracking_number || o.trackingNumber) && 
+                      (!o.trackingStatus || 
+                       (o.trackingStatus && 
+                        !o.trackingStatus.includes('ขนส่ง') && 
+                        !o.trackingStatus.includes('จัดส่ง') && 
+                        !o.trackingStatus.includes('ส่งสำเร็จ') &&
+                        !o.trackingStatus.includes('ได้รับพัสดุ')))
+                    ).length})</span>
                   </TabsTrigger>
                   <TabsTrigger
-                    value="shipped"
+                    value="shipping"
                     className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
                   >
-                    <span>อยู่ระหว่างจัดส่ง ({filteredOrders.filter(o => o.status === 'shipped').length})</span>
+                    <span>อยู่ระหว่างการจัดส่ง ({filteredOrders.filter(o => 
+                      o.trackingStatus && 
+                      (o.trackingStatus.includes('จัดส่ง') || 
+                       o.trackingStatus.includes('ขนส่ง') ||
+                       o.trackingStatus.includes('จุดรับ') ||
+                       o.trackingStatus.includes('เตรียม'))
+                    ).length})</span>
                   </TabsTrigger>
                   <TabsTrigger
-                    value="completed"
+                    value="delivered"
                     className="h-10 px-5 rounded-none data-[state=active]:text-blue-600 data-[state=active]:font-medium transition-all relative"
                   >
-                    <span>จัดส่งสำเร็จ ({filteredOrders.filter(o => o.status === 'completed').length})</span>
+                    <span>ส่งสำเร็จ ({filteredOrders.filter(o => 
+                      o.trackingStatus && 
+                      (o.trackingStatus.includes('ส่งสำเร็จ') || 
+                       o.trackingStatus.includes('ได้รับพัสดุ') ||
+                       o.trackingStatus.includes('ส่งมอบ'))
+                    ).length})</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="cancelled"
@@ -929,8 +981,8 @@ const OrderList: React.FC = () => {
                 transform: `translateX(${activeTab === 'all' ? 16 : 
                              activeTab === 'pending' ? 111 : 
                              activeTab === 'processing' ? 247 : 
-                             activeTab === 'shipped' ? 403 : 
-                             activeTab === 'completed' ? 546 : 
+                             activeTab === 'shipping' ? 403 : 
+                             activeTab === 'delivered' ? 546 : 
                              activeTab === 'cancelled' ? 669 : 0}px)`
               }}></div>
             </div>
