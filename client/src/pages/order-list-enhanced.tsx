@@ -82,6 +82,9 @@ const OrderList: React.FC = () => {
   const [shippingDialogOpen, setShippingDialogOpen] = useState(false);
   const [multipleTrackingDialogOpen, setMultipleTrackingDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(20); // จำนวนรายการต่อหน้า
+  const [totalPages, setTotalPages] = useState<number>(1);
   
   // Dialog แสดงข้อมูลการติดตามพัสดุ
   const [orderToCreateTracking, setOrderToCreateTracking] = useState<number | null>(null);
@@ -98,10 +101,6 @@ const OrderList: React.FC = () => {
   const [currentTrackingNumber, setCurrentTrackingNumber] = useState<string>('');
   const [trackingData, setTrackingData] = useState<any>(null);
   const [isLoadingTracking, setIsLoadingTracking] = useState(false);
-  
-  // การแบ่งหน้า
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 20; // จำนวนรายการต่อหน้า
 
   // ฟังก์ชันดึงข้อมูลคำสั่งซื้อจาก API
   const fetchOrders = async () => {
@@ -534,32 +533,30 @@ const OrderList: React.FC = () => {
           </div>
         )}
         
-        {/* การค้นหาและกรอง - ตามรูปแบบ Lazada */}
-        <div className="bg-white rounded-t-lg border border-gray-200 p-6">
-          <div className="el-row p-6 lz-card-title-non-border" style={{marginLeft: "-2.5px", marginRight: "-2.5px"}}>
-            <div className="el-col el-col-24 el-col-xs-24 el-col-sm-24 el-col-md-4 is-guttered flex pt-2" style={{paddingRight: "2.5px", paddingLeft: "2.5px"}}>
-              <div className="w-100">
-                <p className="text-filter mt-0 mb-0">ค้นหาออเดอร์</p>
-                <div className="relative w-full mt-2">
+        {/* การค้นหาและกรอง - รูปแบบที่สวยงามขึ้น */}
+        <div className="bg-gradient-to-r from-blue-50 to-white rounded-t-lg border border-gray-200 shadow-sm">
+          <div className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
+              <div className="md:col-span-2">
+                <p className="text-sm font-medium text-gray-700 mb-2">ค้นหาออเดอร์</p>
+                <div className="relative w-full">
                   <Input
                     placeholder="ค้นหาเลขออเดอร์, ชื่อลูกค้า, เลขพัสดุ..."
-                    className="pl-9 w-full"
+                    className="pl-9 w-full border-blue-200 focus:border-blue-500 transition-colors"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-500" />
                 </div>
               </div>
-            </div>
-            
-            <div className="el-col el-col-24 el-col-xs-24 el-col-sm-24 el-col-md-20 is-guttered flex flex-wrap items-center" style={{paddingRight: "2.5px", paddingLeft: "2.5px"}}>
-              <div className="mr-4">
-                <p className="text-filter mt-0 mb-0">สถานะออเดอร์</p>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">สถานะออเดอร์</p>
                 <Select 
                   value={orderStatusFilter}
                   onValueChange={setOrderStatusFilter}
                 >
-                  <SelectTrigger className="w-[160px] h-9 mt-2">
+                  <SelectTrigger className="w-full h-10 border-blue-200 focus:border-blue-500 transition-colors">
                     <SelectValue placeholder="สถานะออเดอร์" />
                   </SelectTrigger>
                   <SelectContent>
@@ -573,13 +570,13 @@ const OrderList: React.FC = () => {
                 </Select>
               </div>
               
-              <div className="mr-4">
-                <p className="text-filter mt-0 mb-0">วิธีการชำระเงิน</p>
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">วิธีการชำระเงิน</p>
                 <Select 
                   value={paymentMethodFilter}
                   onValueChange={setPaymentMethodFilter}
                 >
-                  <SelectTrigger className="w-[160px] h-9 mt-2">
+                  <SelectTrigger className="w-full h-10 border-blue-200 focus:border-blue-500 transition-colors">
                     <SelectValue placeholder="วิธีการชำระเงิน" />
                   </SelectTrigger>
                   <SelectContent>
@@ -590,12 +587,10 @@ const OrderList: React.FC = () => {
                 </Select>
               </div>
               
-              <div className="mr-4">
-                <p className="text-filter mt-0 mb-0">สถานะพิมพ์ใบปะหน้า</p>
-                <Select 
-                  value="all"
-                >
-                  <SelectTrigger className="w-[160px] h-9 mt-2">
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">สถานะพิมพ์ใบปะหน้า</p>
+                <Select value="all">
+                  <SelectTrigger className="w-full h-10 border-blue-200 focus:border-blue-500 transition-colors">
                     <SelectValue placeholder="สถานะพิมพ์ใบปะหน้า" />
                   </SelectTrigger>
                   <SelectContent>
@@ -605,13 +600,13 @@ const OrderList: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
-              <div className="mr-4">
-                <p className="text-filter mt-0 mb-0">ขนส่ง</p>
-                <Select 
-                  value="all"
-                >
-                  <SelectTrigger className="w-[160px] h-9 mt-2">
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-5 mt-4">
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">ขนส่ง</p>
+                <Select value="all">
+                  <SelectTrigger className="w-full h-10 border-blue-200 focus:border-blue-500 transition-colors">
                     <SelectValue placeholder="ขนส่ง" />
                   </SelectTrigger>
                   <SelectContent>
@@ -623,18 +618,64 @@ const OrderList: React.FC = () => {
                 </Select>
               </div>
               
-              <div className="mr-4">
-                <p className="text-filter mt-0 mb-0">วันที่</p>
-                <div className="flex items-center h-9 mt-2 border rounded px-3">
-                  <span className="text-gray-500">เลือกช่วงวันที่</span>
-                  <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
-                </div>
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">วันที่</p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="flex items-center h-10 border border-blue-200 hover:border-blue-400 rounded px-3 cursor-pointer transition-colors">
+                      <CalendarIcon className="h-4 w-4 text-blue-500 mr-2" />
+                      <span className="text-gray-600">เลือกช่วงวันที่</span>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="p-3 border-b">
+                      <Select 
+                        value={dateRangeFilter}
+                        onValueChange={setDateRangeFilter}
+                      >
+                        <SelectTrigger className="w-full border-blue-200">
+                          <SelectValue placeholder="ช่วงเวลา" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">ทั้งหมด</SelectItem>
+                          <SelectItem value="today">วันนี้</SelectItem>
+                          <SelectItem value="yesterday">เมื่อวาน</SelectItem>
+                          <SelectItem value="this-week">สัปดาห์นี้</SelectItem>
+                          <SelectItem value="this-month">เดือนนี้</SelectItem>
+                          <SelectItem value="custom">กำหนดเอง</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {dateRangeFilter === 'custom' && (
+                      <div className="p-3 grid gap-3">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 mb-2">วันเริ่มต้น</p>
+                          <Calendar
+                            mode="single"
+                            selected={dateRange?.from}
+                            onSelect={(day) => setDateRange({ ...dateRange, from: day })}
+                            initialFocus
+                          />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 mb-2">วันสิ้นสุด</p>
+                          <Calendar
+                            mode="single"
+                            selected={dateRange?.to}
+                            onSelect={(day) => setDateRange({ ...dateRange, to: day })}
+                            initialFocus
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
               </div>
               
-              <div className="md:flex items-end space-x-2">
+              <div className="md:col-span-3 flex gap-3 items-end">
                 <Button
                   variant="default"
-                  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700"
+                  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 h-10"
                   onClick={() => {
                     fetchOrders(); // ค้นหาตามเงื่อนไข
                   }}
@@ -645,7 +686,7 @@ const OrderList: React.FC = () => {
                 
                 <Button
                   variant="outline"
-                  className="w-full md:w-auto mt-2 md:mt-0"
+                  className="w-full md:w-auto h-10 border-blue-200 text-blue-700 hover:bg-blue-50"
                   onClick={() => {
                     setSearchTerm('');
                     setOrderStatusFilter('all');
@@ -659,90 +700,66 @@ const OrderList: React.FC = () => {
                   <RefreshCw className="h-4 w-4 mr-2" />
                   รีเซ็ต
                 </Button>
+                
+                <Button
+                  variant="ghost"
+                  className="w-full md:w-auto h-10 text-blue-700 hover:bg-blue-50"
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  {showFilters ? 'ซ่อนตัวกรองเพิ่มเติม' : 'แสดงตัวกรองเพิ่มเติม'}
+                </Button>
               </div>
             </div>
-          </div>
-          
-          {/* ตัวกรองเพิ่มเติม */}
-          {showFilters && (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-200">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ช่วงเวลา
-                </label>
-                <Select 
-                  value={dateRangeFilter}
-                  onValueChange={setDateRangeFilter}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="ช่วงเวลา" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">ทั้งหมด</SelectItem>
-                    <SelectItem value="today">วันนี้</SelectItem>
-                    <SelectItem value="yesterday">เมื่อวาน</SelectItem>
-                    <SelectItem value="this-week">สัปดาห์นี้</SelectItem>
-                    <SelectItem value="this-month">เดือนนี้</SelectItem>
-                    <SelectItem value="custom">กำหนดเอง</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {dateRangeFilter === 'custom' && (
-                <div className="lg:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    เลือกวันที่
-                  </label>
-                  <div className="flex space-x-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="pl-3 pr-2 flex justify-between items-center h-9 w-full md:w-auto"
-                        >
-                          <span className="text-sm">
-                            {dateRange?.from ? dateRange.from.toLocaleDateString() : "วันเริ่มต้น"}
-                          </span>
-                          <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={dateRange?.from}
-                          onSelect={(day) => setDateRange({ ...dateRange, from: day })}
-                          initialFocus
+            
+            {/* ตัวกรองเพิ่มเติม */}
+            {showFilters && (
+              <div className="mt-4 pt-4 border-t border-blue-100">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">ค้นหาขั้นสูง</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Input
+                          placeholder="ราคาต่ำสุด"
+                          className="w-full border-blue-200 focus:border-blue-500 transition-colors"
                         />
-                      </PopoverContent>
-                    </Popover>
-                    
-                    <span className="flex items-center">ถึง</span>
-                    
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="pl-3 pr-2 flex justify-between items-center h-9 w-full md:w-auto"
-                        >
-                          <span className="text-sm">
-                            {dateRange?.to ? dateRange.to.toLocaleDateString() : "วันสิ้นสุด"}
-                          </span>
-                          <CalendarIcon className="ml-2 h-4 w-4 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={dateRange?.to}
-                          onSelect={(day) => setDateRange({ ...dateRange, to: day })}
-                          initialFocus
+                      </div>
+                      <div>
+                        <Input
+                          placeholder="ราคาสูงสุด"
+                          className="w-full border-blue-200 focus:border-blue-500 transition-colors"
                         />
-                      </PopoverContent>
-                    </Popover>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">จังหวัด</p>
+                    <Select value="all">
+                      <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 transition-colors">
+                        <SelectValue placeholder="เลือกจังหวัด" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">ทั้งหมด</SelectItem>
+                        <SelectItem value="bkk">กรุงเทพฯ</SelectItem>
+                        <SelectItem value="cnx">เชียงใหม่</SelectItem>
+                        <SelectItem value="pkt">ภูเก็ต</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">หมายเหตุ</p>
+                    <Input
+                      placeholder="ค้นหาตามหมายเหตุ"
+                      className="w-full border-blue-200 focus:border-blue-500 transition-colors"
+                    />
                   </div>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="border-x border-gray-200">
