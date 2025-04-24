@@ -168,9 +168,9 @@ const TikTokStyleLabelPage = () => {
     }
     
     .sender-info, .recipient-info {
-      padding: 5px 10px;
+      padding: 4px 8px;
       border-bottom: 1px solid #000;
-      font-size: 12px;
+      font-size: 9px;
       position: relative;
     }
     
@@ -180,8 +180,8 @@ const TikTokStyleLabelPage = () => {
     }
     
     .sender-info {
-      padding-right: 100px; /* เว้นพื้นที่ด้านขวาสำหรับ sender QR Code */
-      font-size: 10px; /* ปรับขนาดข้อความผู้ส่งให้เล็กลง */
+      padding-right: 20px; /* ลดการเว้นพื้นที่ด้านขวา */
+      font-size: 9px; /* ปรับขนาดข้อความผู้ส่งให้เล็กลง */
     }
     
     .recipient-info {
@@ -195,12 +195,12 @@ const TikTokStyleLabelPage = () => {
     .recipient-address, .sender-address {
       max-width: calc(100% - 90px); /* ลดความกว้างด้านขวาสำหรับ QR Code */
       word-break: break-word;
-      font-size: 11px;
-      line-height: 1.3;
+      font-size: 9px;
+      line-height: 1.2;
     }
     
     .recipient-address > div {
-      margin-top: 2px;
+      margin-top: 1px;
     }
     
     .sender-info-header {
@@ -211,7 +211,8 @@ const TikTokStyleLabelPage = () => {
     
     .recipient-info-header {
       font-weight: 500;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
+      font-size: 9px;
     }
     
     .cod-section {
