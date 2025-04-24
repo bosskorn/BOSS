@@ -72,6 +72,7 @@ const OrderList: React.FC = () => {
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to?: Date | undefined }>({ from: undefined });
   const [shippingMethodFilter, setShippingMethodFilter] = useState('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
+  const [printStatusFilter, setPrintStatusFilter] = useState('all');
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [sorting, setSorting] = useState({ column: 'id', direction: 'desc' });
@@ -312,7 +313,51 @@ const OrderList: React.FC = () => {
     
     // กรองตามสถานะ
     if (orderStatusFilter !== 'all') {
+      // ก่อนการกรอง ให้กำหนดสถานะให้ถูกต้องสำหรับออเดอร์ที่ไม่มีค่า status
+      result = result.map(order => {
+        // กรณีที่ไม่มีเลขพัสดุ = pending
+        if (!order.tracking_number && !order.trackingNumber) {
+          return { ...order, status: 'pending' };
+        }
+        
+        // กรณีที่มีเลขพัสดุและมีสถานะจากการติดตาม
+        if (order.trackingStatus) {
+          if (order.trackingStatus.includes('ส่งสำเร็จ') || 
+              order.trackingStatus.includes('ได้รับพัสดุ') || 
+              order.trackingStatus.includes('ส่งมอบ')) {
+            return { ...order, status: 'delivered' };
+          } else if (order.trackingStatus.includes('จัดส่ง') || 
+                    order.trackingStatus.includes('ขนส่ง') || 
+                    order.trackingStatus.includes('เดินทาง') || 
+                    order.trackingStatus.includes('ขาออก') || 
+                    order.trackingStatus.includes('ส่งต่อ') || 
+                    order.trackingStatus.includes('จุดรับ') || 
+                    order.trackingStatus.includes('เตรียม')) {
+            return { ...order, status: 'shipping' };
+          } else if (order.trackingStatus.includes('ยกเลิก')) {
+            return { ...order, status: 'cancelled' };
+          }
+        }
+        
+        // กรณีที่มีเลขพัสดุแต่ไม่มีสถานะหรือไม่ตรงกับเงื่อนไขข้างต้น = processing
+        if (order.tracking_number || order.trackingNumber) {
+          return { ...order, status: 'processing' };
+        }
+        
+        return order;
+      });
+      
+      // จากนั้นจึงกรองตามสถานะที่ต้องการ
       result = result.filter(order => order.status === orderStatusFilter);
+    }
+    
+    // กรองตามสถานะการพิมพ์
+    if (printStatusFilter !== 'all') {
+      if (printStatusFilter === 'printed') {
+        result = result.filter(order => order.isPrinted === true);
+      } else if (printStatusFilter === 'not-printed') {
+        result = result.filter(order => order.isPrinted !== true);
+      }
     }
     
     // กรองตามบริษัทขนส่ง
@@ -411,7 +456,7 @@ const OrderList: React.FC = () => {
   // เรียกใช้ฟังก์ชันกรองข้อมูลเมื่อตัวแปรที่เกี่ยวข้องมีการเปลี่ยนแปลง
   useEffect(() => {
     filterOrders();
-  }, [orders, activeTab, searchTerm, orderStatusFilter, dateRangeFilter, shippingMethodFilter, paymentMethodFilter, sorting]);
+  }, [orders, activeTab, searchTerm, orderStatusFilter, dateRangeFilter, shippingMethodFilter, paymentMethodFilter, printStatusFilter, sorting]);
 
   // ฟังก์ชันจัดการเมื่อมีการเลือกแท็บ
   const handleTabChange = (value: string) => {
@@ -770,7 +815,10 @@ const OrderList: React.FC = () => {
               
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">สถานะพิมพ์ใบปะหน้า</p>
-                <Select value="all">
+                <Select 
+                  value={printStatusFilter}
+                  onValueChange={setPrintStatusFilter}
+                >
                   <SelectTrigger className="w-full h-10 border-blue-200 focus:border-blue-500 transition-colors">
                     <SelectValue placeholder="สถานะพิมพ์ใบปะหน้า" />
                   </SelectTrigger>
@@ -786,7 +834,10 @@ const OrderList: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-5 mt-4">
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">ขนส่ง</p>
-                <Select value="all">
+                <Select 
+                  value={shippingMethodFilter}
+                  onValueChange={setShippingMethodFilter}
+                >
                   <SelectTrigger className="w-full h-10 border-blue-200 focus:border-blue-500 transition-colors">
                     <SelectValue placeholder="ขนส่ง" />
                   </SelectTrigger>
@@ -795,6 +846,8 @@ const OrderList: React.FC = () => {
                     <SelectItem value="flash-express">Flash Express</SelectItem>
                     <SelectItem value="jt-express">J&T Express</SelectItem>
                     <SelectItem value="thailand-post">ไปรษณีย์ไทย</SelectItem>
+                    <SelectItem value="xiaobai-express">เสี่ยวไป๋</SelectItem>
+                    <SelectItem value="none">ยังไม่มีขนส่ง</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -873,6 +926,7 @@ const OrderList: React.FC = () => {
                     setOrderStatusFilter('all');
                     setShippingMethodFilter('all');
                     setPaymentMethodFilter('all');
+                    setPrintStatusFilter('all');
                     setDateRangeFilter('all');
                     setDateRange({ from: undefined });
                     fetchOrders(); // รีเฟรชข้อมูล
