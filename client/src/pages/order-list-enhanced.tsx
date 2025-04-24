@@ -567,10 +567,23 @@ const OrderList: React.FC = () => {
             }
           }
           
-          // เพิ่มสถานะการติดตามเข้าไปในออเดอร์
+          // เพิ่มสถานะการติดตามและอัปเดตสถานะการแสดงผลเข้าไปในออเดอร์
+          let displayStatus = '';
+          
+          if (latestStatus === 'ส่งสำเร็จ') {
+            displayStatus = 'delivered';
+          } else if (latestStatus === 'อยู่ระหว่างการจัดส่ง') {
+            displayStatus = 'shipping';
+          } else if (latestStatus === 'ยกเลิก') {
+            displayStatus = 'cancelled';
+          } else {
+            displayStatus = 'processing';
+          }
+          
           return {
             ...order,
-            trackingStatus: latestStatus
+            trackingStatus: latestStatus,
+            status: displayStatus || order.status
           };
         }
         
@@ -584,9 +597,19 @@ const OrderList: React.FC = () => {
     // รอการดึงข้อมูลพัสดุทั้งหมดเสร็จสิ้น
     const ordersWithTrackingStatus = await Promise.all(trackingPromises);
     
-    // แทนที่ออเดอร์เดิมด้วยออเดอร์ที่มีข้อมูลการติดตาม
+    // แทนที่ออเดอร์เดิมด้วยออเดอร์ที่มีข้อมูลการติดตาม และกำหนดสถานะให้กับออเดอร์ที่ไม่มีเลขพัสดุ
     return orders.map(originalOrder => {
+      // หาออเดอร์ที่มีข้อมูลการติดตาม
       const orderWithTracking = ordersWithTrackingStatus.find(o => o.id === originalOrder.id);
+      
+      // ถ้าเป็นออเดอร์ที่ไม่มีเลขพัสดุ ให้กำหนดสถานะเป็น pending
+      if (!originalOrder.tracking_number && !originalOrder.trackingNumber) {
+        return {
+          ...(orderWithTracking || originalOrder),
+          status: 'pending'
+        };
+      }
+      
       return orderWithTracking || originalOrder;
     });
   };
@@ -1148,9 +1171,11 @@ const OrderList: React.FC = () => {
                               <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">
                                 ส่งสำเร็จ
                               </Badge>
-                            ) : order.trackingStatus.includes('กำลัง') || 
-                               order.trackingStatus.includes('จัดส่ง') || 
+                            ) : order.trackingStatus.includes('จัดส่ง') || 
                                order.trackingStatus.includes('ขนส่ง') || 
+                               order.trackingStatus.includes('เดินทาง') ||
+                               order.trackingStatus.includes('ขาออก') ||
+                               order.trackingStatus.includes('ส่งต่อ') ||
                                order.trackingStatus.includes('จุดรับ') || 
                                order.trackingStatus.includes('เตรียม') ? (
                               // กรณี 3: อยู่ระหว่างการขนส่ง
