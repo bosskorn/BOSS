@@ -366,13 +366,13 @@ router.post('/create-order', auth, async (req: Request, res: Response) => {
                 ]
               );
               
-              const newOrder = result.rows[0];
-              console.log('บันทึกออเดอร์ลงในฐานข้อมูลสำเร็จ (รูปแบบที่สองใช้ SQL query โดยตรง):', newOrder);
+              const savedOrder = result.rows[0];
+              console.log('บันทึกออเดอร์ลงในฐานข้อมูลสำเร็จ (รูปแบบที่สองใช้ SQL query โดยตรง):', savedOrder);
             } catch (sqlError) {
               console.error('ไม่สามารถบันทึกข้อมูลออเดอร์ลงในฐานข้อมูลได้ (รูปแบบที่สอง SQL query):', sqlError);
             }
             
-            console.log('บันทึกออเดอร์รูปแบบที่สองลงในฐานข้อมูลสำเร็จ:', newOrder);
+
           } catch (dbError) {
             console.error('ไม่สามารถบันทึกข้อมูลออเดอร์ลงในฐานข้อมูลได้ (รูปแบบที่สอง):', dbError);
           }
