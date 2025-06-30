@@ -44,6 +44,7 @@ import JntExpressLabel from './pages/jnt-express-label';
 import TikTokFlashLabel from './pages/tiktok-flash-label';
 import FeeHistory from './pages/fee-history';
 import LandingPage from './pages/landing';
+import TravelLanding from './pages/travel-landing';
 import FlashExpressAPITest from './pages/flash-express-api-test';
 import CreateFlashExpressOrder from './pages/create-flash-express-order';
 import CreateFlashExpressOrderNew from './pages/create-flash-express-order-new';
@@ -85,6 +86,7 @@ function Router() {
       <Route path="/print-multiple-labels" component={PrintMultipleLabels} />
       <Route path="/print-multiple-labels-fixed" component={PrintMultipleLabelsFixed} />
       <Route path="/landing" component={LandingPage} />
+      <Route path="/travel" component={TravelLanding} />
       <Route path="/flash-express-api-test" component={FlashExpressAPITest} />
       <Route path="/create-flash-express-order-new" component={CreateFlashExpressOrderNew} />
       <Route path="/create-order-form" component={CreateOrderForm} />
