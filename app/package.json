@@ -1,0 +1,8 @@
+{
+  "name": "onecut-studio",
+  "version": "1.0.0",
+  "description": "OneCut Studio - Fast, simple video editing and merging",
+  "main": "dist/main/index.js",
+  "author": "OneCut Studio",
+  "license": "MIT"
+}
