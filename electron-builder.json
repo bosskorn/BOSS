@@ -1,0 +1,29 @@
+{
+  "appId": "com.onecut.studio",
+  "productName": "OneCut Studio",
+  "directories": {
+    "output": "release",
+    "buildResources": "assets"
+  },
+  "files": [
+    "dist/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "assets/fonts",
+      "to": "fonts"
+    }
+  ],
+  "mac": {
+    "category": "public.app-category.video",
+    "target": ["dmg", "zip"]
+  },
+  "win": {
+    "target": ["nsis", "portable"]
+  },
+  "linux": {
+    "target": ["AppImage", "deb"],
+    "category": "AudioVideo"
+  }
+}
