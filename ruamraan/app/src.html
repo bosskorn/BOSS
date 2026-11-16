@@ -1,0 +1,724 @@
+<title>รวมร้าน</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+<style>/*__ELEMENT_CSS__*/</style>
+<style>/*__DARK_CSS__*/</style>
+<style>
+/* Layout: Ruamraan's own system — dark slate rail, page header on every screen, one content card per page (tabs → chip filter bar → table → pager), right-side detail panel. Teal brand, Noto Sans Thai + Inter. Light + dark. */
+:root{
+  --brand:#0E9F87; --brand-ink:#0A7F6C; --brand-soft:#E2F5F1; --brand-soft-2:#C8EDE5; --live:#FF5A5F;
+  --bg:#F4F6F7; --surface:#FFFFFF; --surface-2:#F7F9FA; --line:#E2E7EB; --line-2:#EDF1F3;
+  --tx:#16212A; --tx-2:#475562; --tx-3:#83919D;
+  --rail:#0F171B; --rail-2:#18242A; --rail-tx:#9FB0BA; --rail-hi:#FFFFFF;
+  --red:#E5484D; --warn:#E8890C;
+  --s-pay:#D97706; --s-ship:#2563EB; --s-print:#7C3AED; --s-pickup:#0891B2; --s-sent:#16A34A; --s-cancel:#83919D;
+  --sh-1:0 1px 2px rgba(15,23,27,.06); --sh-2:0 12px 32px rgba(15,23,27,.14);
+  --r:14px; --r-s:10px;
+  --font:"Inter","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --el-color-primary:#0E9F87; --el-color-primary-light-3:#56BCAB; --el-color-primary-light-5:#87CFC3; --el-color-primary-light-7:#B7E2DB; --el-color-primary-light-8:#CFEBE6; --el-color-primary-light-9:#E2F5F1; --el-color-primary-dark-2:#0B7F6C;
+  --el-font-family:var(--font); --el-font-size-base:14px; --el-border-radius-base:10px; --el-border-radius-small:8px;
+  --el-bg-color:var(--surface); --el-bg-color-overlay:var(--surface); --el-fill-color-blank:var(--surface); --el-border-color:#D9E0E5; --el-border-color-light:var(--line); --el-border-color-lighter:var(--line-2);
+  --el-text-color-primary:var(--tx); --el-text-color-regular:var(--tx-2);
+  --el-table-header-bg-color:var(--surface); --el-table-header-text-color:var(--tx-3); --el-table-text-color:var(--tx); --el-table-border-color:var(--line-2); --el-table-row-hover-bg-color:var(--surface-2); --el-table-tr-bg-color:var(--surface); --el-table-bg-color:var(--surface);
+}
+html.dark{
+  --brand:#2CC4A7; --brand-ink:#5DD9C1; --brand-soft:rgba(44,196,167,.14); --brand-soft-2:rgba(44,196,167,.26); --live:#FF7477;
+  --bg:#0C1215; --surface:#141C20; --surface-2:#192328; --line:#243036; --line-2:#1F2A30;
+  --tx:#E5ECEF; --tx-2:#AFBDC5; --tx-3:#76868F;
+  --rail:#090E10; --rail-2:#152024;
+  --s-pay:#F5A524; --s-ship:#5B8CFF; --s-print:#A78BFA; --s-pickup:#22D3EE; --s-sent:#4ADE80; --s-cancel:#76868F;
+  --sh-1:0 1px 2px rgba(0,0,0,.4); --sh-2:0 12px 32px rgba(0,0,0,.55);
+  --el-color-primary:#2CC4A7; --el-color-primary-light-3:#23977F; --el-color-primary-light-5:#1C7363; --el-color-primary-light-7:#164F45; --el-color-primary-light-8:#143F37; --el-color-primary-light-9:#12302B; --el-color-primary-dark-2:#5DD9C1;
+  --el-bg-color:var(--surface); --el-bg-color-overlay:#192328; --el-fill-color-blank:var(--surface); --el-border-color:#2C3940; --el-border-color-light:var(--line); --el-border-color-lighter:var(--line-2);
+  --el-text-color-primary:var(--tx); --el-text-color-regular:var(--tx-2);
+  --el-table-header-bg-color:var(--surface); --el-table-header-text-color:var(--tx-3); --el-table-text-color:var(--tx); --el-table-border-color:var(--line-2); --el-table-row-hover-bg-color:#1B262B; --el-table-tr-bg-color:var(--surface); --el-table-bg-color:var(--surface);
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font-family:var(--font);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+#app{height:100%}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.b{font-weight:600}.c3{color:var(--tx-3)}.c2{color:var(--tx-2)}.cr{color:var(--red)}.cb{color:var(--brand)}.f12{font-size:12px}.f13{font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.row{display:flex;align-items:center;gap:8px}.grow{flex:1;min-width:0}.wrap{flex-wrap:wrap}
+
+/* shell */
+.shell{height:100%;display:flex}
+.rail{width:236px;flex:none;background:var(--rail);color:var(--rail-tx);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;transition:width .2s}
+.rail.mini{width:72px}
+.brandbox{display:flex;align-items:center;gap:10px;padding:18px 18px 14px}
+.mark{width:34px;height:34px;flex:none;border-radius:11px;background:conic-gradient(from 210deg,#2CC4A7,#0E9F87,#0A6E5E,#2CC4A7);display:grid;place-items:center;color:#fff;font-weight:700;position:relative}
+.mark::after{content:"";position:absolute;right:-2px;top:-2px;width:10px;height:10px;border-radius:50%;background:var(--live);border:2px solid var(--rail)}
+.brandbox b{color:#fff;font-size:17px;letter-spacing:.2px;white-space:nowrap}
+.shopsel{margin:0 12px 8px;padding:9px 10px;border-radius:12px;background:var(--rail-2);display:flex;align-items:center;gap:10px;cursor:pointer;color:#fff}
+.shopsel small{display:block;color:var(--rail-tx);font-size:11px}
+.rail.mini .shopsel{justify-content:center}.rail.mini .shopsel>div,.rail.mini .shopsel>.el-icon,.rail.mini .brandbox b{display:none}
+.nav{display:flex;flex-direction:column;gap:2px;padding:6px 10px}
+.nb{height:40px;display:flex;align-items:center;gap:12px;padding:0 12px;border:0;background:none;color:var(--rail-tx);border-radius:10px;cursor:pointer;font-size:14px;white-space:nowrap;width:100%;text-align:left}
+.nb .el-icon{font-size:18px;flex:none}
+.nb:hover{background:var(--rail-2);color:#fff}
+.nb.on{background:linear-gradient(90deg,rgba(44,196,167,.22),rgba(44,196,167,.06));color:#fff;box-shadow:inset 2px 0 0 #2CC4A7}
+.nb.on .el-icon{color:#2CC4A7}
+.nb .cnt{margin-left:auto;font-size:11px;font-weight:700;background:var(--live);color:#fff;border-radius:10px;min-width:20px;text-align:center;line-height:18px;padding:0 6px}
+.nb .live{margin-left:auto;font-size:10px;font-weight:700;color:#fff;background:var(--live);border-radius:6px;padding:0 6px;line-height:16px;letter-spacing:.05em}
+.rail.mini .nb{justify-content:center;padding:0;position:relative}.rail.mini .nb .lbl{display:none}.rail.mini .nb .cnt,.rail.mini .nb .live{position:absolute;top:2px;right:4px;margin:0}
+.ngap{height:1px;background:var(--rail-2);margin:8px 12px}
+.rail-foot{margin-top:auto;padding:10px;display:flex;flex-direction:column;gap:2px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+.topbar{height:60px;flex:none;display:flex;align-items:center;gap:10px;padding:0 max(24px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);background:var(--surface)}
+.search{display:flex;align-items:center;gap:8px;height:38px;width:420px;max-width:46vw;padding:0 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);color:var(--tx-3);cursor:pointer;font-size:13px}
+.search kbd{margin-left:auto;font:600 11px var(--font);color:var(--tx-3);border:1px solid var(--line);border-radius:6px;padding:1px 6px;background:var(--surface)}
+.ib{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--tx-2);cursor:pointer;position:relative;font-size:18px;flex:none}
+.ib:hover{color:var(--brand);border-color:var(--brand-soft-2)}
+.ib .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--live)}
+.me{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 6px 4px 4px;border-radius:12px}
+.me:hover{background:var(--surface-2)}
+.view{flex:1;min-height:0;overflow:auto;padding:22px 28px 28px}
+
+/* page */
+.ph{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.ph h1{margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em;color:var(--tx)}
+.ph p{margin:2px 0 0;color:var(--tx-3)}
+.ph .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-1)}
+.card+.card{margin-top:16px}
+.ch{display:flex;align-items:center;gap:8px;padding:16px 18px 0}
+.ch h3{margin:0;font-size:15px;font-weight:600}
+.stabs{display:flex;gap:4px;padding:6px 10px 0;border-bottom:1px solid var(--line-2);overflow-x:auto}
+.stab{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border:0;background:none;color:var(--tx-2);cursor:pointer;font-size:14px;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
+.stab:hover{color:var(--tx)}
+.stab.on{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+.stab i{font-style:normal;font-size:11px;font-weight:700;min-width:20px;line-height:19px;border-radius:10px;text-align:center;padding:0 6px;background:var(--surface-2);color:var(--tx-3);border:1px solid var(--line)}
+.stab.on i{background:var(--brand);color:#fff;border-color:var(--brand)}
+.fbar{display:flex;align-items:center;gap:8px;padding:12px 14px;flex-wrap:wrap}
+.fsearch{flex:1 1 260px;min-width:200px;max-width:420px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:10px;border:1px dashed var(--el-border-color);background:none;color:var(--tx-2);cursor:pointer;font-size:13px;white-space:nowrap}
+.chip:hover{border-color:var(--brand);color:var(--brand)}
+.chip.set{border-style:solid;border-color:var(--brand-soft-2);background:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+html.dark .chip.set{color:var(--brand)}
+.chip .x{margin-left:2px;opacity:.7}
+.fbar .r{margin-left:auto;display:flex;align-items:center;gap:6px}
+.optlist{display:flex;flex-direction:column;gap:2px}
+.optlist button{display:flex;align-items:center;gap:8px;border:0;background:none;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--tx);text-align:left;font-size:13px}
+.optlist button:hover{background:var(--surface-2)}
+.optlist button.on{color:var(--brand);font-weight:600;background:var(--brand-soft)}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-top:1px solid var(--line-2);color:var(--tx-3);font-size:13px;flex-wrap:wrap}
+.empty{padding:56px 16px;text-align:center;color:var(--tx-3)}
+.empty .ill{width:72px;height:72px;border-radius:22px;margin:0 auto 12px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);font-size:30px}
+.empty b{display:block;color:var(--tx);font-size:15px;margin-bottom:4px}
+.lk{color:var(--brand);background:none;border:0;padding:0;cursor:pointer;font-size:inherit}
+.lk:hover{text-decoration:underline}
+.lk+.lk{margin-left:14px}
+
+/* table */
+.el-table th.el-table__cell{font-weight:600;font-size:12px;height:44px;padding:6px 0;text-transform:none;border-bottom:1px solid var(--line)!important}
+.el-table td.el-table__cell{padding:12px 0;border-bottom:1px solid var(--line-2)}
+.el-table .cell{padding:0 14px}
+.el-table__inner-wrapper::before{background:transparent}
+.el-table .el-table__row{cursor:pointer}
+.thumbs{display:flex}
+.th{width:34px;height:34px;border-radius:9px;border:2px solid var(--surface);display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex:none}
+.th+.th{margin-left:-10px}
+.badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:8px;font-size:12px;font-weight:600;white-space:nowrap;background:color-mix(in srgb,currentColor 11%,transparent)}
+.badge.dot::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.code{font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;padding:2px 7px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);color:var(--tx)}
+.ch-ico{width:22px;height:22px;border-radius:7px;display:inline-grid;place-items:center;color:#fff;font-size:10px;font-weight:700;flex:none}
+.fb{background:#1877F2}.tt{background:#111}.sp{background:#EE4D2D}.lz{background:#0F146D}.ln{background:#06C755}
+html.dark .tt{background:#2A3338}
+.av{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;font-weight:700;color:var(--brand-ink);background:var(--brand-soft);flex:none}
+html.dark .av{color:var(--brand)}
+.stockbar{height:6px;border-radius:4px;background:var(--line-2);overflow:hidden;margin-top:6px;width:110px}
+.stockbar i{display:block;height:100%;background:var(--brand);border-radius:4px}
+.bulk{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:8px;padding:8px 8px 8px 16px;background:var(--rail);color:#fff;border-radius:16px;box-shadow:var(--sh-2);white-space:nowrap;max-width:calc(100% - 32px);overflow-x:auto}
+
+/* dashboard */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.kpi{padding:16px 18px;position:relative;overflow:hidden}
+.kpi .k{color:var(--tx-3);font-size:13px;display:flex;align-items:center;gap:6px}
+.kpi .v{font-size:26px;font-weight:700;letter-spacing:-.01em;margin-top:4px}
+.kpi .d{font-size:12px;font-weight:600}
+.kpi>svg{position:absolute;right:14px;bottom:16px}
+.kpis>.card{margin-top:0}
+.grid2{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;align-items:start}
+.grid2>.card+.card,.col>.card+.card{margin-top:0}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.queue{display:flex;flex-direction:column}
+.qi{display:flex;align-items:center;gap:12px;padding:12px 18px;border-top:1px solid var(--line-2);cursor:pointer}
+.qi:first-child{border-top:0}
+.qi:hover{background:var(--surface-2)}
+.qi .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:17px;flex:none}
+.qi .n{font-size:18px;font-weight:700;min-width:30px;text-align:right}
+.chart{padding:8px 18px 16px}
+.chart svg{width:100%;height:auto;display:block}
+.hrow{display:flex;align-items:center;gap:10px;padding:11px 18px;border-top:1px solid var(--line-2)}
+
+/* live */
+.lgrid{display:grid;grid-template-columns:300px minmax(0,1fr) 360px;gap:16px;align-items:stretch;min-height:560px}
+.stage{border-radius:var(--r);background:radial-gradient(130% 90% at 50% 0%,#20343A,#0A1012);color:#9FB0BA;aspect-ratio:9/15;max-width:100%;position:relative;display:grid;place-items:center;text-align:center;overflow:hidden}
+.stage .tag{position:absolute;left:12px;top:12px;background:var(--live);color:#fff;font-size:11px;font-weight:700;border-radius:8px;padding:2px 8px;letter-spacing:.06em}
+.stage .vw{position:absolute;right:12px;top:12px;background:rgba(0,0,0,.45);color:#fff;font-size:12px;border-radius:8px;padding:2px 8px}
+.mini3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.mini3>div{padding:10px;border-radius:12px;background:var(--surface);border:1px solid var(--line);text-align:center}
+.mini3 b{display:block;font-size:17px}
+.feed{display:flex;flex-direction:column;min-height:0}
+.feed .list{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:8px;max-height:620px}
+.cm{display:flex;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid transparent}
+.cm .av{width:30px;height:30px;border-radius:10px;font-size:12px}
+.cm .who{font-weight:600;margin-right:6px}
+.cm .res{font-size:12px;margin-top:2px}
+.cm.hit{border-color:color-mix(in srgb,var(--s-sent) 30%,transparent);background:color-mix(in srgb,var(--s-sent) 8%,var(--surface))}.cm.hit .res{color:var(--s-sent)}
+.cm.over{border-color:color-mix(in srgb,var(--red) 30%,transparent);background:color-mix(in srgb,var(--red) 7%,var(--surface))}.cm.over .res{color:var(--red)}
+.cm.skip .res{color:var(--tx-3)}
+.pinlist{display:flex;flex-direction:column;gap:8px;padding:12px}
+.pin{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;border:1px solid var(--line);cursor:pointer;background:var(--surface)}
+.pin.on{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+
+/* chat */
+.chat{display:grid;grid-template-columns:300px minmax(0,1fr) 300px;height:calc(100vh - 210px);min-height:520px;overflow:hidden}
+.chat>div{min-width:0;min-height:0;display:flex;flex-direction:column}
+.clist{border-right:1px solid var(--line-2)}
+.clist .items{overflow:auto;flex:1}
+.ci{display:flex;gap:10px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line-2)}
+.ci:hover{background:var(--surface-2)}
+.ci.on{background:var(--brand-soft)}
+.ci .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci .lm{color:var(--tx-3);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci .un{width:8px;height:8px;border-radius:50%;background:var(--live);flex:none}
+.cv{background:var(--surface-2)}
+.cvh{height:58px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--line-2);background:var(--surface)}
+.msgs{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.mg{max-width:70%;align-self:flex-start}
+.mg.me{align-self:flex-end;text-align:right}
+.mg .bb{display:inline-block;text-align:left;padding:10px 14px;border-radius:16px 16px 16px 6px;background:var(--surface);border:1px solid var(--line);overflow-wrap:anywhere}
+.mg.me .bb{background:var(--brand);border-color:var(--brand);color:#fff;border-radius:16px 16px 6px 16px}
+.mg .t{font-size:11px;color:var(--tx-3);margin-top:3px}
+.slipcard{align-self:flex-start;max-width:360px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--s-pay)}
+.comp{padding:10px 14px;border-top:1px solid var(--line-2);background:var(--surface)}
+.comp .q{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.comp .q button{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--tx-2)}
+.cside{border-left:1px solid var(--line-2);overflow:auto}
+.cside .sec{padding:14px 16px;border-bottom:1px solid var(--line-2)}
+.kv{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+
+/* settings hub */
+.sgrid{display:grid;grid-template-columns:240px minmax(0,1fr);gap:16px;align-items:start}
+.snav{padding:8px;position:sticky;top:0}
+.snav button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--tx-2);font-size:14px;text-align:left}
+.snav button:hover{background:var(--surface-2)}
+.snav button.on{background:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+html.dark .snav button.on{color:var(--brand)}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 18px;border-top:1px solid var(--line-2)}
+.srow .t{font-weight:500}
+.srow .d{color:var(--tx-3);font-size:13px;margin-top:2px}
+.conn{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;padding:16px 18px 18px}
+.conn .c{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+
+/* drawer */
+.el-drawer{border-radius:18px 0 0 18px}
+.el-drawer__header{margin:0;padding:18px 22px;border-bottom:1px solid var(--line)}
+.el-drawer__title{font-size:17px;font-weight:700;color:var(--tx)}
+.el-drawer__body{padding:0;display:flex;flex-direction:column;background:var(--bg)}
+.el-dialog{border-radius:18px}
+.dbody{flex:1;overflow:auto;padding:18px 22px;display:flex;flex-direction:column;gap:16px}
+.dhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.d2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.d2 .card+.card{margin-top:0}
+.dcol{display:flex;flex-direction:column;gap:16px;min-width:0}
+.sec-h{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line-2)}
+.sec-h h4{margin:0;font-size:14px;font-weight:600}
+.sec-b{padding:14px 16px}
+.li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.li:last-child{border-bottom:0}
+.sum{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--tx-2)}
+.sum.big{font-size:16px;font-weight:700;color:var(--tx);padding-top:10px;margin-top:6px;border-top:1px solid var(--line-2)}
+.dfoot{display:flex;gap:8px;justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--line);background:var(--surface);flex-wrap:wrap}
+.flow{display:flex;gap:0;padding:16px}
+.flow .st{flex:1;text-align:center;position:relative;font-size:12px;color:var(--tx-3)}
+.flow .st::before{content:"";position:absolute;top:11px;left:-50%;right:50%;height:2px;background:var(--line)}
+.flow .st:first-child::before{display:none}
+.flow .st .o{width:24px;height:24px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;background:var(--surface);border:2px solid var(--line);position:relative;z-index:1;font-size:12px}
+.flow .st.done{color:var(--tx)}.flow .st.done .o{background:var(--brand);border-color:var(--brand);color:#fff}.flow .st.done::before{background:var(--brand)}
+.flow .st.cur .o{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}.flow .st.cur{color:var(--brand);font-weight:600}
+
+/* report */
+.bars{display:flex;align-items:flex-end;gap:12px;height:180px;padding:16px 18px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;min-width:0}
+.bar i{display:block;width:100%;max-width:38px;border-radius:8px;background:linear-gradient(180deg,#2CC4A7,#0E9F87)}
+.bar span{font-size:11px;color:var(--tx-3)}
+.share{padding:6px 18px 16px}
+.share .r{display:flex;align-items:center;gap:10px;padding:8px 0}
+.share .tr{flex:1;height:8px;border-radius:5px;background:var(--line-2);overflow:hidden}
+.share .tr i{display:block;height:100%;border-radius:5px}
+
+/* buyer */
+.phone{width:min(380px,100%);margin:0 auto;border-radius:38px;border:10px solid #0F171B;overflow:hidden;background:var(--bg);box-shadow:var(--sh-2)}
+.phone .top{padding:20px 18px 26px;background:linear-gradient(150deg,#14B79A,#0A6E5E);color:#fff}
+.phone .body{padding:0 12px 12px;margin-top:-14px;display:flex;flex-direction:column;gap:10px}
+.phone .card{border-radius:16px}
+.phone .card+.card{margin-top:0}
+.opt{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;cursor:pointer;margin-top:8px}
+.opt.on{border-color:var(--brand);background:var(--brand-soft)}
+.phone .ft{padding:12px;background:var(--surface);border-top:1px solid var(--line)}
+
+/* cmdk */
+.kd .el-dialog__header{display:none}.kd .el-dialog__body{padding:0}
+.kin{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.kin input{flex:1;border:0;outline:0;background:none;font:15px var(--font);color:var(--tx)}
+.kl{max-height:380px;overflow:auto;padding:8px}
+.kg{font-size:11px;color:var(--tx-3);padding:8px 10px 4px}
+.kit{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer}
+.kit.on{background:var(--brand-soft);color:var(--brand-ink)}
+html.dark .kit.on{color:var(--brand)}
+.kit .s{margin-left:auto;font-size:12px;color:var(--tx-3)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pgrid button{height:76px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:15px;font-weight:700;cursor:pointer}
+.pgrid button:hover{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+
+@media (max-width:1200px){.lgrid{grid-template-columns:minmax(0,1fr) 340px}.lgrid .stagecol{display:none}.chat{grid-template-columns:280px minmax(0,1fr)}.cside{display:none!important}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:767px){
+  .rail{display:none}.view{padding:16px}.search{flex:1;width:auto;max-width:none}.search span,.search kbd,.me .nm{display:none}
+  .ph h1{font-size:20px}.ph .acts{margin-left:0}
+  .lgrid{grid-template-columns:minmax(0,1fr)}.chat{grid-template-columns:minmax(0,1fr);height:auto}.chat.open .clist{display:none}.chat:not(.open) .cv{display:none}
+  .sgrid,.d2{grid-template-columns:minmax(0,1fr)}.snav{position:static;display:flex;overflow-x:auto}.snav button{white-space:nowrap;width:auto}
+  .kpis{grid-template-columns:minmax(0,1fr)}.fsearch{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="app"></div>
+
+<script type="text/x-template" id="tpl">
+<el-config-provider :locale="locale">
+<div class="shell">
+  <aside class="rail" :class="{mini}">
+    <div class="brandbox"><span class="mark">ร</span><b>รวมร้าน</b></div>
+    <el-dropdown trigger="click" style="display:block"><div class="shopsel"><span class="av" style="width:30px;height:30px;font-size:12px;background:#2CC4A7;color:#062A23">บ</span><div class="grow"><div class="f13 b">บ้านผ้าฝ้าย</div><small>ทดลองใช้ · เหลือ 15 วัน</small></div><el-icon><DCaret/></el-icon></div>
+      <template #dropdown><el-dropdown-menu><el-dropdown-item>บ้านผ้าฝ้าย</el-dropdown-item><el-dropdown-item>+ เพิ่มร้าน</el-dropdown-item><el-dropdown-item divided>อัปเกรดแพ็กเกจ</el-dropdown-item></el-dropdown-menu></template></el-dropdown>
+    <nav class="nav"><template v-for="m in menu" :key="m.k"><div class="ngap" v-if="m.gap"></div>
+      <button class="nb" :class="{on:isOn(m.k)}" :title="m.t" @click="go(m.k)"><el-icon><component :is="m.i"/></el-icon><span class="lbl">{{m.t}}</span><span class="live" v-if="m.live">LIVE</span><span class="cnt" v-else-if="m.n">{{m.n}}</span></button></template></nav>
+    <div class="rail-foot"><button class="nb" title="ศูนย์ช่วยเหลือ"><el-icon><QuestionFilled/></el-icon><span class="lbl">ศูนย์ช่วยเหลือ</span></button><button class="nb" @click="mini=!mini" :title="mini?'ขยายแถบเมนู':'ย่อแถบเมนู'"><el-icon><component :is="mini?'DArrowRight':'DArrowLeft'"/></el-icon><span class="lbl">ย่อแถบเมนู</span></button></div>
+  </aside>
+  <el-drawer v-model="navOpen" direction="ltr" size="250px" :with-header="false"><div class="rail" style="width:100%;height:100%"><div class="brandbox"><span class="mark">ร</span><b>รวมร้าน</b></div><nav class="nav"><button v-for="m in menu" :key="m.k" class="nb" :class="{on:isOn(m.k)}" @click="navOpen=false;go(m.k)"><el-icon><component :is="m.i"/></el-icon><span class="lbl">{{m.t}}</span></button></nav></div></el-drawer>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="ib" v-if="isMobile" @click="navOpen=true" aria-label="เมนู"><el-icon><Menu/></el-icon></button>
+      <button class="search" @click="openK" aria-label="ค้นหา"><el-icon><Search/></el-icon><span>ค้นหาออเดอร์ ลูกค้า สินค้า หรือไปที่หน้า…</span><kbd>Ctrl K</kbd></button>
+      <span class="grow"></span>
+      <el-button v-if="!isMobile" @click="newOrder" :icon="'Plus'">ออเดอร์ใหม่</el-button>
+      <button class="ib" @click="toggleDark" :aria-label="dark?'ใช้ธีมสว่าง':'ใช้ธีมมืด'" :title="dark?'ใช้ธีมสว่าง':'ใช้ธีมมืด'"><el-icon><component :is="dark?'Sunny':'Moon'"/></el-icon></button>
+      <el-popover trigger="click" width="320" placement="bottom-end"><template #reference><button class="ib" aria-label="การแจ้งเตือน"><el-icon><Bell/></el-icon><span class="dot"></span></button></template>
+        <div class="b" style="margin-bottom:6px">การแจ้งเตือน</div><div v-for="n in notis" :key="n[0]" class="row f13" style="padding:9px 0;border-top:1px solid var(--line-2);align-items:flex-start"><el-icon :style="{color:n[2]}" style="margin-top:3px"><component :is="n[1]"/></el-icon><span>{{n[0]}}</span></div></el-popover>
+      <el-dropdown trigger="click"><div class="me"><span class="av" style="width:34px;height:34px">ก</span><div class="nm f13"><b>กรธนพัฒน์</b><div class="f12 c3" style="line-height:1.2">เจ้าของร้าน</div></div></div>
+        <template #dropdown><el-dropdown-menu><el-dropdown-item>บัญชีของฉัน</el-dropdown-item><el-dropdown-item>แพ็กเกจและใบเสร็จ</el-dropdown-item><el-dropdown-item>ดาวน์โหลดแอปมือถือ</el-dropdown-item><el-dropdown-item divided>ออกจากระบบ</el-dropdown-item></el-dropdown-menu></template></el-dropdown>
+    </header>
+
+    <main class="view" ref="viewEl">
+
+    <!-- ===== หน้าหลัก ===== -->
+    <template v-if="view==='home'">
+      <div class="ph"><div><h1>สวัสดีตอนเช้า คุณกรธนพัฒน์</h1><p>วันนี้ร้านบ้านผ้าฝ้ายมีงานรอคุณ {{queue.reduce((a,q)=>a+q[1],0)}} อย่าง</p></div><div class="acts"><el-button :icon="'Upload'" @click="note('ซิงก์ออเดอร์จากร้านค้าเรียบร้อย')">ซิงก์ร้านค้า</el-button><el-button type="primary" :icon="'VideoCamera'" @click="go('live')">เปิดไลฟ์ขาย</el-button></div></div>
+      <div class="kpis"><div class="card kpi" v-for="k in kpis" :key="k[0]"><div class="k"><el-icon :style="{color:k[3]}"><component :is="k[4]"/></el-icon>{{k[0]}}</div><div class="v num">{{k[1]}}</div><div class="d" :style="{color:k[2][0]==='-'?'var(--red)':'var(--s-sent)'}">{{k[2]}} <span class="c3" style="font-weight:400">เทียบเมื่อวาน</span></div><svg width="84" height="30" viewBox="0 0 84 30" aria-hidden="true"><path :d="k[5]" fill="none" :stroke="k[3]" stroke-width="2.2" stroke-linecap="round"/></svg></div></div>
+      <div class="grid2">
+        <div class="card"><div class="ch"><h3>ยอดขาย 7 วันล่าสุด</h3><span class="grow"></span><el-radio-group v-model="chartMode" size="small"><el-radio-button value="amt">ยอดเงิน</el-radio-button><el-radio-button value="cnt">จำนวนออเดอร์</el-radio-button></el-radio-group></div>
+          <div class="chart"><svg viewBox="0 0 640 220" role="img" aria-label="กราฟยอดขาย 7 วัน">
+            <g stroke="var(--line-2)" stroke-width="1"><line x1="40" x2="630" y1="30" y2="30"/><line x1="40" x2="630" y1="80" y2="80"/><line x1="40" x2="630" y1="130" y2="130"/><line x1="40" x2="630" y1="180" y2="180"/></g>
+            <g fill="var(--tx-3)" font-size="11" text-anchor="end"><text x="32" y="34">{{chartMode==='amt'?'12k':'60'}}</text><text x="32" y="84">{{chartMode==='amt'?'8k':'40'}}</text><text x="32" y="134">{{chartMode==='amt'?'4k':'20'}}</text><text x="32" y="184">0</text></g>
+            <path :d="chartArea" fill="var(--brand)" opacity=".12"/><path :d="chartLine" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+            <g v-for="(p,i) in chartPts" :key="i"><circle :cx="p[0]" :cy="p[1]" r="4" fill="var(--surface)" stroke="var(--brand)" stroke-width="2"/><text :x="p[0]" y="206" text-anchor="middle" fill="var(--tx-3)" font-size="11">{{days[i][0]}}</text></g>
+          </svg></div></div>
+        <div class="col">
+          <div class="card"><div class="ch" style="padding-bottom:10px"><h3>คิวงานวันนี้</h3></div><div class="queue"><div class="qi" v-for="q in queue" :key="q[0]" @click="q[2]?openTab(q[2]):go(q[3])"><span class="ic" :style="{background:'color-mix(in srgb,'+q[4]+' 14%,transparent)',color:q[4]}"><el-icon><component :is="q[5]"/></el-icon></span><span class="grow">{{q[0]}}</span><span class="n num">{{q[1]}}</span><el-icon class="c3"><ArrowRight/></el-icon></div></div></div>
+          <div class="card"><div class="ch" style="padding-bottom:10px"><h3>ช่องทางขาย</h3><span class="grow"></span><button class="lk f13" @click="go('sauth')">จัดการ</button></div><div class="hrow" v-for="c in shops" :key="c.id"><span class="ch-ico" :class="c.k">{{CHI[c.k]}}</span><span class="grow f13">{{c.name}}</span><span class="badge dot" :style="{color:c.warn?'var(--s-pay)':'var(--s-sent)'}">{{c.warn?'ต้องต่ออายุ':'ปกติ'}}</span></div></div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ===== ไลฟ์ ===== -->
+    <template v-if="view==='live'">
+      <div class="ph"><div><h1>ไลฟ์ขาย</h1><p>คอมเมนต์ที่มีรหัสสินค้าจะกลายเป็นออเดอร์ให้อัตโนมัติ</p></div><div class="acts"><el-button @click="liveOn=!liveOn" :icon="liveOn?'VideoPause':'VideoPlay'">{{liveOn?'หยุดคอมเมนต์ตัวอย่าง':'เล่นคอมเมนต์ตัวอย่าง'}}</el-button><el-button type="danger" plain @click="note('ปิดรอบไลฟ์: '+liveOrders.length+' ออเดอร์ ยอด '+baht(liveSum))">ปิดรอบไลฟ์</el-button></div></div>
+      <div class="lgrid">
+        <div class="stagecol"><div class="stage"><span class="tag">● LIVE</span><span class="vw">👁 214</span><div><el-icon :size="34"><VideoCamera/></el-icon><div style="margin-top:6px">ภาพสดจากเพจของคุณ</div></div></div>
+          <div class="mini3"><div><b class="num">{{liveOrders.length}}</b><span class="f12 c3">ออเดอร์</span></div><div><b class="num">{{baht(liveSum)}}</b><span class="f12 c3">ยอดขาย</span></div><div><b class="num">32:10</b><span class="f12 c3">นาที</span></div></div></div>
+        <div class="card feed"><div class="ch" style="padding-bottom:12px"><h3>คอมเมนต์สด</h3><span class="grow"></span><span class="badge" style="color:var(--s-sent)">จับได้ {{feed.filter(c=>c.cls==='hit').length}}</span><span class="badge" style="color:var(--red)">ของไม่พอ {{feed.filter(c=>c.cls==='over').length}}</span></div>
+          <div class="list"><div v-for="c in feed" :key="c.n" class="cm" :class="c.cls"><span class="av">{{c.who[0]}}</span><div class="grow"><span class="who">{{c.who}}</span>{{c.text}}<div class="res" v-if="c.res">{{c.res}} <button class="lk f12" v-if="c.cls==='over'" @click="note('บันทึกเป็นรายการรอของแล้ว')">เก็บเป็นรายการรอของ</button></div></div></div></div></div>
+        <div class="card" style="display:flex;flex-direction:column;min-height:0"><el-tabs v-model="liveTab" style="padding:0 16px"><el-tab-pane label="สินค้าบนไลฟ์" name="p"/><el-tab-pane :label="'ออเดอร์รอบนี้ · '+liveOrders.length" name="o"/></el-tabs>
+          <div class="pinlist" v-if="liveTab==='p'" style="overflow:auto"><div class="pin" v-for="p in products" :key="p.kw" :class="{on:pinned===p.kw}" @click="pinned=p.kw;note('กำลังขาย: '+p.name)"><span class="th" :style="{background:p.c}">{{p.kw}}</span><div class="grow"><div class="f13 b">{{p.name}}</div><div class="f12 c3">พิมพ์ <span class="code">{{p.kw}}</span> เพื่อสั่ง · {{baht(p.price)}}</div></div><span class="badge" :style="{color:p.stock===0?'var(--red)':p.stock<5?'var(--s-pay)':'var(--tx-3)'}">{{p.stock===0?'หมด':'เหลือ '+p.stock}}</span></div></div>
+          <div v-else style="overflow:auto"><div v-if="!liveOrders.length" class="empty"><div class="ill"><el-icon><ChatLineRound/></el-icon></div><b>ยังไม่มีออเดอร์ในรอบนี้</b>รอคอมเมนต์ที่มีรหัสสินค้า</div><div class="hrow" v-for="(o,i) in liveOrders" :key="i"><span class="av" style="width:30px;height:30px;font-size:12px">{{o.who[0]}}</span><div class="grow f13"><b>{{o.who}}</b><div class="f12 c3">{{o.kw}} × {{o.q}}</div></div><b class="num f13">{{baht(o.amt)}}</b></div></div></div>
+      </div>
+    </template>
+
+    <!-- ===== ออเดอร์ ===== -->
+    <template v-if="view==='orders'">
+      <div class="ph"><div><h1>ออเดอร์</h1><p>ทุกช่องทางในที่เดียว เรียงตามสิ่งที่ต้องทำต่อ</p></div><div class="acts"><el-button :icon="'Refresh'" @click="note('ดึงออเดอร์ใหม่จากร้านค้าแล้ว')">ดึงออเดอร์ใหม่</el-button><el-button :icon="'Download'" @click="note('กำลังเตรียมไฟล์ส่งออก')">ส่งออก</el-button><el-button type="primary" :icon="'Plus'" @click="newOrder">ออเดอร์ใหม่</el-button></div></div>
+      <div class="card">
+        <div class="stabs"><button v-for="t in tabs" :key="t" class="stab" :class="{on:of.tab===t}" @click="of.tab=t;sel=[]">{{t==='all'?'ทั้งหมด':ST[t]}}<i v-if="t!=='sent'&&t!=='cancel'">{{t==='all'?orders.length:cnt(t)}}</i></button></div>
+        <div class="fbar">
+          <el-input v-model="of.q" class="fsearch" :prefix-icon="'Search'" placeholder="เลขออเดอร์ ชื่อลูกค้า เบอร์โทร หรือเลขพัสดุ" clearable aria-label="ค้นหาออเดอร์"/>
+          <el-popover trigger="click" width="220"><template #reference><button class="chip" :class="{set:of.ch}"><el-icon><Shop/></el-icon>{{of.ch?CH[of.ch]:'ช่องทาง'}}<el-icon v-if="of.ch" class="x" @click.stop="of.ch=''"><Close/></el-icon><el-icon v-else><ArrowDown/></el-icon></button></template>
+            <div class="optlist"><button :class="{on:!of.ch}" @click="of.ch=''">ทุกช่องทาง</button><button v-for="(n,k) in CH" :key="k" :class="{on:of.ch===k}" @click="of.ch=k"><span class="ch-ico" :class="k">{{CHI[k]}}</span>{{n}}</button></div></el-popover>
+          <el-popover trigger="click" width="220"><template #reference><button class="chip" :class="{set:of.when!=='all'}"><el-icon><Calendar/></el-icon>{{WHEN[of.when]}}<el-icon><ArrowDown/></el-icon></button></template>
+            <div class="optlist"><button v-for="(n,k) in WHEN" :key="k" :class="{on:of.when===k}" @click="of.when=k">{{n}}</button></div></el-popover>
+          <el-popover trigger="click" width="240"><template #reference><button class="chip" :class="{set:of.src}"><el-icon><PriceTag/></el-icon>{{of.src||'ที่มา'}}<el-icon v-if="of.src" class="x" @click.stop="of.src=''"><Close/></el-icon><el-icon v-else><ArrowDown/></el-icon></button></template>
+            <div class="optlist"><button :class="{on:!of.src}" @click="of.src=''">ทุกที่มา</button><button v-for="t in SRC" :key="t" :class="{on:of.src===t}" @click="of.src=t">{{t}}</button></div></el-popover>
+          <el-popover trigger="click" width="280"><template #reference><button class="chip" :class="{set:of.urgent||of.slip}"><el-icon><Filter/></el-icon>ตัวกรองอื่น<span v-if="(of.urgent?1:0)+(of.slip?1:0)" class="b">· {{(of.urgent?1:0)+(of.slip?1:0)}}</span></button></template>
+            <div style="display:flex;flex-direction:column;gap:12px"><el-checkbox v-model="of.urgent">ใกล้เลยกำหนดส่ง</el-checkbox><el-checkbox v-model="of.slip">มีสลิปรอตรวจ</el-checkbox><div><div class="f12 c3" style="margin-bottom:4px">รอบไลฟ์</div><el-select v-model="of.lv" placeholder="ทุกรอบ" clearable style="width:100%"><el-option label="LV-1116 · คืนนี้" value="a"/><el-option label="LV-1114 · 14 พ.ย." value="b"/></el-select></div></div></el-popover>
+          <div class="r"><el-dropdown trigger="click" @command="v=>note('เปิดมุมมอง: '+v)"><el-button text :icon="'Collection'">มุมมองที่บันทึก</el-button><template #dropdown><el-dropdown-menu><el-dropdown-item command="ออเดอร์ไลฟ์คืนนี้">ออเดอร์ไลฟ์คืนนี้</el-dropdown-item><el-dropdown-item command="Shopee ด่วน">Shopee ด่วน</el-dropdown-item><el-dropdown-item divided command="บันทึกมุมมองปัจจุบัน">+ บันทึกมุมมองปัจจุบัน</el-dropdown-item></el-dropdown-menu></template></el-dropdown></div>
+        </div>
+        <el-table :data="filtered" @selection-change="r=>sel=r.map(x=>x.id)" @row-click="(r,c)=>{if(c&&c.type!=='selection')openOrder(r)}" ref="otbl" empty-text=" " style="width:100%">
+          <el-table-column type="selection" width="48"/>
+          <el-table-column label="ออเดอร์" min-width="170"><template #default="{row}"><div class="row"><span class="ch-ico" :class="row.ch">{{CHI[row.ch]}}</span><div><div class="b">{{row.id}}</div><div class="f12 c3">{{row.time.slice(5,16)}} · {{row.src}}</div></div></div></template></el-table-column>
+          <el-table-column label="ลูกค้า" min-width="160"><template #default="{row}"><div class="b f13">{{row.cust}}</div><div class="f12 c3 num">{{row.tel}}</div></template></el-table-column>
+          <el-table-column label="สินค้า" min-width="210"><template #default="{row}"><div class="row"><div class="thumbs"><span class="th" v-for="it in row.items.slice(0,3)" :key="it[0]" :style="{background:P(it[0]).c}">{{it[0]}}</span></div><div class="f13" style="min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{P(row.items[0][0]).name}}</div><div class="f12 c3">{{row.items.reduce((a,i)=>a+i[1],0)}} ชิ้น<span v-if="row.items.length>1"> · {{row.items.length}} รายการ</span></div></div></div></template></el-table-column>
+          <el-table-column label="ยอดรวม" width="110" align="right"><template #default="{row}"><b class="num">{{baht(total(row))}}</b></template></el-table-column>
+          <el-table-column label="การชำระ" width="130"><template #default="{row}"><span class="badge" :style="{color:payOf(row)[1]}">{{payOf(row)[0]}}</span></template></el-table-column>
+          <el-table-column label="สถานะ" width="150"><template #default="{row}"><span class="badge dot" :style="{color:SC[row.st]}">{{ST[row.st]}}</span><div v-if="row.warn" class="f12" style="color:var(--red);margin-top:4px">{{row.warn}}</div></template></el-table-column>
+          <el-table-column label="ขนส่ง" min-width="140"><template #default="{row}"><div class="f13">{{row.ship||'—'}}</div><div class="mono c3" v-if="row.track">{{row.track}}</div></template></el-table-column>
+          <el-table-column width="170" align="right" fixed="right"><template #default="{row}"><div class="row" style="justify-content:flex-end" @click.stop><el-button v-if="NEXT[row.st]" size="small" type="primary" plain @click="advance(row)">{{NEXT[row.st][0]}}</el-button><el-dropdown trigger="click" @command="c=>rowCmd(c,row)"><el-button size="small" text :icon="'MoreFilled'" aria-label="เพิ่มเติม"/><template #dropdown><el-dropdown-menu><el-dropdown-item command="open">ดูรายละเอียด</el-dropdown-item><el-dropdown-item command="chat">เปิดแชตลูกค้า</el-dropdown-item><el-dropdown-item command="link">คัดลอกลิงก์ชำระเงิน</el-dropdown-item><el-dropdown-item command="cancel" divided v-if="row.st==='pay'">ยกเลิกออเดอร์</el-dropdown-item></el-dropdown-menu></template></el-dropdown></div></template></el-table-column>
+        </el-table>
+        <div v-if="!filtered.length" class="empty"><div class="ill"><el-icon><Tickets/></el-icon></div><b>ไม่มีออเดอร์ตรงกับเงื่อนไข</b>ลองล้างตัวกรอง หรือสร้างออเดอร์ใหม่จากแชต<div style="margin-top:12px"><el-button @click="clearF">ล้างตัวกรอง</el-button></div></div>
+        <div class="pager"><span>แสดง {{filtered.length}} จาก {{orders.length}} ออเดอร์</span><el-pagination layout="prev, pager, next" :total="filtered.length" :page-size="20" small/></div>
+      </div>
+      <div class="bulk" v-if="sel.length"><b>{{sel.length}} รายการ</b><el-button v-if="NEXT[of.tab]" type="primary" size="small" @click="bulkNext">{{NEXT[of.tab][0]}}ทั้งหมด</el-button><el-button size="small" @click="note('พิมพ์ใบปะหน้า '+sel.length+' ใบ')">พิมพ์ใบปะหน้า</el-button><el-button size="small" @click="note('ติดป้ายแล้ว')">ติดป้าย</el-button><el-button size="small" text style="color:#fff" @click="clearSel">ยกเลิกการเลือก</el-button></div>
+    </template>
+
+    <!-- ===== ดรอปชิป ===== -->
+    <template v-if="view==='drop'">
+      <div class="ph"><div><h1>ดรอปชิป</h1><p>ส่งออเดอร์ให้พาร์ทเนอร์จัดส่งแทน และดูยอดที่ต้องจ่าย</p></div><div class="acts"><el-button type="primary" :icon="'Plus'" @click="note('ส่งคำเชิญพาร์ทเนอร์แล้ว')">เชิญพาร์ทเนอร์</el-button></div></div>
+      <div class="card"><div class="stabs"><button class="stab" :class="{on:dropTab==='p'}" @click="dropTab='p'">พาร์ทเนอร์</button><button class="stab" :class="{on:dropTab==='o'}" @click="dropTab='o'">ออเดอร์ที่ส่งต่อ<i>0</i></button></div>
+        <div class="empty" style="padding:80px 16px"><div class="ill"><el-icon><Connection/></el-icon></div><b>{{dropTab==='p'?'ยังไม่มีพาร์ทเนอร์':'ยังไม่มีออเดอร์ที่ส่งต่อ'}}</b>{{dropTab==='p'?'เชิญร้านที่ส่งสินค้าแทนคุณ แล้วจับคู่สินค้ากับสต็อกของเขา':'เมื่อส่งออเดอร์ให้พาร์ทเนอร์ ยอดที่ต้องจ่ายจะแสดงที่นี่'}}</div></div>
+    </template>
+
+    <!-- ===== สินค้า ===== -->
+    <template v-if="view==='products'">
+      <div class="ph"><div><h1>สินค้า</h1><p>สต็อกเดียว ขายได้ทุกช่องทาง</p></div><div class="acts"><el-button :icon="'Download'" @click="note('นำเข้าสินค้าจากร้านที่เชื่อมไว้')">นำเข้าจากร้านค้า</el-button><el-button type="primary" :icon="'Plus'" @click="openProd()">เพิ่มสินค้า</el-button></div></div>
+      <div class="card">
+        <div class="stabs"><button class="stab" :class="{on:pf.st===''}" @click="pf.st=''">ทั้งหมด<i>{{products.length}}</i></button><button class="stab" :class="{on:pf.st==='low'}" @click="pf.st='low'">ใกล้หมด<i>{{products.filter(p=>p.stock<5).length}}</i></button><button class="stab" :class="{on:pf.st==='off'}" @click="pf.st='off'">ซ่อนอยู่<i>{{products.filter(p=>!p.on).length}}</i></button></div>
+        <div class="fbar"><el-input v-model="pf.q" class="fsearch" :prefix-icon="'Search'" placeholder="ชื่อ รหัส SKU หรือรหัส CF" clearable aria-label="ค้นหาสินค้า"/>
+          <el-popover trigger="click" width="200"><template #reference><button class="chip" :class="{set:pf.cat}"><el-icon><Folder/></el-icon>{{pf.cat||'หมวดหมู่'}}<el-icon><ArrowDown/></el-icon></button></template><div class="optlist"><button :class="{on:!pf.cat}" @click="pf.cat=''">ทุกหมวด</button><button v-for="c in ['เสื้อผ้า','กระเป๋าและหมวก']" :key="c" :class="{on:pf.cat===c}" @click="pf.cat=c">{{c}}</button></div></el-popover></div>
+        <el-table :data="prodList" @row-click="r=>openProd(r)" style="width:100%">
+          <el-table-column label="สินค้า" min-width="260"><template #default="{row}"><div class="row"><span class="th" :style="{background:row.c,width:'40px',height:'40px',borderRadius:'11px'}">{{row.kw}}</span><div><div class="b f13">{{row.name}}</div><div class="f12 c3">{{row.cat}}</div></div></div></template></el-table-column>
+          <el-table-column label="SKU" width="140"><template #default="{row}"><span class="mono">{{row.sku}}</span></template></el-table-column>
+          <el-table-column label="รหัส CF" width="100"><template #default="{row}"><span class="code">{{row.kw}}</span></template></el-table-column>
+          <el-table-column label="สต็อก" width="170"><template #default="{row}"><div class="f13"><b :class="{cr:row.stock===0}">{{row.stock}}</b> <span class="c3">พร้อมขาย</span></div><div class="stockbar"><i :style="{width:Math.min(100,row.stock/40*100)+'%',background:row.stock<5?'var(--s-pay)':'var(--brand)'}"></i></div></template></el-table-column>
+          <el-table-column label="ราคา" width="100" align="right"><template #default="{row}"><b class="num">{{baht(row.price)}}</b></template></el-table-column>
+          <el-table-column label="ขายที่" width="130"><template #default="{row}"><div class="row" style="gap:4px"><span v-for="c in row.chs" :key="c" class="ch-ico" :class="c" :title="CH[c]">{{CHI[c]}}</span></div></template></el-table-column>
+          <el-table-column label="แสดง" width="80"><template #default="{row}"><span @click.stop><el-switch v-model="row.on" size="small" :aria-label="'แสดง '+row.name"/></span></template></el-table-column>
+        </el-table>
+        <div class="pager"><span>{{prodList.length}} สินค้า</span><el-pagination layout="prev, pager, next" :total="prodList.length" :page-size="20" small/></div>
+      </div>
+    </template>
+
+    <!-- ===== กล่องข้อความ ===== -->
+    <template v-if="view==='chat'">
+      <div class="ph"><div><h1>กล่องข้อความ</h1><p>Facebook, IG, LINE และ TikTok ตอบได้จากที่นี่</p></div></div>
+      <div class="card chat" :class="{open:chatOpen}">
+        <div class="clist"><div style="padding:12px"><el-input :prefix-icon="'Search'" placeholder="ค้นหาชื่อลูกค้า" aria-label="ค้นหาแชต"/><div class="row" style="margin-top:10px;gap:6px"><el-radio-group v-model="chatF" size="small"><el-radio-button value="u">ยังไม่ตอบ</el-radio-button><el-radio-button value="a">ทั้งหมด</el-radio-button></el-radio-group></div></div>
+          <div class="items"><div class="ci" v-for="c in convList" :key="c.id" :class="{on:c.id===conv.id}" @click="pickConv(c)"><span class="av">{{c.name.replace('คุณ','')[0]}}</span><div class="grow"><div class="row"><span class="nm grow">{{c.name}}</span><span class="f12 c3">{{c.time}}</span></div><div class="row"><span class="ch-ico" :class="c.ch" style="width:16px;height:16px;font-size:8px;border-radius:5px">{{CHI[c.ch]}}</span><span class="lm grow">{{c.msgs[c.msgs.length-1][1]}}</span><span class="un" v-if="c.unread"></span></div></div></div></div></div>
+        <div class="cv"><div class="cvh"><el-button v-if="isMobile" text @click="chatOpen=false" aria-label="กลับ"><el-icon><ArrowLeft/></el-icon></el-button><span class="av">{{conv.name.replace('คุณ','')[0]}}</span><div class="grow"><b>{{conv.name}}</b><div class="f12 c3">{{CH[conv.ch]}} · ตอบเฉลี่ย 3 นาที</div></div><el-button size="small" @click="openOrderId(conv.order)">ดูออเดอร์</el-button></div>
+          <div class="msgs" ref="msgEl"><div class="mg" v-for="(m,i) in conv.msgs" :key="i" :class="{me:m[0]==='m'}"><div class="bb">{{m[1]}}</div><div class="t">{{m[2]}}</div></div>
+            <div class="slipcard" v-if="conv.id===1&&byId('RR-1042').st==='pay'"><div class="row"><el-icon style="color:var(--s-pay)"><Picture/></el-icon><b class="f13">ลูกค้าส่งสลิปมา</b></div><div class="f13 c2" style="margin:4px 0 8px">ยอด ฿398 ตรงกับออเดอร์ RR-1042</div><el-button size="small" type="primary" @click="advance(byId('RR-1042'))">ยืนยันว่าได้รับเงิน</el-button></div></div>
+          <form class="comp" @submit.prevent="send"><div class="q"><button type="button" v-for="q in quickReplies" :key="q" @click="draft=q">{{q}}</button></div><div class="row"><el-input v-model="draft" placeholder="พิมพ์ข้อความ…" aria-label="ข้อความ"/><el-button type="primary" native-type="submit" :icon="'Promotion'">ส่ง</el-button></div></form></div>
+        <div class="cside"><div class="sec" style="text-align:center"><span class="av" style="width:56px;height:56px;margin:0 auto 8px;font-size:20px;border-radius:18px">{{conv.name.replace('คุณ','')[0]}}</span><b>{{conv.name}}</b><div style="margin-top:6px"><span class="badge" style="color:var(--brand)">{{conv.tag}}</span></div></div>
+          <div class="sec"><div class="kv"><span class="c3">ซื้อแล้ว</span><b>{{conv.n}} ครั้ง</b></div><div class="kv"><span class="c3">ยอดรวม</span><b>{{baht(conv.spend)}}</b></div><div class="kv"><span class="c3">เครดิตคงเหลือ</span><b>฿0</b></div></div>
+          <div class="sec"><div class="f12 c3" style="margin-bottom:6px">ออเดอร์ล่าสุด</div><div class="row"><b class="grow lk" @click="openOrderId(conv.order)">{{conv.order}}</b><span class="badge dot" :style="{color:SC[byId(conv.order).st]}">{{ST[byId(conv.order).st]}}</span></div></div>
+          <div class="sec"><el-button style="width:100%" :icon="'Plus'" @click="newOrder">สร้างออเดอร์ให้ลูกค้าคนนี้</el-button></div></div>
+      </div>
+    </template>
+
+    <!-- ===== ลูกค้า ===== -->
+    <template v-if="view==='customers'">
+      <div class="ph"><div><h1>ลูกค้า</h1><p>รู้จักลูกค้าก่อนตอบ ดูประวัติ ยอดซื้อ และเครดิต</p></div><div class="acts"><el-button type="primary" :icon="'Plus'" @click="note('ฟอร์มเพิ่มลูกค้ายังไม่อยู่ในต้นแบบนี้')">เพิ่มลูกค้า</el-button></div></div>
+      <div class="card"><div class="stabs"><button class="stab" v-for="t in ['ทั้งหมด','ลูกค้าประจำ','ลูกค้าใหม่','ไม่รับออเดอร์']" :key="t" :class="{on:cf===t}" @click="cf=t">{{t}}</button></div>
+        <div class="fbar"><el-input class="fsearch" :prefix-icon="'Search'" placeholder="ชื่อหรือเบอร์โทร" aria-label="ค้นหาลูกค้า"/><button class="chip"><el-icon><Wallet/></el-icon>ยอดซื้อ<el-icon><ArrowDown/></el-icon></button><button class="chip"><el-icon><Calendar/></el-icon>ซื้อล่าสุด<el-icon><ArrowDown/></el-icon></button></div>
+        <el-table :data="custList" style="width:100%"><el-table-column type="selection" width="48"/>
+          <el-table-column label="ลูกค้า" min-width="230"><template #default="{row}"><div class="row"><span class="av">{{row.name.replace('คุณ','')[0]}}</span><div><div class="b f13">{{row.name}}</div><div class="f12 c3 num">{{row.tel}}</div></div></div></template></el-table-column>
+          <el-table-column label="ช่องทาง" width="150"><template #default="{row}"><div class="row"><span class="ch-ico" :class="row.ch">{{CHI[row.ch]}}</span><span class="f13">{{CH[row.ch]}}</span></div></template></el-table-column>
+          <el-table-column label="กลุ่ม" width="150"><template #default="{row}"><span class="badge" :style="{color:row.tag==='ไม่รับออเดอร์'?'var(--red)':row.tag==='ลูกค้าประจำ'?'var(--brand)':'var(--s-ship)'}">{{row.tag}}</span></template></el-table-column>
+          <el-table-column label="ซื้อแล้ว" width="100" align="right"><template #default="{row}">{{row.n}} ครั้ง</template></el-table-column>
+          <el-table-column label="ยอดรวม" width="120" align="right"><template #default="{row}"><b class="num">{{baht(row.spend)}}</b></template></el-table-column>
+          <el-table-column label="ซื้อล่าสุด" width="130"><template #default="{row}"><span class="c2 f13">{{row.last}}</span></template></el-table-column>
+          <el-table-column width="120" align="right"><template #default><el-button size="small" text @click="go('chat')">ส่งข้อความ</el-button></template></el-table-column>
+        </el-table>
+        <div class="pager"><span>{{custList.length}} คน</span><el-pagination layout="prev, pager, next" :total="custList.length" :page-size="20" small/></div></div>
+    </template>
+
+    <!-- ===== รายงาน ===== -->
+    <template v-if="view==='reports'">
+      <div class="ph"><div><h1>รายงาน</h1><p>ยอดขาย กำไร และผลของแต่ละรอบไลฟ์</p></div><div class="acts"><el-radio-group v-model="rRange"><el-radio-button value="7">7 วัน</el-radio-button><el-radio-button value="30">30 วัน</el-radio-button><el-radio-button value="90">ไตรมาส</el-radio-button></el-radio-group><el-button :icon="'Download'">ส่งออก</el-button></div></div>
+      <div class="kpis"><div class="card kpi" v-for="k in rKpis" :key="k[0]"><div class="k">{{k[0]}}</div><div class="v num">{{k[1]}}</div><div class="d" :style="{color:k[2][0]==='-'?'var(--red)':'var(--s-sent)'}">{{k[2]}} <span class="c3" style="font-weight:400">จากช่วงก่อน</span></div></div></div>
+      <div class="grid2">
+        <div class="card"><div class="ch"><h3>ยอดขายรายวัน</h3><span class="grow"></span><span class="f12 c3">หน่วย: บาท</span></div><div class="bars"><div class="bar" v-for="d in days" :key="d[0]"><span class="num">{{(d[1]/1000).toFixed(1)}}k</span><i :style="{height:Math.round(d[1]/12400*130)+'px'}"></i><span>{{d[0]}}</span></div></div></div>
+        <div class="card"><div class="ch"><h3>สัดส่วนตามช่องทาง</h3></div><div class="share"><div class="r" v-for="c in salesRows" :key="c.k"><span class="ch-ico" :class="c.k">{{CHI[c.k]}}</span><span class="f13" style="width:90px">{{CH[c.k]}}</span><span class="tr"><i :style="{width:(c.amt/51700*100)+'%',background:CHC[c.k]}"></i></span><b class="num f13" style="width:70px;text-align:right">{{baht(c.amt)}}</b></div></div></div>
+      </div>
+      <div class="card" style="margin-top:16px"><div class="stabs"><button class="stab" :class="{on:rTab==='ch'}" @click="rTab='ch'">ตามช่องทาง</button><button class="stab" :class="{on:rTab==='lv'}" @click="rTab='lv'">ตามรอบไลฟ์</button></div>
+        <el-table v-if="rTab==='ch'" :data="salesRows" show-summary :summary-method="sumRow" style="width:100%"><el-table-column label="ช่องทาง" min-width="160"><template #default="{row}"><div class="row"><span class="ch-ico" :class="row.k">{{CHI[row.k]}}</span>{{CH[row.k]}}</div></template></el-table-column><el-table-column label="ออเดอร์" prop="n" width="100" align="right" sortable/><el-table-column label="ชิ้น" prop="qty" width="90" align="right" sortable/><el-table-column label="ยอดขาย" prop="amt" width="120" align="right" sortable/><el-table-column label="ต้นทุน" prop="cost" width="110" align="right"/><el-table-column label="กำไรขั้นต้น" prop="gp" width="130" align="right" sortable/><el-table-column label="มาร์จิ้น" width="100" align="right"><template #default="{row}">{{(row.gp/row.amt*100).toFixed(1)}}%</template></el-table-column><el-table-column label="คืนสินค้า" prop="ret" width="100" align="right"/></el-table>
+        <el-table v-else :data="liveRows" style="width:100%"><el-table-column label="รอบไลฟ์" min-width="170"><template #default="{row}"><b>{{row.id}}</b><div class="f12 c3">{{row.t}}</div></template></el-table-column><el-table-column label="ออเดอร์" prop="n" width="90" align="right"/><el-table-column label="ชำระแล้ว" prop="paid" width="100" align="right"/><el-table-column label="อัตราชำระ" width="170"><template #default="{row}"><el-progress :percentage="Math.round(row.paid/row.n*100)" :stroke-width="8"/></template></el-table-column><el-table-column label="รับเงินแล้ว" width="120" align="right"><template #default="{row}"><b class="num">{{baht(row.amt)}}</b></template></el-table-column><el-table-column label="ยกเลิก" prop="cancel" width="90" align="right"/><el-table-column label="ของไม่พอ" prop="over" width="100" align="right"/></el-table></div>
+    </template>
+
+    <!-- ===== ตั้งค่า ===== -->
+    <template v-if="view.startsWith('s')&&SET[view]">
+      <div class="ph"><div><h1>ตั้งค่า</h1><p>ปรับร้านให้ทำงานแบบที่คุณต้องการ</p></div></div>
+      <div class="sgrid">
+        <div class="card snav"><button v-for="(n,k) in SET" :key="k" :class="{on:view===k}" @click="go(k)"><el-icon><component :is="n[1]"/></el-icon>{{n[0]}}</button></div>
+        <div>
+          <div class="card" v-if="view==='sauth'"><div class="ch"><h3>ช่องทางที่เชื่อมไว้</h3><span class="grow"></span><el-button type="primary" size="small" :icon="'Plus'" @click="addShop=true">เชื่อมช่องทางใหม่</el-button></div>
+            <div class="conn"><div class="c" v-for="c in shops" :key="c.id"><div class="row"><span class="ch-ico" :class="c.k" style="width:30px;height:30px;font-size:13px;border-radius:9px">{{CHI[c.k]}}</span><div class="grow"><b class="f13">{{c.name}}</b><div class="f12 c3">{{CH[c.k]}}</div></div><span class="badge dot" :style="{color:c.warn?'var(--s-pay)':'var(--s-sent)'}">{{c.warn?'ต้องต่ออายุ':'ปกติ'}}</span></div><div class="f12 c3">ใช้ได้ถึง {{c.exp}} · {{c.scope}}</div><div class="row"><el-button size="small" :type="c.warn?'primary':''" @click="note(c.warn?'เปิดหน้าต่ออายุ':'ซิงก์แล้ว')">{{c.warn?'ต่ออายุตอนนี้':'ซิงก์ตอนนี้'}}</el-button><el-button size="small" text>ตั้งค่า</el-button></div></div></div></div>
+          <template v-if="view==='slive'">
+            <div class="card"><div class="ch" style="padding-bottom:14px"><h3>การรับออเดอร์จากคอมเมนต์</h3></div>
+              <div class="srow"><div><div class="t">คำสำหรับสั่งเพิ่ม</div><div class="d">ลูกค้าพิมพ์คำนี้ตามด้วยรหัสสินค้า เพื่อเพิ่มลงออเดอร์เดิมแทนการเปิดใหม่</div></div><el-input v-model="rules.addKw" style="width:200px" aria-label="คำสำหรับสั่งเพิ่ม"/></div>
+              <div class="srow"><div><div class="t">คำที่ไม่นับเป็นการสั่ง</div><div class="d">คอมเมนต์ที่มีคำเหล่านี้จะถูกมองว่าเป็นคำถาม ไม่สร้างออเดอร์</div></div><el-select v-model="rules.skip" multiple filterable allow-create default-first-option style="width:260px" aria-label="คำที่ไม่นับ"><el-option v-for="w in rules.skip" :key="w" :label="w" :value="w"/></el-select></div>
+              <div class="srow"><div><div class="t">เมื่อของไม่พอ</div><div class="d">เลือกว่าจะทำอย่างไรเมื่อมีคนสั่งเกินจำนวนที่เหลือ</div></div><el-select v-model="rules.over" style="width:200px" aria-label="เมื่อของไม่พอ"><el-option label="ปฏิเสธและแจ้งลูกค้า" value="reject"/><el-option label="เก็บเป็นรายการรอของ" value="wait"/></el-select></div>
+              <div class="srow"><div><div class="t">ปิดออเดอร์ที่ไม่จ่ายอัตโนมัติ</div><div class="d">คืนสต็อกให้คนอื่นซื้อต่อ เมื่อพ้นเวลาที่กำหนด</div></div><div class="row"><el-input-number v-model="rules.hours" :min="1" :max="168" style="width:120px" aria-label="ชั่วโมง"/><span class="c3 f13">ชั่วโมง</span></div></div></div>
+            <div class="card"><div class="ch" style="padding-bottom:14px"><h3>สิ่งที่ลูกค้าทำได้ในลิงก์ชำระเงิน</h3></div>
+              <div class="srow" v-for="r in buyerRules" :key="r.k"><div><div class="t">{{r.t}}</div><div class="d">{{r.d}}</div></div><el-switch v-model="rules[r.k]" :aria-label="r.t" @change="note('บันทึกแล้ว')"/></div></div>
+          </template>
+          <div class="card" v-if="view==='sship'"><div class="ch" style="padding-bottom:14px"><h3>บริษัทขนส่ง</h3><span class="grow"></span><span class="f12 c3">ส่งฟรีเมื่อซื้อครบ ฿500 · ต่ำกว่านั้น ฿40</span></div>
+            <div class="srow" v-for="c in couriers" :key="c.n"><div class="row"><span class="av" style="width:34px;height:34px;font-size:12px">{{c.n[0]}}</span><div><div class="t">{{c.n}}</div><div class="d">{{c.s?'เชื่อมแล้ว · เรียกรถเข้ารับได้':'ยังไม่ได้เชื่อม'}}</div></div></div><div class="row"><el-tag v-if="courier===c.n" type="success" effect="light" round>ใช้เป็นหลัก</el-tag><el-button v-else-if="c.s" size="small" text @click="courier=c.n;note('ตั้ง '+c.n+' เป็นขนส่งหลัก')">ใช้เป็นหลัก</el-button><el-button size="small" :type="c.s?'':'primary'" plain>{{c.s?'ตั้งค่า':'เชื่อม'}}</el-button></div></div></div>
+          <div class="card" v-if="view==='spay'"><div class="ch" style="padding-bottom:14px"><h3>ช่องทางรับเงิน</h3></div>
+            <div class="srow" v-for="p in payMethods" :key="p.t"><div><div class="t">{{p.t}}</div><div class="d">{{p.d}}</div></div><div class="row"><el-switch v-model="p.on" :aria-label="p.t"/><el-button size="small" text>ตั้งค่า</el-button></div></div></div>
+          <div class="card" v-if="view==='smsg'"><div class="ch" style="padding-bottom:6px"><h3>ข้อความอัตโนมัติ</h3><span class="grow"></span><span class="f12 c3">คลิกตัวแปรเพื่อแทรก</span></div>
+            <div class="srow" v-for="t in tpls" :key="t.t" style="grid-template-columns:minmax(0,1fr)"><div class="row"><el-switch v-model="t.on" :aria-label="t.t"/><b class="f13">{{t.t}}</b><span class="f12 c3">· {{t.w}}</span></div><el-input type="textarea" v-model="t.body" :rows="3" maxlength="1000" show-word-limit :aria-label="t.t"/><div class="row wrap" style="gap:6px"><button class="code" style="cursor:pointer" v-for="v in vars" :key="v" @click="t.body+=' ['+v+']'">[{{v}}]</button></div><div class="f12 c3">ตัวอย่าง: <span class="c2">{{preview(t.body)}}</span></div></div></div>
+          <div class="card" v-if="view==='sauto'"><div class="ch" style="padding-bottom:14px"><h3>ตอบกลับอัตโนมัติ</h3><span class="grow"></span><el-button size="small" type="primary" :icon="'Plus'" @click="note('ฟอร์มสร้างกฎยังไม่อยู่ในต้นแบบนี้')">สร้างกฎ</el-button></div>
+            <div class="srow" v-for="a in autos" :key="a.n"><div><div class="t">{{a.n}}</div><div class="d">{{a.p}} · ตอบภายใน {{a.dl}} นาที · ไม่ซ้ำภายใน {{a.fq}} ชม. · {{a.via}}</div></div><el-switch v-model="a.on" :aria-label="a.n"/></div></div>
+          <div class="card" v-if="view==='steam'"><div class="ch" style="padding-bottom:14px"><h3>ทีมงาน</h3><span class="grow"></span><el-button size="small" type="primary" :icon="'Plus'" @click="note('ส่งคำเชิญทางอีเมลแล้ว')">เชิญสมาชิก</el-button></div>
+            <div class="srow" v-for="u in users" :key="u.n"><div class="row"><span class="av">{{u.n[0]}}</span><div><div class="t">{{u.n}}</div><div class="d">{{u.r}} · ใช้งานล่าสุด {{u.l}}</div></div></div><el-select v-model="u.r" size="small" style="width:150px" :aria-label="'บทบาท '+u.n"><el-option v-for="r in ['เจ้าของร้าน','แอดมินแชต','ฝ่ายแพ็กของ']" :key="r" :label="r" :value="r"/></el-select></div></div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ===== หน้าลิงก์ชำระเงิน ===== -->
+    <template v-if="view==='pay'">
+      <div class="ph"><div><h1>หน้าลิงก์ชำระเงิน</h1><p>สิ่งที่ลูกค้าเห็นเมื่อกดลิงก์จากแชต</p></div></div>
+      <div class="phone"><div class="top"><div class="f12" style="opacity:.85">บ้านผ้าฝ้าย</div><div style="font-size:20px;font-weight:700">ออเดอร์ RR-1042</div><div class="f13" style="opacity:.9">{{buy.paid?'ได้รับเงินแล้ว ขอบคุณค่ะ':'ชำระภายใน 21:14:05 ก่อนสินค้าถูกปล่อยให้คนอื่น'}}</div></div>
+        <div class="body">
+          <div class="card sec-b" v-if="buy.paid"><div class="flow" style="padding:4px 0"><div class="st done"><div class="o">✓</div>ชำระแล้ว</div><div class="st cur"><div class="o"></div>กำลังแพ็ก</div><div class="st"><div class="o"></div>จัดส่ง</div></div></div>
+          <div class="card sec-b"><div class="li" v-for="it in byId('RR-1042').items" :key="it[0]"><span class="th" :style="{background:P(it[0]).c}">{{it[0]}}</span><div class="grow f13">{{P(it[0]).name}}<div class="f12 c3">จำนวน {{it[1]}}</div></div><b class="num">{{baht(P(it[0]).price*it[1])}}</b></div><div class="sum"><span>ค่าส่ง</span><span>฿40</span></div><div class="sum big"><span>ยอดชำระ</span><span>{{baht(buyTotal)}}</span></div></div>
+          <div class="card sec-b"><div class="row"><el-icon class="cb"><Location/></el-icon><b class="grow f13">ส่งถึง</b><button class="lk f13" @click="note('วางที่อยู่ทั้งก้อนได้ ระบบแยกให้เอง')">เปลี่ยน</button></div><div class="f13 c2" style="margin-top:6px">คุณมะลิ ใจดี · 081-234-5678<br>99/1 ซ.สุขุมวิท 22 แขวงคลองตัน เขตคลองเตย กรุงเทพฯ 10110</div></div>
+          <div class="card sec-b" v-if="!buy.paid"><b class="f13">จ่ายด้วย</b><div class="opt" v-for="p in payOpts" :key="p[0]" :class="{on:buy.pay===p[0]}" @click="buy.pay=p[0]"><el-icon class="cb" :size="20"><component :is="p[3]"/></el-icon><div class="grow"><div class="f13 b">{{p[1]}}</div><div class="f12 c3">{{p[2]}}</div></div><el-radio :model-value="buy.pay" :value="p[0]" :aria-label="p[1]">&nbsp;</el-radio></div></div>
+        </div>
+        <div class="ft"><el-button v-if="!buy.paid" type="primary" size="large" style="width:100%" @click="buy.paid=true;note('ชำระเงินเรียบร้อย')">จ่าย {{baht(buyTotal)}}</el-button><el-button v-else size="large" style="width:100%" @click="buy.paid=false">ดูหน้าก่อนจ่ายอีกครั้ง</el-button></div></div>
+    </template>
+
+    </main>
+  </div>
+
+  <!-- ===== แผงออเดอร์ ===== -->
+  <el-drawer v-model="od.open" size="min(980px,100%)" :title="od.o?'ออเดอร์ '+od.o.id:'ออเดอร์ใหม่'">
+    <div class="dbody">
+      <div class="dhead" v-if="od.o"><span class="badge dot" :style="{color:SC[od.o.st]}">{{ST[od.o.st]}}</span><span class="badge" :style="{color:payOf(od.o)[1]}">{{payOf(od.o)[0]}}</span><span class="row f13 c2"><span class="ch-ico" :class="od.o.ch">{{CHI[od.o.ch]}}</span>{{SHOP[od.o.ch]}}</span><span class="f13 c3">· {{od.o.src}} · {{od.o.time}}</span></div>
+      <div class="card" v-if="od.o&&od.o.st!=='cancel'"><div class="flow"><div v-for="(f,i) in FLOW" :key="f" class="st" :class="{done:FLOW.indexOf(od.o.st)>i,cur:FLOW.indexOf(od.o.st)===i}"><div class="o">{{FLOW.indexOf(od.o.st)>i?'✓':i+1}}</div>{{ST[f]}}</div></div></div>
+      <div class="d2">
+        <div class="dcol">
+          <div class="card"><div class="sec-h"><h4>สินค้า</h4><span class="grow"></span><span class="f12 c3" v-if="editable">พิมพ์รหัส CF หรือ SKU แล้วกด Enter</span></div>
+            <div class="sec-b"><el-input v-if="editable" v-model="no.kw" :prefix-icon="'Plus'" placeholder="เพิ่มสินค้า เช่น A01" @keyup.enter="addItem" aria-label="เพิ่มสินค้า" style="margin-bottom:6px"/>
+              <div class="li" v-for="(it,i) in dItems" :key="it[0]"><span class="th" :style="{background:P(it[0]).c,width:'40px',height:'40px'}">{{it[0]}}</span><div class="grow"><div class="f13 b">{{P(it[0]).name}}</div><div class="f12 c3">{{P(it[0]).sku}} · {{baht(P(it[0]).price)}}</div></div><el-input-number v-if="editable" v-model="it[1]" :min="1" size="small" style="width:96px" aria-label="จำนวน"/><span v-else class="f13">× {{it[1]}}</span><b class="num" style="width:70px;text-align:right">{{baht(P(it[0]).price*it[1])}}</b><el-button v-if="editable" text size="small" :icon="'Delete'" @click="dItems.splice(i,1)" aria-label="ลบ"/></div>
+              <div v-if="!dItems.length" class="c3 f13" style="padding:16px 0;text-align:center">ยังไม่มีสินค้า</div>
+              <div style="margin-top:10px"><div class="sum"><span>ค่าสินค้า</span><span class="num">{{baht(dSum)}}</span></div><div class="sum"><span>ส่วนลด</span><el-input-number v-model="dDisc" :min="0" size="small" :controls="false" style="width:100px" aria-label="ส่วนลด"/></div><div class="sum"><span>ค่าส่ง</span><el-input-number v-model="dFee" :min="0" size="small" :controls="false" style="width:100px" aria-label="ค่าส่ง"/></div><div class="sum big"><span>ยอดรวม</span><span class="num">{{baht(dSum+dFee-dDisc)}}</span></div></div></div></div>
+          <div class="card" v-if="od.o"><div class="sec-h"><h4>ความเคลื่อนไหว</h4></div><div class="sec-b"><el-timeline style="padding-left:2px"><el-timeline-item v-for="(l,i) in od.o.log" :key="i" :timestamp="l[0]+' · '+l[1]" type="primary">{{l[2]}}</el-timeline-item><el-timeline-item :timestamp="od.o.time+' · ระบบ'">รับออเดอร์จาก{{od.o.src}}</el-timeline-item></el-timeline></div></div>
+        </div>
+        <div class="dcol">
+          <div class="card"><div class="sec-h"><h4>ลูกค้าและที่อยู่</h4></div><div class="sec-b">
+            <el-form label-position="top"><el-form-item label="ชื่อผู้รับ"><el-input v-model="dForm.cust"/></el-form-item><el-form-item label="เบอร์โทร"><el-input v-model="dForm.tel"/></el-form-item><el-form-item label="ที่อยู่"><el-input type="textarea" :rows="3" v-model="dForm.addr" placeholder="วางชื่อ เบอร์ และที่อยู่รวมกันได้"/></el-form-item></el-form>
+            <el-button size="small" :icon="'MagicStick'" @click="parseAddr">แยกชื่อ เบอร์ และรหัสไปรษณีย์ให้</el-button><span class="f12 c3" style="margin-left:8px" v-if="dForm.zip">รหัสไปรษณีย์ {{dForm.zip}}</span></div></div>
+          <div class="card" v-if="od.o"><div class="sec-h"><h4>การชำระเงิน</h4></div><div class="sec-b">
+            <template v-if="od.o.st==='pay'"><div class="f13 c2" style="margin-bottom:10px">{{od.o.slip?'ลูกค้าส่งสลิปแล้ว ตรวจยอดแล้วกดยืนยัน':'ยังไม่ได้รับเงิน · '+od.o.left}}</div><div class="row"><el-button type="primary" size="small" @click="advance(od.o)">ยืนยันว่าได้รับเงิน</el-button><el-button size="small" @click="note('ส่งลิงก์ชำระเงินซ้ำทางแชตแล้ว')">ส่งลิงก์อีกครั้ง</el-button></div></template>
+            <template v-else-if="od.o.st==='cancel'"><span class="c3 f13">ยกเลิกก่อนชำระ</span></template>
+            <template v-else><div class="kv"><span class="c3">วิธีชำระ</span><span>โอนผ่านธนาคาร</span></div><div class="kv"><span class="c3">ได้รับ</span><b>{{baht(total(od.o))}}</b></div></template></div></div>
+          <div class="card" v-else><div class="sec-h"><h4>การชำระเงิน</h4></div><div class="sec-b"><el-radio-group v-model="no.cod"><el-radio :value="false">ส่งลิงก์ให้ลูกค้าจ่าย</el-radio><el-radio :value="true">เก็บเงินปลายทาง</el-radio></el-radio-group></div></div>
+          <div class="card"><div class="sec-h"><h4>การจัดส่ง</h4></div><div class="sec-b"><el-form label-position="top"><el-form-item label="ขนส่ง"><el-select v-model="dForm.ship" style="width:100%"><el-option v-for="c in couriers.filter(c=>c.s)" :key="c.n" :label="c.n" :value="c.n"/></el-select></el-form-item><el-form-item label="เลขพัสดุ" v-if="od.o"><el-input v-model="dForm.track" placeholder="ได้หลังพิมพ์ใบปะหน้า"/></el-form-item></el-form></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="dfoot"><template v-if="od.o"><el-button v-if="od.o.st==='pay'" type="danger" plain @click="cancelOrder(od.o)">ยกเลิกออเดอร์</el-button><el-button v-if="!['pay','cancel'].includes(od.o.st)" @click="note('เปิดหน้าคืนเงิน')">คืนเงิน</el-button><span class="grow"></span><el-button @click="note('บันทึกการแก้ไขแล้ว')">บันทึก</el-button><el-button type="primary" v-if="NEXT[od.o.st]" @click="advance(od.o)">{{NEXT[od.o.st][0]}}</el-button></template>
+      <template v-else><el-button @click="od.open=false">ยกเลิก</el-button><el-button @click="saveOrder(true)">บันทึกแล้วสร้างอีก</el-button><el-button type="primary" @click="saveOrder(false)">สร้างออเดอร์</el-button></template></div>
+  </el-drawer>
+
+  <!-- ===== แผงสินค้า ===== -->
+  <el-drawer v-model="pd.open" size="min(720px,100%)" :title="pd.edit?'แก้ไขสินค้า':'สินค้าใหม่'">
+    <div class="dbody">
+      <div class="card"><div class="sec-h"><h4>ข้อมูลสินค้า</h4><span class="grow"></span><span class="f13 c2">แสดงในร้าน</span><el-switch v-model="pd.on" aria-label="แสดงในร้าน"/></div><div class="sec-b"><el-form label-position="top">
+        <el-form-item label="ชื่อสินค้า" required><el-input v-model="pd.name" placeholder="เช่น เสื้อยืดโอเวอร์ไซซ์ สีขาว"/></el-form-item>
+        <el-form-item label="รายละเอียด"><el-input type="textarea" :rows="3" v-model="pd.desc"/></el-form-item>
+        <el-form-item label="หมวดหมู่"><el-select v-model="pd.cat" style="width:100%" placeholder="เลือกหมวด"><el-option label="เสื้อผ้า" value="เสื้อผ้า"/><el-option label="กระเป๋าและหมวก" value="กระเป๋าและหมวก"/></el-select></el-form-item></el-form></div></div>
+      <div class="card"><div class="sec-h"><h4>รหัสและราคา</h4></div><div class="sec-b"><el-form label-position="top"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0 14px">
+        <el-form-item label="SKU" required><el-input v-model="pd.sku"/></el-form-item><el-form-item label="รหัส CF สำหรับไลฟ์" required><el-input v-model="pd.kw" placeholder="เช่น E01"/></el-form-item><el-form-item label="บาร์โค้ด"><el-input v-model="pd.bar"/></el-form-item>
+        <el-form-item label="ราคาขาย" required><el-input-number v-model="pd.price" :min="0" :controls="false" style="width:100%"/></el-form-item><el-form-item label="ต้นทุน"><el-input-number v-model="pd.cost" :min="0" :controls="false" style="width:100%"/></el-form-item><el-form-item label="สต็อก"><el-input-number v-model="pd.stock" :min="0" style="width:100%"/></el-form-item></div></el-form>
+        <div class="f12 c3" v-if="pd.price&&pd.cost">กำไรต่อชิ้น {{baht(pd.price-pd.cost)}} · มาร์จิ้น {{Math.round((pd.price-pd.cost)/pd.price*100)}}%</div></div></div>
+      <div class="card"><div class="sec-h"><h4>ขายที่ช่องทางไหน</h4></div><div class="sec-b"><el-checkbox-group v-model="pd.chs"><el-checkbox v-for="(n,k) in CH" :key="k" :value="k">{{n}}</el-checkbox></el-checkbox-group></div></div>
+    </div>
+    <div class="dfoot"><el-button v-if="pd.edit" type="danger" text @click="delProd(pd.edit)">ลบสินค้า</el-button><span class="grow"></span><el-button @click="pd.open=false">ยกเลิก</el-button><el-button type="primary" @click="saveProd">บันทึก</el-button></div>
+  </el-drawer>
+
+  <el-dialog v-model="addShop" title="เชื่อมช่องทางใหม่" width="min(760px,94%)"><p class="c2 f13" style="margin:0 0 14px">เลือกแพลตฟอร์มที่ต้องการ ระบบจะพาไปให้สิทธิ์ แล้วดึงสินค้าและออเดอร์มาให้</p>
+    <div class="pgrid"><button v-for="p in platforms" :key="p[0]" :style="{color:p[1]}" @click="addShop=false;note('กำลังพาไปให้สิทธิ์ '+p[0])">{{p[0]}}</button></div></el-dialog>
+
+  <el-dialog v-model="kOpen" class="kd" width="min(620px,94%)" top="12vh" :show-close="false" @opened="()=>$refs.kin&&$refs.kin.focus()">
+    <div class="kin"><el-icon :size="18" class="c3"><Search/></el-icon><input ref="kin" v-model="kq" placeholder="ค้นหาหรือพิมพ์คำสั่ง" aria-label="ค้นหา" @keydown.down.prevent="kI=Math.min(kI+1,kRes.length-1)" @keydown.up.prevent="kI=Math.max(kI-1,0)" @keydown.enter.prevent="kRes[kI]&&kRun(kRes[kI])"><span class="code">Esc</span></div>
+    <div class="kl"><template v-for="(r,i) in kRes" :key="r.g+r.t"><div class="kg" v-if="i===0||kRes[i-1].g!==r.g">{{r.g}}</div><div class="kit" :class="{on:i===kI}" @mouseenter="kI=i" @click="kRun(r)"><el-icon><component :is="r.i"/></el-icon>{{r.t}}<span class="s">{{r.s}}</span></div></template><div v-if="!kRes.length" class="empty" style="padding:28px">ไม่พบสิ่งที่ค้นหา</div></div>
+  </el-dialog>
+</div>
+</el-config-provider>
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.27/vue.global.prod.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/element-plus/2.7.3/index.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/element-plus/2.7.3/locale/th.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script>
+const {createApp,reactive,ref,computed,watch,nextTick,onMounted,toRefs}=Vue;
+const baht=n=>'฿'+Number(n).toLocaleString('en-US');
+const CH={fb:'Facebook',tt:'TikTok Shop',sp:'Shopee',lz:'Lazada',ln:'LINE'};
+const CHI={fb:'f',tt:'T',sp:'S',lz:'L',ln:'L'};
+const CHC={fb:'#1877F2',tt:'#475562',sp:'#EE4D2D',lz:'#3B3FA8',ln:'#06C755'};
+const SHOP={fb:'บ้านผ้าฝ้าย Official',tt:'baanphafai.shop',sp:'บ้านผ้าฝ้าย Shopee',lz:'Baan Phafai',ln:'@baanphafai'};
+const ST={pay:'รอชำระ',ship:'รอจัดส่ง',print:'รอพิมพ์ใบปะหน้า',pickup:'รอขนส่งเข้ารับ',sent:'ส่งแล้ว',cancel:'ยกเลิก'};
+const SC={pay:'var(--s-pay)',ship:'var(--s-ship)',print:'var(--s-print)',pickup:'var(--s-pickup)',sent:'var(--s-sent)',cancel:'var(--s-cancel)'};
+const FLOW=['pay','ship','print','pickup','sent'];
+const NEXT={pay:['รับเงินแล้ว','ship','ยืนยันว่าได้รับเงิน'],ship:['เลือกขนส่ง','print','เลือกขนส่ง'],print:['พิมพ์ใบปะหน้า','pickup','พิมพ์ใบปะหน้า'],pickup:['เรียกรถ','sent','ส่งมอบพัสดุให้ขนส่ง']};
+const WHEN={all:'ทุกวัน',today:'วันนี้',y:'เมื่อวาน',w:'7 วันล่าสุด',m:'30 วันล่าสุด'};
+const SRC=['ไลฟ์','แชต','ร้านค้า','สร้างเอง'];
+const TITLES={home:'หน้าหลัก',live:'ไลฟ์ขาย',orders:'ออเดอร์',chat:'กล่องข้อความ',products:'สินค้า',customers:'ลูกค้า',drop:'ดรอปชิป',reports:'รายงาน',sauth:'ตั้งค่า · ช่องทางขาย',slive:'ตั้งค่า · ไลฟ์และคอมเมนต์',sship:'ตั้งค่า · การจัดส่ง',spay:'ตั้งค่า · รับเงิน',smsg:'ตั้งค่า · ข้อความอัตโนมัติ',sauto:'ตั้งค่า · ตอบกลับอัตโนมัติ',steam:'ตั้งค่า · ทีมงาน',pay:'หน้าลิงก์ชำระเงิน'};
+const SET={sauth:['ช่องทางขาย','Connection'],slive:['ไลฟ์และคอมเมนต์','VideoCamera'],sship:['การจัดส่ง','Van'],spay:['รับเงิน','Wallet'],smsg:['ข้อความอัตโนมัติ','ChatLineSquare'],sauto:['ตอบกลับอัตโนมัติ','MagicStick'],steam:['ทีมงาน','UserFilled']};
+const SAMPLE=[['ฝน','A01 2'],['Ploy','สวยมากค่ะ'],['บอย','B01'],['mind_mm','A02 2'],['หน่อย','ราคาเท่าไหร่คะ C01'],['Nan','C01'],['เอ','D01 3'],['จอย','เพิ่ม A01'],['pim','A02 2'],['วิทย์','ส่งกี่วันครับ'],['แอน','D01'],['Bee','A01']];
+
+const App={template:'#tpl',setup(){
+  const note=m=>ElementPlus.ElMessage({message:m,type:'success',duration:2000,grouping:true});
+  const warn=m=>ElementPlus.ElMessage({message:m,type:'warning',grouping:true});
+  const s=reactive({
+    view:'home',mini:false,navOpen:false,isMobile:false,dark:false,kOpen:false,kq:'',kI:0,
+    sel:[],chatOpen:false,chatF:'u',draft:'',liveOn:true,liveTab:'p',pinned:'A01',dropTab:'p',cf:'ทั้งหมด',rRange:'7',rTab:'ch',chartMode:'amt',addShop:false,courier:'Flash Express',dFee:0,dDisc:0,
+    of:{tab:'pay',q:'',ch:'',when:'all',src:'',urgent:false,slip:false,lv:''},
+    pf:{st:'',q:'',cat:''},
+    od:{open:false,o:null},
+    no:{ch:'fb',kw:'',items:[],cod:false},
+    dForm:{cust:'',tel:'',addr:'',zip:'',ship:'',track:''},
+    pd:{open:false,edit:null,name:'',desc:'',cat:'',sku:'',kw:'',bar:'',price:0,cost:0,stock:0,chs:['fb'],on:true},
+    buy:{pay:'qr',paid:false},
+    rules:{addKw:'เพิ่ม',skip:['ราคา','เท่าไหร่','ส่งกี่วัน','ถาม'],over:'reject',hours:24,edit:true,showOver:false,pick:true,hold:true,first:false},
+    products:[
+      {kw:'A01',sku:'TEE-WH-F',name:'เสื้อยืดโอเวอร์ไซซ์ สีขาว',cat:'เสื้อผ้า',price:199,cost:80,stock:24,chs:['fb','sp','tt'],on:true,c:'#0E9F87'},
+      {kw:'A02',sku:'TEE-BK-F',name:'เสื้อยืดโอเวอร์ไซซ์ สีดำ',cat:'เสื้อผ้า',price:199,cost:80,stock:3,chs:['fb','sp','tt'],on:true,c:'#334155'},
+      {kw:'B01',sku:'JEAN-ST-M',name:'กางเกงยีนส์ขากระบอก M',cat:'เสื้อผ้า',price:390,cost:170,stock:12,chs:['fb','lz'],on:true,c:'#2563EB'},
+      {kw:'C01',sku:'BAG-CV-01',name:'กระเป๋าผ้าแคนวาส',cat:'กระเป๋าและหมวก',price:159,cost:55,stock:0,chs:['fb','sp'],on:true,c:'#B45309'},
+      {kw:'D01',sku:'HAT-CR-01',name:'หมวกบักเก็ต สีครีม',cat:'กระเป๋าและหมวก',price:129,cost:45,stock:40,chs:['fb','tt','ln'],on:true,c:'#A16207'}],
+    orders:[
+      {id:'RR-1042',st:'pay',ch:'fb',src:'ไลฟ์',cust:'คุณมะลิ ใจดี',items:[['A01',2]],time:'2026-11-16 10:42',slip:true,addr:'99/1 ซ.สุขุมวิท 22 แขวงคลองตัน เขตคลองเตย กรุงเทพฯ 10110',tel:'081-234-5678',left:'เหลือเวลา 21 ชม.',log:[]},
+      {id:'RR-1041',st:'pay',ch:'fb',src:'ไลฟ์',cust:'คุณต้น สายลุย',items:[['B01',1],['D01',1]],time:'2026-11-16 10:40',addr:'12 ม.4 ต.สุเทพ อ.เมือง เชียงใหม่ 50200',tel:'089-555-0142',left:'เหลือเวลา 21 ชม.',log:[]},
+      {id:'RR-1039',st:'ship',ch:'ln',src:'แชต',cust:'คุณแพรว',items:[['A02',1]],time:'2026-11-16 09:58',addr:'45/7 ถ.มิตรภาพ อ.เมือง ขอนแก่น 40000',tel:'086-110-2233',log:[]},
+      {id:'SP-88213',st:'ship',ch:'sp',src:'ร้านค้า',cust:'somchai_88',items:[['A01',1],['C01',1]],time:'2026-11-16 09:31',addr:'88 ถ.เพชรเกษม อ.หาดใหญ่ สงขลา 90110',tel:'08x-xxx-4471',warn:'ต้องส่งใน 5 ชม.',log:[]},
+      {id:'TT-55120',st:'print',ch:'tt',src:'ร้านค้า',cust:'nong.fah',items:[['D01',2]],time:'2026-11-16 09:10',addr:'7/2 ถ.สุขุมวิท อ.เมือง ชลบุรี 20000',tel:'08x-xxx-9020',ship:'J&T Express',log:[]},
+      {id:'LZ-30077',st:'print',ch:'lz',src:'ร้านค้า',cust:'Kittipong P.',items:[['B01',1]],time:'2026-11-16 08:47',addr:'201 ถ.นิมมานเหมินท์ อ.เมือง เชียงใหม่ 50200',tel:'08x-xxx-1180',ship:'Flash Express',log:[]},
+      {id:'RR-1035',st:'pickup',ch:'fb',src:'ไลฟ์',cust:'คุณอ้อม',items:[['A01',3]],time:'2026-11-15 21:14',addr:'5 ซ.ลาดพร้าว 71 กรุงเทพฯ 10230',tel:'082-778-9900',ship:'Flash Express',track:'TH0142XK77A',log:[]},
+      {id:'RR-1030',st:'sent',ch:'fb',src:'ไลฟ์',cust:'คุณเก่ง',items:[['D01',1]],time:'2026-11-15 20:51',addr:'31 ถ.ราชดำเนิน อ.เมือง นครศรีธรรมราช 80000',tel:'083-221-4455',ship:'ไปรษณีย์ไทย',track:'EB123456789TH',log:[]},
+      {id:'RR-1028',st:'cancel',ch:'fb',src:'ไลฟ์',cust:'คุณนิด',items:[['C01',1]],time:'2026-11-14 20:20',addr:'-',tel:'-',log:[]}],
+    convs:[
+      {id:1,name:'คุณมะลิ ใจดี',ch:'fb',time:'10:46',unread:true,order:'RR-1042',spend:2380,n:6,tag:'ลูกค้าประจำ',msgs:[['c','CF A01 2 ตัวค่ะ','10:42'],['m','รับออเดอร์แล้วนะคะ 2 ตัว ฿398 กดลิงก์เพื่อยืนยันที่อยู่และจ่ายได้เลยค่ะ','10:42'],['c','โอนแล้วนะคะ แนบสลิปให้แล้วค่ะ','10:46']]},
+      {id:2,name:'คุณต้น สายลุย',ch:'fb',time:'10:41',unread:true,order:'RR-1041',spend:519,n:1,tag:'ลูกค้าใหม่',msgs:[['c','กางเกงไซซ์ M เอวกี่นิ้วครับ','10:41']]},
+      {id:3,name:'คุณแพรว',ch:'ln',time:'10:02',unread:false,order:'RR-1039',spend:1190,n:4,tag:'ลูกค้าประจำ',msgs:[['c','ส่งวันไหนคะ','10:00'],['m','วันนี้ค่ะ ได้เลขพัสดุแล้วจะส่งให้ทันทีนะคะ','10:02']]},
+      {id:4,name:'nong.fah',ch:'tt',time:'09:15',unread:false,order:'TT-55120',spend:258,n:1,tag:'ลูกค้าใหม่',msgs:[['c','เปลี่ยนสีหมวกได้ไหมคะ','09:12'],['m','ได้ค่ะ มีสีครีมกับสีดำ เลือกสีไหนดีคะ','09:15']]}],
+    convId:1,feed:[],liveOrders:[],
+    shops:[{k:'fb',id:'1',name:'บ้านผ้าฝ้าย Official',exp:'12 ก.พ. 2027',scope:'ไลฟ์ คอมเมนต์ แชต'},{k:'tt',id:'2',name:'baanphafai.shop',exp:'12 พ.ค. 2027',scope:'ออเดอร์ สต็อก'},{k:'sp',id:'3',name:'บ้านผ้าฝ้าย Shopee',exp:'19 พ.ย. 2026',scope:'ออเดอร์ สต็อก',warn:true},{k:'lz',id:'4',name:'Baan Phafai',exp:'3 มี.ค. 2027',scope:'ออเดอร์ สต็อก'},{k:'ln',id:'5',name:'@baanphafai',exp:'ไม่หมดอายุ',scope:'แชต'}],
+    couriers:[{n:'Flash Express',s:1},{n:'J&T Express',s:1},{n:'Kerry Express',s:1},{n:'ไปรษณีย์ไทย',s:1},{n:'SPX Express',s:0},{n:'Ninja Van',s:0}],
+    payMethods:[{t:'โอนเข้าบัญชีธนาคาร',d:'กสิกรไทย · xxx-x-x4471-x · ลูกค้าแนบสลิปในลิงก์',on:true},{t:'QR พร้อมเพย์ ตรวจยอดอัตโนมัติ',d:'เงินเข้าแล้วออเดอร์เปลี่ยนสถานะเอง',on:true},{t:'บัตรเครดิต / เดบิต',d:'ผ่านผู้ให้บริการรับชำระ ค่าธรรมเนียมตามสัญญา',on:false},{t:'เก็บเงินปลายทาง',d:'ใช้กับขนส่งที่เชื่อมไว้ ค่าบริการเพิ่ม ฿20',on:true}],
+    tpls:[{t:'รับออเดอร์จากไลฟ์',w:'ส่งทันทีที่คอมเมนต์ถูกจับ',on:true,body:'ได้รับออเดอร์ [รายการ] แล้วค่ะ ยอด [ยอดชำระ] กดจ่ายที่ [ลิงก์ชำระเงิน]'},{t:'เตือนก่อนหมดเวลา',w:'ก่อนปิดออเดอร์ 2 ชั่วโมง',on:true,body:'อีก 2 ชั่วโมงออเดอร์ [เลขออเดอร์] จะถูกปล่อยนะคะ จ่ายได้ที่ [ลิงก์ชำระเงิน]'},{t:'แจ้งเลขพัสดุ',w:'เมื่อขนส่งรับของ',on:true,body:'ส่งของแล้วค่ะ [ขนส่ง] เลขพัสดุ [เลขพัสดุ] ขอบคุณที่อุดหนุนนะคะ'}],
+    autos:[{n:'ทักทายนอกเวลาทำการ',p:'บ้านผ้าฝ้าย Official',dl:0,fq:12,via:'ทางแชต',on:true},{n:'ตอบคำถามราคาใต้โพสต์',p:'บ้านผ้าฝ้าย Official',dl:1,fq:24,via:'ตอบคอมเมนต์และแชต',on:true},{n:'บอกวิธีสั่งซื้อ',p:'@baanphafai',dl:0,fq:6,via:'ทางแชต',on:false}],
+    users:[{n:'กรธนพัฒน์',r:'เจ้าของร้าน',l:'เมื่อสักครู่'},{n:'แอดมินฝน',r:'แอดมินแชต',l:'09:40'},{n:'น้องบีม',r:'ฝ่ายแพ็กของ',l:'เมื่อวาน 18:02'}]
+  });
+  const P=k=>s.products.find(p=>p.kw===k)||{name:k,sku:'',price:0,c:'#83919D'};
+  const total=o=>o.items.reduce((a,[k,q])=>a+P(k).price*q,0);
+  const cnt=t=>s.orders.filter(o=>o.st===t).length;
+  const byId=id=>s.orders.find(o=>o.id===id);
+  const payOf=o=>o.st==='cancel'?['—','var(--tx-3)']:o.st==='pay'?(o.slip?['รอตรวจสลิป','var(--s-pay)']:['ยังไม่จ่าย','var(--red)']):['ชำระแล้ว','var(--s-sent)'];
+  const tabs=['pay','ship','print','pickup','sent','cancel','all'];
+  const filtered=computed(()=>{const q=s.of.q.trim().toLowerCase();return s.orders.filter(o=>(s.of.tab==='all'||o.st===s.of.tab)&&(!s.of.ch||o.ch===s.of.ch)&&(!s.of.src||o.src===s.of.src)&&(!s.of.urgent||o.warn)&&(!s.of.slip||o.slip)&&(!q||[o.id,o.cust,o.tel,o.track||''].join(' ').toLowerCase().includes(q)))});
+  const unread=computed(()=>s.convs.filter(c=>c.unread).length);
+  const conv=computed(()=>s.convs.find(c=>c.id===s.convId));
+  const convList=computed(()=>s.chatF==='u'?s.convs.filter(c=>c.unread||c.id===s.convId):s.convs);
+  const liveSum=computed(()=>s.liveOrders.reduce((a,o)=>a+o.amt,0));
+  const prodList=computed(()=>{const q=s.pf.q.trim().toLowerCase();return s.products.filter(p=>(!q||(p.name+p.sku+p.kw).toLowerCase().includes(q))&&(!s.pf.cat||p.cat===s.pf.cat)&&(s.pf.st===''||(s.pf.st==='low'&&p.stock<5)||(s.pf.st==='off'&&!p.on)))});
+  const custList=computed(()=>{const all=s.convs.map(c=>({name:c.name,ch:c.ch,tag:c.tag,n:c.n,spend:c.spend,tel:byId(c.order).tel,last:byId(c.order).time.slice(5,10)})).concat([{name:'คุณนิด',ch:'fb',tag:'ไม่รับออเดอร์',n:3,spend:0,tel:'081-773-0000',last:'11-14'}]);return s.cf==='ทั้งหมด'?all:all.filter(c=>c.tag===s.cf)});
+  const menu=computed(()=>[{k:'home',t:'หน้าหลัก',i:'House'},{k:'live',t:'ไลฟ์ขาย',i:'VideoCamera',live:true},{k:'orders',t:'ออเดอร์',i:'Tickets',n:cnt('pay')+cnt('ship')+cnt('print')},{k:'chat',t:'กล่องข้อความ',i:'ChatDotRound',n:unread.value},{k:'products',t:'สินค้า',i:'Box',gap:true},{k:'customers',t:'ลูกค้า',i:'User'},{k:'drop',t:'ดรอปชิป',i:'Connection'},{k:'reports',t:'รายงาน',i:'DataAnalysis',gap:true},{k:'sauth',t:'ตั้งค่า',i:'Setting'},{k:'pay',t:'หน้าลิงก์ชำระเงิน',i:'Iphone'}]);
+  const isOn=k=>k==='sauth'?(s.view in SET):s.view===k;
+  const buyTotal=computed(()=>total(byId('RR-1042'))+40);
+  const editable=computed(()=>!s.od.o||s.od.o.st==='pay');
+  const dItems=computed(()=>s.od.o?s.od.o.items:s.no.items);
+  const dSum=computed(()=>dItems.value.reduce((a,[k,q])=>a+P(k).price*q,0));
+  const days=[['จ.',4200,21],['อ.',5100,25],['พ.',3900,19],['พฤ.',6800,33],['ศ.',9200,44],['ส.',12400,58],['อา.',10100,49]];
+  const chartPts=computed(()=>days.map((d,i)=>[70+i*90,180-(s.chartMode==='amt'?d[1]/12000:d[2]/60)*150]));
+  const chartLine=computed(()=>chartPts.value.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join(' '));
+  const chartArea=computed(()=>chartLine.value+' L'+chartPts.value[6][0]+' 180 L70 180 Z');
+  const queue=computed(()=>[['สลิปรอตรวจ',s.orders.filter(o=>o.st==='pay'&&o.slip).length,'pay','', 'var(--s-pay)','Picture'],['รอจัดส่ง',cnt('ship'),'ship','','var(--s-ship)','Van'],['รอพิมพ์ใบปะหน้า',cnt('print'),'print','','var(--s-print)','Printer'],['แชตที่ยังไม่ตอบ',unread.value,'','chat','var(--live)','ChatDotRound'],['สินค้าใกล้หมด',s.products.filter(p=>p.stock<5).length,'','products','var(--red)','Box']]);
+  const kpis=computed(()=>{const act=s.orders.filter(o=>o.st!=='cancel'),paid=act.filter(o=>o.st!=='pay');return [['ยอดขายวันนี้',baht(paid.reduce((a,o)=>a+total(o),0)),'+18%','var(--brand)','Money','M2 24 L14 20 L26 22 L38 14 L50 16 L62 8 L82 5'],['ออเดอร์ใหม่',String(act.length),'+3','var(--s-ship)','Tickets','M2 22 L14 21 L26 17 L38 18 L50 11 L62 12 L82 6'],['อัตราการจ่ายเงิน',Math.round(paid.length/act.length*100)+'%','-4%','var(--s-pay)','PieChart','M2 8 L14 10 L26 9 L38 13 L50 16 L62 15 L82 19'],['รอรับเงิน',baht(s.orders.filter(o=>o.st==='pay').reduce((a,o)=>a+total(o),0)),cnt('pay')+' ใบ','var(--s-print)','Wallet','M2 16 L14 13 L26 17 L38 12 L50 15 L62 11 L82 13']]});
+  const rKpis=[['ยอดขาย','฿51,700','+12%'],['ออเดอร์','127','+9%'],['กำไรขั้นต้น','฿29,800','+15%'],['ยกเลิก','9','-2']];
+  const salesRows=[{k:'fb',n:48,qty:96,amt:21400,cost:8900,gp:12500,ret:1},{k:'tt',n:31,qty:52,amt:11200,cost:4700,gp:6500,ret:0},{k:'sp',n:27,qty:44,amt:9800,cost:4100,gp:5700,ret:2},{k:'lz',n:12,qty:15,amt:5400,cost:2400,gp:3000,ret:0},{k:'ln',n:9,qty:17,amt:3900,cost:1800,gp:2100,ret:0}];
+  const liveRows=[{id:'LV-1114',t:'เสาร์ 14 พ.ย. · 20:00',n:42,paid:35,amt:9870,cancel:4,over:2},{id:'LV-1113',t:'ศุกร์ 13 พ.ย. · 20:00',n:31,paid:27,amt:7410,cancel:2,over:0},{id:'LV-1111',t:'พุธ 11 พ.ย. · 12:00',n:18,paid:13,amt:3120,cancel:3,over:1}];
+  const sumRow=({columns,data})=>columns.map((c,i)=>i===0?'รวม':c.property?data.reduce((a,r)=>a+r[c.property],0).toLocaleString('en-US'):'');
+
+  const go=k=>{s.navOpen=false; if(location.hash==='#'+k) s.view=k; else location.hash=k;};
+  const route=()=>{const k=(location.hash||'#home').slice(1); s.view=TITLES[k]?k:'home'; s.od.open=false; s.sel=[];};
+  const openTab=t=>{s.of.tab=t;go('orders')};
+  const stamp=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return '16 พ.ย. '+z(d.getHours())+':'+z(d.getMinutes())};
+  const advance=o=>{const n=NEXT[o.st]; if(!n) return; if(o.st==='ship') o.ship=s.dForm.ship&&s.od.o===o?s.dForm.ship:s.courier; if(o.st==='pickup'&&!o.track) o.track='TH0'+Math.floor(1e8+Math.random()*9e8); o.log.unshift([stamp(),'กรธนพัฒน์',n[2]]); o.st=n[1]; o.slip=false; o.left=''; note(o.id+' · '+n[2]);};
+  const cancelOrder=o=>ElementPlus.ElMessageBox.confirm('ออเดอร์ '+o.id+' จะถูกยกเลิกและคืนสต็อกทันที','ยกเลิกออเดอร์นี้?',{confirmButtonText:'ยกเลิกออเดอร์',cancelButtonText:'ไม่ใช่ตอนนี้',type:'warning'}).then(()=>{o.st='cancel';o.log.unshift([stamp(),'กรธนพัฒน์','ยกเลิกออเดอร์ และคืนสต็อก']);o.items.forEach(([k,q])=>{P(k).stock+=q});note(o.id+' ยกเลิกแล้ว')}).catch(()=>{});
+  const rowCmd=(c,o)=>c==='open'?openOrder(o):c==='chat'?go('chat'):c==='link'?note('คัดลอกลิงก์ชำระเงินของ '+o.id+' แล้ว'):cancelOrder(o);
+  const otbl=ref(null);
+  const clearSel=()=>{s.sel=[];otbl.value&&otbl.value.clearSelection()};
+  const bulkNext=()=>{s.sel.map(byId).filter(o=>o.st===s.of.tab).forEach(advance);clearSel()};
+  const clearF=()=>Object.assign(s.of,{q:'',ch:'',when:'all',src:'',urgent:false,slip:false,lv:''});
+  const openOrder=o=>{s.od.o=o;s.dFee=0;s.dDisc=0;Object.assign(s.dForm,{cust:o.cust,tel:o.tel,addr:o.addr,zip:(o.addr.match(/\d{5}$/)||[''])[0],ship:o.ship||s.courier,track:o.track||''});s.od.open=true};
+  const openOrderId=id=>openOrder(byId(id));
+  const newOrder=()=>{s.od.o=null;s.dFee=0;s.dDisc=0;Object.assign(s.no,{kw:'',items:[],cod:false});Object.assign(s.dForm,{cust:'',tel:'',addr:'',zip:'',ship:s.courier,track:''});s.od.open=true};
+  const addItem=()=>{const q=s.no.kw.trim().toLowerCase(); if(!q) return; const p=s.products.find(p=>p.kw.toLowerCase()===q||p.sku.toLowerCase()===q)||s.products.find(p=>p.name.toLowerCase().includes(q)); if(!p) return warn('ไม่เจอสินค้า "'+s.no.kw+'"'); const ex=dItems.value.find(i=>i[0]===p.kw); ex?ex[1]++:dItems.value.push([p.kw,1]); s.no.kw='';};
+  const parseAddr=()=>{const a=s.dForm.addr; const z=a.match(/\b\d{5}\b/), t=a.match(/0\d{1,2}[- ]?\d{3}[- ]?\d{4}/), n=a.match(/คุณ\s*\S+(\s+\S+)?/); if(z)s.dForm.zip=z[0]; if(t)s.dForm.tel=t[0]; if(n)s.dForm.cust=n[0].trim(); (z||t||n)?note('แยกข้อมูลแล้ว ตรวจอีกครั้งก่อนบันทึก'):warn('ยังแยกข้อมูลไม่ได้ ลองวางที่อยู่เต็ม');};
+  const saveOrder=again=>{ if(!s.no.items.length) return warn('เพิ่มสินค้าอย่างน้อย 1 รายการ'); if(!s.dForm.cust||!s.dForm.addr) return warn('ใส่ชื่อผู้รับและที่อยู่ก่อน');
+    const id='RR-'+(1043+s.orders.filter(o=>o.src==='สร้างเอง').length); s.orders.unshift({id,st:s.no.cod?'ship':'pay',ch:s.no.ch,src:'สร้างเอง',cust:s.dForm.cust,items:s.no.items.map(i=>[...i]),time:'2026-11-16 '+stamp().slice(-5),addr:s.dForm.addr,tel:s.dForm.tel||'-',left:s.no.cod?'':'เหลือเวลา 24 ชม.',log:[]}); s.no.items.forEach(([k,q])=>{P(k).stock=Math.max(0,P(k).stock-q)}); note('สร้างออเดอร์ '+id+' แล้ว');
+    if(again) newOrder(); else {s.od.open=false;s.of.tab=s.no.cod?'ship':'pay';go('orders');} };
+  const openProd=row=>{Object.assign(s.pd,row?{edit:row,name:row.name,desc:'',cat:row.cat,sku:row.sku,kw:row.kw,bar:'',price:row.price,cost:row.cost,stock:row.stock,chs:[...row.chs],on:row.on}:{edit:null,name:'',desc:'',cat:'',sku:'',kw:'',bar:'',price:0,cost:0,stock:0,chs:['fb'],on:true});s.pd.open=true};
+  const saveProd=()=>{const d=s.pd; if(!d.name||!d.sku||!d.kw||!d.price) return warn('ใส่ชื่อ SKU รหัส CF และราคาให้ครบ'); const kw=d.kw.toUpperCase(); if(s.products.some(p=>p!==d.edit&&(p.kw===kw||p.sku===d.sku))) return ElementPlus.ElMessage({message:'SKU หรือรหัส CF นี้มีสินค้าอื่นใช้แล้ว',type:'error'});
+    const was=!!d.edit; const rec={kw,sku:d.sku,name:d.name,cat:d.cat,price:d.price,cost:d.cost,stock:d.stock,chs:[...d.chs],on:d.on}; if(was) Object.assign(d.edit,rec); else s.products.push({...rec,c:'#0E9F87'}); d.open=false; note(was?'บันทึกแล้ว':'เพิ่มสินค้าแล้ว');};
+  const delProd=row=>ElementPlus.ElMessageBox.confirm(row.name+' จะถูกลบออกจากทุกช่องทาง','ลบสินค้านี้?',{confirmButtonText:'ลบ',cancelButtonText:'ไม่ลบ',type:'warning'}).then(()=>{s.products.splice(s.products.indexOf(row),1);s.pd.open=false;note('ลบแล้ว')}).catch(()=>{});
+  const msgEl=ref(null);
+  const scrollMsgs=()=>nextTick(()=>{if(msgEl.value)msgEl.value.scrollTop=msgEl.value.scrollHeight});
+  const pickConv=c=>{s.convId=c.id;c.unread=false;s.chatOpen=true;scrollMsgs()};
+  const send=()=>{const v=s.draft.trim(); if(!v) return; const d=new Date(),z=n=>String(n).padStart(2,'0'); conv.value.msgs.push(['m',v,z(d.getHours())+':'+z(d.getMinutes())]); s.draft=''; scrollMsgs();};
+  let li=0,cn=0,timer=null;
+  const pushComment=()=>{const [who,text]=SAMPLE[li++%SAMPLE.length]; const skip=s.rules.skip.some(w=>text.includes(w)); const m=!skip&&text.match(/\b([A-Z]\d{2})\b\s*x?(\d+)?/i); let cls='',res='';
+    if(m){const p=s.products.find(x=>x.kw===m[1].toUpperCase()),q=+(m[2]||1); if(p){ if(p.stock>=q){p.stock-=q;s.liveOrders.unshift({who,kw:p.kw,q,amt:p.price*q});cls='hit';res='สร้างออเดอร์ '+p.kw+' × '+q+' · '+baht(p.price*q)+' · ส่งลิงก์ชำระเงินแล้ว';} else {cls='over';res=p.kw+' เหลือ '+p.stock+' ชิ้น ไม่พอสำหรับคำสั่งนี้';} } }
+    else if(skip){cls='skip';res='เป็นคำถาม ไม่ได้สร้างออเดอร์';}
+    s.feed.unshift({n:cn++,who,text,cls,res}); if(s.feed.length>40) s.feed.pop();};
+  const liveLoop=()=>{clearInterval(timer); if(s.view==='live'){ if(!s.feed.length) for(let i=0;i<5;i++)pushComment(); if(s.liveOn) timer=setInterval(pushComment,2500);} };
+  const viewEl=ref(null);
+  watch(()=>[s.view,s.liveOn],()=>{liveLoop(); if(s.view==='chat')scrollMsgs(); nextTick(()=>{if(viewEl.value)viewEl.value.scrollTop=0});});
+  const applyDark=()=>{document.documentElement.classList.toggle('dark',s.dark);try{localStorage.setItem('ruamraan-dark',s.dark?'1':'0')}catch(e){}};
+  const toggleDark=()=>{s.dark=!s.dark;applyDark()};
+  const openK=()=>{s.kq='';s.kI=0;s.kOpen=true};
+  const kRes=computed(()=>{const q=s.kq.trim().toLowerCase();
+    const acts=[{g:'ทำทันที',t:'สร้างออเดอร์ใหม่',s:'',i:'Plus',run:newOrder},{g:'ทำทันที',t:'เพิ่มสินค้า',s:'',i:'Box',run:()=>{go('products');openProd()}},{g:'ทำทันที',t:s.dark?'ใช้ธีมสว่าง':'ใช้ธีมมืด',s:'',i:'Moon',run:toggleDark}];
+    const pages=Object.entries(TITLES).map(([k,t])=>({g:'ไปที่หน้า',t,s:'',i:'Right',run:()=>go(k)}));
+    const ords=s.orders.map(o=>({g:'ออเดอร์',t:o.id+' · '+o.cust,s:ST[o.st],i:'Tickets',run:()=>openOrder(o)}));
+    const prods=s.products.map(p=>({g:'สินค้า',t:p.name,s:p.kw,i:'Box',run:()=>{go('products');openProd(p)}}));
+    const all=[...acts,...pages,...ords,...prods]; return q?all.filter(r=>(r.t+' '+r.s).toLowerCase().includes(q)).slice(0,12):[...acts,...pages.slice(0,6)];});
+  watch(()=>s.kq,()=>{s.kI=0});
+  const kRun=r=>{s.kOpen=false;r.run()};
+  const preview=b=>{const m={'รายการ':'เสื้อยืดโอเวอร์ไซซ์ สีขาว × 2','ยอดชำระ':'฿398','ลิงก์ชำระเงิน':'ruamraan.example/p/RR-1042','เลขออเดอร์':'RR-1042','ขนส่ง':'Flash Express','เลขพัสดุ':'TH0142XK77A','ชื่อลูกค้า':'คุณมะลิ','ชื่อร้าน':'บ้านผ้าฝ้าย'};return b.replace(/\[([^\]]+)\]/g,(a,k)=>m[k]||a)};
+  onMounted(()=>{window.addEventListener('hashchange',route);route();
+    try{const v=localStorage.getItem('ruamraan-dark');s.dark=v?v==='1':matchMedia('(prefers-color-scheme: dark)').matches}catch(e){s.dark=false} applyDark();
+    const mq=matchMedia('(max-width:767px)');const mm=()=>{s.isMobile=mq.matches};mm();mq.addEventListener('change',mm);
+    window.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openK()}}); liveLoop();});
+  return {...toRefs(s),locale:window.ElementPlusLocaleTh,CH,CHI,CHC,SHOP,ST,SC,FLOW,NEXT,WHEN,SRC,SET,baht,P,total,cnt,byId,payOf,tabs,filtered,unread,conv,convList,liveSum,prodList,custList,menu,isOn,buyTotal,editable,dItems,dSum,days,chartPts,chartLine,chartArea,queue,kpis,rKpis,salesRows,liveRows,sumRow,
+    go,openTab,advance,cancelOrder,rowCmd,otbl,clearSel,bulkNext,clearF,openOrder,openOrderId,newOrder,addItem,parseAddr,saveOrder,openProd,saveProd,delProd,msgEl,pickConv,send,viewEl,toggleDark,openK,kRes,kRun,preview,note,
+    notis:[['สิทธิ์ร้าน Shopee จะหมดใน 3 วัน','Warning','var(--s-pay)'],['คุณมะลิ ใจดี ส่งสลิปสำหรับ RR-1042','Picture','var(--brand)'],['A02 เหลือ 3 ชิ้น','Box','var(--red)']],
+    quickReplies:['ขอบคุณที่อุดหนุนค่ะ','ส่งลิงก์ชำระเงินให้แล้วนะคะ','ของจะส่งภายในวันนี้ค่ะ'],
+    buyerRules:[{k:'edit',t:'ให้ลูกค้าแก้จำนวนเอง',d:'ลูกค้าเพิ่มหรือลดจำนวน หรือเอาบางรายการออกได้ก่อนจ่าย'},{k:'showOver',t:'บอกลูกค้าเมื่อของไม่พอ',d:'แสดงรายการที่ร้านยังไม่มีของ พร้อมให้เลือกว่าจะรอหรือไม่'},{k:'pick',t:'ให้ลูกค้าเลือกขนส่ง',d:'แสดงขนส่งที่ร้านเชื่อมไว้ให้เลือกตอนจ่าย'},{k:'hold',t:'ให้ฝากของไว้ส่งรวม',d:'ลูกค้าเก็บสินค้าไว้ก่อน แล้วส่งพร้อมกับรอบถัดไป'},{k:'first',t:'รอให้ลูกค้าทักก่อนจึงส่งลิงก์',d:'ใช้เมื่อแพลตฟอร์มไม่อนุญาตให้ร้านเริ่มแชตเอง'}],
+    vars:['ชื่อลูกค้า','ชื่อร้าน','เลขออเดอร์','รายการ','ยอดชำระ','ลิงก์ชำระเงิน','ขนส่ง','เลขพัสดุ'],
+    platforms:[['TikTok Shop','#111'],['Shopee','#EE4D2D'],['Lazada','#3B3FA8'],['LINE OA','#06C755'],['LINE SHOPPING','#06C755'],['Shopify','#5E8E3E'],['WooCommerce','#7F54B3'],['Instagram','#C13584']],
+    payOpts:[['qr','QR พร้อมเพย์','จ่ายแล้วยืนยันให้อัตโนมัติ','Iphone'],['slip','โอนแล้วแนบสลิป','กสิกรไทย xxx-x-x4471-x','Picture'],['cod','เก็บเงินปลายทาง','+฿20 จ่ายกับพนักงานส่งของ','Van']]};
+}};
+const app=createApp(App);
+app.use(ElementPlus);
+for(const [k,c] of Object.entries(ElementPlusIconsVue)) app.component(k,c);
+app.mount('#app');
+</script>
