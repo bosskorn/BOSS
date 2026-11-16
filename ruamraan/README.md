@@ -12,6 +12,8 @@
 | `app/src.html` | ซอร์สที่ใช้แก้ไข |
 | `app/build.py` | ฝัง stylesheet ของ Element Plus (สว่างและมืด) ลงใน `src.html` แล้วเขียนเป็น `index.html` |
 | `design-skill/` | สกิลออกแบบสำหรับ Claude: `SKILL.md` + เอกสารอ้างอิง 3 ไฟล์ |
+| `docs/facebook-live-oms-mvp.md` | สเปก MVP: ไลฟ์ Facebook → ออเดอร์ (OMS) → จัดส่งแบบเปิดกว้าง สถาปัตยกรรม โครงข้อมูล แผนงาน ความเสี่ยง |
+| `docs/carrier-partner-api.md` | ร่าง API ให้บริษัทขนส่งเชื่อมเข้ามาเป็นพาร์ทเนอร์ |
 
 ## สร้าง `index.html` ใหม่หลังแก้ `src.html`
 
