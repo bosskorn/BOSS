@@ -1,0 +1,597 @@
+<title>รวมร้าน 2027</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>/*__ELEMENT_CSS__*/</style>
+<style>/*__DARK_CSS__*/</style>
+<style>/*__MODERN_CSS__*/</style>
+
+<div id="app"></div>
+
+<script type="text/x-template" id="nav-tpl">
+  <div class="nav">
+    <template v-for="m in menu" :key="m.k">
+      <div class="nsec" v-if="m.sec">{{m.sec}}</div>
+      <button class="nb" :class="{on:m.k===view&&!m.kids||(mini&&m.kids&&m.kids.some(c=>c.k===view)), open:open.includes(m.k)}" :title="m.t" @click="m.kids?(mini?$emit('go',m.kids[0].k):toggle(m.k)):$emit('go',m.k)">
+        <span class="ico"><el-icon><component :is="m.i"/></el-icon></span><span class="lbl">{{m.t}}</span>
+        <span class="cnt" v-if="m.n">{{m.n}}</span><el-icon v-if="m.kids" class="car"><ArrowDown/></el-icon></button>
+      <template v-if="m.kids&&open.includes(m.k)"><button v-for="c in m.kids" :key="c.k" class="nb child" :class="{on:c.k===view}" @click="$emit('go',c.k)">{{c.t}}</button></template>
+    </template>
+  </div>
+</script>
+
+<script type="text/x-template" id="pager-tpl">
+  <div class="pager"><span v-if="sel!==undefined">เลือก {{sel}} รายการ</span><span class="f12">ทั้งหมด {{total}}</span>
+    <el-select model-value="20" size="small" style="width:110px" aria-label="จำนวนต่อหน้า"><el-option label="20/หน้า" value="20"/><el-option label="50/หน้า" value="50"/><el-option label="100/หน้า" value="100"/></el-select>
+    <el-pagination layout="prev, pager, next" :total="total" :page-size="20" small/>
+    <span class="f12">ไปที่</span><el-input model-value="1" size="small" style="width:46px" aria-label="ไปที่หน้า"/></div>
+</script>
+
+<script type="text/x-template" id="empty-tpl">
+  <div class="empty"><el-icon><Box/></el-icon><p>{{text||'ไม่มีข้อมูล'}}</p><slot/></div>
+</script>
+
+<script type="text/x-template" id="app-tpl">
+<el-config-provider :locale="locale">
+<div class="shell">
+  <aside class="rail" :class="{mini:collapsed}">
+    <div class="rail-top"><div class="logo"><i>ร</i><b v-show="!collapsed">รวม<span>ร้าน</span></b></div></div>
+    <el-dropdown trigger="click" style="display:block"><div class="ws"><span class="ava">บ</span><div class="grow"><div class="nm">บ้านผ้าฝ้าย</div><div class="sub">ทดลองใช้ · เหลือ 15 วัน</div></div><el-icon color="#8892A3"><ArrowDown/></el-icon></div>
+      <template #dropdown><el-dropdown-menu><el-dropdown-item>บ้านผ้าฝ้าย</el-dropdown-item><el-dropdown-item>+ เพิ่มร้านใหม่</el-dropdown-item><el-dropdown-item divided>แพ็กเกจและการชำระเงิน</el-dropdown-item></el-dropdown-menu></template></el-dropdown>
+    <side-nav :menu="menu" :view="view" :mini="collapsed" @go="go"/>
+    <div class="rail-foot"><button class="nb" :title="'ติดต่อฝ่ายบริการลูกค้า'"><span class="ico"><el-icon><Headset/></el-icon></span><span class="lbl">ติดต่อฝ่ายบริการลูกค้า</span></button><button class="nb" @click="collapsed=!collapsed" :title="collapsed?'ขยายเมนู':'ย่อเมนู'"><span class="ico"><el-icon><component :is="collapsed?'Expand':'Fold'"/></el-icon></span><span class="lbl">ย่อเมนู</span></button></div>
+  </aside>
+  <el-drawer v-model="navOpen" direction="ltr" size="250px" :with-header="false"><div class="rail" style="width:100%;height:100%;border:0"><div class="rail-top"><div class="logo"><i>ร</i><b>รวม<span>ร้าน</span></b></div></div><side-nav :menu="menu" :view="view" @go="k=>{navOpen=false;go(k)}"/></div></el-drawer>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="ib mob-only" @click="navOpen=true" aria-label="เมนู" v-if="isMobile"><el-icon><Menu/></el-icon></button>
+      <div class="crumb"><span>{{crumbs[view]||'รวมร้าน'}}</span><span v-if="crumbs[view]">/</span><b>{{titles[view]}}</b></div>
+      <button class="cmdk" @click="openK" aria-label="ค้นหาและคำสั่ง"><el-icon><Search/></el-icon><span>ค้นหาออเดอร์ สินค้า หรือหน้า</span><kbd>⌘K</kbd></button>
+      <button class="ib" @click="toggleDark" :aria-label="dark?'โหมดสว่าง':'โหมดมืด'" :title="dark?'โหมดสว่าง':'โหมดมืด'"><el-icon><component :is="dark?'Sunny':'Moon'"/></el-icon></button>
+      <el-popover trigger="click" width="300" placement="bottom-end"><template #reference><button class="ib" aria-label="การแจ้งเตือน"><el-icon><Bell/></el-icon><span class="dot"></span></button></template>
+        <div class="b" style="margin-bottom:8px">การแจ้งเตือน</div><div class="f13" v-for="n in notis" :key="n" style="padding:8px 0;border-top:1px solid var(--line-2)">{{n}}</div></el-popover>
+      <el-dropdown trigger="click"><span class="ava" style="width:34px;height:34px;cursor:pointer">ก</span>
+        <template #dropdown><el-dropdown-menu><el-dropdown-item disabled>กรธนพัฒน์ · ผู้ดูแลระบบ</el-dropdown-item><el-dropdown-item divided>ศูนย์ช่วยเหลือ</el-dropdown-item><el-dropdown-item>ดาวน์โหลดแอป</el-dropdown-item><el-dropdown-item>เปลี่ยนรหัสผ่าน</el-dropdown-item><el-dropdown-item divided>ออกจากระบบ</el-dropdown-item></el-dropdown-menu></template></el-dropdown>
+    </header>
+    <div class="view">
+
+    <!-- ========== หน้าหลัก ========== -->
+    <div class="home" v-if="view==='home'">
+      <div class="hello"><div><h1>สวัสดีตอนเช้า บ้านผ้าฝ้าย</h1><p>วันจันทร์ 16 พ.ย. 2026 · มีงานรอจัดการ {{tasks.reduce((a,t)=>a+t[1],0)}} รายการ</p></div><span class="grow"></span><el-button :icon="'Plus'" @click="newOrder">สร้างออเดอร์</el-button><el-button type="primary" :icon="'VideoCamera'" @click="go('live')">เริ่มไลฟ์</el-button></div>
+      <div class="cards" style="margin:0"><div class="kcard" v-for="k in homeKpis" :key="k[0]"><span class="ci" :style="{background:k[3]}"><el-icon><component :is="k[4]"/></el-icon></span><span class="d" :style="{color:k[2][0]==='-'?'var(--red)':'var(--s-sent)'}">{{k[2]}}</span><div class="k">{{k[0]}}</div><div class="v num">{{k[1]}}</div><svg width="64" height="22" viewBox="0 0 64 22" aria-hidden="true"><polyline :points="k[5]" fill="none" :stroke="k[3]" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+      <div class="hgrid">
+        <div class="card"><div class="chead2"><h3>งานที่ต้องทำ</h3><span class="grow"></span><span class="f12 c-label">อัปเดตเมื่อสักครู่</span></div>
+          <div class="todo"><button v-for="t in tasks" :key="t[0]" @click="t[2]?setTab(t[2]):go(t[3])"><div class="n num" :style="{color:t[1]?'var(--tx)':'var(--tx-3)'}">{{t[1]}}</div><div class="t">{{t[0]}}</div></button></div>
+          <div class="chead2" style="padding-top:4px"><h3>ยอดขาย 7 วัน</h3><span class="grow"></span><button class="lk f13" @click="go('rsales')">ดูรายงาน</button></div>
+          <div class="bars"><div class="bar" v-for="d in days" :key="d[0]"><span class="num">{{(d[1]/1000).toFixed(1)}}k</span><i :style="{height:Math.round(d[1]/12400*100)+'px'}"></i><span>{{d[0]}}</span></div></div></div>
+        <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+          <div class="card"><div class="chead2"><h3>ทางลัด</h3></div><div class="qgrid"><button class="qcard" v-for="q in quick" :key="q[1]" @click="go(q[2])"><el-icon><component :is="q[0]"/></el-icon>{{q[1]}}</button></div></div>
+          <div class="card"><div class="chead2" style="padding-bottom:10px"><h3>ช่องทางที่เชื่อมอยู่</h3><span class="grow"></span><button class="lk f13" @click="go('sauth')">จัดการ</button></div>
+            <div class="chrow" v-for="c in shops" :key="c.id"><span :class="'chn '+c.k"><b>{{CHI[c.k]}}</b></span><span class="grow f13">{{c.name}}</span><span class="pill" :style="{color:c.warn?'var(--s-ship)':'var(--s-sent)'}">{{c.warn?'ใกล้หมดอายุ':'เชื่อมอยู่'}}</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ไลฟ์ ========== -->
+    <template v-if="view==='live'">
+      <div class="toolbar livebar"><b class="c-pri">เลือกเพจ:</b><span class="chn fb"><b>f</b>บ้านผ้าฝ้าย Official</span><el-tag type="danger" size="small" effect="dark">กำลังไลฟ์</el-tag>
+        <span class="c-reg">รอบ LV-1116</span><div class="tb-r"><button class="tb" @click="liveOn=!liveOn"><el-icon><component :is="liveOn?'VideoPause':'VideoPlay'"/></el-icon>{{liveOn?'หยุดคอมเมนต์ตัวอย่าง':'เล่นคอมเมนต์ตัวอย่าง'}}</button><el-button type="primary" size="small" @click="note('สรุปรอบ: '+liveOrders.length+' ออเดอร์ ยอด '+baht(liveSum))">จบไลฟ์และสรุปรอบ</el-button></div></div>
+      <div class="live">
+        <div class="lvideo"><div class="screen"><span class="onair">LIVE</span><div>พื้นที่วิดีโอไลฟ์<div class="f12" style="opacity:.6;margin-top:4px">ภาพจากเพจที่เชื่อมไว้</div></div></div>
+          <div class="lstat"><div><b class="num">214</b><span class="f12 c-label">ผู้ชม</span></div><div><b class="num">{{liveOrders.length}}</b><span class="f12 c-label">ออเดอร์</span></div><div><b class="num">{{baht(liveSum)}}</b><span class="f12 c-label">ยอดขาย</span></div></div></div>
+        <div class="lfeed"><div class="lhead"><b>คอมเมนต์</b><span class="grow"></span><span class="f12 c-label">เขียว = จับเป็นออเดอร์ · แดง = สต็อกไม่พอ · เทา = ข้าม</span></div>
+          <div class="feed"><div v-for="c in feed" :key="c.n" :class="'cm '+c.cls"><span class="who">{{c.who}}</span>{{c.text}}<div class="res" v-if="c.res">{{c.res}} <button class="lk f12" v-if="c.cls==='over'" @click="note('รับเป็นของขายเกินแล้ว')">รับเป็นของขายเกิน</button></div></div></div></div>
+        <div class="lside"><el-tabs v-model="liveTab"><el-tab-pane label="สินค้าในรอบ" name="p">
+            <el-table :data="products" size="small" @row-click="r=>{pinned=r.kw;note('ปักหมุด '+r.name)}" :row-style="r=>r.row.kw===pinned?{background:'#ECF5FF'}:{}"><el-table-column label="คีย์เวิร์ด" width="80"><template #default="{row}"><span class="c-pri b">{{row.kw}}</span></template></el-table-column><el-table-column label="สินค้า" prop="name" min-width="130" show-overflow-tooltip/><el-table-column label="ราคา" width="64" align="right" prop="price"/><el-table-column label="สต็อก" width="64" align="right"><template #default="{row}"><span :class="{'c-red':row.stock<5}">{{row.stock}}</span></template></el-table-column></el-table>
+            <p class="f12 c-label" style="padding:8px 12px">คลิกแถวเพื่อปักหมุดสินค้าที่กำลังขาย</p></el-tab-pane>
+          <el-tab-pane :label="'ออเดอร์รอบนี้ ('+liveOrders.length+')'" name="o">
+            <el-table :data="liveOrders" size="small" empty-text="ไม่มีข้อมูล"><el-table-column label="ผู้ซื้อ" prop="who" min-width="90"/><el-table-column label="สินค้า" width="80"><template #default="{row}">{{row.kw}} × {{row.q}}</template></el-table-column><el-table-column label="ยอด" width="70" align="right"><template #default="{row}">{{baht(row.amt)}}</template></el-table-column><el-table-column label="สถานะ" width="80"><template #default><span style="color:var(--s-pay)">รอชำระ</span></template></el-table-column></el-table></el-tab-pane></el-tabs></div>
+      </div>
+    </template>
+
+    <!-- ========== ออเดอร์ / ออเดอร์ซัพพลายเออร์ ========== -->
+    <template v-if="view==='orders'||view==='dorders'">
+      <div class="filters">
+        <p v-if="view==='dorders'" class="f12 c-label" style="margin:0 0 6px 10px">ออเดอร์ซัพพลายเออร์คือออเดอร์ที่ตัวแทนส่งให้ซัพพลายเออร์จัดส่ง ยอดเงินคือยอดที่ตัวแทนต้องจ่ายให้ซัพพลายเออร์</p>
+        <div class="frow"><div class="flab">ออเดอร์</div><div class="fct"><button v-for="t in tabs" :key="t" class="ob" :class="{on:of.tab===t}" @click="of.tab=t;sel=[]">{{t==='all'?'ทั้งหมด':ST[t]}}<em v-if="['pay','ship','print','pickup'].includes(t)">({{view==='dorders'?0:cnt(t)}})</em></button></div></div>
+        <div class="frow"><div class="flab">ช่องทาง</div><div class="fct"><button class="ob" :class="{on:!of.ch}" @click="of.ch=''">ทั้งหมด</button><button v-for="(n,k) in CH" :key="k" class="ob" :class="{on:of.ch===k}" @click="of.ch=k">{{n}}</button></div></div>
+        <div class="frow in"><div class="flab">ป้าย</div><div class="fct" style="gap:12px"><el-select v-model="of.inTag" multiple collapse-tags placeholder="รวมป้าย" style="width:320px"><el-option v-for="t in tagList" :key="t" :label="t" :value="t"/></el-select><el-select v-model="of.exTag" multiple collapse-tags placeholder="ไม่รวมป้าย" style="width:320px"><el-option v-for="t in tagList" :key="t" :label="t" :value="t"/></el-select></div></div>
+        <div class="frow in"><div class="flab">เวลา</div><div class="fct"><el-radio-group v-model="of.timeType" class="seg"><el-radio-button value="order">เวลาสั่งซื้อ</el-radio-button><el-radio-button value="pay">เวลาชำระ</el-radio-button><el-radio-button value="due">กำหนดส่ง</el-radio-button></el-radio-group>
+          <el-date-picker v-model="of.range" type="datetimerange" start-placeholder="วันเริ่มต้น" end-placeholder="วันสิ้นสุด" style="width:360px;margin-left:-10px"/>
+          <button class="ob" v-for="d in ['เมื่อวาน','วันนี้','7 วัน','15 วัน']" :key="d" :class="{on:of.quick===d}" @click="of.quick=d" style="margin-left:6px">{{d}}</button></div></div>
+        <template v-if="!of.fold">
+        <div class="frow in"><div class="flab">หมดเวลา</div><div class="fct"><el-radio-group v-model="of.toType" class="seg"><el-radio-button value="ship">หมดเวลาจัดส่ง</el-radio-button><el-radio-button value="pick">หมดเวลาเข้ารับ</el-radio-button></el-radio-group><el-select v-model="of.toSel" placeholder="เลือก" style="width:320px;margin-left:-10px"><el-option label="เกินกำหนดแล้ว" value="1"/><el-option label="เหลือไม่ถึง 12 ชม." value="2"/></el-select></div></div>
+        <div class="frow in"><div class="flab">รอบไลฟ์</div><div class="fct"><el-select v-model="of.lv" placeholder="เลือกรอบไลฟ์" style="width:320px"><el-option label="LV-1116 · 16/11 20:00" value="a"/><el-option label="LV-1114 · 14/11 20:00" value="b"/></el-select></div></div>
+        <div class="frow"><div class="flab">ใกล้หมดเวลา</div><div class="fct"><button class="ob" :class="{on:!of.due}" @click="of.due=''">ทั้งหมด</button><button class="ob" v-for="d in ['0–6 ชม.','6–12 ชม.','12–24 ชม.']" :key="d" :class="{on:of.due===d}" @click="of.due=d">{{d}}</button></div></div>
+        <div class="frow"><div class="flab">ข้อความ | หมายเหตุ</div><div class="fct"><button class="ob" v-for="d in ['ทั้งหมด','มีข้อความลูกค้า','ไม่มีข้อความ','มีหมายเหตุ','ไม่มีหมายเหตุ']" :key="d" :class="{on:(of.msg||'ทั้งหมด')===d}" @click="of.msg=d">{{d}}</button></div></div>
+        <div class="frow"><div class="flab">สถานะขนส่ง</div><div class="fct"><button class="ob on">ทั้งหมด</button><button class="ob">รอเข้ารับ<em>(0)</em></button><button class="ob">กำลังเข้ารับ<em>(0)</em></button><button class="ob">เข้ารับไม่สำเร็จ<em>(0)</em></button></div></div>
+        </template>
+        <div class="frow in"><div class="flab">ค้นหาด่วน</div><div class="fct" style="gap:0"><el-radio-group v-model="of.qType" class="seg"><el-radio-button value="id">เลขออเดอร์</el-radio-button><el-radio-button value="track">เลขพัสดุ</el-radio-button><el-radio-button value="cust">ชื่อผู้ซื้อ</el-radio-button></el-radio-group><el-input v-model="of.q" placeholder="กรอกแล้วกด Enter เพื่อค้นหา" style="width:320px" clearable/></div></div>
+        <div class="frow in"><div class="flab"></div><div class="fct"><el-button class="btn-search" :icon="'Search'">ค้นหา</el-button><el-button class="btn-reset" @click="resetFilter">ล้าง</el-button><button class="save-flt" @click="note('บันทึกเงื่อนไขกรองแล้ว')"><el-icon><Setting/></el-icon>บันทึกเงื่อนไขกรอง</button><button class="save-flt" @click="of.fold=!of.fold">{{of.fold?'แสดงตัวกรองทั้งหมด':'ย่อตัวกรอง'}}</button></div></div>
+      </div>
+      <div class="toolbar">
+        <el-dropdown trigger="click" @command="toolCmd"><button class="tb pri"><el-icon><Plus/></el-icon>เพิ่มออเดอร์<el-icon><ArrowDown/></el-icon></button><template #dropdown><el-dropdown-menu><el-dropdown-item command="new">สร้างออเดอร์</el-dropdown-item><el-dropdown-item command="sync">ดาวน์โหลดออเดอร์จากร้าน</el-dropdown-item><el-dropdown-item command="sync">ดาวน์โหลดออเดอร์ที่เลือก</el-dropdown-item><el-dropdown-item command="sync">ซิงก์ออเดอร์ตามเงื่อนไข</el-dropdown-item></el-dropdown-menu></template></el-dropdown>
+        <el-dropdown trigger="click" v-if="bulk" @command="bulkNext"><button class="tb"><el-icon><CircleCheck/></el-icon>{{bulk[0]}}<el-icon><ArrowDown/></el-icon></button><template #dropdown><el-dropdown-menu><el-dropdown-item command="sel">ทำกับรายการที่เลือก</el-dropdown-item><el-dropdown-item command="all">ทำทั้งหมดในแท็บนี้</el-dropdown-item></el-dropdown-menu></template></el-dropdown>
+        <button class="tb" @click="note('ทำเครื่องหมายผิดปกติแล้ว')"><el-icon><DocumentDelete/></el-icon>ทำเครื่องหมายผิดปกติ</button>
+        <el-dropdown trigger="click" @command="c=>note(c)"><button class="tb"><el-icon><DocumentChecked/></el-icon>ยกเลิกเครื่องหมาย<el-icon><ArrowDown/></el-icon></button><template #dropdown><el-dropdown-menu><el-dropdown-item command="ยกเลิกเครื่องหมายแล้ว">ยกเลิกเครื่องหมายผิดปกติ</el-dropdown-item></el-dropdown-menu></template></el-dropdown>
+        <el-dropdown trigger="click" @command="bulkCancel"><button class="tb">ยกเลิก<el-icon><ArrowDown/></el-icon></button><template #dropdown><el-dropdown-menu><el-dropdown-item command="c">ยกเลิกออเดอร์ที่เลือก</el-dropdown-item></el-dropdown-menu></template></el-dropdown>
+        <el-dropdown trigger="click" @command="c=>note(c)"><button class="tb"><el-icon><Collection/></el-icon>แก้ไขแบบกลุ่ม<el-icon><ArrowDown/></el-icon></button><template #dropdown><el-dropdown-menu><el-dropdown-item command="ตั้งคลังแล้ว">ตั้งคลังสินค้า</el-dropdown-item><el-dropdown-item command="ติดป้ายแล้ว">ติดป้าย</el-dropdown-item><el-dropdown-item command="เปลี่ยนเป็นเก็บปลายทางแล้ว">เปลี่ยนเป็นเก็บปลายทาง</el-dropdown-item><el-dropdown-item command="ยกเลิกเก็บปลายทางแล้ว">ยกเลิกเก็บปลายทาง</el-dropdown-item><el-dropdown-item command="คำนวณออเดอร์ใหม่แล้ว">คำนวณออเดอร์ใหม่</el-dropdown-item><el-dropdown-item command="แยกสินค้าชุดแล้ว">แยกสินค้าชุด</el-dropdown-item></el-dropdown-menu></template></el-dropdown>
+        <div class="tb-r"><span class="f12">เลือก {{sel.length}} รายการ</span><span class="f12">ทั้งหมด {{filtered.length}}</span><el-icon title="เรียงลำดับ"><Sort/></el-icon><el-icon title="ส่งออก"><Download/></el-icon></div>
+      </div>
+      <div class="tbl"><div class="otbl">
+        <div class="ohead"><div class="chk"><el-checkbox :model-value="sel.length>0&&sel.length===filtered.length" :indeterminate="sel.length>0&&sel.length<filtered.length" @change="v=>sel=v?filtered.map(o=>o.id):[]" aria-label="เลือกทั้งหมด"/></div>
+          <div class="ocols"><div>ข้อมูลสินค้า<el-icon style="margin-left:auto;color:#999"><Setting/></el-icon></div><div>ยอดเงิน</div><div>ป้าย / หมายเหตุ</div><div>คลัง</div><div>ข้อมูลขนส่ง</div><div>ข้อมูลจัดส่ง</div><div>เวลา</div></div></div>
+        <div class="ord" v-for="o in filtered" :key="o.id" :class="{sel:sel.includes(o.id)}"><div class="bar" :style="{background:SC[o.st]}"></div><div class="rt">
+          <div class="ostrip"><div class="chk"><el-checkbox :model-value="sel.includes(o.id)" @change="v=>toggleSel(o.id,v)" :aria-label="'เลือก '+o.id"/></div>
+            <span class="ostat pill" :style="{color:SC[o.st]}">{{ST[o.st]}}</span>
+            <span class="otime num">{{o.time}}</span>
+            <span class="oid" @click="openOrder(o)"><el-icon :size="15"><Document/></el-icon>{{o.id}}</span>
+            <span class="obuyer" @click="go('chat')"><el-icon :size="15"><ChatDotRound/></el-icon>{{o.cust}}</span>
+            <span :class="'chn '+o.ch"><b>{{CHI[o.ch]}}</b></span><span class="oshop">{{SHOP[o.ch]}}</span><span class="oop">กรธนพัฒน์</span>
+            <span class="oacts"><template v-for="(a,i) in rowActs(o)" :key="a[0]"><span v-if="i"> - </span><button @click="a[1]()">{{a[0]}}</button></template></span></div>
+          <div class="obody"><div class="sp"></div><div class="ocols">
+            <div><div class="oitem" v-for="it in o.items" :key="it[0]"><span class="pic l">{{it[0]}}</span><div class="grow"><div class="nm"><span class="grow">{{P(it[0]).name}}</span><b class="num">{{P(it[0]).price}}</b><span class="qty">× {{it[1]}}</span></div><div><span class="sku">{{P(it[0]).sku}}</span><span class="c-label">{{P(it[0]).spu}}</span></div></div></div></div>
+            <div class="num"><b>{{baht(total(o))}}</b><div>ค่าส่ง : {{o.fee||0}}</div><div>ส่วนลด : 0</div></div>
+            <div><el-tag size="small">{{o.tag}}</el-tag><div v-if="o.slip&&o.st==='pay'"><el-tag size="small" type="warning" style="margin-top:4px">รอตรวจสลิป</el-tag></div><div v-if="o.warn" style="color:var(--qty)"><el-icon style="color:var(--warn);vertical-align:-2px"><Warning/></el-icon> {{o.warn}}</div></div>
+            <div>บ้านผ้าฝ้าย-คลังหลัก</div>
+            <div>{{o.ship||'ส่งถึงบ้าน'}}<div v-if="o.track" class="c-pri">{{o.track}}</div></div>
+            <div>{{o.cust}} {{o.addr}}</div>
+            <div class="c-reg">สั่งซื้อ: {{o.time}}<div v-if="o.left" style="color:var(--s-ship)">{{o.left}}</div></div>
+          </div></div></div></div>
+        <empty-box v-if="!filtered.length"/>
+      </div></div>
+      <pager :total="filtered.length" :sel="sel.length"/>
+      <div class="bulkbar" v-if="sel.length"><span>เลือกแล้ว {{sel.length}} รายการ</span><el-button v-if="bulk" type="primary" size="small" @click="bulkNext('sel')">{{bulk[0]}}</el-button><el-button size="small" @click="note('ติดป้ายแล้ว')">ติดป้าย</el-button><el-button size="small" @click="bulkCancel">ยกเลิกออเดอร์</el-button><el-button size="small" text style="color:#fff" @click="sel=[]">ล้าง</el-button></div>
+    </template>
+
+    <!-- ========== รายชื่อตัวแทน ========== -->
+    <template v-if="view==='dlist'">
+      <empty-box text="ยังไม่ได้ผูกซัพพลายเออร์ กรุณาผูกซัพพลายเออร์ก่อน" style="padding-top:160px"><el-button type="primary" style="margin-top:14px" :icon="'Plus'" @click="note('เปิดหน้าผูกซัพพลายเออร์')">ผูกซัพพลายเออร์</el-button></empty-box>
+    </template>
+
+    <!-- ========== สินค้า ========== -->
+    <template v-if="view==='products'">
+      <div class="filters">
+        <div class="frow"><div class="flab">หมวดสินค้า</div><div class="fct"><button class="ob on">ทั้งหมด</button><button class="ob">เสื้อผ้า</button><button class="ob">กระเป๋าและหมวก</button><button class="ob">ยังไม่ตั้ง</button></div></div>
+        <div class="frow"><div class="flab">สถานะ</div><div class="fct"><button class="ob" :class="{on:pf.st===''}" @click="pf.st=''">ทั้งหมด</button><button class="ob" :class="{on:pf.st==='on'}" @click="pf.st='on'">เปิดใช้</button><button class="ob" :class="{on:pf.st==='off'}" @click="pf.st='off'">ปิดใช้</button></div></div>
+        <div class="frow in"><div class="flab">ค้นหาด่วน</div><div class="fct" style="gap:0"><el-radio-group v-model="pf.qt" class="seg"><el-radio-button value="spu">รหัสสินค้า</el-radio-button><el-radio-button value="sku">SKU</el-radio-button><el-radio-button value="name">ชื่อสินค้า</el-radio-button></el-radio-group><el-input v-model="pf.q" style="width:320px" clearable aria-label="คำค้น"/></div></div>
+      </div>
+      <div class="toolbar"><button class="tb pri" @click="openProd()"><el-icon><Plus/></el-icon>เพิ่มสินค้า</button><button class="tb" @click="note('เลือกสินค้าก่อนลบ')"><el-icon><Delete/></el-icon>ลบหลายรายการ</button><div class="tb-r"><el-icon title="ส่งออก"><Document/></el-icon><el-icon title="ตั้งค่าคอลัมน์"><User/></el-icon></div></div>
+      <div class="tbl"><el-table :data="prodList" height="100%" empty-text="ไม่มีข้อมูล">
+        <el-table-column type="index" width="40"/><el-table-column type="selection" width="30"/>
+        <el-table-column label="รูปภาพ" width="100"><template #default="{row}"><span class="pic">{{row.kw}}</span></template></el-table-column>
+        <el-table-column label="ชื่อสินค้า" prop="name" min-width="300"/>
+        <el-table-column label="รหัสสินค้า (SPU)" prop="spu" width="180"/>
+        <el-table-column label="SKU" prop="sku" width="180"/>
+        <el-table-column label="คีย์เวิร์ด" prop="kw" width="100"/>
+        <el-table-column label="สต็อก" width="110"><template #default="{row}"><span :class="{'c-red':row.stock===0}">{{row.stock}}</span></template></el-table-column>
+        <el-table-column label="ราคาขาย" prop="price" width="110"/>
+        <el-table-column label="จัดการ" width="110" fixed="right"><template #default="{row}"><el-icon class="ibtn" title="แก้ไข" @click="openProd(row)"><EditPen/></el-icon><el-icon class="ibtn" title="ลบ" @click="delProd(row)"><Delete/></el-icon></template></el-table-column>
+      </el-table></div>
+      <pager :total="prodList.length" :sel="0"/>
+    </template>
+
+    <!-- ========== แชต ========== -->
+    <div class="chat" v-if="view==='chat'" :class="{open:chatOpen}">
+      <div class="clist"><div class="cflt"><div class="row" style="gap:6px"><el-select v-model="chatQt" size="small" style="width:96px" aria-label="ประเภทค้นหา"><el-option label="ชื่อผู้ซื้อ" value="n"/><el-option label="เลขออเดอร์" value="o"/></el-select><el-input size="small" :prefix-icon="'Search'" aria-label="ค้นหา"/><el-icon style="color:#999;cursor:pointer"><MoreFilled/></el-icon></div>
+          <div class="lnks"><span>บัญชี</span><span>ประเภทข้อความ</span><span>ป้าย</span></div></div>
+        <div style="overflow:auto;flex:1"><div class="citem" v-for="c in convs" :key="c.id" :class="{on:c.id===conv.id}" @click="pickConv(c)"><span class="ava">{{c.name.replace('คุณ','')[0]}}</span><div class="grow"><div class="row"><span class="nm grow">{{c.name}}</span><span class="tm">{{c.time}}</span></div><div class="row"><span class="lm grow">{{c.msgs[c.msgs.length-1][1]}}</span><span class="dot" v-if="c.unread"></span></div></div></div></div></div>
+      <div class="cview"><div class="chead"><el-button text size="small" @click="chatOpen=false" v-if="chatOpen" class="mob-back" aria-label="กลับ">‹</el-button><b>{{conv.name}}</b><span :class="'chn '+conv.ch"><b>{{CHI[conv.ch]}}</b>{{CH[conv.ch]}}</span><span class="grow"></span><button class="lk" @click="openOrderId(conv.order)">ออเดอร์ {{conv.order}}</button></div>
+        <div class="msgs" ref="msgs">
+          <div class="mrow" v-for="(m,i) in conv.msgs" :key="i" :class="{me:m[0]==='m'}"><span class="tm">{{m[2]}}</span><div class="mbox">{{m[1]}}</div></div>
+          <div class="mrow" v-if="conv.id===1&&orderById('RR-1042').st==='pay'"><span class="tm">ระบบ</span><div class="sys"><div style="color:#E07062;padding-bottom:6px">พบสลิปในแชต</div><div style="font-size:15px;color:#101010">ยอด ฿398 ตรงกับออเดอร์ RR-1042</div><el-button type="primary" size="small" style="margin-top:8px" @click="advance(orderById('RR-1042'))">ยืนยันชำระ</el-button></div></div></div>
+        <form class="compose" @submit.prevent="send"><div class="tools"><button type="button" class="lk f13" @click="draft='ขอบคุณที่อุดหนุนนะคะ'">ข้อความด่วน</button><button type="button" class="lk f13" @click="draft='ลิงก์ออเดอร์ค่ะ ruamraan.example/o/'+conv.order">ส่งลิงก์ออเดอร์</button><button type="button" class="lk f13" @click="draft='กสิกรไทย xxx-x-x4471-x บจก.บ้านผ้าฝ้าย'">ส่งเลขบัญชี</button></div>
+          <div class="row"><el-input v-model="draft" placeholder="พิมพ์ข้อความ กด Enter เพื่อส่ง" aria-label="ข้อความ"/><el-button type="primary" native-type="submit">ส่ง</el-button></div></form></div>
+      <div class="cinfo"><div class="sec row"><span class="ava">{{conv.name.replace('คุณ','')[0]}}</span><div><div class="b">{{conv.name}}</div><el-tag size="small">{{conv.tag}}</el-tag></div></div>
+        <div class="sec"><div class="row f13"><span class="c-label grow">ยอดซื้อสะสม</span>{{baht(conv.spend)}}</div><div class="row f13" style="margin-top:8px"><span class="c-label grow">จำนวนออเดอร์</span>{{conv.n}}</div><div class="row f13" style="margin-top:8px"><span class="c-label grow">ยอดคงเหลือ</span>0</div></div>
+        <div class="sec"><div class="f13 b" style="margin-bottom:8px">ออเดอร์ล่าสุด</div><div class="row f12"><span class="c-pri grow" style="cursor:pointer" @click="openOrderId(conv.order)">{{conv.order}}</span><span :style="{color:SC[orderById(conv.order).st]}">{{ST[orderById(conv.order).st]}}</span></div></div>
+        <div class="sec"><el-button style="width:100%" @click="newOrder">สร้างออเดอร์</el-button></div></div>
+    </div>
+
+    <!-- ========== ลูกค้า ========== -->
+    <template v-if="view==='customers'">
+      <div class="filters">
+        <div class="frow"><div class="flab">ป้าย</div><div class="fct"><button class="ob on">ทั้งหมด</button><button class="ob">ยังไม่ตั้ง</button><button class="ob">บัญชีดำ</button></div></div>
+        <div class="frow in"><div class="flab">จำนวนออเดอร์</div><div class="fct"><el-input style="width:320px" placeholder="-" aria-label="จำนวนออเดอร์"/></div></div>
+        <div class="frow in"><div class="flab">ยอดชำระสะสม</div><div class="fct"><el-input style="width:320px" placeholder="-" aria-label="ยอดชำระสะสม"/></div></div>
+        <div class="frow in"><div class="flab">เวลาสั่งซื้อ</div><div class="fct"><el-date-picker type="daterange" start-placeholder="วันเริ่มต้น" end-placeholder="วันสิ้นสุด" style="width:360px"/><button class="ob" v-for="d in ['เมื่อวาน','7 วัน','15 วัน','30 วัน','ครึ่งปี']" :key="d">{{d}}</button></div></div>
+        <div class="frow in"><div class="flab">ค้นหาด่วน</div><div class="fct" style="gap:0"><el-radio-group v-model="custQt" class="seg"><el-radio-button value="n">ชื่อลูกค้า</el-radio-button><el-radio-button value="p">เบอร์โทร</el-radio-button></el-radio-group><el-input style="width:320px" aria-label="คำค้น"/></div></div>
+      </div>
+      <div class="toolbar"><button class="tb" @click="note('ฟอร์มเพิ่มลูกค้ายังไม่อยู่ในต้นแบบ')"><el-icon><CirclePlus/></el-icon>เพิ่ม</button><button class="tb">ติดป้ายแบบกลุ่ม<el-icon><ArrowDown/></el-icon></button><button class="tb">สถิติเติมเงิน-คืนเงิน</button><div class="tb-r"><el-icon><User/></el-icon><el-icon><Refresh/></el-icon><el-icon><Download/></el-icon></div></div>
+      <div class="tbl"><el-table :data="customers" height="100%">
+        <el-table-column type="index" width="40"/><el-table-column type="selection" width="30"/>
+        <el-table-column label="ข้อมูลลูกค้า" min-width="330"><template #default="{row}"><div class="row" style="gap:14px"><span><el-icon style="vertical-align:-2px"><User/></el-icon> {{row.name}}</span><span :class="'chn '+row.ch"><b>{{CHI[row.ch]}}</b>{{SHOP[row.ch]}}</span></div><div class="row" style="gap:14px;margin-top:6px"><span><el-icon style="vertical-align:-2px"><Phone/></el-icon> {{row.tel}}</span><span class="c-label"><el-icon style="vertical-align:-2px"><Message/></el-icon> --</span></div></template></el-table-column>
+        <el-table-column label="ป้าย" min-width="200"><template #default="{row}"><el-tag size="small" :type="row.tag==='บัญชีดำ'?'danger':'primary'">{{row.tag}}</el-tag></template></el-table-column>
+        <el-table-column label="ออเดอร์" prop="n" width="90"/><el-table-column label="ยอดซื้อสะสม" width="120"><template #default="{row}">{{baht(row.spend)}}</template></el-table-column><el-table-column label="ยอดคงเหลือ" width="110"><template #default>0</template></el-table-column>
+        <el-table-column label="จัดการ" width="300"><template #default><button class="lk">แก้ไข</button><button class="lk">ส่งข้อความ</button><button class="lk">เติมเงิน</button><div style="margin-top:6px"><button class="lk">จัดการที่อยู่</button></div></template></el-table-column>
+      </el-table></div>
+      <pager :total="customers.length" :sel="0"/>
+    </template>
+
+    <!-- ========== รายงานยอดขาย ========== -->
+    <template v-if="view==='rsales'">
+      <div class="filters">
+        <div class="frow"><div class="flab">ร้าน</div><div class="fct"><button class="ob on">ทั้งหมด</button><button class="ob" v-for="(n,k) in SHOP" :key="k">{{n}}</button></div></div>
+        <div class="frow"><div class="flab">สถานะออเดอร์</div><div class="fct"><button class="ob">ทั้งหมด</button><button class="ob">รอชำระ</button><button class="ob on">รอดำเนินการ</button><button class="ob on">ผิดปกติ</button><button class="ob on">รอจัดส่ง</button><button class="ob on">รอซัพพลายเออร์ | คลังจัดส่ง</button><button class="ob on">ส่งแล้ว</button><button class="ob">ยกเลิกแล้ว</button><button class="ob">ถูกรวม</button><button class="ob">ถูกแยก</button></div></div>
+        <div class="frow"><div class="flab"></div><div class="fct"><el-checkbox v-model="exSub">ไม่รวมออเดอร์ย่อย</el-checkbox></div></div>
+        <div class="frow"><div class="flab">เก็บปลายทาง</div><div class="fct"><button class="ob on">ทั้งหมด</button><button class="ob">ใช่</button><button class="ob">ไม่ใช่</button></div></div>
+        <div class="frow in"><div class="flab">เวลา</div><div class="fct"><el-radio-group v-model="rTime" class="seg"><el-radio-button value="o">เวลาสั่งซื้อ</el-radio-button><el-radio-button value="p">เวลาชำระ</el-radio-button><el-radio-button value="s">เวลาจัดส่ง</el-radio-button><el-radio-button value="r">เวลารับของ</el-radio-button></el-radio-group><el-date-picker type="datetimerange" start-placeholder="วันเริ่มต้น" end-placeholder="วันสิ้นสุด" style="width:360px;margin-left:-10px"/><button class="ob" v-for="d in ['เมื่อวาน','7 วันล่าสุด','15 วันล่าสุด','30 วันล่าสุด']" :key="d" :class="{on:d==='7 วันล่าสุด'}">{{d}}</button></div></div>
+        <div class="frow in"><div class="flab"></div><div class="fct"><el-button class="btn-search-l" :icon="'Search'">ค้นหา</el-button><el-button class="btn-reset">ล้าง</el-button><button class="save-flt"><el-icon><Setting/></el-icon>บันทึกเงื่อนไขกรอง</button></div></div>
+      </div>
+      <div class="ptitle">ภาพรวม</div>
+      <div class="cards"><div class="kcard" v-for="k in kpis" :key="k[0]"><span class="ci" :style="{background:k[2]}"><el-icon><component :is="k[3]"/></el-icon></span><div class="k">{{k[0]}}</div><div class="v num">{{k[1]}}</div></div></div>
+      <div class="ptitle">รายละเอียดข้อมูล</div>
+      <div class="toolbar"><el-radio-group v-model="rTab" class="solid"><el-radio-button value="shop">ตามร้าน</el-radio-button><el-radio-button value="day">ตามวัน</el-radio-button><el-radio-button value="month">ตามเดือน</el-radio-button></el-radio-group><div class="tb-r"><el-icon title="ส่งออก"><Download/></el-icon><el-icon title="ตั้งค่าคอลัมน์"><Grid/></el-icon></div></div>
+      <div class="tbl" style="flex:none;border-bottom:1px solid var(--line);border-radius:0 0 var(--r) var(--r)"><el-table :data="salesRows" show-summary :summary-method="salesSum" style="min-width:1300px">
+        <el-table-column label="ร้าน" min-width="170"><template #default="{row}">{{SHOP[row.k]}}</template></el-table-column><el-table-column label="แพลตฟอร์ม" width="110"><template #default="{row}">{{CH[row.k]}}</template></el-table-column>
+        <el-table-column label="จำนวนออเดอร์" prop="n" width="120" sortable align="right"/><el-table-column label="จำนวนสินค้าที่ขาย" prop="qty" width="140" sortable align="right"/><el-table-column label="ยอดขาย" prop="amt" width="110" sortable align="right"/><el-table-column label="ส่วนลดร้าน" prop="disc" width="110" sortable align="right"/><el-table-column label="ค่าส่ง" prop="fee" width="90" sortable align="right"/><el-table-column label="ต้นทุนสินค้า" prop="cost" width="120" sortable align="right"/><el-table-column label="กำไรขั้นต้น" prop="gp" width="120" sortable align="right"/><el-table-column label="อัตรากำไรขั้นต้น" width="130" align="right"><template #default="{row}">{{(row.gp/row.amt*100).toFixed(2)}}%</template></el-table-column><el-table-column label="จำนวนคืนสินค้า" prop="ret" width="130" align="right"/>
+      </el-table></div>
+    </template>
+
+    <!-- ========== สถิติรอบไลฟ์ ========== -->
+    <template v-if="view==='rlive'">
+      <el-tabs v-model="rlTab" class="tabs-card"><el-tab-pane label="สถิติ MOP" name="a"/><el-tab-pane label="สถิติรอบไลฟ์" name="b"/></el-tabs>
+      <div class="filters"><div class="frow in"><div class="flab">เวลา</div><div class="fct"><el-date-picker type="daterange" start-placeholder="วันเริ่มต้น" end-placeholder="วันสิ้นสุด" style="width:360px"/><button class="ob" v-for="d in ['เมื่อวาน','วันนี้','7 วัน','15 วัน']" :key="d" :class="{on:d==='7 วัน'}">{{d}}</button><el-button class="btn-search-l" :icon="'Search'">ค้นหา</el-button><el-button class="btn-reset">ล้าง</el-button></div></div></div>
+      <div class="toolbar"><b>รอบไลฟ์ทั้งหมด</b><div class="tb-r"><el-icon title="ส่งออก"><Download/></el-icon></div></div>
+      <div class="tbl"><el-table :data="liveRows" height="100%" show-summary :summary-method="liveSumRow">
+        <el-table-column label="รหัสงานจับออเดอร์" prop="id" width="150"/><el-table-column label="ชื่อบัญชี" width="170"><template #default>บ้านผ้าฝ้าย Official</template></el-table-column><el-table-column label="ออเดอร์" prop="n" width="80" align="right"/><el-table-column label="ชำระแล้ว" prop="paid" width="90" align="right"/><el-table-column label="ยังไม่ชำระ" width="100" align="right"><template #default="{row}">{{row.n-row.paid-row.cancel}}</template></el-table-column><el-table-column label="ส่งแล้ว" prop="sent" width="80" align="right"/><el-table-column label="อัตราชำระ" width="100" align="right"><template #default="{row}">{{Math.round(row.paid/row.n*100)}}%</template></el-table-column><el-table-column label="ยอดออเดอร์รวม" prop="tot" width="130" align="right"/><el-table-column label="ยอดที่ชำระแล้ว" prop="amt" width="130" align="right"/><el-table-column label="ยกเลิก" prop="cancel" width="80" align="right"/><el-table-column label="ขายเกิน" prop="over" width="80" align="right"/><el-table-column label="เวลาสร้าง" prop="t" width="150"/><el-table-column label="จัดการ" width="100" fixed="right"><template #default><button class="lk" @click="go('orders')">ดูออเดอร์</button></template></el-table-column>
+      </el-table></div>
+      <pager :total="liveRows.length"/>
+    </template>
+
+    <!-- ========== เชื่อมบัญชี ========== -->
+    <template v-if="view==='sauth'">
+      <el-tabs v-model="authTab" class="tabs-card"><el-tab-pane label="แพลตฟอร์มโซเชียล" name="s"/><el-tab-pane label="แพลตฟอร์มอีคอมเมิร์ซ" name="e"/></el-tabs>
+      <div class="authlist" v-if="authTab==='s'"><div class="authrow" v-for="a in socials" :key="a.t"><span class="lg" :style="{background:a.c}">{{a.i}}</span><div class="grow"><div>{{a.t}}</div><div class="f12 c-label" style="margin-top:4px">{{a.d}}</div></div><button class="lk">ประวัติการดำเนินการ</button><el-button :type="a.on?'':'primary'" size="small" @click="note(a.on?'เชื่อมต่ออยู่แล้ว':'เปิดหน้าขอสิทธิ์ของแพลตฟอร์ม')">{{a.on?'เชื่อมต่อแล้ว':'เชื่อมต่อ'}}</el-button></div></div>
+      <template v-else>
+        <div class="filters" style="padding:10px;display:flex;gap:8px;flex-wrap:wrap"><el-input placeholder="รหัสร้าน" style="width:160px"/><el-input placeholder="ชื่อร้าน" style="width:160px"/><el-select v-model="authPf" placeholder="เลือกแพลตฟอร์ม" style="width:160px"><el-option v-for="(n,k) in CH" :key="k" :label="n" :value="k"/></el-select><el-select v-model="authEn" style="width:160px"><el-option label="เปิดใช้" value="on"/><el-option label="ปิดใช้" value="off"/></el-select><el-button class="btn-search-l">ค้นหา</el-button><el-button>ล้าง</el-button></div>
+        <div class="toolbar"><button class="tb" @click="addShop=true">เพิ่มร้าน</button><button class="tb dis">ลบ<el-icon><ArrowDown/></el-icon></button><button class="tb dis">วิธีจัดส่ง<el-icon><ArrowDown/></el-icon></button><button class="tb">จับคู่คลังแพลตฟอร์ม</button><button class="tb">ดูประวัติ</button><button class="tb">สร้างกลุ่มร้าน</button></div>
+        <div class="tbl"><el-table :data="shops" height="100%"><el-table-column type="index" width="40"/><el-table-column label="แพลตฟอร์ม" width="140"><template #default="{row}"><span :class="'chn '+row.k"><b>{{CHI[row.k]}}</b><span class="c-pri f12">{{CH[row.k]}}</span></span></template></el-table-column><el-table-column label="รหัสร้าน" prop="id" width="130"/><el-table-column label="ชื่อร้าน" prop="name" min-width="200"/><el-table-column label="สิทธิ์ร้านค้า" width="140"><template #default="{row}"><span :style="{color:row.warn?'var(--s-ship)':''}">{{row.auth}}</span></template></el-table-column><el-table-column label="สิทธิ์หมดอายุ" prop="exp" width="150"/><el-table-column label="สิทธิ์ข้อความ" prop="msg" width="130"/><el-table-column label="ร้านหลัก" width="90"><template #default="{row}">{{row.main?'ใช่':''}}</template></el-table-column><el-table-column label="เปิดใช้" width="80"><template #default><el-switch :model-value="true" size="small" aria-label="เปิดใช้"/></template></el-table-column><el-table-column label="จัดการ" width="200" fixed="right"><template #default="{row}"><button class="lk">{{row.warn?'ต่ออายุสิทธิ์':'ขอสิทธิ์ใหม่'}}</button><button class="lk">ตั้งค่าขนส่ง</button></template></el-table-column></el-table></div>
+        <pager :total="shops.length"/>
+      </template>
+    </template>
+
+    <!-- ========== ตั้งค่าไลฟ์ ========== -->
+    <div class="grey" v-if="view==='slive'"><div class="panel">
+      <div class="setr" v-for="r in ruleList" :key="r.k"><div><div class="t">{{r.t}}</div><div class="rm" v-if="r.d">{{r.d}}</div></div><div class="ctl"><el-switch v-model="rules[r.k]" :aria-label="r.t" @change="note('บันทึกแล้ว')"/></div></div>
+      <div class="setr"><div><div class="t">ค่าเริ่มต้น</div><div class="rm">ตั้งวิธีจัดส่งเริ่มต้นล่วงหน้า</div></div><div class="ctl"><el-select v-model="courier" style="width:180px" placeholder="กรุณาเลือก"><el-option v-for="c in couriers.filter(c=>c.s)" :key="c.n" :label="c.n" :value="c.n"/></el-select></div></div>
+      <div class="setr"><div><div class="t">เวลายกเลิกออเดอร์อัตโนมัติ</div><div class="rm">หน่วย: ชั่วโมง</div></div><div class="ctl"><el-input v-model="rules.hours" size="small" style="width:186px" placeholder="กรอกแล้วบันทึก"/></div></div>
+      <div class="setr"><div><div class="t">คีย์เวิร์ดสั่งเพิ่ม (คั่นด้วย ,)</div><div class="rm">ถ้าลูกค้าต้องการซื้อสินค้าเดิมเพิ่ม ให้พิมพ์คีย์เวิร์ดนี้ในคอมเมนต์ถัดไปพร้อมรหัส เช่น เพิ่ม A01</div></div><div class="ctl"><el-input v-model="rules.addKw" size="small" style="width:186px" placeholder="กรอกแล้วบันทึก"/></div></div>
+      <div class="setr"><div><div class="t">คีย์เวิร์ดที่ให้ข้ามเมื่อจับออเดอร์ (คั่นด้วย ,)</div><div class="rm">ถ้าข้อความมีคำเหล่านี้ จะไม่ถูกจับเป็นออเดอร์</div></div><div class="ctl"><el-input v-model="rules.skipText" size="small" style="width:186px" placeholder="กรอกแล้วบันทึก"/></div></div>
+      <div class="setr"><div><div class="t">คีย์เวิร์ดสั่งทุก SKU ใน SPU</div><div class="rm">ถ้าลูกค้าพิมพ์รหัส SPU พร้อมคีย์เวิร์ดนี้ จะสั่งทุก SKU ใน SPU นั้นจำนวนเท่ากัน</div></div><div class="ctl"><el-input v-model="rules.allKw" size="small" style="width:186px" placeholder="กรอกแล้วบันทึก"/></div></div>
+      <div class="sett">ข้อมูลผู้ส่ง</div>
+      <el-form label-width="200px" style="padding:12px 0"><el-form-item label="ที่อยู่" required><el-input v-model="sender.area"/></el-form-item><el-form-item label="ที่อยู่เต็ม" required><el-input type="textarea" :rows="3" v-model="sender.addr"/></el-form-item><el-form-item label="ผู้ติดต่อ" required><div style="width:100%"><el-radio-group v-model="sender.mode" style="float:right"><el-radio value="c">กำหนดเอง</el-radio><el-radio value="p">ใช้ชื่อเพจ</el-radio></el-radio-group><el-input v-model="sender.name"/></div></el-form-item><el-form-item label="เบอร์โทร" required><el-input v-model="sender.tel"/></el-form-item><el-form-item label="รหัสไปรษณีย์" required><el-input v-model="sender.zip"/></el-form-item></el-form>
+      <div class="setr"><div><div class="t">เปิดให้ลูกค้าเลือกขนส่งเอง</div><div class="rm">เมื่อเปิด ลูกค้าเลือกบริษัทขนส่งได้ในลิงก์ออเดอร์</div></div><div class="ctl"><el-switch v-model="rules.pick" aria-label="เลือกขนส่งเอง"/></div></div>
+      <div class="setr"><div><div class="t">ลิงก์ออเดอร์ให้ลูกค้าฝากของได้</div><div class="rm">เมื่อเปิด ลูกค้าเลือกฝากสินค้าไว้ก่อนได้</div></div><div class="ctl"><el-switch v-model="rules.hold" aria-label="ฝากของ"/></div></div>
+      <div class="setr"><div><div class="t">เปิดโหมดส่งข้อความปลอดภัย</div><div class="rm">เมื่อเปิด ลูกค้า Facebook และ Instagram ต้องส่งข้อความหาร้านก่อน ร้านจึงส่งข้อความได้</div></div><div class="ctl"><el-switch v-model="rules.safe" aria-label="ส่งข้อความปลอดภัย"/></div></div>
+    </div></div>
+
+    <!-- ========== ขนส่ง ========== -->
+    <template v-if="view==='sship'">
+      <el-tabs v-model="shipTab" class="tabs-card"><el-tab-pane label="ขนส่ง" name="a"/><el-tab-pane label="กฎค่าส่ง" name="b"/></el-tabs>
+      <div class="toolbar" v-if="shipTab==='a'"><b>บริษัทขนส่ง</b><span class="c-label f12">เชื่อมแล้ว {{couriers.filter(c=>c.s).length}} จาก {{couriers.length}}</span></div>
+      <div class="tbl" v-if="shipTab==='a'" style="border-bottom:1px solid var(--line);border-radius:0 0 var(--r) var(--r)"><el-table :data="couriers" height="100%"><el-table-column type="index" width="40"/><el-table-column label="บริษัทขนส่ง" prop="n" min-width="200"/><el-table-column label="สถานะ" width="140"><template #default="{row}"><span :style="{color:row.s?'var(--s-sent)':row.f===-1?'var(--qty)':'var(--label)'}">{{row.s?'เชื่อมแล้ว':row.f===-1?'ล้มเหลว':'ยังไม่ได้เชื่อม'}}</span></template></el-table-column><el-table-column label="ค่าเริ่มต้น" width="120"><template #default="{row}"><el-radio v-model="courier" :value="row.n" :disabled="!row.s" :aria-label="'ตั้ง '+row.n+' เป็นค่าเริ่มต้น'">&nbsp;</el-radio></template></el-table-column><el-table-column label="รองรับเก็บปลายทาง" width="150"><template #default="{row}">{{row.s?'รองรับ':'-'}}</template></el-table-column><el-table-column label="จัดการ" width="140" fixed="right"><template #default="{row}"><button class="lk">{{row.s?'ตั้งค่า':'เชื่อมต่อ'}}</button></template></el-table-column></el-table></div>
+      <template v-else><div class="toolbar"><button class="tb" @click="note('เพิ่มกฎค่าส่ง')"><el-icon><CirclePlus/></el-icon>เพิ่มกฎค่าส่ง</button></div>
+        <div class="tbl" style="border-bottom:1px solid var(--line);border-radius:0 0 var(--r) var(--r)"><el-table :data="feeRules" height="100%"><el-table-column type="index" width="40"/><el-table-column label="ชื่อกฎ" prop="n" min-width="180"/><el-table-column label="ขนส่ง" prop="c" width="160"/><el-table-column label="เงื่อนไข" prop="w" min-width="220"/><el-table-column label="ค่าส่ง" prop="f" width="100" align="right"/><el-table-column label="เปิดใช้" width="80"><template #default><el-switch :model-value="true" size="small" aria-label="เปิดใช้"/></template></el-table-column><el-table-column label="จัดการ" width="120" fixed="right"><template #default><button class="lk">แก้ไข</button><button class="lk">ลบ</button></template></el-table-column></el-table></div></template>
+    </template>
+
+    <!-- ========== วิธีชำระเงิน ========== -->
+    <div class="grey" v-if="view==='spay'"><div class="panel" style="width:900px">
+      <div class="setr"><div style="min-width:0"><div class="t b">โอนเงิน</div><div class="rm">รองรับธนาคารส่วนใหญ่ในประเทศไทย</div><el-table :data="banks" size="small" style="margin-top:10px;width:600px;max-width:100%"><el-table-column label="ธนาคาร" prop="b" width="140"/><el-table-column label="เลขบัญชี" prop="no" width="160"/><el-table-column label="ชื่อบัญชี" prop="nm"/></el-table></div><div class="ctl"><button class="lk" @click="note('เพิ่มบัญชี')">เพิ่มบัญชี</button></div></div>
+      <div class="setr"><div style="min-width:0"><div class="t b">ชำระออนไลน์</div><el-table :data="gateways" size="small" style="margin-top:10px;width:600px;max-width:100%"><el-table-column label="ผู้ให้บริการ" prop="n" width="160"/><el-table-column label="สถานะ" width="140"><template #default="{row}"><span :class="row.on?'':'c-label'">{{row.on?'เปิดใช้':'ยังไม่ได้ตั้งค่า'}}</span></template></el-table-column><el-table-column label="ค่าธรรมเนียม" prop="fee"/></el-table></div><div class="ctl"><button class="lk" @click="note('เพิ่มบัญชี')">เพิ่มบัญชี</button></div></div>
+      <div class="setr"><div><div class="t b">ชำระด้วยบัตรเครดิต</div><div class="rm">ผ่านผู้ให้บริการรับชำระ</div></div><div class="ctl"><button class="lk">เพิ่มบัญชี</button></div></div>
+      <div class="setr"><div><div class="t b">เก็บเงินปลายทาง (COD)</div><div class="rm">เมื่อเปิด ลูกค้าเลือกเก็บเงินปลายทางได้ตอนสั่งซื้อ</div></div><div class="ctl"><el-switch v-model="cod" aria-label="เก็บเงินปลายทาง"/></div></div>
+      <div class="setr"><div><div class="t b">ชำระด่วน</div></div><div class="ctl"><button class="lk">ดูประวัติ</button></div></div>
+    </div></div>
+
+    <!-- ========== เทมเพลตข้อความ ========== -->
+    <div class="card" style="padding:16px 20px" v-if="view==='smsg'">
+      <div v-for="t in tpls" :key="t.t" style="margin-bottom:26px"><div class="row" style="margin-bottom:12px"><el-switch v-model="t.on" :aria-label="t.t"/><span>{{t.t}}</span></div>
+        <el-input type="textarea" v-model="t.body" :rows="4" maxlength="2000" show-word-limit :aria-label="t.t"/>
+        <div style="margin-top:8px;line-height:22px"><button class="lk" v-for="v in vars" :key="v" style="margin:0 10px 0 0" @click="t.body+='{'+v+'}'">{{'{'+v+'}'}}</button></div></div>
+      <div style="text-align:right;padding:10px 0"><el-button type="primary" @click="note('บันทึกแล้ว')">ยืนยัน</el-button></div>
+    </div>
+
+    <!-- ========== ตอบอัตโนมัติ ========== -->
+    <template v-if="view==='sauto'">
+      <div class="toolbar"><button class="tb" @click="note('ฟอร์มเพิ่มกฎยังไม่อยู่ในต้นแบบ')"><el-icon><CirclePlus/></el-icon>เพิ่ม</button></div>
+      <div class="tbl"><el-table :data="autos" height="100%"><el-table-column type="index" width="40"/><el-table-column label="ชื่อกฎ" prop="n" min-width="170"/><el-table-column label="เพจ" prop="p" min-width="170"/><el-table-column label="ลำดับความสำคัญ" prop="pr" width="130"/><el-table-column label="หน่วงเวลาตอบ (นาที)" prop="dl" width="160"/><el-table-column label="ความถี่ตอบ (ชั่วโมง)" prop="fq" width="160"/><el-table-column label="สถานะ" width="90"><template #default="{row}"><el-switch v-model="row.on" size="small" :aria-label="row.n"/></template></el-table-column><el-table-column label="ผู้สร้าง" width="110"><template #default>กรธนพัฒน์</template></el-table-column><el-table-column label="เวลาแก้ไข" prop="t" width="150"/><el-table-column label="จัดการ" width="120" fixed="right"><template #default><button class="lk">แก้ไข</button><button class="lk">ลบ</button></template></el-table-column></el-table></div>
+      <pager :total="autos.length"/>
+    </template>
+
+    <!-- ========== ผู้ใช้งาน ========== -->
+    <template v-if="view==='susers'">
+      <div class="filters" style="padding:10px;display:flex;gap:8px;flex-wrap:wrap"><el-input placeholder="ชื่อผู้ใช้" style="width:160px"/><el-input placeholder="บัญชีเข้าใช้" style="width:160px"/><el-button class="btn-search-l">ค้นหา</el-button><el-button>ล้าง</el-button></div>
+      <div class="toolbar"><button class="tb" @click="userDlg=true">เพิ่มผู้ใช้</button><button class="tb">ดูประวัติ</button><button class="tb">ส่งออก</button></div>
+      <div class="tbl"><el-table :data="users" height="100%"><el-table-column type="index" width="40"/><el-table-column label="รหัสผู้ใช้" prop="id" width="110"/><el-table-column label="ชื่อผู้ใช้" prop="n" width="140"/><el-table-column label="บัญชีเข้าใช้" prop="a" min-width="170"/><el-table-column label="กลุ่มผู้ใช้" prop="r" width="140"/><el-table-column label="อีเมล" prop="m" width="170"/><el-table-column label="เบอร์โทร" prop="tel" width="130"/><el-table-column label="เปิดใช้" width="80"><template #default><el-switch :model-value="true" size="small" aria-label="เปิดใช้"/></template></el-table-column><el-table-column label="เข้าใช้ล่าสุด" prop="l" width="160"/><el-table-column label="จัดการ" width="150" fixed="right"><template #default><button class="lk">แก้ไข</button><button class="lk">รีเซ็ตรหัสผ่าน</button></template></el-table-column></el-table></div>
+      <pager :total="users.length"/>
+    </template>
+
+    <!-- ========== ลิงก์ออเดอร์ ========== -->
+    <div class="buyer" v-if="view==='buyer'">
+      <p class="c-reg f13" style="text-align:center;margin:0 0 14px">หน้าที่ลูกค้าเห็นเมื่อเปิดลิงก์ออเดอร์จากแชต (มือถือ)</p>
+      <div class="phone"><div class="ph"><div class="f12" style="opacity:.85">บ้านผ้าฝ้าย Official</div><div class="b" style="font-size:16px">ออเดอร์ RR-1042</div><div class="f12">{{buy.paid?'ชำระเงินแล้ว ขอบคุณค่ะ':'กรุณาชำระภายใน 21:14:05'}}</div></div>
+        <div class="pb">
+          <div class="card" v-if="buy.paid"><el-steps :active="1" align-center finish-status="success"><el-step title="ชำระแล้ว"/><el-step title="กำลังแพ็ก"/><el-step title="จัดส่งแล้ว"/></el-steps></div>
+          <div class="card"><div class="oitem" v-for="it in orderById('RR-1042').items" :key="it[0]"><span class="pic l">{{it[0]}}</span><div class="grow"><div>{{P(it[0]).name}}</div><div class="row f12"><span class="c-label grow">{{P(it[0]).sku}}</span><span style="color:var(--qty)">× {{it[1]}}</span></div></div><b>{{baht(P(it[0]).price*it[1])}}</b></div>
+            <div class="row f13" style="margin-top:10px"><span class="grow c-reg">ค่าส่ง</span>฿40</div><div class="row" style="margin-top:4px"><span class="grow">ยอดรวม</span><b class="c-red" style="font-size:16px">{{baht(buyTotal)}}</b></div></div>
+          <div class="card"><div class="row"><b class="grow">ที่อยู่จัดส่ง</b><button class="lk f13" @click="note('วางที่อยู่ทั้งก้อน ระบบแยกจังหวัดและรหัสไปรษณีย์ให้')">แก้ไข</button></div><div class="f13" style="margin-top:6px">คุณมะลิ ใจดี 0812345678<br>99/1 ซ.สุขุมวิท 22 แขวงคลองตัน เขตคลองเตย กรุงเทพฯ 10110</div></div>
+          <div class="card" v-if="!buy.paid"><b>วิธีชำระเงิน</b><div class="opt" :class="{on:buy.pay===p[0]}" v-for="p in payOpts" :key="p[0]" @click="buy.pay=p[0]"><el-radio :model-value="buy.pay" :value="p[0]" style="margin:0" :aria-label="p[1]">&nbsp;</el-radio><div class="grow"><div>{{p[1]}}</div><div class="f12 c-label">{{p[2]}}</div></div></div></div>
+        </div>
+        <div class="pf"><el-button v-if="!buy.paid" type="primary" style="width:100%" size="large" @click="buy.paid=true;note('ชำระเงินสำเร็จ')">ยืนยันและชำระ {{baht(buyTotal)}}</el-button><el-button v-else style="width:100%" @click="buy.paid=false">กลับไปหน้าก่อนชำระ</el-button></div></div>
+    </div>
+
+    </div>
+  </div>
+
+  <!-- ===== ลิ้นชักออเดอร์ (ดู/สร้าง) ===== -->
+  <el-drawer v-model="od.open" :title="od.o?'แก้ไขออเดอร์':'สร้างออเดอร์'" size="min(1100px,100%)">
+    <div class="dtabs"><div class="dtab" :class="{on:od.tab==='a'}" @click="od.tab='a'"><el-icon><Tickets/></el-icon>ออเดอร์</div><div class="dtab" :class="{on:od.tab==='b'}" @click="od.tab='b'" v-if="od.o"><el-icon><Coin/></el-icon>การชำระเงิน</div><div class="dtab" :class="{on:od.tab==='c'}" @click="od.tab='c'" v-if="od.o"><el-icon><CopyDocument/></el-icon>ประวัติ</div></div>
+    <div class="dscroll">
+      <template v-if="od.tab==='a'">
+        <div class="dsec">ข้อมูลพื้นฐาน</div>
+        <div class="igrid" v-if="od.o">
+          <div class="lb">เลขออเดอร์</div><div class="lb">สถานะ</div><div class="lb">ผู้ดูแล</div>
+          <div>{{od.o.id}}</div><div :style="{color:SC[od.o.st]}">{{ST[od.o.st]}}</div><div>กรธนพัฒน์</div>
+          <div class="lb">ร้าน</div><div class="lb">คลัง</div><div class="lb">ป้าย</div>
+          <div>{{SHOP[od.o.ch]}}</div><div>บ้านผ้าฝ้าย-คลังหลัก</div><div class="c-pri">{{od.o.tag}} <el-icon style="vertical-align:-2px;margin-left:8px"><EditPen/></el-icon></div>
+          <div class="lb">ข้อความลูกค้า</div><div class="lb">หมายเหตุร้าน</div><div class="lb">กำหนดส่ง</div>
+          <div>-</div><div><el-input type="textarea" :rows="1" v-model="od.o.remark" aria-label="หมายเหตุร้าน"/></div><div><el-date-picker type="datetime" placeholder="เลือกเวลา" size="small" style="width:220px;max-width:100%"/></div>
+        </div>
+        <div class="igrid" v-else>
+          <div class="lb">ร้าน</div><div class="lb">คลัง</div><div class="lb">ผู้ดูแล</div>
+          <div><el-select v-model="no.ch" size="small" style="width:100%"><el-option v-for="(n,k) in SHOP" :key="k" :label="n" :value="k"/></el-select></div><div><el-select v-model="no.wh" size="small" style="width:100%"><el-option label="บ้านผ้าฝ้าย-คลังหลัก" value="w"/></el-select></div><div>กรธนพัฒน์</div>
+          <div class="lb">ข้อความลูกค้า</div><div class="lb">หมายเหตุร้าน</div><div class="lb">กำหนดส่ง</div>
+          <div><el-input v-model="no.msg" size="small" aria-label="ข้อความลูกค้า"/></div><div><el-input v-model="no.remark" size="small" aria-label="หมายเหตุร้าน"/></div><div><el-date-picker type="datetime" placeholder="เลือกเวลา" size="small" style="width:220px;max-width:100%"/></div>
+        </div>
+        <div class="dsec">ข้อมูลสินค้า <el-icon style="vertical-align:-2px"><ArrowDown/></el-icon></div>
+        <template v-if="!od.o||od.o.st==='pay'">
+          <div class="dlinks"><button @click="addItem"><el-icon><CirclePlus/></el-icon>เพิ่มสินค้า</button><button @click="note('เพิ่มของแถม')"><el-icon><CirclePlus/></el-icon>เพิ่มของแถม</button><button @click="note('นำเข้าสินค้าจากไฟล์')"><el-icon><Upload/></el-icon>นำเข้าสินค้า</button></div>
+          <div style="padding:0 10px 8px 25px"><el-input v-model="no.kw" size="small" style="width:160px" placeholder="รหัสสินค้า คีย์เวิร์ด" @keyup.enter="addItem"/> <span class="f12 c-label">ลอง A01, B01, D01 แล้วกด Enter</span></div>
+        </template>
+        <el-table :data="dItems" style="margin:0 10px;width:calc(100% - 20px)" empty-text="ยังไม่ได้เพิ่มสินค้า">
+          <el-table-column type="index" width="40"/><el-table-column label="ข้อมูลสินค้า" min-width="300"><template #default="{row}"><div class="row"><span class="pic">{{row[0]}}</span><div><div>{{P(row[0]).name}} {{P(row[0]).spu}}</div><div>{{P(row[0]).sku}}</div></div></div></template></el-table-column>
+          <el-table-column label="จำนวน" width="110"><template #default="{row}"><el-input-number v-model="row[1]" :min="1" size="small" controls-position="right" style="width:84px" :disabled="!!od.o&&od.o.st!=='pay'"/></template></el-table-column>
+          <el-table-column label="ราคาต่อหน่วย" width="110"><template #default="{row}">{{P(row[0]).price}}</template></el-table-column><el-table-column label="ราคาเดิม" width="100"><template #default="{row}">{{P(row[0]).tag}}</template></el-table-column><el-table-column label="ยอดเงิน" width="100"><template #default="{row}">{{P(row[0]).price*row[1]}}</template></el-table-column>
+          <el-table-column width="70"><template #default="{$index}"><el-icon class="ibtn" title="ลบ" @click="dItems.splice($index,1)" v-if="!od.o||od.o.st==='pay'"><Delete/></el-icon></template></el-table-column>
+        </el-table>
+        <div class="totals">
+          <span class="l">จำนวนสินค้า {{dItems.reduce((a,i)=>a+i[1],0)}} &nbsp;&nbsp;&nbsp; ราคาสินค้า</span><span>{{dSum}}</span>
+          <span class="l"><el-button type="primary" size="small">คำนวณใหม่</el-button> -ส่วนลด:</span><span><el-input-number v-model="dDisc" size="small" :controls="false" style="width:140px"/></span>
+          <span class="l"><el-button type="primary" size="small">คำนวณใหม่</el-button> +ค่าส่ง:</span><span><el-input-number v-model="dFee" size="small" :controls="false" style="width:140px"/></span>
+          <span class="l">ยอดรวม:</span><span class="v hl">฿ {{dSum+dFee-dDisc}}</span>
+          <span class="l">ชำระแล้ว:</span><span class="v">฿ {{dPaid?dSum+dFee-dDisc:0}}</span>
+          <span class="l">ค้างชำระ:</span><span class="v">฿ {{dPaid?0:dSum+dFee-dDisc}}</span>
+        </div>
+        <div class="dsec">ข้อมูลจัดส่ง</div>
+        <el-form label-width="120px" style="padding:0 20px;max-width:760px">
+          <el-form-item label="ขนส่ง"><el-select v-model="dForm.ship" placeholder="เลือกบริษัทขนส่ง" style="width:240px"><el-option v-for="c in couriers.filter(c=>c.s)" :key="c.n" :label="c.n" :value="c.n"/></el-select><el-input v-model="dForm.track" placeholder="เลขพัสดุ" style="width:240px;margin-left:10px"/></el-form-item>
+          <el-form-item label="ผู้ซื้อ"><el-input v-model="dForm.cust" style="width:300px"/><button class="lk" style="margin-left:10px" type="button" @click="note('เลือกจากรายชื่อลูกค้า')">เลือกผู้ซื้อ</button></el-form-item>
+          <el-form-item label="ที่อยู่โดยละเอียด"><div style="width:100%;position:relative"><el-input type="textarea" v-model="dForm.addr" :rows="3" placeholder="วางชื่อ เบอร์โทร และที่อยู่ทั้งก้อนได้"/><button type="button" class="lk" style="position:absolute;right:10px;bottom:6px" @click="parseAddr">แยกที่อยู่</button></div></el-form-item>
+          <el-form-item label="รหัสไปรษณีย์"><el-input v-model="dForm.zip" style="width:300px" placeholder="ได้จากที่อยู่"/></el-form-item>
+          <el-form-item label="เบอร์โทร"><el-input v-model="dForm.tel" style="width:300px"/></el-form-item>
+          <el-form-item label="เก็บเงินปลายทาง" v-if="!od.o"><el-switch v-model="no.cod" aria-label="เก็บเงินปลายทาง"/></el-form-item>
+        </el-form>
+      </template>
+      <template v-if="od.tab==='b'&&od.o">
+        <div class="dsec">การชำระเงิน</div>
+        <el-table :data="dPaid?[{m:'โอนเงิน',a:total(od.o),t:od.o.time,s:'ยืนยันแล้ว'}]:[]" style="margin:0 10px;width:calc(100% - 20px)" empty-text="ยังไม่มีรายการชำระ"><el-table-column label="วิธีชำระ" prop="m"/><el-table-column label="จำนวนเงิน"><template #default="{row}">{{baht(row.a)}}</template></el-table-column><el-table-column label="สลิป"><template #default>-</template></el-table-column><el-table-column label="เวลา" prop="t"/><el-table-column label="สถานะ" prop="s"/></el-table>
+        <div style="padding:16px 20px" v-if="od.o.st==='pay'"><el-button type="primary" @click="advance(od.o)">ยืนยันชำระ</el-button><el-button @click="note('เปิดหน้าต่างอัปโหลดสลิป')">อัปโหลดสลิปแทนลูกค้า</el-button></div>
+      </template>
+      <template v-if="od.tab==='c'&&od.o">
+        <el-table :data="[...od.o.log,[od.o.time,'ระบบ','สร้างออเดอร์ · ตั้งสถานะ รอชำระ']]" style="margin:10px;width:calc(100% - 20px)"><el-table-column label="เวลา" width="180"><template #default="{row}">{{row[0]}}</template></el-table-column><el-table-column label="ผู้ดำเนินการ" width="140"><template #default="{row}">{{row[1]}}</template></el-table-column><el-table-column label="รายละเอียด"><template #default="{row}">{{row[2]}}</template></el-table-column></el-table>
+      </template>
+    </div>
+    <div class="dfoot"><template v-if="od.o"><el-button @click="note('รีเฟรชแล้ว')">รีเฟรช</el-button><el-button v-if="od.o.st==='pay'" @click="cancelOrder(od.o)">ยกเลิกออเดอร์</el-button><el-button v-if="!['pay','cancel'].includes(od.o.st)" @click="note('เปิดหน้าต่างคืนเงิน')">คืนเงิน</el-button><el-button type="primary" v-if="NEXT[od.o.st]" @click="advance(od.o)">{{NEXT[od.o.st][0]}}</el-button><el-button type="primary" @click="note('บันทึกแล้ว')">บันทึก</el-button></template>
+      <template v-else><el-button @click="od.open=false">ยกเลิก</el-button><el-button type="primary" plain @click="saveOrder(true)">บันทึกแล้วสร้างต่อ</el-button><el-button type="primary" @click="saveOrder(false)">บันทึก</el-button></template></div>
+  </el-drawer>
+
+  <!-- ===== เพิ่ม/แก้ไขสินค้า ===== -->
+  <el-drawer v-model="pd.open" :title="pd.edit?'แก้ไขสินค้า':'เพิ่มสินค้าใหม่'" size="min(1100px,100%)">
+    <div class="pedit"><div class="lf">
+      <div class="fld"><div class="flabel"><span class="req">*</span>รหัสสินค้า</div><el-input v-model="pd.spu" style="width:180px"/></div>
+      <div class="fld"><div class="flabel"><span class="req">*</span>ชื่อสินค้า</div><el-input v-model="pd.name"/></div>
+      <div class="fld"><div class="flabel">รายละเอียด</div><el-input type="textarea" :rows="6" v-model="pd.desc"/></div>
+      <div class="fld"><div class="flabel">รูปหลักสินค้า</div><div style="width:80px;height:80px;border:1px dashed var(--bd);border-radius:4px;display:grid;place-items:center;color:#999;cursor:pointer"><el-icon :size="22"><Plus/></el-icon></div></div>
+      <div class="pgrid fld"><div><div class="flabel"><span class="req">*</span>ราคาขาย</div><el-input-number v-model="pd.price" :min="0" :controls="false" style="width:100%"/></div><div><div class="flabel">ราคาป้าย</div><el-input-number v-model="pd.tag" :min="0" :controls="false" style="width:100%"/></div><div><div class="flabel">ราคาทุน</div><el-input-number v-model="pd.cost" :min="0" :controls="false" style="width:100%"/></div></div>
+      <div class="fld"><div class="flabel">น้ำหนัก</div><el-input v-model="pd.w" style="width:180px"><template #suffix>kg</template></el-input></div>
+      <div class="pgrid fld"><div><div class="flabel">SKU</div><el-input v-model="pd.sku"/></div><div><div class="flabel">คีย์เวิร์ด</div><el-input v-model="pd.kw"/></div><div><div class="flabel">บาร์โค้ด</div><el-input v-model="pd.bar"/></div></div>
+      <div class="pgrid fld"><div><div class="flabel">สต็อก</div><el-input-number v-model="pd.stock" :min="0" :controls="false" style="width:100%"/></div></div>
+      <el-checkbox v-model="pd.multi">เปิดหลายตัวเลือก</el-checkbox>
+    </div><div class="rg">
+      <div class="fld"><div class="flabel">สถานะ</div><el-switch v-model="pd.on" aria-label="สถานะ"/></div>
+      <div class="fld"><div class="flabel row">หมวดสินค้า<span class="grow"></span><el-icon class="c-pri"><Setting/></el-icon></div><el-select v-model="pd.cat" placeholder="เลือก" style="width:100%"><el-option label="เสื้อผ้า" value="a"/><el-option label="กระเป๋าและหมวก" value="b"/></el-select></div>
+      <div class="fld"><div class="flabel row">แบรนด์<span class="grow"></span><el-icon class="c-pri"><Setting/></el-icon></div><el-select v-model="pd.brand" placeholder="เลือก" style="width:100%"><el-option label="บ้านผ้าฝ้าย" value="a"/></el-select></div>
+    </div></div>
+    <div class="dfoot"><el-button type="primary" @click="saveProd">บันทึก</el-button></div>
+  </el-drawer>
+
+  <!-- ===== เพิ่มร้าน ===== -->
+  <el-dialog v-model="addShop" title="เพิ่มร้าน" width="min(860px,94%)">
+    <p class="c-reg f13" style="margin:0 0 12px">รองรับการขายหลายช่องทาง เช่น ไลฟ์ Facebook | IG, POS | ขายส่ง, ดรอปชิป และเว็บไซต์ของร้าน</p>
+    <div class="shopgrid"><button v-for="s in platforms" :key="s[0]" :style="{color:s[1]}" @click="addShop=false;note('เปิดหน้าขอสิทธิ์ '+s[0])">{{s[0]}}<span class="new" v-if="s[2]">ใหม่</span></button></div>
+  </el-dialog>
+
+  <el-dialog v-model="kOpen" class="k-dlg" width="min(600px,94%)" top="12vh" :show-close="false" @opened="()=>$refs.kin&&$refs.kin.focus()">
+    <div class="kin"><el-icon :size="18" color="#8892A3"><Search/></el-icon><input ref="kin" v-model="kq" placeholder="พิมพ์ชื่อหน้า เลขออเดอร์ ชื่อลูกค้า หรือสินค้า" aria-label="ค้นหา" @keydown.down.prevent="kIdx=Math.min(kIdx+1,kRes.length-1)" @keydown.up.prevent="kIdx=Math.max(kIdx-1,0)" @keydown.enter.prevent="kRes[kIdx]&&kRun(kRes[kIdx])"><kbd style="font-size:11px;color:var(--tx-3)">Esc</kbd></div>
+    <div class="klist"><template v-for="(r,i) in kRes" :key="r.g+r.t"><div class="kgrp" v-if="i===0||kRes[i-1].g!==r.g">{{r.g}}</div><div class="kit" :class="{on:i===kIdx}" @mouseenter="kIdx=i" @click="kRun(r)"><el-icon><component :is="r.i"/></el-icon>{{r.t}}<span class="s">{{r.s}}</span></div></template><div v-if="!kRes.length" class="empty" style="padding:30px 0"><p>ไม่พบผลลัพธ์</p></div></div>
+  </el-dialog>
+
+  <el-dialog v-model="userDlg" title="ผู้ใช้ใหม่" width="min(720px,94%)">
+    <el-tabs v-model="userTab"><el-tab-pane label="ข้อมูลพื้นฐาน" name="a"/><el-tab-pane label="สิทธิ์เมนูเริ่มต้น" name="b"/><el-tab-pane label="ผูกร้าน" name="c"/><el-tab-pane label="ผูกแบรนด์" name="d"/></el-tabs>
+    <el-form label-width="110px"><el-form-item label="ชื่อผู้ใช้" required><el-input/></el-form-item><el-form-item label="บัญชีเข้าใช้" required><el-input/></el-form-item><el-form-item label="รหัสผ่าน" required><el-input type="password" show-password/></el-form-item><el-form-item label="กลุ่มผู้ใช้"><el-select v-model="userGroup" placeholder="เลือก" style="width:100%"><el-option label="แอดมินแชต" value="a"/><el-option label="แพ็กสินค้า" value="b"/></el-select></el-form-item><el-form-item label="อีเมล"><el-input/></el-form-item><el-form-item label="เบอร์โทร"><el-input/></el-form-item><el-form-item label="เปิดใช้"><el-switch :model-value="true" aria-label="เปิดใช้"/></el-form-item></el-form>
+    <template #footer><el-button @click="userDlg=false">ยกเลิก</el-button><el-button type="primary" @click="userDlg=false;note('ฟอร์มนี้เป็นตัวอย่าง ยังไม่บันทึกจริง')">ยืนยัน</el-button></template>
+  </el-dialog>
+</div>
+</el-config-provider>
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.27/vue.global.prod.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/element-plus/2.7.3/index.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/element-plus/2.7.3/locale/th.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script>
+const {createApp,reactive,ref,computed,watch,nextTick,onMounted,toRefs}=Vue;
+const baht=n=>'฿'+Number(n).toLocaleString('en-US');
+const CH={fb:'Facebook',tt:'TikTok Shop',sp:'Shopee',lz:'Lazada',ln:'LINE'};
+const CHI={fb:'f',tt:'T',sp:'S',lz:'L',ln:'L'};
+const SHOP={fb:'บ้านผ้าฝ้าย Official',tt:'baanphafai.shop',sp:'บ้านผ้าฝ้าย Shopee',lz:'Baan Phafai',ln:'@baanphafai'};
+const ST={pay:'รอชำระ',ship:'รอจัดส่ง',print:'รอพิมพ์ใบปะหน้า',pickup:'รอขนส่งเข้ารับ',sent:'ส่งแล้ว',cancel:'ยกเลิกแล้ว'};
+const SC={pay:'var(--s-pay)',ship:'var(--s-ship)',print:'var(--s-print)',pickup:'var(--s-pickup)',sent:'var(--s-sent)',cancel:'var(--s-cancel)'};
+const NEXT={pay:['ยืนยันชำระ','ship','ยืนยันการชำระเงิน'],ship:['เลือกขนส่ง','print','เลือกขนส่ง'],print:['พิมพ์ใบปะหน้า','pickup','พิมพ์ใบปะหน้า'],pickup:['เรียกรถเข้ารับ','sent','ขนส่งรับพัสดุ']};
+const TITLES={home:'หน้าหลัก',live:'ไลฟ์',orders:'ออเดอร์',dlist:'รายชื่อตัวแทน',dorders:'ออเดอร์ซัพพลายเออร์',products:'สินค้า',chat:'แชต',customers:'ลูกค้า',rsales:'รายงานยอดขาย',rlive:'สถิติรอบไลฟ์',sauth:'เชื่อมบัญชี',slive:'ตั้งค่าไลฟ์',sship:'ขนส่งและค่าส่ง',spay:'วิธีชำระเงิน',smsg:'เทมเพลตข้อความ',sauto:'ตอบอัตโนมัติ',susers:'จัดการผู้ใช้',buyer:'ลิงก์ออเดอร์ (ลูกค้า)'};
+const SAMPLE=[['คุณฝน','A01 2'],['Ploy Ch.','สวยมากค่ะแม่ค้า'],['คุณบอย','B01'],['mind_mm','A02 2'],['คุณหน่อย','ราคาเท่าไหร่คะ C01'],['Nan Nan','C01'],['คุณเอ','D01 3'],['คุณจอย','เพิ่ม A01'],['pim.pim','A02 2'],['คุณวิทย์','ส่งกี่วันครับ'],['คุณแอน','D01'],['Bee','A01']];
+
+const SideNav={template:'#nav-tpl',props:['menu','view','mini'],emits:['go'],setup(p){const parent=()=>(p.menu.find(m=>m.kids&&m.kids.some(c=>c.k===p.view))||{}).k;const open=ref([parent()].filter(Boolean));watch(()=>p.view,()=>{const k=parent();if(k&&!open.value.includes(k))open.value=[...open.value,k]});const toggle=k=>{open.value=open.value.includes(k)?open.value.filter(x=>x!==k):[...open.value,k]};return {open,toggle}}};
+const Pager={template:'#pager-tpl',props:['total','sel']};
+const EmptyBox={template:'#empty-tpl',props:['text']};
+
+const App={template:'#app-tpl',setup(){
+  const note=m=>ElementPlus.ElMessage({message:m,type:'success',duration:2000});
+  const warn=m=>ElementPlus.ElMessage({message:m,type:'warning'});
+  const s=reactive({
+    view:'home',navOpen:false,collapsed:false,dark:false,isMobile:false,kOpen:false,kq:'',kIdx:0,sel:[],chatOpen:false,draft:'',liveOn:true,liveTab:'p',pinned:'A01',authTab:'s',shipTab:'a',rTab:'shop',rTime:'o',rlTab:'b',exSub:false,courier:'Flash Express',cod:true,addShop:false,userDlg:false,userTab:'a',userGroup:'',chatQt:'n',custQt:'n',authPf:'',authEn:'on',dFee:0,dDisc:0,
+    of:{tab:'pay',ch:'',timeType:'order',range:null,quick:'วันนี้',toType:'ship',toSel:'',lv:'',due:'',msg:'',q:'',qType:'id',fold:true,inTag:[],exTag:[]},
+    pf:{st:'',q:'',qt:'spu'},
+    od:{open:false,o:null,tab:'a'},
+    no:{ch:'fb',wh:'w',msg:'',remark:'',kw:'',items:[],cod:false},
+    dForm:{cust:'',addr:'',zip:'',tel:'',ship:'',track:''},
+    pd:{open:false,edit:null,spu:'',name:'',desc:'',price:0,tag:0,cost:0,w:'0.2',sku:'',kw:'',bar:'',stock:0,multi:false,on:true,cat:'',brand:''},
+    buy:{pay:'qr',paid:false},
+    sender:{area:'กรุงเทพมหานคร / พญาไท / สามเสนใน',addr:'18/4 ซ.อารีย์ 2',mode:'c',name:'บ้านผ้าฝ้าย',tel:'0650000000',zip:'10400'},
+    rules:{edit:false,over:false,pick:true,hold:true,safe:false,hours:'24',addKw:'เพิ่ม',skipText:'ราคา,เท่าไหร่,ส่งกี่วัน,ถาม',allKw:''},
+    products:[
+      {kw:'A01',spu:'TEE-01',sku:'TEE-WH-F',name:'เสื้อยืดโอเวอร์ไซซ์ สีขาว',price:199,tag:299,cost:80,stock:24,on:true},
+      {kw:'A02',spu:'TEE-01',sku:'TEE-BK-F',name:'เสื้อยืดโอเวอร์ไซซ์ สีดำ',price:199,tag:299,cost:80,stock:3,on:true},
+      {kw:'B01',spu:'JEAN-02',sku:'JEAN-ST-M',name:'กางเกงยีนส์ขากระบอก M',price:390,tag:590,cost:170,stock:12,on:true},
+      {kw:'C01',spu:'BAG-03',sku:'BAG-CV-01',name:'กระเป๋าผ้าแคนวาส',price:159,tag:250,cost:55,stock:0,on:true},
+      {kw:'D01',spu:'HAT-04',sku:'HAT-CR-01',name:'หมวกบักเก็ต สีครีม',price:129,tag:199,cost:45,stock:40,on:true}],
+    orders:[
+      {id:'RR-1042',st:'pay',ch:'fb',tag:'ออเดอร์จากไลฟ์',cust:'คุณมะลิ ใจดี',items:[['A01',2]],time:'2026-11-16 10:42:18',slip:true,addr:'99/1 ซ.สุขุมวิท 22 แขวงคลองตัน เขตคลองเตย กรุงเทพฯ 10110',tel:'0812345678',left:'เหลือเวลาชำระ 21 ชม.',log:[],remark:''},
+      {id:'RR-1041',st:'pay',ch:'fb',tag:'ออเดอร์จากไลฟ์',cust:'คุณต้น สายลุย',items:[['B01',1],['D01',1]],time:'2026-11-16 10:40:02',addr:'12 ม.4 ต.สุเทพ อ.เมือง เชียงใหม่ 50200',tel:'0895550142',left:'เหลือเวลาชำระ 21 ชม.',log:[],remark:''},
+      {id:'RR-1039',st:'ship',ch:'ln',tag:'ออเดอร์จากแชต',cust:'คุณแพรว',items:[['A02',1]],time:'2026-11-16 09:58:40',addr:'45/7 ถ.มิตรภาพ ต.ในเมือง อ.เมือง ขอนแก่น 40000',tel:'0861102233',log:[],remark:''},
+      {id:'SP-88213',st:'ship',ch:'sp',tag:'ออเดอร์แพลตฟอร์ม',cust:'somchai_88',items:[['A01',1],['C01',1]],time:'2026-11-16 09:31:11',addr:'88 ถ.เพชรเกษม อ.หาดใหญ่ สงขลา 90110',tel:'08xxxx4471',warn:'ต้องส่งภายใน 5 ชม.',log:[],remark:''},
+      {id:'TT-55120',st:'print',ch:'tt',tag:'ออเดอร์แพลตฟอร์ม',cust:'nong.fah',items:[['D01',2]],time:'2026-11-16 09:10:25',addr:'7/2 ถ.สุขุมวิท ต.บางปลาสร้อย อ.เมือง ชลบุรี 20000',tel:'08xxxx9020',ship:'J&T Express',log:[],remark:''},
+      {id:'LZ-30077',st:'print',ch:'lz',tag:'ออเดอร์แพลตฟอร์ม',cust:'Kittipong P.',items:[['B01',1]],time:'2026-11-16 08:47:09',addr:'201 ถ.นิมมานเหมินท์ อ.เมือง เชียงใหม่ 50200',tel:'08xxxx1180',ship:'Flash Express',log:[],remark:''},
+      {id:'RR-1035',st:'pickup',ch:'fb',tag:'ออเดอร์จากไลฟ์',cust:'คุณอ้อม',items:[['A01',3]],time:'2026-11-15 21:14:50',addr:'5 ซ.ลาดพร้าว 71 เขตลาดพร้าว กรุงเทพฯ 10230',tel:'0827789900',ship:'Flash Express',track:'TH0142XK77A',log:[],remark:''},
+      {id:'RR-1030',st:'sent',ch:'fb',tag:'ออเดอร์จากไลฟ์',cust:'คุณเก่ง',items:[['D01',1]],time:'2026-11-15 20:51:33',addr:'31 ถ.ราชดำเนิน อ.เมือง นครศรีธรรมราช 80000',tel:'0832214455',ship:'ไปรษณีย์ไทย',track:'EB123456789TH',log:[],remark:''},
+      {id:'RR-1028',st:'cancel',ch:'fb',tag:'ออเดอร์จากไลฟ์',cust:'คุณนิด',items:[['C01',1]],time:'2026-11-14 20:20:47',addr:'-',tel:'-',log:[],remark:''}],
+    convs:[
+      {id:1,name:'คุณมะลิ ใจดี',ch:'fb',time:'10:46',unread:true,order:'RR-1042',spend:2380,n:6,tag:'ลูกค้าประจำ',msgs:[['c','CF A01 2 ตัวค่ะ','11-16 10:42'],['m','รับออเดอร์แล้วค่ะ 2 ตัว ฿398 กดลิงก์เพื่อยืนยันที่อยู่และชำระเงินได้เลยนะคะ','11-16 10:42'],['c','โอนแล้วนะคะ ส่งสลิปให้ค่ะ','11-16 10:46']]},
+      {id:2,name:'คุณต้น สายลุย',ch:'fb',time:'10:41',unread:true,order:'RR-1041',spend:519,n:1,tag:'ลูกค้าใหม่',msgs:[['c','กางเกง M เอวเท่าไหร่ครับ','11-16 10:41']]},
+      {id:3,name:'คุณแพรว',ch:'ln',time:'10:02',unread:false,order:'RR-1039',spend:1190,n:4,tag:'ลูกค้าประจำ',msgs:[['c','ส่งวันไหนคะ','11-16 10:00'],['m','จัดส่งวันนี้ค่ะ ได้เลขพัสดุแล้วจะแจ้งทันทีนะคะ','11-16 10:02']]},
+      {id:4,name:'nong.fah',ch:'tt',time:'09:15',unread:false,order:'TT-55120',spend:258,n:1,tag:'ลูกค้าใหม่',msgs:[['c','ขอเปลี่ยนสีหมวกได้ไหมคะ','11-16 09:12'],['m','ได้ค่ะ ตอนนี้มีสีครีมกับสีดำ รับสีไหนดีคะ','11-16 09:15']]}],
+    convId:1,feed:[],liveOrders:[],
+    tpls:[{t:'ข้อความในลิงก์ออเดอร์',on:true,body:'{ชื่อเพจ} ขอบคุณ {ชื่อผู้ซื้อ} ที่สั่งซื้อ ออเดอร์ {เลขออเดอร์} กรุณาชำระก่อน {เวลายกเลิกอัตโนมัติ}'},
+          {t:'สั่งซื้อสำเร็จ (ออเดอร์ทั่วไป)',on:true,body:'สั่งซื้อสำเร็จแล้วค่ะ กรุณาชำระเงินก่อน มิฉะนั้นออเดอร์จะถูกยกเลิกอัตโนมัติ ร้านจะรีบจัดส่งให้เร็วที่สุด ขอบคุณมากค่ะ'},
+          {t:'จับออเดอร์จากไลฟ์สำเร็จ',on:true,body:'คุณสั่ง {ข้อมูลสินค้า} สำเร็จแล้ว กรุณาชำระเงินโดยเร็ว มิฉะนั้นจะถูกยกเลิกอัตโนมัติ ถ้าชำระแล้ว กดลิงก์ออเดอร์เพื่อยืนยันข้อมูล {ลิงก์ออเดอร์}'},
+          {t:'ออเดอร์มีการแก้ไข',on:true,body:'แก้ไข {ข้อมูลสินค้า} สำเร็จ ที่อยู่จัดส่งของคุณคือ {ที่อยู่ผู้รับ} กดลิงก์ออเดอร์เพื่อดูรายละเอียด'}]
+  });
+  const P=k=>s.products.find(p=>p.kw===k)||{name:k,sku:'',spu:'',price:0,tag:0};
+  const total=o=>o.items.reduce((a,[k,q])=>a+P(k).price*q,0);
+  const cnt=t=>s.orders.filter(o=>o.st===t).length;
+  const orderById=id=>s.orders.find(o=>o.id===id);
+  const tabs=['all','pay','ship','print','pickup','sent','cancel'];
+  const filtered=computed(()=>s.view==='dorders'?[]:s.orders.filter(o=>(s.of.tab==='all'||o.st===s.of.tab)&&(!s.of.ch||o.ch===s.of.ch)&&(!s.of.q||String(o[s.of.qType]||'').toLowerCase().includes(s.of.q.toLowerCase()))&&(!s.of.due||o.warn)&&(!s.of.inTag.length||s.of.inTag.includes(o.tag))&&(!s.of.exTag.includes(o.tag))));
+  const bulk=computed(()=>NEXT[s.of.tab]);
+  const unread=computed(()=>s.convs.filter(c=>c.unread).length);
+  const conv=computed(()=>s.convs.find(c=>c.id===s.convId));
+  const liveSum=computed(()=>s.liveOrders.reduce((a,o)=>a+o.amt,0));
+  const prodList=computed(()=>s.products.filter(p=>(!s.pf.q||(p[s.pf.qt]||'').toLowerCase().includes(s.pf.q.toLowerCase()))&&(s.pf.st===''||(s.pf.st==='on')===p.on)));
+  const menu=computed(()=>[
+    {k:'home',t:'หน้าหลัก',i:'HomeFilled',sec:'ภาพรวม'},{k:'live',t:'ไลฟ์',i:'VideoCamera',sec:'การขาย'},{k:'orders',t:'ออเดอร์',i:'Tickets',n:cnt('pay')+cnt('ship')+cnt('print')},
+    {k:'dist',t:'ตัวแทนจำหน่าย',i:'Share',kids:[{k:'dlist',t:'รายชื่อตัวแทน'},{k:'dorders',t:'ออเดอร์ซัพพลายเออร์'}]},
+    {k:'products',t:'สินค้า',i:'Goods',sec:'ข้อมูล'},{k:'chat',t:'แชต',i:'ChatDotRound',n:unread.value},{k:'customers',t:'ลูกค้า',i:'User'},
+    {k:'rep',t:'รายงาน',i:'TrendCharts',sec:'วิเคราะห์และตั้งค่า',kids:[{k:'rsales',t:'รายงานยอดขาย'},{k:'rlive',t:'สถิติรอบไลฟ์'}]},
+    {k:'set',t:'ตั้งค่า',i:'Setting',kids:[{k:'sauth',t:'เชื่อมบัญชี'},{k:'slive',t:'ตั้งค่าไลฟ์'},{k:'sship',t:'ขนส่งและค่าส่ง'},{k:'spay',t:'วิธีชำระเงิน'},{k:'smsg',t:'เทมเพลตข้อความ'},{k:'sauto',t:'ตอบอัตโนมัติ'},{k:'susers',t:'จัดการผู้ใช้'}]},
+    {k:'buyer',t:'ลิงก์ออเดอร์ (ลูกค้า)',i:'Iphone'}]);
+  const buyTotal=computed(()=>total(orderById('RR-1042'))+40);
+  const customers=computed(()=>s.convs.map(c=>({name:c.name,ch:c.ch,tag:c.tag,n:c.n,spend:c.spend,tel:'08'+(10000000+c.id*1234567)})).concat([{name:'คุณนิด',ch:'fb',tag:'บัญชีดำ',n:3,spend:0,tel:'0817730000'}]));
+  const dItems=computed(()=>s.od.o?s.od.o.items:s.no.items);
+  const dSum=computed(()=>dItems.value.reduce((a,[k,q])=>a+P(k).price*q,0));
+  const dPaid=computed(()=>!!s.od.o&&!['pay','cancel'].includes(s.od.o.st));
+
+  const go=k=>{ if(location.hash==='#'+k) s.view=k; else location.hash=k; };
+  const route=()=>{const k=(location.hash||'#home').slice(1); s.view=TITLES[k]?k:'home'; s.od.open=false; s.sel=[];};
+  const stamp=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return '2026-11-16 '+z(d.getHours())+':'+z(d.getMinutes())+':'+z(d.getSeconds())};
+  const advance=o=>{const n=NEXT[o.st]; if(!n) return; if(o.st==='ship') o.ship=s.courier; if(o.st==='pickup'&&!o.track) o.track='TH0'+Math.floor(1e8+Math.random()*9e8); o.log.unshift([stamp(),'กรธนพัฒน์',n[2]+' · ตั้งสถานะ '+ST[n[1]]]); o.st=n[1]; o.slip=false; o.left=''; note(o.id+' '+n[2]+'แล้ว');};
+  const cancelOrder=o=>{ElementPlus.ElMessageBox.confirm('ยกเลิกออเดอร์ '+o.id+' และคืนสต็อกสินค้า?','ยืนยัน',{confirmButtonText:'ยืนยัน',cancelButtonText:'ยกเลิก',type:'warning'}).then(()=>{o.st='cancel';o.log.unshift([stamp(),'กรธนพัฒน์','ยกเลิกออเดอร์ · คืนสต็อก']);o.items.forEach(([k,q])=>{P(k).stock+=q});note(o.id+' ยกเลิกแล้ว คืนสต็อกเรียบร้อย')}).catch(()=>{})};
+  const rowActs=o=>({pay:[['แก้สลิป',()=>openOrder(o,'b')],['อัปโหลดสลิป',()=>note('เปิดหน้าต่างอัปโหลดสลิป')],['ยืนยันชำระ',()=>advance(o)]],ship:[['เลือกขนส่ง',()=>advance(o)],['คืนเงิน',()=>note('เปิดหน้าต่างคืนเงิน')]],print:[['พิมพ์ใบปะหน้า',()=>advance(o)],['คืนเงิน',()=>note('เปิดหน้าต่างคืนเงิน')]],pickup:[['เรียกรถเข้ารับ',()=>advance(o)],['พิมพ์ซ้ำ',()=>note('ส่งไปเครื่องพิมพ์แล้ว')]],sent:[['ติดตามพัสดุ',()=>note('เปิดหน้าติดตามพัสดุ')],['คืนเงิน',()=>note('เปิดหน้าต่างคืนเงิน')]],cancel:[['ดูรายละเอียด',()=>openOrder(o)]]}[o.st]);
+  const bulkNext=c=>{const ids=c==='sel'?s.sel:filtered.value.map(o=>o.id); if(!ids.length) return warn('เลือกออเดอร์ก่อน'); ids.map(orderById).filter(o=>o.st===s.of.tab).forEach(advance); s.sel=[];};
+  const bulkCancel=()=>{ if(!s.sel.length) return warn('เลือกออเดอร์ก่อน'); const n=s.sel.length; ElementPlus.ElMessageBox.confirm('ยกเลิกออเดอร์ที่เลือก '+n+' รายการ และคืนสต็อก?','ยืนยัน',{confirmButtonText:'ยืนยัน',cancelButtonText:'ยกเลิก',type:'warning'}).then(()=>{s.sel.map(orderById).filter(o=>o.st==='pay').forEach(o=>{o.st='cancel';o.items.forEach(([k,q])=>{P(k).stock+=q})}); note('ยกเลิกแล้ว '+n+' รายการ'); s.sel=[];}).catch(()=>{}); };
+  const toggleSel=(id,v)=>{s.sel=v?[...s.sel,id]:s.sel.filter(x=>x!==id)};
+  const openOrder=(o,tab)=>{s.od.o=o;s.od.tab=tab||'a';s.dFee=o.fee||0;s.dDisc=0;Object.assign(s.dForm,{cust:o.cust,addr:o.addr,zip:(o.addr.match(/\d{5}$/)||[''])[0],tel:o.tel,ship:o.ship||'',track:o.track||''});s.od.open=true};
+  const openOrderId=id=>openOrder(orderById(id));
+  const newOrder=()=>{s.od.o=null;s.od.tab='a';s.dFee=0;s.dDisc=0;Object.assign(s.no,{items:[],kw:'',remark:'',msg:'',cod:false});Object.assign(s.dForm,{cust:'',addr:'',zip:'',tel:'',ship:s.courier,track:''});s.od.open=true};
+  const toolCmd=c=>c==='new'?newOrder():note('ดาวน์โหลดออเดอร์จาก 3 ร้านแล้ว');
+  const addItem=()=>{const q=s.no.kw.trim().toLowerCase(); if(!q) return warn('พิมพ์รหัสสินค้าหรือคีย์เวิร์ดก่อน'); const p=s.products.find(p=>p.kw.toLowerCase()===q||p.sku.toLowerCase()===q||p.spu.toLowerCase()===q)||s.products.find(p=>p.name.toLowerCase().includes(q)); if(!p) return warn('ไม่พบสินค้า "'+s.no.kw+'"'); const arr=dItems.value; const ex=arr.find(i=>i[0]===p.kw); ex?ex[1]++:arr.push([p.kw,1]); s.no.kw='';};
+  const parseAddr=()=>{const a=s.dForm.addr; const z=a.match(/\b\d{5}\b/), t=a.match(/0\d{1,2}[- ]?\d{3}[- ]?\d{4}/), n=a.match(/คุณ\s*\S+(\s+\S+)?/); if(z)s.dForm.zip=z[0]; if(t)s.dForm.tel=t[0]; if(n)s.dForm.cust=n[0].trim(); note(z||t||n?'แยกที่อยู่แล้ว กรุณาตรวจสอบก่อนบันทึก':'ไม่พบข้อมูลที่แยกได้');};
+  const saveOrder=again=>{ if(!s.no.items.length) return warn('เพิ่มสินค้าอย่างน้อย 1 รายการ'); if(!s.dForm.cust||!s.dForm.addr) return warn('กรอกชื่อผู้ซื้อและที่อยู่');
+    const id='RR-'+(1043+s.orders.filter(o=>o.tag==='สร้างเอง').length); s.orders.unshift({id,st:s.no.cod?'ship':'pay',ch:s.no.ch,tag:'สร้างเอง',cust:s.dForm.cust,items:s.no.items.map(i=>[...i]),time:stamp(),addr:s.dForm.addr,tel:s.dForm.tel||'-',left:s.no.cod?'':'เหลือเวลาชำระ 24 ชม.',fee:s.dFee,log:[],remark:s.no.remark}); s.no.items.forEach(([k,q])=>{P(k).stock=Math.max(0,P(k).stock-q)}); note('สร้างออเดอร์ '+id+' แล้ว');
+    if(again){ newOrder(); } else { s.od.open=false; s.of.tab=s.no.cod?'ship':'pay'; s.of.ch=''; go('orders'); } };
+  const openProd=row=>{Object.assign(s.pd,row?{edit:row,spu:row.spu,name:row.name,desc:'',price:row.price,tag:row.tag,cost:row.cost,sku:row.sku,kw:row.kw,bar:'',stock:row.stock,on:row.on}:{edit:null,spu:'',name:'',desc:'',price:0,tag:0,cost:0,sku:'',kw:'',bar:'',stock:0,on:true}); s.pd.open=true;};
+  const saveProd=()=>{const d=s.pd; if(!d.spu||!d.name||!d.price) return warn('กรอกรหัสสินค้า ชื่อสินค้า และราคาขาย'); const kw=(d.kw||d.sku||d.spu).toUpperCase(), sku=d.sku||d.spu;
+    if(s.products.some(p=>p!==d.edit&&(p.kw===kw||p.sku===sku))) return ElementPlus.ElMessage({message:'SKU หรือคีย์เวิร์ดซ้ำกับสินค้าที่มีอยู่',type:'error'});
+    const wasEdit=!!d.edit; const rec={kw,spu:d.spu,sku,name:d.name,price:d.price,tag:d.tag,cost:d.cost,stock:d.stock,on:d.on}; if(wasEdit) Object.assign(d.edit,rec); else s.products.push(rec); d.open=false; note(wasEdit?'บันทึกแล้ว':'เพิ่มสินค้าแล้ว');};
+  const delProd=row=>ElementPlus.ElMessageBox.confirm('ลบสินค้า '+row.name+'?','ยืนยัน',{confirmButtonText:'ลบ',cancelButtonText:'ยกเลิก',type:'warning'}).then(()=>{s.products.splice(s.products.indexOf(row),1);note('ลบแล้ว')}).catch(()=>{});
+  const CRUMB={dlist:'ตัวแทนจำหน่าย',dorders:'ตัวแทนจำหน่าย',rsales:'รายงาน',rlive:'รายงาน',sauth:'ตั้งค่า',slive:'ตั้งค่า',sship:'ตั้งค่า',spay:'ตั้งค่า',smsg:'ตั้งค่า',sauto:'ตั้งค่า',susers:'ตั้งค่า'};
+  const applyDark=()=>{document.documentElement.classList.toggle('dark',s.dark);try{localStorage.setItem('rr-dark',s.dark?'1':'0')}catch(e){}};
+  const toggleDark=()=>{s.dark=!s.dark;applyDark()};
+  const setTab=t=>{s.of.tab=t;s.of.ch='';go('orders')};
+  const openK=()=>{s.kq='';s.kIdx=0;s.kOpen=true};
+  const kRes=computed(()=>{const q=s.kq.trim().toLowerCase();const pages=Object.entries(TITLES).map(([k,t])=>({g:'หน้า',t,s:CRUMB[k]||'',i:'Position',run:()=>go(k)}));
+    const acts=[{g:'คำสั่ง',t:'สร้างออเดอร์',s:'',i:'Plus',run:newOrder},{g:'คำสั่ง',t:'เพิ่มสินค้า',s:'',i:'Goods',run:()=>{go('products');openProd()}},{g:'คำสั่ง',t:s.dark?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด',s:'',i:'Moon',run:toggleDark}];
+    const ords=s.orders.map(o=>({g:'ออเดอร์',t:o.id+' · '+o.cust,s:ST[o.st],i:'Tickets',run:()=>openOrder(o)}));
+    const prods=s.products.map(p=>({g:'สินค้า',t:p.name,s:p.kw+' · '+p.sku,i:'Goods',run:()=>{go('products');openProd(p)}}));
+    const all=[...acts,...pages,...ords,...prods];
+    return q?all.filter(r=>(r.t+' '+r.s).toLowerCase().includes(q)).slice(0,12):[...acts,...pages.slice(0,6)];});
+  watch(()=>s.kq,()=>{s.kIdx=0});
+  const kRun=r=>{s.kOpen=false;r.run()};
+  const tasks=computed(()=>[['รอตรวจสลิป',s.orders.filter(o=>o.st==='pay'&&o.slip).length,'pay'],['รอจัดส่ง',cnt('ship'),'ship'],['รอพิมพ์ใบปะหน้า',cnt('print'),'print'],['รอขนส่งเข้ารับ',cnt('pickup'),'pickup'],['แชตยังไม่ตอบ',unread.value,'','chat'],['สินค้าใกล้หมด',s.products.filter(p=>p.stock<5).length,'','products']]);
+  const homeKpis=computed(()=>{const act=s.orders.filter(o=>o.st!=='cancel'),paid=act.filter(o=>o.st!=='pay');return [['ยอดขายวันนี้',baht(paid.reduce((a,o)=>a+total(o),0)),'+18%','#0094FF','Money','0,18 10,14 20,16 30,10 40,12 50,6 64,4'],['ออเดอร์วันนี้',String(act.length),'+3','#16A34A','Tickets','0,16 10,15 20,12 30,13 40,8 50,9 64,5'],['อัตราชำระ',Math.round(paid.length/act.length*100)+'%','-4%','#F08C00','PieChart','0,6 10,8 20,7 30,10 40,12 50,11 64,14'],['ค้างชำระ',baht(s.orders.filter(o=>o.st==='pay').reduce((a,o)=>a+total(o),0)),cnt('pay')+' ใบ','#4F46E5','Wallet','0,12 10,10 20,13 30,9 40,11 50,8 64,10']]});
+  const resetFilter=()=>Object.assign(s.of,{ch:'',due:'',q:'',range:null,msg:'',inTag:[],exTag:[],toSel:'',lv:''});
+  const msgs=ref(null);
+  const scrollMsgs=()=>nextTick(()=>{if(msgs.value)msgs.value.scrollTop=msgs.value.scrollHeight});
+  const pickConv=c=>{s.convId=c.id;c.unread=false;s.chatOpen=true;scrollMsgs()};
+  const send=()=>{const v=s.draft.trim(); if(!v) return; const d=new Date(),z=n=>String(n).padStart(2,'0'); conv.value.msgs.push(['m',v,'11-16 '+z(d.getHours())+':'+z(d.getMinutes())]); conv.value.unread=false; s.draft=''; scrollMsgs();};
+  let li=0,cn=0,timer=null;
+  const pushComment=()=>{const [who,text]=SAMPLE[li++%SAMPLE.length]; const skips=s.rules.skipText.split(',').map(x=>x.trim()).filter(Boolean); const skip=skips.some(w=>text.includes(w)); const m=!skip&&text.match(/\b([A-Z]\d{2})\b\s*x?(\d+)?/i); let cls='',res='';
+    if(m){const p=s.products.find(x=>x.kw===m[1].toUpperCase()),q=+(m[2]||1); if(p){ if(p.stock>=q){p.stock-=q;s.liveOrders.unshift({who,kw:p.kw,q,amt:p.price*q});cls='hit';res='จับออเดอร์ '+p.kw+' × '+q+' = '+baht(p.price*q)+' · ส่งลิงก์ออเดอร์ทางแชตแล้ว';} else {cls='over';res=p.kw+' สต็อกไม่พอ (เหลือ '+p.stock+')';} } }
+    else if(skip){cls='skip';res='ข้าม: มีคีย์เวิร์ดที่ตั้งให้ข้าม';}
+    s.feed.unshift({n:cn++,who,text,cls,res}); if(s.feed.length>40) s.feed.pop();};
+  const liveLoop=()=>{clearInterval(timer); if(s.view==='live'){ if(!s.feed.length) for(let i=0;i<5;i++)pushComment(); if(s.liveOn) timer=setInterval(pushComment,2500);} };
+  watch(()=>[s.view,s.liveOn],()=>{liveLoop(); if(s.view==='chat')scrollMsgs();});
+  const salesRows=[{k:'fb',n:48,qty:96,amt:21400,disc:600,fee:1200,cost:8900,gp:12500,ret:1},{k:'tt',n:31,qty:52,amt:11200,disc:300,fee:0,cost:4700,gp:6500,ret:0},{k:'sp',n:27,qty:44,amt:9800,disc:450,fee:0,cost:4100,gp:5700,ret:2},{k:'lz',n:12,qty:15,amt:5400,disc:0,fee:0,cost:2400,gp:3000,ret:0},{k:'ln',n:9,qty:17,amt:3900,disc:0,fee:360,cost:1800,gp:2100,ret:0}];
+  const sum=(d,k)=>d.reduce((a,r)=>a+r[k],0);
+  const salesSum=({columns,data})=>columns.map((c,i)=>i===0?'รวม':c.property?sum(data,c.property).toLocaleString('en-US'):(c.label==='อัตรากำไรขั้นต้น'?(sum(data,'gp')/sum(data,'amt')*100).toFixed(2)+'%':''));
+  const liveSumRow=({columns,data})=>columns.map((c,i)=>i===0?'รวม':c.property&&c.property!=='t'&&c.property!=='id'?sum(data,c.property).toLocaleString('en-US'):'');
+  onMounted(()=>{window.addEventListener('hashchange',route);route();liveLoop();
+    try{const v=localStorage.getItem('rr-dark');s.dark=v?v==='1':matchMedia('(prefers-color-scheme: dark)').matches}catch(e){s.dark=false} applyDark();
+    const mq=matchMedia('(max-width:767px)');const mm=()=>{s.isMobile=mq.matches};mm();mq.addEventListener('change',mm);
+    window.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openK()}});});
+  return {...toRefs(s),locale:window.ElementPlusLocaleTh,titles:TITLES,CH,CHI,SHOP,ST,SC,NEXT,baht,P,total,cnt,tabs,filtered,bulk,unread,conv,liveSum,prodList,menu,buyTotal,customers,orderById,dItems,dSum,dPaid,
+    go,toggleDark,setTab,openK,kRes,kRun,tasks,homeKpis,crumbs:CRUMB,advance,cancelOrder,rowActs,bulkNext,bulkCancel,toggleSel,openOrder,openOrderId,newOrder,toolCmd,addItem,parseAddr,saveOrder,openProd,saveProd,delProd,resetFilter,pickConv,send,note,salesRows,salesSum,liveSumRow,msgs,
+    days:[['จ.',4200],['อ.',5100],['พ.',3900],['พฤ.',6800],['ศ.',9200],['ส.',12400],['อา.',10100]],
+    notis:['Shopee: สิทธิ์ร้านจะหมดอายุใน 3 วัน','คุณมะลิ ใจดี ส่งสลิปสำหรับ RR-1042','A02 เหลือ 3 ชิ้น'],
+    quick:[['VideoCamera','ไลฟ์','live'],['Goods','สินค้า','products'],['User','ลูกค้า','customers'],['Setting','ตั้งค่า','slive'],['Tickets','ออเดอร์','orders'],['ChatDotRound','ข้อความ','chat'],['TrendCharts','รายงาน','rsales'],['Link','เชื่อมบัญชี','sauth']],
+    tagList:['ออเดอร์จากไลฟ์','ออเดอร์จากแชต','ออเดอร์แพลตฟอร์ม','สร้างเอง'],
+    kpis:[['จำนวนออเดอร์','127','#13C2C2','Document'],['ยอดที่ต้องชำระ','51,700','#FF6A3D','Money'],['ค่าส่ง','1,560','#52C41A','Van'],['ยอดสินค้า','50,140','#FA8C16','ShoppingBag'],['ต้นทุนสินค้า','21,900','#FADB14','Box'],['กำไรขั้นต้น','29,800','#A0D911','Coin'],['อัตรากำไรขั้นต้น','57.64%','#2F7BFF','PieChart']],
+    liveRows:[{id:'LV-1114',t:'2026-11-14 20:00',n:42,paid:35,sent:33,tot:11240,amt:9870,cancel:4,over:2},{id:'LV-1113',t:'2026-11-13 20:00',n:31,paid:27,sent:27,tot:8130,amt:7410,cancel:2,over:0},{id:'LV-1111',t:'2026-11-11 12:00',n:18,paid:13,sent:12,tot:4390,amt:3120,cancel:3,over:1}],
+    socials:[{t:'เชื่อมต่อบัญชี Facebook/IG',d:'เพจ บ้านผ้าฝ้าย Official · หมดอายุ 12/02/2027',i:'f',c:'#1877F2',on:true},{t:'เชื่อมต่อ LINE',d:'เชื่อม LINE เพื่อเริ่มใช้งาน',i:'L',c:'#06C755',on:false},{t:'เชื่อมต่อ LINE Robot',d:'เชื่อม LINE Robot เพื่อเริ่มใช้งาน',i:'R',c:'#06C755',on:false}],
+    shops:[{k:'tt',id:'22301877',name:'baanphafai.shop',auth:'อนุญาตแล้ว',exp:'2027-05-12',msg:'อนุญาตแล้ว'},{k:'sp',id:'22301902',name:'บ้านผ้าฝ้าย Shopee',auth:'หมดอายุใน 3 วัน',warn:true,exp:'2026-11-19',msg:'-'},{k:'lz',id:'22302015',name:'Baan Phafai',auth:'อนุญาตแล้ว',exp:'2027-03-03',msg:'-'},{k:'fb',id:'22296439',name:'บ้านผ้าฝ้าย Official',auth:'อนุญาตแล้ว',exp:'2027-02-12',msg:'อนุญาตแล้ว',main:true}],
+    platforms:[['TikTok Shop','#111'],['Shopee','#EE4D2D'],['Lazada','#0F146D'],['LINE SHOPPING','#06C755'],['Shopify','#5E8E3E'],['WooCommerce','#7F54B3'],['Amazon','#111'],['TEMU','#FB7701',1],['Tokopedia','#03AC0E'],['Zalora','#111'],['NocNoc','#E4002B',1],['Thaimart','#E30613']],
+    ruleList:[{k:'edit',t:'อนุญาตให้ลูกค้าแก้ไขสินค้า',d:''},{k:'over',t:'ลิงก์ออเดอร์แสดงสินค้าที่ขายเกิน',d:'เมื่อเปิด ลูกค้าจะเห็นสินค้าที่ขายเกินในลิงก์ออเดอร์'}],
+    couriers:[{n:'Flash Express',s:1},{n:'J&T Express',s:1},{n:'Best Express',s:0},{n:'Kerry Express',s:1},{n:'SPX Express',s:0},{n:'ไปรษณีย์ไทย',s:1},{n:'Ninja Van',s:0},{n:'DHL',s:0,f:-1}],
+    feeRules:[{n:'ค่าส่งมาตรฐาน',c:'Flash Express',w:'ยอดซื้อต่ำกว่า ฿500',f:40},{n:'ส่งฟรี',c:'ทุกขนส่ง',w:'ยอดซื้อตั้งแต่ ฿500',f:0}],
+    banks:[{b:'กสิกรไทย',no:'xxx-x-x4471-x',nm:'บจก.บ้านผ้าฝ้าย'}],
+    gateways:[{n:'KBank QR',on:true,fee:'0%'},{n:'SCB QR',on:false,fee:'-'},{n:'2C2P',on:false,fee:'-'},{n:'Stripe',on:false,fee:'-'}],
+    vars:['ชื่อเพจ','ชื่อผู้ซื้อ','เลขออเดอร์','เวลาสั่งซื้อ','เวลายกเลิกอัตโนมัติ','จำนวนสินค้า','ค่าส่ง','ยอดที่ต้องชำระ','เลขบัญชี','ธนาคาร','ลิงก์ออเดอร์','ข้อมูลสินค้า','ยอดค้างชำระ','ส่วนลด','ที่อยู่ผู้รับ','หมายเหตุร้าน'],
+    autos:reactive([{n:'ทักทายนอกเวลาทำการ',p:'บ้านผ้าฝ้าย Official',pr:1,dl:0,fq:12,on:true,t:'2026-11-15 18:20'},{n:'ตอบเรื่องราคาใต้โพสต์',p:'บ้านผ้าฝ้าย Official',pr:2,dl:1,fq:24,on:true,t:'2026-11-14 11:02'},{n:'วิธีสั่งซื้อ',p:'@baanphafai',pr:3,dl:0,fq:6,on:false,t:'2026-11-10 09:45'}]),
+    users:[{id:'23818758',n:'กรธนพัฒน์',a:'admin01',r:'ผู้ดูแลระบบ',m:'admin@example.com',tel:'0650000000',l:'2026-11-16 10:11:50'},{id:'23818790',n:'แอดมินฝน',a:'fon_admin',r:'แอดมินแชต',m:'-',tel:'0811112222',l:'2026-11-16 09:40:12'},{id:'23818802',n:'น้องบีม',a:'beam_pack',r:'แพ็กสินค้า',m:'-',tel:'0833334444',l:'2026-11-15 18:02:37'}],
+    payOpts:[['qr','สแกน QR พร้อมเพย์','ตรวจยอดอัตโนมัติ'],['slip','โอนแล้วแนบสลิป','กสิกรไทย xxx-x-x4471-x'],['cod','เก็บเงินปลายทาง','จ่ายกับพนักงานส่งของ']]};
+}};
+const app=createApp(App);
+app.component('side-nav',SideNav);app.component('pager',Pager);app.component('empty-box',EmptyBox);
+app.use(ElementPlus);
+for(const [k,c] of Object.entries(ElementPlusIconsVue)) app.component(k,c);
+app.mount('#app');
+</script>

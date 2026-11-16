@@ -10,6 +10,7 @@
 | `prototype/index.html` | ต้นแบบที่กดใช้ได้ เปิดในเบราว์เซอร์ได้เลย (ต้องต่ออินเทอร์เน็ตเพื่อโหลด Vue และ Element Plus จาก CDN) |
 | `prototype/src.html` | ซอร์สที่ใช้แก้ไข (ยังไม่ได้ฝัง stylesheet ของ Element Plus) |
 | `prototype/build.py` | ฝัง stylesheet ของ Element Plus ลงใน `src.html` แล้วเขียนเป็น `index.html` |
+| `prototype-2027/` | เวอร์ชันทันสมัยปี 2027: โครงและเทคโนโลยีเดียวกัน หน้าตาใหม่ (การ์ด แถบหัว ⌘K โหมดมืด แถบจัดการหลายรายการ แดชบอร์ด) |
 | `design-skill/` | สกิลออกแบบสำหรับ Claude: `SKILL.md` + เอกสารอ้างอิง 3 ไฟล์ |
 | `design-skill/references/design-system.md` | ระบบออกแบบที่วัดจากเว็บต้นแบบ (สี ฟอนต์ ขนาด โครงหน้า ตาราง) |
 | `design-skill/references/screens.md` | สเปกแต่ละหน้าจอ |
@@ -21,6 +22,10 @@
 npm pack element-plus@2.7.3
 tar xzf element-plus-2.7.3.tgz package/dist/index.css
 python3 prototype/build.py package/dist/index.css
+
+# เวอร์ชัน 2027 ต้องใช้ไฟล์โหมดมืดของ Element Plus ด้วย
+tar xzf element-plus-2.7.3.tgz package/theme-chalk/dark/css-vars.css
+python3 prototype-2027/build.py package/dist/index.css package/theme-chalk/dark/css-vars.css
 ```
 
 ## หน้าจอในต้นแบบ
