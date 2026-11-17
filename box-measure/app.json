@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "วัดกล่อง",
+    "slug": "box-measure",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bosskorn.boxmeasure"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.bosskorn.boxmeasure"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "@reactvision/react-viro",
+        {
+          "provider": "none",
+          "telemetry": false,
+          "ios": {
+            "cameraUsagePermission": "ใช้กล้องเพื่อวัดขนาดกล่องพัสดุด้วย AR"
+          },
+          "android": {
+            "xRMode": [
+              "AR"
+            ]
+          }
+        }
+      ],
+      "expo-dev-client"
+    ]
+  }
+}

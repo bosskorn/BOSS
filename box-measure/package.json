@@ -1,0 +1,29 @@
+{
+  "name": "box-measure",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@reactvision/react-viro": "^3.2.0",
+    "expo": "~58.0.25",
+    "expo-dev-client": "~58.0.20",
+    "expo-status-bar": "~58.0.5",
+    "react": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-safe-area-context": "~5.11.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/react": "~19.3.0",
+    "jest": "^30.5.2",
+    "ts-jest": "^29.4.15",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "private": true
+}
