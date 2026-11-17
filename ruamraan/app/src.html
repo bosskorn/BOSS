@@ -324,6 +324,81 @@ html.dark .kit.on{color:var(--brand)}
 .pic{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:4px;text-align:left;cursor:pointer;font:inherit;color:inherit}
 .pic span{display:block;aspect-ratio:1;border-radius:8px}.pic i{font-style:normal}.pic.on{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-weak,rgba(14,159,135,.2))}
 .note{background:color-mix(in srgb,var(--s-pay) 10%,transparent);color:var(--tx-2);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+/* ===== โทนมืออาชีพ: สีเน้นสีเดียว สถานะเป็นจุดเล็ก พื้นหลังเรียบ ===== */
+:root{
+  --brand:#0F766E; --brand-ink:#0B5D57; --brand-soft:#EEF4F3; --brand-soft-2:#D5E5E2; --live:#D9363E;
+  --bg:#F5F6F7; --surface:#FFFFFF; --surface-2:#F7F8F9; --line:#E3E6E9; --line-2:#EEF0F2;
+  --tx:#1F2933; --tx-2:#4B5563; --tx-3:#8A939C;
+  --rail:#FFFFFF; --rail-2:#F1F3F5; --rail-tx:#4B5563; --rail-hi:#1F2933;
+  --red:#C2383F; --warn:#B7791F;
+  --s-pay:#B7791F; --s-ship:#3B6EA8; --s-print:#6B5B95; --s-pickup:#3B7E8C; --s-sent:#2F7D4F; --s-cancel:#9AA3AB;
+  --sh-1:none; --sh-2:0 8px 24px rgba(17,24,39,.12);
+  --r:8px; --r-s:6px;
+  --el-color-primary:#0F766E; --el-color-primary-light-3:#57A09A; --el-color-primary-light-5:#87BBB6; --el-color-primary-light-7:#B7D6D3; --el-color-primary-light-8:#CFE3E1; --el-color-primary-light-9:#EEF4F3; --el-color-primary-dark-2:#0B5D57;
+  --el-border-radius-base:6px; --el-border-radius-small:4px; --el-border-color:#D6DADF;
+}
+html.dark{
+  --brand:#3FA89E; --brand-ink:#6CC1B8; --brand-soft:rgba(63,168,158,.12); --brand-soft-2:rgba(63,168,158,.24); --live:#E5575E;
+  --bg:#111417; --surface:#171B1F; --surface-2:#1C2126; --line:#2A3036; --line-2:#22282D;
+  --tx:#E4E7EA; --tx-2:#AEB5BC; --tx-3:#7B848C;
+  --rail:#171B1F; --rail-2:#22282D; --rail-tx:#AEB5BC; --rail-hi:#E4E7EA;
+  --s-pay:#D69E2E; --s-ship:#6E9BD1; --s-print:#9D8EC4; --s-pickup:#6FB0BD; --s-sent:#5FAE7E; --s-cancel:#7B848C;
+  --el-color-primary:#3FA89E; --el-color-primary-dark-2:#6CC1B8; --el-color-primary-light-9:#18302D; --el-color-primary-light-8:#1C3A36; --el-color-primary-light-7:#21453F;
+}
+/* แถบเมนูสว่าง */
+.rail{border-right:1px solid var(--line)}
+.brandbox b{color:var(--tx)}
+.mark{background:var(--brand);border-radius:8px}.mark::after{display:none}
+.shopsel{color:var(--tx);border:1px solid var(--line);background:var(--surface-2);border-radius:8px}.shopsel small{color:var(--tx-3)}
+.nb{border-radius:6px;height:38px}
+.nb:hover{background:var(--rail-2);color:var(--tx)}
+.nb.on{background:var(--brand-soft);color:var(--brand-ink);box-shadow:none;font-weight:600}
+html.dark .nb.on{color:var(--brand)}
+.nb.on .el-icon{color:var(--brand)}
+.nb .cnt{background:var(--rail-2);color:var(--tx-2);border:1px solid var(--line)}
+.nb .live{background:none;color:var(--live);border:1px solid currentColor;line-height:14px}
+.ngap{background:var(--line-2)}
+/* ส่วนหัวและการ์ด */
+.topbar{height:56px}
+.search,.ib,.me{border-radius:6px}
+.ph h1{font-size:20px;font-weight:600}
+.card{box-shadow:none}
+.stab.on i{background:var(--surface-2);color:var(--brand);border-color:var(--brand-soft-2)}
+.chip{border-style:solid;border-radius:6px;height:32px}
+.chip.set{background:var(--surface);border-color:var(--brand);color:var(--brand-ink);font-weight:500}
+html.dark .chip.set{color:var(--brand)}
+/* ป้ายสถานะ: จุดสี + ตัวอักษรเทา ไม่มีพื้นสี */
+.badge{background:var(--surface-2);border:1px solid var(--line);border-radius:4px;font-weight:500;height:22px;padding:0 8px}
+.badge:not(.dot){color:var(--tx-2)!important}
+.badge.dot{background:none;border:0;padding:0;font-weight:500}
+/* รูปย่อสินค้า ไอคอนช่องทาง อวตาร: เรียบ ไม่ใช้สีจัด */
+.th{background:var(--surface-2)!important;color:var(--tx-2)!important;border:1px solid var(--line);border-radius:6px}
+.ch-ico{background:var(--surface-2)!important;color:var(--tx-2)!important;border:1px solid var(--line);border-radius:4px}
+.av{background:var(--surface-2);color:var(--tx-2);border:1px solid var(--line);border-radius:50%}
+html.dark .av{color:var(--tx-2)}
+.empty .ill{background:var(--surface-2);color:var(--tx-3);border-radius:12px}
+/* ไลฟ์ */
+.cm{background:var(--surface);border:1px solid var(--line-2);border-left:2px solid var(--line);border-radius:6px}
+.cm.hit{background:var(--surface);border-color:var(--line-2);border-left-color:var(--s-sent)}
+.cm.over{background:var(--surface);border-color:var(--line-2);border-left-color:var(--red)}
+.stage{background:#1F2428;border-radius:8px}
+.stage .tag{border-radius:4px}
+.pin,.lvid,.rate,.mode{border-radius:6px}
+.pin.on,.lvid.on,.rate.on{box-shadow:none;border-color:var(--brand)}
+.mode{background:var(--surface)}
+/* กราฟ */
+.bar i{background:var(--brand);border-radius:3px 3px 0 0;opacity:.85}
+.share .tr i{background:var(--brand)!important;opacity:.75}
+.kpi .v{font-size:24px;font-weight:600}
+.el-dialog,.el-drawer,.el-message-box{--el-dialog-border-radius:8px;border-radius:8px}
+.el-tag{border-radius:4px}
+.el-progress-bar__inner{background-color:var(--brand)}
+.qi .ic{background:var(--surface-2)!important;color:var(--tx-2)!important;border:1px solid var(--line);border-radius:6px}
+.qi .n{font-weight:600}
+.kpi .k .el-icon{color:var(--tx-3)!important}
+.kpi>svg path{stroke:var(--tx-3)!important}.kpi>svg path+path{stroke:none!important}
+.kpi>svg path:first-child{stroke:var(--brand)!important}
+
 </style>
 
 <div id="app"></div>
